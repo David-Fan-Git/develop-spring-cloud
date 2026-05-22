@@ -1,5 +1,8 @@
 package com.develop.mvp.pk.module.system.controller.admin.user;
 
+// Skill: AggregateRoot_User_Validation_Skill — 接口层 UserController
+// DDD 角色：接口层，仅处理 HTTP 请求/响应，调用 UserApplicationService
+
 import cn.hutool.core.collection.CollUtil;
 import com.develop.mvp.pk.framework.apilog.core.annotation.ApiAccessLog;
 import com.develop.mvp.pk.framework.common.enums.CommonStatusEnum;
@@ -7,10 +10,12 @@ import com.develop.mvp.pk.framework.common.pojo.CommonResult;
 import com.develop.mvp.pk.framework.common.pojo.PageParam;
 import com.develop.mvp.pk.framework.common.pojo.PageResult;
 import com.develop.mvp.pk.framework.excel.core.util.ExcelUtils;
+import com.develop.mvp.pk.module.system.application.user.UserApplicationService;
 import com.develop.mvp.pk.module.system.controller.admin.user.vo.user.*;
 import com.develop.mvp.pk.module.system.convert.user.UserConvert;
 import com.develop.mvp.pk.module.system.dal.dataobject.dept.DeptDO;
-import com.develop.mvp.pk.module.system.dal.dataobject.user.AdminUserDO;
+import com.develop.mvp.pk.module.system.domain.user.User;
+import com.develop.mvp.pk.module.system.domain.user.repository.UserPageQuery;
 import com.develop.mvp.pk.module.system.enums.common.SexEnum;
 import com.develop.mvp.pk.module.system.service.dept.DeptService;
 import com.develop.mvp.pk.module.system.service.user.AdminUserService;
@@ -21,16 +26,13 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.annotation.Resource;
 import jakarta.servlet.http.HttpServletResponse;
 import jakarta.validation.Valid;
-import java.util.Collections;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.io.IOException;
-import java.util.Arrays;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 import static com.develop.mvp.pk.framework.apilog.core.enums.OperateTypeEnum.EXPORT;
 import static com.develop.mvp.pk.framework.common.pojo.CommonResult.success;
@@ -44,7 +46,9 @@ import static com.develop.mvp.pk.framework.common.util.collection.CollectionUtil
 public class UserController {
 
     @Resource
-    private AdminUserService userService;
+    private UserApplicationService userApplicationService;
+    @Resource
+    private AdminUserService adminUserService; // 导入功能暂保留旧服务
     @Resource
     private DeptService deptService;
 
@@ -52,7 +56,11 @@ public class UserController {
     @Operation(summary = "新增用户")
     @PreAuthorize("@ss.hasPermission('system:user:create')")
     public CommonResult<Long> createUser(@Valid @RequestBody UserSaveReqVO reqVO) {
-        Long id = userService.createUser(reqVO);
+        Long id = userApplicationService.createUser(
+                null, reqVO.getUsername(), reqVO.getPassword(), null,
+                reqVO.getDeptId(), reqVO.getEmail(), reqVO.getMobile(),
+                reqVO.getNickname(), reqVO.getAvatar(), reqVO.getSex(),
+                reqVO.getRemark(), reqVO.getPostIds());
         return success(id);
     }
 
@@ -60,7 +68,10 @@ public class UserController {
     @Operation(summary = "修改用户")
     @PreAuthorize("@ss.hasPermission('system:user:update')")
     public CommonResult<Boolean> updateUser(@Valid @RequestBody UserSaveReqVO reqVO) {
-        userService.updateUser(reqVO);
+        userApplicationService.updateUser(
+                reqVO.getId(), reqVO.getUsername(), reqVO.getEmail(), reqVO.getMobile(),
+                reqVO.getNickname(), reqVO.getAvatar(), reqVO.getSex(), reqVO.getRemark(),
+                reqVO.getDeptId(), reqVO.getPostIds());
         return success(true);
     }
 
@@ -69,7 +80,7 @@ public class UserController {
     @Parameter(name = "id", description = "编号", required = true, example = "1024")
     @PreAuthorize("@ss.hasPermission('system:user:delete')")
     public CommonResult<Boolean> deleteUser(@RequestParam("id") Long id) {
-        userService.deleteUser(id);
+        userApplicationService.deleteUser(id);
         return success(true);
     }
 
@@ -78,7 +89,7 @@ public class UserController {
     @Operation(summary = "批量删除用户")
     @PreAuthorize("@ss.hasPermission('system:user:delete')")
     public CommonResult<Boolean> deleteUserList(@RequestParam("ids") List<Long> ids) {
-        userService.deleteUserList(ids);
+        userApplicationService.deleteUserList(ids);
         return success(true);
     }
 
@@ -86,7 +97,7 @@ public class UserController {
     @Operation(summary = "重置用户密码")
     @PreAuthorize("@ss.hasPermission('system:user:update-password')")
     public CommonResult<Boolean> updateUserPassword(@Valid @RequestBody UserUpdatePasswordReqVO reqVO) {
-        userService.updateUserPassword(reqVO.getId(), reqVO.getPassword());
+        userApplicationService.resetPassword(reqVO.getId(), reqVO.getPassword());
         return success(true);
     }
 
@@ -94,7 +105,7 @@ public class UserController {
     @Operation(summary = "修改用户状态")
     @PreAuthorize("@ss.hasPermission('system:user:update')")
     public CommonResult<Boolean> updateUserStatus(@Valid @RequestBody UserUpdateStatusReqVO reqVO) {
-        userService.updateUserStatus(reqVO.getId(), reqVO.getStatus());
+        userApplicationService.updateUserStatus(reqVO.getId(), reqVO.getStatus());
         return success(true);
     }
 
@@ -102,15 +113,20 @@ public class UserController {
     @Operation(summary = "获得用户分页列表")
     @PreAuthorize("@ss.hasPermission('system:user:query')")
     public CommonResult<PageResult<UserRespVO>> getUserPage(@Valid UserPageReqVO pageReqVO) {
-        // 获得用户分页列表
-        PageResult<AdminUserDO> pageResult = userService.getUserPage(pageReqVO);
+        Set<Long> deptIds = userApplicationService.getDeptCondition(pageReqVO.getDeptId());
+        PageResult<User> pageResult = userApplicationService.getUserPage(
+                UserPageQuery.builder()
+                        .username(pageReqVO.getUsername()).mobile(pageReqVO.getMobile())
+                        .status(pageReqVO.getStatus()).deptIds(deptIds)
+                        .pageNo(pageReqVO.getPageNo()).pageSize(pageReqVO.getPageSize())
+                        .build());
         if (CollUtil.isEmpty(pageResult.getList())) {
             return success(new PageResult<>(pageResult.getTotal()));
         }
-        // 拼接数据
         Map<Long, DeptDO> deptMap = deptService.getDeptMap(
-                convertList(pageResult.getList(), AdminUserDO::getDeptId));
-        return success(new PageResult<>(UserConvert.INSTANCE.convertList(pageResult.getList(), deptMap),
+                convertList(pageResult.getList(), User::deptId));
+        return success(new PageResult<>(
+                UserConvert.INSTANCE.convertUserList(pageResult.getList(), deptMap),
                 pageResult.getTotal()));
     }
 
@@ -119,23 +135,19 @@ public class UserController {
     @Parameter(name = "ids", description = "编号列表", required = true, example = "[1024]")
     @PreAuthorize("@ss.hasPermission('system:user:query')")
     public CommonResult<List<UserRespVO>> getUserList(@RequestParam("ids") List<Long> ids) {
-        List<AdminUserDO> list = userService.getUserList(ids);
-        if (CollUtil.isEmpty(list)) {
-            return success(Collections.emptyList());
-        }
-        // 拼接数据
-        Map<Long, DeptDO> deptMap = deptService.getDeptMap(convertSet(list, AdminUserDO::getDeptId));
-        return success(UserConvert.INSTANCE.convertList(list, deptMap));
+        List<User> users = userApplicationService.getUserList(ids);
+        if (CollUtil.isEmpty(users)) return success(Collections.emptyList());
+        Map<Long, DeptDO> deptMap = deptService.getDeptMap(convertSet(users, User::deptId));
+        return success(UserConvert.INSTANCE.convertUserList(users, deptMap));
     }
 
     @GetMapping({"/list-all-simple", "/simple-list"})
-    @Operation(summary = "获取用户精简信息列表", description = "只包含被开启的用户，主要用于前端的下拉选项")
+    @Operation(summary = "获取用户精简信息列表")
     public CommonResult<List<UserSimpleRespVO>> getSimpleUserList() {
-        List<AdminUserDO> list = userService.getUserListByStatus(CommonStatusEnum.ENABLE.getStatus());
-        // 拼接数据
-        Map<Long, DeptDO> deptMap = deptService.getDeptMap(
-                convertList(list, AdminUserDO::getDeptId));
-        return success(UserConvert.INSTANCE.convertSimpleList(list, deptMap));
+        List<User> users = userApplicationService.getUserListByStatus(
+                CommonStatusEnum.ENABLE.getStatus());
+        Map<Long, DeptDO> deptMap = deptService.getDeptMap(convertList(users, User::deptId));
+        return success(UserConvert.INSTANCE.convertUserSimpleList(users, deptMap));
     }
 
     @GetMapping("/get")
@@ -143,13 +155,10 @@ public class UserController {
     @Parameter(name = "id", description = "编号", required = true, example = "1024")
     @PreAuthorize("@ss.hasPermission('system:user:query')")
     public CommonResult<UserRespVO> getUser(@RequestParam("id") Long id) {
-        AdminUserDO user = userService.getUser(id);
-        if (user == null) {
-            return success(null);
-        }
-        // 拼接数据
-        DeptDO dept = deptService.getDept(user.getDeptId());
-        return success(UserConvert.INSTANCE.convert(user, dept));
+        User user = userApplicationService.getUser(id);
+        if (user == null) return success(null);
+        DeptDO dept = deptService.getDept(user.deptId());
+        return success(UserConvert.INSTANCE.convertUser(user, dept));
     }
 
     @GetMapping("/export-excel")
@@ -159,25 +168,29 @@ public class UserController {
     public void exportUserList(@Validated UserPageReqVO exportReqVO,
                                HttpServletResponse response) throws IOException {
         exportReqVO.setPageSize(PageParam.PAGE_SIZE_NONE);
-        List<AdminUserDO> list = userService.getUserPage(exportReqVO).getList();
-        // 输出 Excel
+        Set<Long> deptIds = userApplicationService.getDeptCondition(exportReqVO.getDeptId());
+        PageResult<User> pageResult = userApplicationService.getUserPage(
+                UserPageQuery.builder()
+                        .username(exportReqVO.getUsername()).mobile(exportReqVO.getMobile())
+                        .status(exportReqVO.getStatus()).deptIds(deptIds)
+                        .pageNo(exportReqVO.getPageNo()).pageSize(exportReqVO.getPageSize())
+                        .build());
         Map<Long, DeptDO> deptMap = deptService.getDeptMap(
-                convertList(list, AdminUserDO::getDeptId));
+                convertList(pageResult.getList(), User::deptId));
         ExcelUtils.write(response, "用户数据.xls", "数据", UserRespVO.class,
-                UserConvert.INSTANCE.convertList(list, deptMap));
+                UserConvert.INSTANCE.convertUserList(pageResult.getList(), deptMap));
     }
 
     @GetMapping("/get-import-template")
     @Operation(summary = "获得导入用户模板")
     public void importTemplate(HttpServletResponse response) throws IOException {
-        // 手动创建导出 demo
         List<UserImportExcelVO> list = Arrays.asList(
-                UserImportExcelVO.builder().username("yunai").deptId(1L).email("yunai@iocoder.cn").mobile("15601691300")
-                        .nickname("芋道").status(CommonStatusEnum.ENABLE.getStatus()).sex(SexEnum.MALE.getSex()).build(),
-                UserImportExcelVO.builder().username("yuanma").deptId(2L).email("yuanma@iocoder.cn").mobile("15601701300")
-                        .nickname("源码").status(CommonStatusEnum.DISABLE.getStatus()).sex(SexEnum.FEMALE.getSex()).build()
-        );
-        // 输出
+                UserImportExcelVO.builder().username("yunai").deptId(1L).email("yunai@iocoder.cn")
+                        .mobile("15601691300").nickname("芋道")
+                        .status(CommonStatusEnum.ENABLE.getStatus()).sex(SexEnum.MALE.getSex()).build(),
+                UserImportExcelVO.builder().username("yuanma").deptId(2L).email("yuanma@iocoder.cn")
+                        .mobile("15601701300").nickname("源码")
+                        .status(CommonStatusEnum.DISABLE.getStatus()).sex(SexEnum.FEMALE.getSex()).build());
         ExcelUtils.write(response, "用户导入模板.xls", "用户列表", UserImportExcelVO.class, list);
     }
 
@@ -185,13 +198,14 @@ public class UserController {
     @Operation(summary = "导入用户")
     @Parameters({
             @Parameter(name = "file", description = "Excel 文件", required = true),
-            @Parameter(name = "updateSupport", description = "是否支持更新，默认为 false", example = "true")
+            @Parameter(name = "updateSupport", description = "是否支持更新", example = "true")
     })
     @PreAuthorize("@ss.hasPermission('system:user:import')")
-    public CommonResult<UserImportRespVO> importExcel(@RequestParam("file") MultipartFile file,
-                                                      @RequestParam(value = "updateSupport", required = false, defaultValue = "false") Boolean updateSupport) throws Exception {
+    public CommonResult<UserImportRespVO> importExcel(
+            @RequestParam("file") MultipartFile file,
+            @RequestParam(value = "updateSupport", required = false, defaultValue = "false")
+            Boolean updateSupport) throws Exception {
         List<UserImportExcelVO> list = ExcelUtils.read(file, UserImportExcelVO.class);
-        return success(userService.importUserList(list, updateSupport));
+        return success(adminUserService.importUserList(list, updateSupport));
     }
-
 }

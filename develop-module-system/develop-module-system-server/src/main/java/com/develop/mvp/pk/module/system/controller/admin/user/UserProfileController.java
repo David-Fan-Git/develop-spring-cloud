@@ -1,8 +1,12 @@
 package com.develop.mvp.pk.module.system.controller.admin.user;
 
+// Skill: AggregateRoot_User_Validation_Skill — 接口层 UserProfileController
+// DDD 角色：接口层，调用 UserApplicationService
+
 import cn.hutool.core.collection.CollUtil;
 import com.develop.mvp.pk.framework.common.pojo.CommonResult;
 import com.develop.mvp.pk.framework.datapermission.core.annotation.DataPermission;
+import com.develop.mvp.pk.module.system.application.user.UserApplicationService;
 import com.develop.mvp.pk.module.system.controller.admin.user.vo.profile.UserProfileRespVO;
 import com.develop.mvp.pk.module.system.controller.admin.user.vo.profile.UserProfileUpdatePasswordReqVO;
 import com.develop.mvp.pk.module.system.controller.admin.user.vo.profile.UserProfileUpdateReqVO;
@@ -10,12 +14,11 @@ import com.develop.mvp.pk.module.system.convert.user.UserConvert;
 import com.develop.mvp.pk.module.system.dal.dataobject.dept.DeptDO;
 import com.develop.mvp.pk.module.system.dal.dataobject.dept.PostDO;
 import com.develop.mvp.pk.module.system.dal.dataobject.permission.RoleDO;
-import com.develop.mvp.pk.module.system.dal.dataobject.user.AdminUserDO;
+import com.develop.mvp.pk.module.system.domain.user.User;
 import com.develop.mvp.pk.module.system.service.dept.DeptService;
 import com.develop.mvp.pk.module.system.service.dept.PostService;
 import com.develop.mvp.pk.module.system.service.permission.PermissionService;
 import com.develop.mvp.pk.module.system.service.permission.RoleService;
-import com.develop.mvp.pk.module.system.service.user.AdminUserService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.annotation.Resource;
@@ -37,7 +40,7 @@ import static com.develop.mvp.pk.framework.security.core.util.SecurityFrameworkU
 public class UserProfileController {
 
     @Resource
-    private AdminUserService userService;
+    private UserApplicationService userApplicationService;
     @Resource
     private DeptService deptService;
     @Resource
@@ -49,31 +52,32 @@ public class UserProfileController {
 
     @GetMapping("/get")
     @Operation(summary = "获得登录用户信息")
-    @DataPermission(enable = false) // 关闭数据权限，避免只查看自己时，查询不到部门。
+    @DataPermission(enable = false)
     public CommonResult<UserProfileRespVO> getUserProfile() {
-        // 获得用户基本信息
-        AdminUserDO user = userService.getUser(getLoginUserId());
-        // 获得用户角色
-        List<RoleDO> userRoles = roleService.getRoleListFromCache(permissionService.getUserRoleIdListByUserId(user.getId()));
-        // 获得部门信息
-        DeptDO dept = user.getDeptId() != null ? deptService.getDept(user.getDeptId()) : null;
-        // 获得岗位信息
-        List<PostDO> posts = CollUtil.isNotEmpty(user.getPostIds()) ? postService.getPostList(user.getPostIds()) : null;
-        return success(UserConvert.INSTANCE.convert(user, userRoles, dept, posts));
+        User user = userApplicationService.getUser(getLoginUserId());
+        List<RoleDO> userRoles = roleService.getRoleListFromCache(
+                permissionService.getUserRoleIdListByUserId(user.id().value()));
+        DeptDO dept = user.deptId() != null ? deptService.getDept(user.deptId()) : null;
+        List<PostDO> posts = CollUtil.isNotEmpty(user.postIds())
+                ? postService.getPostList(user.postIds()) : null;
+        return success(UserConvert.INSTANCE.convertUser(user, userRoles, dept, posts));
     }
 
     @PutMapping("/update")
     @Operation(summary = "修改用户个人信息")
     public CommonResult<Boolean> updateUserProfile(@Valid @RequestBody UserProfileUpdateReqVO reqVO) {
-        userService.updateUserProfile(getLoginUserId(), reqVO);
+        userApplicationService.updateProfile(
+                getLoginUserId(), reqVO.getEmail(), reqVO.getMobile(),
+                reqVO.getNickname(), reqVO.getAvatar(), reqVO.getSex(), null);
         return success(true);
     }
 
     @PutMapping("/update-password")
     @Operation(summary = "修改用户个人密码")
-    public CommonResult<Boolean> updateUserProfilePassword(@Valid @RequestBody UserProfileUpdatePasswordReqVO reqVO) {
-        userService.updateUserPassword(getLoginUserId(), reqVO);
+    public CommonResult<Boolean> updateUserProfilePassword(
+            @Valid @RequestBody UserProfileUpdatePasswordReqVO reqVO) {
+        userApplicationService.changePassword(
+                getLoginUserId(), reqVO.getOldPassword(), reqVO.getNewPassword());
         return success(true);
     }
-
 }

@@ -13,6 +13,7 @@ import com.develop.mvp.pk.module.system.dal.dataobject.dept.DeptDO;
 import com.develop.mvp.pk.module.system.dal.dataobject.dept.PostDO;
 import com.develop.mvp.pk.module.system.dal.dataobject.permission.RoleDO;
 import com.develop.mvp.pk.module.system.dal.dataobject.user.AdminUserDO;
+import com.develop.mvp.pk.module.system.domain.user.User;
 import org.mapstruct.Mapper;
 import org.mapstruct.factory.Mappers;
 
@@ -23,6 +24,8 @@ import java.util.Map;
 public interface UserConvert {
 
     UserConvert INSTANCE = Mappers.getMapper(UserConvert.class);
+
+    // ── 旧 API：基于 AdminUserDO（保持兼容） ──
 
     default List<UserRespVO> convertList(List<AdminUserDO> list, Map<Long, DeptDO> deptMap) {
         return CollectionUtils.convertList(list, user -> convert(user, deptMap.get(user.getDeptId())));
@@ -53,4 +56,66 @@ public interface UserConvert {
         return userVO;
     }
 
+    // ── 新 API：基于 User 领域对象 ──
+
+    /** 将 User 领域对象列表转换为 UserRespVO 列表 */
+    default List<UserRespVO> convertUserList(List<User> users, Map<Long, DeptDO> deptMap) {
+        return CollectionUtils.convertList(users, user -> convertUser(user, deptMap.get(user.deptId())));
+    }
+
+    /** 将单个 User 领域对象转换为 UserRespVO */
+    default UserRespVO convertUser(User user, DeptDO dept) {
+        UserRespVO vo = new UserRespVO();
+        vo.setId(user.id().value());
+        vo.setUsername(user.username().value());
+        vo.setNickname(user.profile().nickname());
+        vo.setDeptId(user.deptId());
+        vo.setPostIds(new java.util.HashSet<>(user.postIds()));
+        vo.setEmail(user.email().isPresent() ? user.email().value() : null);
+        vo.setMobile(user.mobile().isPresent() ? user.mobile().value() : null);
+        vo.setSex(user.profile().sex());
+        vo.setAvatar(user.profile().avatar());
+        vo.setStatus(user.status().code());
+        if (user.lastLogin() != null) {
+            vo.setLoginIp(user.lastLogin().loginIp());
+            vo.setLoginDate(user.lastLogin().loginDate());
+        }
+        if (dept != null) {
+            vo.setDeptName(dept.getName());
+        }
+        return vo;
+    }
+
+    /** 将 User 领域对象列表转换为 UserSimpleRespVO 列表 */
+    default List<UserSimpleRespVO> convertUserSimpleList(List<User> users, Map<Long, DeptDO> deptMap) {
+        return CollectionUtils.convertList(users, user -> {
+            UserSimpleRespVO vo = new UserSimpleRespVO();
+            vo.setId(user.id().value());
+            vo.setNickname(user.profile().nickname());
+            vo.setDeptId(user.deptId());
+            MapUtils.findAndThen(deptMap, user.deptId(), dept -> vo.setDeptName(dept.getName()));
+            return vo;
+        });
+    }
+
+    /** 将 User 领域对象转换为 UserProfileRespVO */
+    default UserProfileRespVO convertUser(User user, List<RoleDO> userRoles,
+                                           DeptDO dept, List<PostDO> posts) {
+        UserProfileRespVO vo = new UserProfileRespVO();
+        vo.setId(user.id().value());
+        vo.setUsername(user.username().value());
+        vo.setNickname(user.profile().nickname());
+        vo.setEmail(user.email().isPresent() ? user.email().value() : null);
+        vo.setMobile(user.mobile().isPresent() ? user.mobile().value() : null);
+        vo.setSex(user.profile().sex());
+        vo.setAvatar(user.profile().avatar());
+        if (user.lastLogin() != null) {
+            vo.setLoginIp(user.lastLogin().loginIp());
+            vo.setLoginDate(user.lastLogin().loginDate());
+        }
+        vo.setRoles(BeanUtils.toBean(userRoles, RoleSimpleRespVO.class));
+        vo.setDept(BeanUtils.toBean(dept, DeptSimpleRespVO.class));
+        vo.setPosts(BeanUtils.toBean(posts, PostSimpleRespVO.class));
+        return vo;
+    }
 }

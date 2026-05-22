@@ -1,96 +1,99 @@
 package com.develop.mvp.pk.module.system.api.user;
 
+// Skill: AggregateRoot_User_Validation_Skill — 接口层 AdminUserApiImpl (Feign RPC)
+// DDD 角色：Feign RPC 端点，调用 UserApplicationService
+
 import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.util.ObjUtil;
 import com.develop.mvp.pk.framework.common.pojo.CommonResult;
-import com.develop.mvp.pk.framework.common.util.object.BeanUtils;
 import com.develop.mvp.pk.framework.datapermission.core.annotation.DataPermission;
 import com.develop.mvp.pk.framework.datapermission.core.util.DataPermissionUtils;
 import com.develop.mvp.pk.module.system.api.user.dto.AdminUserRespDTO;
+import com.develop.mvp.pk.module.system.application.user.UserApplicationService;
 import com.develop.mvp.pk.module.system.dal.dataobject.dept.DeptDO;
-import com.develop.mvp.pk.module.system.dal.dataobject.user.AdminUserDO;
+import com.develop.mvp.pk.module.system.domain.user.User;
 import com.develop.mvp.pk.module.system.service.dept.DeptService;
-import com.develop.mvp.pk.module.system.service.user.AdminUserService;
 import jakarta.annotation.Resource;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.RestController;
 
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.List;
+import java.util.*;
+import java.util.stream.Collectors;
 
 import static com.develop.mvp.pk.framework.common.pojo.CommonResult.success;
 import static com.develop.mvp.pk.framework.common.util.collection.CollectionUtils.convertSet;
 
-@RestController // 提供 RESTful API 接口，给 Feign 调用
+@RestController
 @Validated
 public class AdminUserApiImpl implements AdminUserApi {
 
     @Resource
-    private AdminUserService userService;
+    private UserApplicationService userApplicationService;
     @Resource
     private DeptService deptService;
 
     @Override
-    @DataPermission(enable = false) // 忽略数据权限，避免因为过滤，导致无法查询用户。类似：https://github.com/YunaiV/ruoyi-vue-pro/issues/1051
+    @DataPermission(enable = false)
     public CommonResult<AdminUserRespDTO> getUser(Long id) {
-        AdminUserDO user = userService.getUser(id);
-        return success(BeanUtils.toBean(user, AdminUserRespDTO.class));
+        User user = userApplicationService.getUser(id);
+        return success(toDTO(user));
     }
 
     @Override
     public CommonResult<List<AdminUserRespDTO>> getUserListBySubordinate(Long id) {
-        // 1.1 获取用户负责的部门
-        AdminUserDO user = userService.getUser(id);
-        if (user == null) {
-            return success(Collections.emptyList());
-        }
+        User user = userApplicationService.getUser(id);
+        if (user == null) return success(Collections.emptyList());
         ArrayList<Long> deptIds = new ArrayList<>();
-        DeptDO dept = deptService.getDept(user.getDeptId());
-        if (dept == null) {
-            return success(Collections.emptyList());
-        }
-        if (ObjUtil.notEqual(dept.getLeaderUserId(), id)) { // 校验为负责人
-            return success(Collections.emptyList());
-        }
+        DeptDO dept = deptService.getDept(user.deptId());
+        if (dept == null) return success(Collections.emptyList());
+        if (ObjUtil.notEqual(dept.getLeaderUserId(), id)) return success(Collections.emptyList());
         deptIds.add(dept.getId());
-        // 1.2 获取所有子部门
         List<DeptDO> childDeptList = deptService.getChildDeptList(dept.getId());
         if (CollUtil.isNotEmpty(childDeptList)) {
             deptIds.addAll(convertSet(childDeptList, DeptDO::getId));
         }
-
-        // 2. 获取部门对应的用户信息
-        List<AdminUserDO> users = userService.getUserListByDeptIds(deptIds);
-        users.removeIf(item -> ObjUtil.equal(item.getId(), id)); // 排除自己
-        return success(BeanUtils.toBean(users, AdminUserRespDTO.class));
+        List<User> users = userApplicationService.getUserListByDeptIds(deptIds);
+        users.removeIf(item -> ObjUtil.equal(item.id().value(), id));
+        return success(users.stream().map(this::toDTO).collect(Collectors.toList()));
     }
 
     @Override
     public CommonResult<List<AdminUserRespDTO>> getUserList(Collection<Long> ids) {
-        return DataPermissionUtils.executeIgnore(() -> { // 禁用数据权限。原因是，一般基于指定 id 的 API 查询，都是数据拼接为主
-            List<AdminUserDO> users = userService.getUserList(ids);
-            return success(BeanUtils.toBean(users, AdminUserRespDTO.class));
+        return DataPermissionUtils.executeIgnore(() -> {
+            List<User> users = userApplicationService.getUserList(ids);
+            return success(users.stream().map(this::toDTO).collect(Collectors.toList()));
         });
     }
 
     @Override
     public CommonResult<List<AdminUserRespDTO>> getUserListByDeptIds(Collection<Long> deptIds) {
-        List<AdminUserDO> users = userService.getUserListByDeptIds(deptIds);
-        return success(BeanUtils.toBean(users, AdminUserRespDTO.class));
+        List<User> users = userApplicationService.getUserListByDeptIds(deptIds);
+        return success(users.stream().map(this::toDTO).collect(Collectors.toList()));
     }
 
     @Override
     public CommonResult<List<AdminUserRespDTO>> getUserListByPostIds(Collection<Long> postIds) {
-        List<AdminUserDO> users = userService.getUserListByPostIds(postIds);
-        return success(BeanUtils.toBean(users, AdminUserRespDTO.class));
+        List<User> users = userApplicationService.getUserListByPostIds(postIds);
+        return success(users.stream().map(this::toDTO).collect(Collectors.toList()));
     }
 
     @Override
     public CommonResult<Boolean> validateUserList(Collection<Long> ids) {
-        userService.validateUserList(ids);
+        userApplicationService.validateUserList(ids);
         return success(true);
     }
 
+    /** User 领域对象 → AdminUserRespDTO */
+    private AdminUserRespDTO toDTO(User user) {
+        if (user == null) return null;
+        AdminUserRespDTO dto = new AdminUserRespDTO();
+        dto.setId(user.id().value());
+        dto.setNickname(user.profile().nickname());
+        dto.setStatus(user.status().code());
+        dto.setDeptId(user.deptId());
+        dto.setPostIds(new HashSet<>(user.postIds()));
+        dto.setMobile(user.mobile().isPresent() ? user.mobile().value() : null);
+        dto.setAvatar(user.profile().avatar());
+        return dto;
+    }
 }
