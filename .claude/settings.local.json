@@ -1,0 +1,9 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(mvn dependency:tree -pl develop-server)",
+      "Bash(jar tf *)",
+      "Bash(mvn install *)"
+    ]
+  }
+}
