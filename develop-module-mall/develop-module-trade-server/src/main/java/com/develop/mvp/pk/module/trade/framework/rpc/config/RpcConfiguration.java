@@ -1,7 +1,7 @@
 package com.develop.mvp.pk.module.trade.framework.rpc.config;
 
 import com.develop.mvp.pk.module.member.api.address.MemberAddressApi;
-import com.develop.mvp.pk.module.member.api.config.MemberConfigApi;
+import com.develop.mvp.pk.module.member.api.config.remote.MemberConfigRemoteClient;
 import com.develop.mvp.pk.module.member.api.level.MemberLevelApi;
 import com.develop.mvp.pk.module.member.api.point.MemberPointApi;
 import com.develop.mvp.pk.module.member.api.user.MemberUserApi;
@@ -32,7 +32,7 @@ import org.springframework.context.annotation.Configuration;
 @EnableFeignClients(clients = {
         BargainActivityApi.class, BargainRecordApi.class, CombinationRecordApi.class,
         CouponApi.class, DiscountActivityApi.class, RewardActivityApi.class, SeckillActivityApi.class, PointActivityApi.class,
-        MemberUserApi.class, MemberPointApi.class, MemberLevelApi.class, MemberAddressApi.class, MemberConfigApi.class,
+        MemberUserApi.class, MemberPointApi.class, MemberLevelApi.class, MemberAddressApi.class, MemberConfigRemoteClient.class,
         ProductSpuApi.class, ProductSkuApi.class, ProductCommentApi.class, ProductCategoryApi.class,
         PayOrderApi.class, PayRefundApi.class, PayTransferApi.class, PayWalletApi.class,
         AdminUserRemoteClient.class, NotifyMessageSendRemoteClient.class, SocialClientRemoteClient.class, SocialUserRemoteClient.class
