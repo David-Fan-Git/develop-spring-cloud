@@ -8,7 +8,7 @@ import com.develop.mvp.pk.module.promotion.domain.seckill.SeckillActivityFactory
 import com.develop.mvp.pk.module.promotion.domain.seckill.repository.SeckillActivityRepository;
 import com.develop.mvp.pk.module.promotion.domain.seckill.valueobject.SeckillActivityId;
 import com.develop.mvp.pk.module.promotion.domain.seckill.valueobject.SeckillProduct;
-import com.develop.mvp.pk.module.system.domain.user.event.DomainEventPublisher;
+import com.develop.mvp.pk.module.promotion.domain.event.DomainEventPublisher;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -40,7 +40,7 @@ public class SeckillActivityApplicationService {
         List<SeckillProduct> products = buildProducts(productParams);
         SeckillActivity activity = SeckillActivityFactory.create(id, spuId, name, status, remark,
                 startTime, endTime, sort, configIds, totalLimitCount, singleLimitCount, products);
-        seckillActivityRepository.save(activity);
+        activity = seckillActivityRepository.save(activity);
         publishEvents(activity);
         return activity.id().value();
     }

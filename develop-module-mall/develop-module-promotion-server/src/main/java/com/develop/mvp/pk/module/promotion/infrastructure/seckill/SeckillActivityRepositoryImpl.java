@@ -16,6 +16,8 @@ import org.springframework.stereotype.Repository;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
+import java.util.Objects;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 @Repository
@@ -34,27 +36,31 @@ public class SeckillActivityRepositoryImpl implements SeckillActivityRepository 
     @Transactional
     public SeckillActivity save(SeckillActivity activity) {
         SeckillActivityDO activityDO = toDataObject(activity);
-        if (seckillActivityMapper.selectById(activity.id().value()) == null) {
+        SeckillActivity persistedActivity;
+        if (activity.id() == null || seckillActivityMapper.selectById(activity.id().value()) == null) {
             seckillActivityMapper.insert(activityDO);
+            persistedActivity = toDomain(activityDO);
         } else {
             seckillActivityMapper.updateById(activityDO);
+            persistedActivity = activity;
+            deleteRemovedProducts(activity);
         }
         for (SeckillProduct product : activity.products()) {
-            SeckillProductDO productDO = toProductDataObject(product, activity.id().value(), activity.status());
+            SeckillProductDO productDO = toProductDataObject(product, persistedActivity.id().value(), persistedActivity.status());
             if (product.id() != null && seckillProductMapper.selectById(product.id()) != null) {
                 seckillProductMapper.updateById(productDO);
             } else {
                 seckillProductMapper.insert(productDO);
             }
         }
-        return activity;
+        return persistedActivity;
     }
 
     @Override
     @Transactional
     public void delete(SeckillActivityId id) {
         seckillActivityMapper.deleteById(id.value());
-        seckillProductMapper.deleteByActivityId(id.value());
+        seckillProductMapper.delete(SeckillProductDO::getActivityId, id.value());
     }
 
     @Override
@@ -71,7 +77,7 @@ public class SeckillActivityRepositoryImpl implements SeckillActivityRepository 
 
     @Override
     public List<SeckillActivity> findActiveActivities() {
-        return seckillActivityMapper.selectListByStatus(
+        return seckillActivityMapper.selectList(SeckillActivityDO::getStatus,
                 com.develop.mvp.pk.framework.common.enums.CommonStatusEnum.ENABLE.getStatus()).stream()
                 .map(this::toDomain).collect(Collectors.toList());
     }
@@ -79,7 +85,7 @@ public class SeckillActivityRepositoryImpl implements SeckillActivityRepository 
     @Override
     public PageResult<SeckillActivity> findPage(String name, Integer status, Long spuId,
                                                  Integer pageNo, Integer pageSize) {
-        var reqVO = new com.develop.mvp.pk.module.promotion.controller.admin.seckill.vo.SeckillActivityPageReqVO();
+        var reqVO = new com.develop.mvp.pk.module.promotion.controller.admin.seckill.vo.activity.SeckillActivityPageReqVO();
         reqVO.setName(name);
         reqVO.setStatus(status);
         reqVO.setSpuId(spuId);
@@ -94,6 +100,18 @@ public class SeckillActivityRepositoryImpl implements SeckillActivityRepository 
     @Override
     public long count() {
         return seckillActivityMapper.selectCount();
+    }
+
+    private void deleteRemovedProducts(SeckillActivity activity) {
+        Set<Long> currentProductIds = activity.products().stream()
+                .map(SeckillProduct::id)
+                .filter(Objects::nonNull)
+                .collect(Collectors.toSet());
+        seckillProductMapper.selectListByActivityId(activity.id().value()).stream()
+                .map(SeckillProductDO::getId)
+                .filter(Objects::nonNull)
+                .filter(id -> !currentProductIds.contains(id))
+                .forEach(seckillProductMapper::deleteById);
     }
 
     private SeckillActivity toDomain(SeckillActivityDO activityDO) {
@@ -113,7 +131,7 @@ public class SeckillActivityRepositoryImpl implements SeckillActivityRepository 
 
     private SeckillActivityDO toDataObject(SeckillActivity activity) {
         SeckillActivityDO activityDO = new SeckillActivityDO();
-        activityDO.setId(activity.id().value());
+        activityDO.setId(activity.id() != null ? activity.id().value() : null);
         activityDO.setSpuId(activity.spuId());
         activityDO.setName(activity.name());
         activityDO.setStatus(activity.status());

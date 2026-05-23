@@ -6,7 +6,7 @@ package com.develop.mvp.pk.module.promotion.domain.banner;
 
 import com.develop.mvp.pk.framework.common.enums.CommonStatusEnum;
 import com.develop.mvp.pk.module.promotion.domain.banner.valueobject.BannerId;
-import com.develop.mvp.pk.module.system.domain.user.event.DomainEvent;
+import com.develop.mvp.pk.module.promotion.domain.event.DomainEvent;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -31,7 +31,7 @@ public final class Banner {
 
     Banner(BannerId id, String title, String url, String picUrl,
            Integer sort, Integer status, Integer position, String memo) {
-        this.id = Objects.requireNonNull(id, "Banner编号不能为空");
+        this.id = id;
         this.title = Objects.requireNonNull(title, "Banner标题不能为空");
         this.url = url;
         this.picUrl = Objects.requireNonNull(picUrl, "Banner图片不能为空");
@@ -78,7 +78,7 @@ public final class Banner {
     public boolean equals(Object o) {
         if (this == o) return true;
         if (!(o instanceof Banner that)) return false;
-        return id.equals(that.id);
+        return Objects.equals(id, that.id);
     }
 
     @Override

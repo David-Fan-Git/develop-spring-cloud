@@ -17,7 +17,7 @@ public final class SeckillActivityFactory {
                                           List<Long> configIds, Integer totalLimitCount, Integer singleLimitCount,
                                           List<SeckillProduct> products) {
         int totalStock = products != null ? products.stream().mapToInt(SeckillProduct::stock).sum() : 0;
-        return new SeckillActivity(SeckillActivityId.of(id), spuId, name, status, remark,
+        return new SeckillActivity(id != null ? SeckillActivityId.of(id) : null, spuId, name, status, remark,
                 startTime, endTime, sort, configIds, totalLimitCount, singleLimitCount,
                 totalStock, totalStock, products);
     }

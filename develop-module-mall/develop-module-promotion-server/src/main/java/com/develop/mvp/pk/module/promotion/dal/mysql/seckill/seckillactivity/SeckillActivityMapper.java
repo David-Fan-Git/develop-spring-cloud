@@ -26,6 +26,7 @@ public interface SeckillActivityMapper extends BaseMapperX<SeckillActivityDO> {
         return selectPage(reqVO, new LambdaQueryWrapperX<SeckillActivityDO>()
                 .likeIfPresent(SeckillActivityDO::getName, reqVO.getName())
                 .eqIfPresent(SeckillActivityDO::getStatus, reqVO.getStatus())
+                .eqIfPresent(SeckillActivityDO::getSpuId, reqVO.getSpuId())
                 .betweenIfPresent(SeckillActivityDO::getCreateTime, reqVO.getCreateTime())
                 .apply(ObjectUtil.isNotNull(reqVO.getConfigId()), "FIND_IN_SET(" + reqVO.getConfigId() + ", config_ids) > 0")
                 .orderByDesc(SeckillActivityDO::getId));

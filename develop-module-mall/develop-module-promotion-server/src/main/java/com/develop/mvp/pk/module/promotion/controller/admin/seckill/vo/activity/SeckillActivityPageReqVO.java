@@ -25,6 +25,9 @@ public class SeckillActivityPageReqVO extends PageParam {
     @Schema(description = "活动状态", example = "进行中")
     private Integer status;
 
+    @Schema(description = "商品 SPU 编号", example = "1")
+    private Long spuId;
+
     @Schema(description = "秒杀时段id", example = "1")
     private Long configId;
 

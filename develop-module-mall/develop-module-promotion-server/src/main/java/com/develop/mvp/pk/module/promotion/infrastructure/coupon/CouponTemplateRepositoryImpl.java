@@ -28,11 +28,11 @@ public class CouponTemplateRepositoryImpl implements CouponTemplateRepository {
     @Transactional
     public CouponTemplate save(CouponTemplate template) {
         CouponTemplateDO templateDO = toDataObject(template);
-        if (couponTemplateMapper.selectById(template.id().value()) == null) {
+        if (template.id() == null || couponTemplateMapper.selectById(template.id().value()) == null) {
             couponTemplateMapper.insert(templateDO);
-        } else {
-            couponTemplateMapper.updateById(templateDO);
+            return toDomain(templateDO);
         }
+        couponTemplateMapper.updateById(templateDO);
         return template;
     }
 
@@ -82,20 +82,20 @@ public class CouponTemplateRepositoryImpl implements CouponTemplateRepository {
 
     private CouponTemplateDO toDataObject(CouponTemplate template) {
         CouponTemplateDO templateDO = new CouponTemplateDO();
-        templateDO.setId(template.id().value());
+        templateDO.setId(template.id() != null ? template.id().value() : null);
         templateDO.setName(template.name());
         templateDO.setDescription(template.description());
-        templateDO.setType(template.type());
+        templateDO.setTakeType(template.type());
         templateDO.setStatus(template.status());
         templateDO.setTotalCount(template.totalCount());
-        templateDO.setLimitCount(template.limitCount());
-        templateDO.setDistributeCount(template.distributeCount());
+        templateDO.setTakeLimitCount(template.limitCount());
+        templateDO.setTakeCount(template.distributeCount());
         templateDO.setUseCount(template.useCount());
         templateDO.setDiscountType(template.discountType());
         templateDO.setDiscountPercent(template.discountPercent());
         templateDO.setDiscountPrice(template.discountPrice());
-        templateDO.setMinimumPrice(template.minimumPrice());
-        templateDO.setMaximumPrice(template.maximumPrice());
+        templateDO.setUsePrice(template.minimumPrice());
+        templateDO.setDiscountLimitPrice(template.maximumPrice());
         templateDO.setValidStartTime(template.validStartTime());
         templateDO.setValidEndTime(template.validEndTime());
         return templateDO;
@@ -104,12 +104,12 @@ public class CouponTemplateRepositoryImpl implements CouponTemplateRepository {
     private CouponTemplate toDomain(CouponTemplateDO templateDO) {
         return CouponTemplateFactory.reconstitute(
                 templateDO.getId(), templateDO.getName(), templateDO.getDescription(),
-                templateDO.getType(), templateDO.getStatus(),
-                templateDO.getTotalCount(), templateDO.getLimitCount(),
-                templateDO.getDistributeCount(), templateDO.getUseCount(),
+                templateDO.getTakeType(), templateDO.getStatus(),
+                templateDO.getTotalCount(), templateDO.getTakeLimitCount(),
+                templateDO.getTakeCount(), templateDO.getUseCount(),
                 templateDO.getDiscountType(), templateDO.getDiscountPercent(),
-                templateDO.getDiscountPrice(), templateDO.getMinimumPrice(),
-                templateDO.getMaximumPrice(),
+                templateDO.getDiscountPrice(), templateDO.getUsePrice(),
+                templateDO.getDiscountLimitPrice(),
                 templateDO.getValidStartTime(), templateDO.getValidEndTime());
     }
 }

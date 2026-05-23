@@ -7,7 +7,7 @@ import com.develop.mvp.pk.module.promotion.domain.coupon.CouponTemplate;
 import com.develop.mvp.pk.module.promotion.domain.coupon.CouponTemplateFactory;
 import com.develop.mvp.pk.module.promotion.domain.coupon.repository.CouponTemplateRepository;
 import com.develop.mvp.pk.module.promotion.domain.coupon.valueobject.CouponTemplateId;
-import com.develop.mvp.pk.module.system.domain.user.event.DomainEventPublisher;
+import com.develop.mvp.pk.module.promotion.domain.event.DomainEventPublisher;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -38,7 +38,7 @@ public class CouponTemplateApplicationService {
         CouponTemplate template = CouponTemplateFactory.create(id, name, description, type, status,
                 totalCount, limitCount, discountType, discountPercent, discountPrice,
                 minimumPrice, maximumPrice, validStartTime, validEndTime);
-        couponTemplateRepository.save(template);
+        template = couponTemplateRepository.save(template);
         publishEvents(template);
         return template.id().value();
     }

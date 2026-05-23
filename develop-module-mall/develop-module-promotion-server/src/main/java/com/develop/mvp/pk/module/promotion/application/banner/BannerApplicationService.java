@@ -7,7 +7,7 @@ import com.develop.mvp.pk.module.promotion.domain.banner.Banner;
 import com.develop.mvp.pk.module.promotion.domain.banner.BannerFactory;
 import com.develop.mvp.pk.module.promotion.domain.banner.repository.BannerRepository;
 import com.develop.mvp.pk.module.promotion.domain.banner.valueobject.BannerId;
-import com.develop.mvp.pk.module.system.domain.user.event.DomainEventPublisher;
+import com.develop.mvp.pk.module.promotion.domain.event.DomainEventPublisher;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -31,7 +31,7 @@ public class BannerApplicationService {
     public Long createBanner(Long id, String title, String url, String picUrl,
                               Integer sort, Integer status, Integer position, String memo) {
         Banner banner = BannerFactory.create(id, title, url, picUrl, sort, status, position, memo);
-        bannerRepository.save(banner);
+        banner = bannerRepository.save(banner);
         publishEvents(banner);
         return banner.id().value();
     }

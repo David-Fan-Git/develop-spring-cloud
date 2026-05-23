@@ -13,7 +13,7 @@ public final class CouponTemplateFactory {
                                          Integer discountType, Integer discountPercent, Integer discountPrice,
                                          Integer minimumPrice, Integer maximumPrice,
                                          LocalDateTime validStartTime, LocalDateTime validEndTime) {
-        return new CouponTemplate(CouponTemplateId.of(id), name, description, type, status,
+        return new CouponTemplate(id != null ? CouponTemplateId.of(id) : null, name, description, type, status,
                 totalCount, limitCount, 0, 0, discountType, discountPercent, discountPrice,
                 minimumPrice, maximumPrice, validStartTime, validEndTime);
     }

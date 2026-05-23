@@ -11,7 +11,7 @@ public final class BannerFactory {
 
     public static Banner create(Long id, String title, String url, String picUrl,
                                  Integer sort, Integer status, Integer position, String memo) {
-        return new Banner(BannerId.of(id), title, url, picUrl, sort, status, position, memo);
+        return new Banner(id != null ? BannerId.of(id) : null, title, url, picUrl, sort, status, position, memo);
     }
 
     public static Banner reconstitute(Long id, String title, String url, String picUrl,

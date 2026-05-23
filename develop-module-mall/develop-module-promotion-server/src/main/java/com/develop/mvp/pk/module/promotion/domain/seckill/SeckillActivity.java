@@ -8,7 +8,7 @@ import com.develop.mvp.pk.framework.common.enums.CommonStatusEnum;
 import com.develop.mvp.pk.module.promotion.domain.seckill.event.SeckillActivityStatusChangedEvent;
 import com.develop.mvp.pk.module.promotion.domain.seckill.valueobject.SeckillActivityId;
 import com.develop.mvp.pk.module.promotion.domain.seckill.valueobject.SeckillProduct;
-import com.develop.mvp.pk.module.system.domain.user.event.DomainEvent;
+import com.develop.mvp.pk.module.promotion.domain.event.DomainEvent;
 
 import java.time.LocalDateTime;
 import java.util.ArrayList;
@@ -38,7 +38,7 @@ public final class SeckillActivity {
                     LocalDateTime startTime, LocalDateTime endTime, Integer sort, List<Long> configIds,
                     Integer totalLimitCount, Integer singleLimitCount, Integer stock, Integer totalStock,
                     List<SeckillProduct> products) {
-        this.id = Objects.requireNonNull(id, "活动编号不能为空");
+        this.id = id;
         this.spuId = Objects.requireNonNull(spuId, "商品SPU编号不能为空");
         this.name = Objects.requireNonNull(name, "活动名称不能为空");
         this.status = status != null ? status : CommonStatusEnum.ENABLE.getStatus();
@@ -127,7 +127,7 @@ public final class SeckillActivity {
     public boolean equals(Object o) {
         if (this == o) return true;
         if (!(o instanceof SeckillActivity that)) return false;
-        return id.equals(that.id);
+        return Objects.equals(id, that.id);
     }
 
     @Override

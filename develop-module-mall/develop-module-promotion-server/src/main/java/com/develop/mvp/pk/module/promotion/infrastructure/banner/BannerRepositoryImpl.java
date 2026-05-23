@@ -28,11 +28,11 @@ public class BannerRepositoryImpl implements BannerRepository {
     @Transactional
     public Banner save(Banner banner) {
         BannerDO bannerDO = toDataObject(banner);
-        if (bannerMapper.selectById(banner.id().value()) == null) {
+        if (banner.id() == null || bannerMapper.selectById(banner.id().value()) == null) {
             bannerMapper.insert(bannerDO);
-        } else {
-            bannerMapper.updateById(bannerDO);
+            return toDomain(bannerDO);
         }
+        bannerMapper.updateById(bannerDO);
         return banner;
     }
 
@@ -80,7 +80,7 @@ public class BannerRepositoryImpl implements BannerRepository {
 
     private BannerDO toDataObject(Banner banner) {
         BannerDO bannerDO = new BannerDO();
-        bannerDO.setId(banner.id().value());
+        bannerDO.setId(banner.id() != null ? banner.id().value() : null);
         bannerDO.setTitle(banner.title());
         bannerDO.setUrl(banner.url());
         bannerDO.setPicUrl(banner.picUrl());

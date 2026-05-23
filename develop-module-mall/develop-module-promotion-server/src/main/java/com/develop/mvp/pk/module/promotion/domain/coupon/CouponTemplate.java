@@ -6,7 +6,7 @@ package com.develop.mvp.pk.module.promotion.domain.coupon;
 
 import com.develop.mvp.pk.framework.common.enums.CommonStatusEnum;
 import com.develop.mvp.pk.module.promotion.domain.coupon.valueobject.CouponTemplateId;
-import com.develop.mvp.pk.module.system.domain.user.event.DomainEvent;
+import com.develop.mvp.pk.module.promotion.domain.event.DomainEvent;
 
 import java.time.LocalDateTime;
 import java.util.ArrayList;
@@ -38,7 +38,7 @@ public final class CouponTemplate {
                    Integer discountType, Integer discountPercent, Integer discountPrice,
                    Integer minimumPrice, Integer maximumPrice,
                    LocalDateTime validStartTime, LocalDateTime validEndTime) {
-        this.id = Objects.requireNonNull(id);
+        this.id = id;
         this.name = Objects.requireNonNull(name, "模板名称不能为空");
         this.description = description;
         this.type = type;
@@ -113,7 +113,7 @@ public final class CouponTemplate {
     public boolean equals(Object o) {
         if (this == o) return true;
         if (!(o instanceof CouponTemplate that)) return false;
-        return id.equals(that.id);
+        return Objects.equals(id, that.id);
     }
 
     @Override
