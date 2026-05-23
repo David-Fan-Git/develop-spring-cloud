@@ -25,6 +25,7 @@ import com.develop.mvp.pk.module.system.api.notify.remote.NotifyMessageSendRemot
 import com.develop.mvp.pk.module.system.api.social.remote.SocialClientRemoteClient;
 import com.develop.mvp.pk.module.system.api.social.remote.SocialUserRemoteClient;
 import com.develop.mvp.pk.module.system.api.user.remote.AdminUserRemoteClient;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.cloud.openfeign.EnableFeignClients;
 import org.springframework.context.annotation.Configuration;
 
@@ -34,8 +35,15 @@ import org.springframework.context.annotation.Configuration;
         CouponApi.class, DiscountActivityApi.class, RewardActivityApi.class, SeckillActivityApi.class, PointActivityApi.class,
         MemberUserApi.class, MemberPointApi.class, MemberLevelApi.class, MemberAddressApi.class, MemberConfigRemoteClient.class,
         ProductSpuApi.class, ProductSkuApi.class, ProductCommentApi.class, ProductCategoryApi.class,
-        PayOrderApi.class, PayRefundApi.class, PayTransferApi.class, PayWalletApi.class,
-        AdminUserRemoteClient.class, NotifyMessageSendRemoteClient.class, SocialClientRemoteClient.class, SocialUserRemoteClient.class
+        PayOrderApi.class, PayRefundApi.class, PayTransferApi.class, PayWalletApi.class
 })
 public class RpcConfiguration {
+
+    @Configuration(proxyBeanMethods = false)
+    @ConditionalOnProperty(prefix = "develop.rpc.remote.system", name = "enabled", havingValue = "true", matchIfMissing = true)
+    @EnableFeignClients(clients = {AdminUserRemoteClient.class, NotifyMessageSendRemoteClient.class,
+            SocialClientRemoteClient.class, SocialUserRemoteClient.class})
+    public static class SystemRemoteRpcConfiguration {
+    }
+
 }
