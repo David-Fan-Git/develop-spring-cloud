@@ -49,8 +49,8 @@ public final class MemberLevel {
         this.status = status;
     }
 
-    public void enable() { this.status = 1; }
-    public void disable() { this.status = 0; }
+    public void enable() { this.status = 0; }
+    public void disable() { this.status = 1; }
 
     // ── 访问器 ──
     public Long id() { return id; }

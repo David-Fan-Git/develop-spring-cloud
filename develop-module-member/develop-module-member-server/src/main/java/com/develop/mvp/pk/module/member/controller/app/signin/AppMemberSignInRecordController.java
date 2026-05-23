@@ -49,7 +49,7 @@ public class AppMemberSignInRecordController {
     public CommonResult<PageResult<AppMemberSignInRecordRespVO>> getSignRecordPage(@Valid PageParam pageParam) {
         PageResult<MemberSignInRecord> pageResult = signInRecordApplicationService.getSignRecordPage(
                 getLoginUserId(), pageParam.getPageNo(), pageParam.getPageSize());
-        return success(MemberSignInRecordConvert.INSTANCE.convertPage02(pageResult));
+        return success(MemberSignInRecordConvert.INSTANCE.convertPage02FromDomain(pageResult));
     }
 
 }

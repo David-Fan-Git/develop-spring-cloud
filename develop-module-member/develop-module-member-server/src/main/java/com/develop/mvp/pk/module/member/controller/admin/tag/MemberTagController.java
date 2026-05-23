@@ -69,7 +69,7 @@ public class MemberTagController {
     @Operation(summary = "获取会员标签精简信息列表")
     public CommonResult<List<MemberTagRespVO>> getSimpleTagList() {
         List<MemberTag> list = tagApplicationService.getList();
-        return success(MemberTagConvert.INSTANCE.convertList(list));
+        return success(MemberTagConvert.INSTANCE.convertListFromDomain(list));
     }
 
     @GetMapping("/list")
@@ -78,7 +78,7 @@ public class MemberTagController {
     @PreAuthorize("@ss.hasPermission('member:tag:query')")
     public CommonResult<List<MemberTagRespVO>> getMemberTagList(@RequestParam("ids") Collection<Long> ids) {
         List<MemberTag> list = tagApplicationService.getList(ids);
-        return success(MemberTagConvert.INSTANCE.convertList(list));
+        return success(MemberTagConvert.INSTANCE.convertListFromDomain(list));
     }
 
     @GetMapping("/page")
@@ -87,7 +87,7 @@ public class MemberTagController {
     public CommonResult<PageResult<MemberTagRespVO>> getTagPage(@Valid MemberTagPageReqVO pageVO) {
         PageResult<MemberTag> pageResult = tagApplicationService.getPage(
                 pageVO.getName(), null, null, pageVO.getPageNo(), pageVO.getPageSize());
-        return success(MemberTagConvert.INSTANCE.convertPage(pageResult));
+        return success(MemberTagConvert.INSTANCE.convertPageFromDomain(pageResult));
     }
 
 }

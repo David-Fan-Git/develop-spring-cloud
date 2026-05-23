@@ -2,6 +2,7 @@ package com.develop.mvp.pk.module.member.application.signin;
 
 // Skill: AggregateRoot_MemberSignInConfig_Skill — 应用服务 MemberSignInConfigApplicationService
 
+import com.develop.mvp.pk.framework.common.enums.CommonStatusEnum;
 import com.develop.mvp.pk.module.member.domain.signin.MemberSignInConfig;
 import com.develop.mvp.pk.module.member.domain.signin.repository.MemberSignInConfigRepository;
 import lombok.RequiredArgsConstructor;
@@ -24,7 +25,7 @@ public class MemberSignInConfigApplicationService {
     public Long createSignInConfig(Integer day, Integer point, Integer experience, Integer status) {
         validateDayDuplicate(day, null);
         MemberSignInConfig config = MemberSignInConfig.create(day, point, experience);
-        if (status != null && status == 1) config.enable(); else config.disable();
+        if (CommonStatusEnum.ENABLE.getStatus().equals(status)) config.enable(); else config.disable();
         config = repo.save(config);
         return config.id();
     }

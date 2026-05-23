@@ -32,7 +32,7 @@ public class AppMemberLevelController {
     @PermitAll
     public CommonResult<List<AppMemberLevelRespVO>> getLevelList() {
         List<MemberLevel> result = levelApplicationService.getEnableList();
-        return success(MemberLevelConvert.INSTANCE.convertList02(result));
+        return success(MemberLevelConvert.INSTANCE.convertList02FromDomain(result));
     }
 
 }

@@ -42,12 +42,12 @@ public interface MemberTagConvert {
         return vo;
     }
 
-    default List<MemberTagRespVO> convertList(List<MemberTag> list) {
+    default List<MemberTagRespVO> convertListFromDomain(List<MemberTag> list) {
         if (list == null) return null;
         return list.stream().map(this::convert).collect(Collectors.toList());
     }
 
-    default PageResult<MemberTagRespVO> convertPage(PageResult<MemberTag> page) {
+    default PageResult<MemberTagRespVO> convertPageFromDomain(PageResult<MemberTag> page) {
         if (page == null) return null;
         return new PageResult<>(page.getList().stream().map(this::convert).collect(Collectors.toList()), page.getTotal());
     }

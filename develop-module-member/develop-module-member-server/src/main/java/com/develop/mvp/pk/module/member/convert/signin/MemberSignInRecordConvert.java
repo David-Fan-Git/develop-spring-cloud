@@ -66,7 +66,7 @@ public interface MemberSignInRecordConvert {
 
     // ── Domain object conversions ──
 
-    default PageResult<MemberSignInRecordRespVO> convertPage(PageResult<MemberSignInRecord> pageResult, List<MemberUserDO> users) {
+    default PageResult<MemberSignInRecordRespVO> convertPageFromDomain(PageResult<MemberSignInRecord> pageResult, List<MemberUserDO> users) {
         List<MemberSignInRecordRespVO> list = pageResult.getList().stream().map(r -> {
             MemberSignInRecordRespVO vo = new MemberSignInRecordRespVO();
             vo.setId(r.id());
@@ -94,7 +94,7 @@ public interface MemberSignInRecordConvert {
         return vo;
     }
 
-    default PageResult<AppMemberSignInRecordRespVO> convertPage02(PageResult<MemberSignInRecord> pageResult) {
+    default PageResult<AppMemberSignInRecordRespVO> convertPage02FromDomain(PageResult<MemberSignInRecord> pageResult) {
         if (pageResult == null) return null;
         List<AppMemberSignInRecordRespVO> list = pageResult.getList().stream().map(r -> {
             AppMemberSignInRecordRespVO vo = new AppMemberSignInRecordRespVO();

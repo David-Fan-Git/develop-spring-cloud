@@ -48,7 +48,7 @@ public class MemberSignInRecordController {
         }
         List<MemberUserDO> users = memberUserMapper.selectByIds(
                 convertSet(pageResult.getList(), MemberSignInRecord::userId));
-        return success(MemberSignInRecordConvert.INSTANCE.convertPage(pageResult, users));
+        return success(MemberSignInRecordConvert.INSTANCE.convertPageFromDomain(pageResult, users));
     }
 
 }

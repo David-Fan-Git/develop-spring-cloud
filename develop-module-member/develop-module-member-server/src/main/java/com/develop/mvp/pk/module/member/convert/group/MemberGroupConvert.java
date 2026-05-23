@@ -47,17 +47,17 @@ public interface MemberGroupConvert {
         return vo;
     }
 
-    default List<MemberGroupRespVO> convertList(List<MemberGroup> list) {
+    default List<MemberGroupRespVO> convertListFromDomain(List<MemberGroup> list) {
         if (list == null) return null;
         return list.stream().map(this::convert).collect(Collectors.toList());
     }
 
-    default PageResult<MemberGroupRespVO> convertPage(PageResult<MemberGroup> page) {
+    default PageResult<MemberGroupRespVO> convertPageFromDomain(PageResult<MemberGroup> page) {
         if (page == null) return null;
         return new PageResult<>(page.getList().stream().map(this::convert).collect(Collectors.toList()), page.getTotal());
     }
 
-    default List<MemberGroupSimpleRespVO> convertSimpleList(List<MemberGroup> list) {
+    default List<MemberGroupSimpleRespVO> convertSimpleListFromDomain(List<MemberGroup> list) {
         if (list == null) return null;
         return list.stream().map(g -> {
             MemberGroupSimpleRespVO vo = new MemberGroupSimpleRespVO();

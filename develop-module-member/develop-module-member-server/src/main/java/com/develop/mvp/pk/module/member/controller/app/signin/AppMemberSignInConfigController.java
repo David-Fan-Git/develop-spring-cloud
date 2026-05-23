@@ -33,7 +33,7 @@ public class AppMemberSignInConfigController {
     @PermitAll
     public CommonResult<List<AppMemberSignInConfigRespVO>> getSignInConfigList() {
         List<MemberSignInConfig> pageResult = signInConfigApplicationService.getListByStatus(CommonStatusEnum.ENABLE.getStatus());
-        return success(MemberSignInConfigConvert.INSTANCE.convertList02(pageResult));
+        return success(MemberSignInConfigConvert.INSTANCE.convertList02FromDomain(pageResult));
     }
 
 }

@@ -70,7 +70,7 @@ public class MemberGroupController {
     @Operation(summary = "获取会员分组精简信息列表", description = "只包含被开启的会员分组，主要用于前端的下拉选项")
     public CommonResult<List<MemberGroupSimpleRespVO>> getSimpleGroupList() {
         List<MemberGroup> list = groupApplicationService.getEnableList();
-        return success(MemberGroupConvert.INSTANCE.convertSimpleList(list));
+        return success(MemberGroupConvert.INSTANCE.convertSimpleListFromDomain(list));
     }
 
     @GetMapping("/page")
@@ -79,7 +79,7 @@ public class MemberGroupController {
     public CommonResult<PageResult<MemberGroupRespVO>> getGroupPage(@Valid MemberGroupPageReqVO pageVO) {
         PageResult<MemberGroup> pageResult = groupApplicationService.getPage(
                 pageVO.getName(), pageVO.getStatus(), null, null, pageVO.getPageNo(), pageVO.getPageSize());
-        return success(MemberGroupConvert.INSTANCE.convertPage(pageResult));
+        return success(MemberGroupConvert.INSTANCE.convertPageFromDomain(pageResult));
     }
 
 }

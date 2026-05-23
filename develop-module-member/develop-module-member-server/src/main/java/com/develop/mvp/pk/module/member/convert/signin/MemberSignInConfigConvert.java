@@ -45,12 +45,12 @@ public interface MemberSignInConfigConvert {
         return vo;
     }
 
-    default List<MemberSignInConfigRespVO> convertList(List<MemberSignInConfig> list) {
+    default List<MemberSignInConfigRespVO> convertListFromDomain(List<MemberSignInConfig> list) {
         if (list == null) return null;
         return list.stream().map(this::convert).collect(Collectors.toList());
     }
 
-    default List<AppMemberSignInConfigRespVO> convertList02(List<MemberSignInConfig> list) {
+    default List<AppMemberSignInConfigRespVO> convertList02FromDomain(List<MemberSignInConfig> list) {
         if (list == null) return null;
         return list.stream().map(c -> {
             AppMemberSignInConfigRespVO vo = new AppMemberSignInConfigRespVO();

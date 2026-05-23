@@ -73,7 +73,7 @@ public class AppAddressController {
     @Operation(summary = "获得用户收件地址列表")
     public CommonResult<List<AppAddressRespVO>> getAddressList() {
         List<MemberAddress> list = addressApplicationService.getAddressList(getLoginUserId());
-        return success(AddressConvert.INSTANCE.convertList(list));
+        return success(AddressConvert.INSTANCE.convertListFromDomain(list));
     }
 
 }

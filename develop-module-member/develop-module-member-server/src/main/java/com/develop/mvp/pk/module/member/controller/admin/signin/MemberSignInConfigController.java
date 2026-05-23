@@ -69,7 +69,7 @@ public class MemberSignInConfigController {
     @PreAuthorize("@ss.hasPermission('point:sign-in-config:query')")
     public CommonResult<List<MemberSignInConfigRespVO>> getSignInConfigList() {
         List<MemberSignInConfig> list = signInConfigApplicationService.getList();
-        return success(MemberSignInConfigConvert.INSTANCE.convertList(list));
+        return success(MemberSignInConfigConvert.INSTANCE.convertListFromDomain(list));
     }
 
 }

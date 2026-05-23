@@ -35,7 +35,7 @@ public class AddressController {
     @PreAuthorize("@ss.hasPermission('member:user:query')")
     public CommonResult<List<AddressRespVO>> getAddressList(@RequestParam("userId") Long userId) {
         List<MemberAddress> list = addressApplicationService.getAddressList(userId);
-        return success(AddressConvert.INSTANCE.convertList2(list));
+        return success(AddressConvert.INSTANCE.convertList2FromDomain(list));
     }
 
 }

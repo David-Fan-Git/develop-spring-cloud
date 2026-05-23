@@ -60,7 +60,7 @@ public interface AddressConvert {
         return vo;
     }
 
-    default List<AppAddressRespVO> convertList(List<MemberAddress> list) {
+    default List<AppAddressRespVO> convertListFromDomain(List<MemberAddress> list) {
         if (list == null) return null;
         return list.stream().map(this::convert).collect(Collectors.toList());
     }
@@ -78,7 +78,7 @@ public interface AddressConvert {
         return vo;
     }
 
-    default List<AddressRespVO> convertList2(List<MemberAddress> list) {
+    default List<AddressRespVO> convertList2FromDomain(List<MemberAddress> list) {
         if (list == null) return null;
         return list.stream().map(this::convertAddressRespVO).collect(Collectors.toList());
     }

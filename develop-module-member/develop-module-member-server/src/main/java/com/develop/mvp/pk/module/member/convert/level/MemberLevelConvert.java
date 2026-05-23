@@ -54,12 +54,12 @@ public interface MemberLevelConvert {
         return vo;
     }
 
-    default List<MemberLevelRespVO> convertList(List<MemberLevel> list) {
+    default List<MemberLevelRespVO> convertListFromDomain(List<MemberLevel> list) {
         if (list == null) return null;
         return list.stream().map(this::convert).collect(Collectors.toList());
     }
 
-    default List<MemberLevelSimpleRespVO> convertSimpleList(List<MemberLevel> list) {
+    default List<MemberLevelSimpleRespVO> convertSimpleListFromDomain(List<MemberLevel> list) {
         if (list == null) return null;
         return list.stream().map(l -> {
             MemberLevelSimpleRespVO vo = new MemberLevelSimpleRespVO();
@@ -70,7 +70,7 @@ public interface MemberLevelConvert {
         }).collect(Collectors.toList());
     }
 
-    default List<AppMemberLevelRespVO> convertList02(List<MemberLevel> list) {
+    default List<AppMemberLevelRespVO> convertList02FromDomain(List<MemberLevel> list) {
         if (list == null) return null;
         return list.stream().map(l -> {
             AppMemberLevelRespVO vo = new AppMemberLevelRespVO();

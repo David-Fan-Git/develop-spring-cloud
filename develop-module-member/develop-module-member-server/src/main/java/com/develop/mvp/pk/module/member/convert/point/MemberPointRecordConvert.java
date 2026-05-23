@@ -37,7 +37,7 @@ public interface MemberPointRecordConvert {
 
     // ── Domain object conversions ──
 
-    default PageResult<MemberPointRecordRespVO> convertPage(PageResult<MemberPointRecord> pageResult, List<MemberUserDO> users) {
+    default PageResult<MemberPointRecordRespVO> convertPageFromDomain(PageResult<MemberPointRecord> pageResult, List<MemberUserDO> users) {
         List<MemberPointRecordRespVO> list = pageResult.getList().stream().map(r -> {
             MemberPointRecordRespVO vo = new MemberPointRecordRespVO();
             vo.setId(r.id());

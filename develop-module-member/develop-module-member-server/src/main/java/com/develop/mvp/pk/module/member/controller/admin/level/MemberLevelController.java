@@ -68,7 +68,7 @@ public class MemberLevelController {
     @Operation(summary = "获取会员等级精简信息列表", description = "只包含被开启的会员等级，主要用于前端的下拉选项")
     public CommonResult<List<MemberLevelSimpleRespVO>> getSimpleLevelList() {
         List<MemberLevel> list = levelApplicationService.getEnableList();
-        return success(MemberLevelConvert.INSTANCE.convertSimpleList(list));
+        return success(MemberLevelConvert.INSTANCE.convertSimpleListFromDomain(list));
     }
 
     @GetMapping("/list")
@@ -76,7 +76,7 @@ public class MemberLevelController {
     @PreAuthorize("@ss.hasPermission('member:level:query')")
     public CommonResult<List<MemberLevelRespVO>> getLevelList(@Valid MemberLevelListReqVO listReqVO) {
         List<MemberLevel> result = levelApplicationService.getList(listReqVO.getName(), listReqVO.getStatus());
-        return success(MemberLevelConvert.INSTANCE.convertList(result));
+        return success(MemberLevelConvert.INSTANCE.convertListFromDomain(result));
     }
 
 }
