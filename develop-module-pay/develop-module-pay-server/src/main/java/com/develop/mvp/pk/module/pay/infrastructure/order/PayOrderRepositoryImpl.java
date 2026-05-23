@@ -50,7 +50,8 @@ public class PayOrderRepositoryImpl implements PayOrderRepository {
     }
     @Override public PageResult<PayOrder> findPage(Long appId, Long channelId, Integer status, Integer pageNo, Integer pageSize) {
         var req = new com.develop.mvp.pk.module.pay.controller.admin.order.vo.PayOrderPageReqVO();
-        req.setAppId(appId); if (pageNo != null) req.setPageNo(pageNo); if (pageSize != null) req.setPageSize(pageSize);
+        req.setAppId(appId); req.setChannelId(channelId); req.setStatus(status);
+        if (pageNo != null) req.setPageNo(pageNo); if (pageSize != null) req.setPageSize(pageSize);
         PageResult<PayOrderDO> page = mapper.selectPage(req);
         return new PageResult<>(page.getList().stream().map(PayOrderRepositoryImpl::toDomain).collect(Collectors.toList()), page.getTotal());
     }

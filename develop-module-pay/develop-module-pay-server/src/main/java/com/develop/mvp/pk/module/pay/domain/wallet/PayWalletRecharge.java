@@ -2,6 +2,8 @@ package com.develop.mvp.pk.module.pay.domain.wallet;
 // DDD 角色：钱包充值记录实体 - AggregateRoot_Pay_Skill
 import java.time.LocalDateTime;
 import java.util.Objects;
+import lombok.Getter;
+@Getter
 public final class PayWalletRecharge {
     private final Long id;
     private Long walletId; private Integer totalPrice; private Integer payPrice; private Integer bonusPrice;

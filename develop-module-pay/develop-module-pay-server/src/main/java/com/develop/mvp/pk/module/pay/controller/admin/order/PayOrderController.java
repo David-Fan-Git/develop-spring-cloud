@@ -6,18 +6,21 @@ import com.develop.mvp.pk.framework.common.pojo.CommonResult;
 import com.develop.mvp.pk.framework.common.pojo.PageResult;
 import com.develop.mvp.pk.framework.common.util.object.BeanUtils;
 import com.develop.mvp.pk.framework.excel.core.util.ExcelUtils;
+import com.develop.mvp.pk.module.pay.application.app.PayAppApplicationService;
+import com.develop.mvp.pk.module.pay.application.order.PayOrderApplicationService;
+import com.develop.mvp.pk.module.pay.application.wallet.PayWalletApplicationService;
 import com.develop.mvp.pk.module.pay.controller.admin.order.vo.*;
 import com.develop.mvp.pk.module.pay.convert.order.PayOrderConvert;
-import com.develop.mvp.pk.module.pay.dal.dataobject.app.PayAppDO;
 import com.develop.mvp.pk.module.pay.dal.dataobject.order.PayOrderDO;
 import com.develop.mvp.pk.module.pay.dal.dataobject.order.PayOrderExtensionDO;
-import com.develop.mvp.pk.module.pay.dal.dataobject.wallet.PayWalletDO;
+import com.develop.mvp.pk.module.pay.domain.app.PayApp;
+import com.develop.mvp.pk.module.pay.domain.order.PayOrder;
+import com.develop.mvp.pk.module.pay.domain.wallet.PayWallet;
 import com.develop.mvp.pk.module.pay.enums.PayChannelEnum;
 import com.develop.mvp.pk.module.pay.enums.order.PayOrderStatusEnum;
 import com.develop.mvp.pk.module.pay.framework.pay.core.client.impl.wallet.WalletPayClient;
 import com.develop.mvp.pk.module.pay.service.app.PayAppService;
 import com.develop.mvp.pk.module.pay.service.order.PayOrderService;
-import com.develop.mvp.pk.module.pay.service.wallet.PayWalletService;
 import com.google.common.collect.Maps;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
@@ -33,7 +36,6 @@ import org.springframework.web.bind.annotation.*;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Map;
 import java.util.Objects;
 
 import static com.develop.mvp.pk.framework.apilog.core.enums.OperateTypeEnum.EXPORT;
@@ -50,11 +52,15 @@ import static com.develop.mvp.pk.framework.web.core.util.WebFrameworkUtils.getLo
 public class PayOrderController {
 
     @Resource
+    private PayOrderApplicationService orderApplicationService;
+    @Resource
     private PayOrderService orderService;
+    @Resource
+    private PayAppApplicationService appApplicationService;
     @Resource
     private PayAppService appService;
     @Resource
-    private PayWalletService payWalletService;
+    private PayWalletApplicationService walletApplicationService;
 
     @GetMapping("/get")
     @Operation(summary = "获得支付订单")
@@ -65,12 +71,10 @@ public class PayOrderController {
     @PreAuthorize("@ss.hasPermission('pay:order:query')")
     public CommonResult<PayOrderRespVO> getOrder(@RequestParam("id") Long id,
                                                  @RequestParam(value = "sync", required = false) Boolean sync) {
-        PayOrderDO order = orderService.getOrder(id);
-        // sync 仅在等待支付
-        if (Boolean.TRUE.equals(sync) && PayOrderStatusEnum.isWaiting(order.getStatus())) {
+        PayOrder order = orderApplicationService.get(id);
+        if (Boolean.TRUE.equals(sync) && order != null && PayOrderStatusEnum.isWaiting(order.getStatus())) {
             orderService.syncOrderQuietly(order.getId());
-            // 重新查询，因为同步后，可能会有变化
-            order = orderService.getOrder(id);
+            order = orderApplicationService.get(id);
         }
         return success(BeanUtils.toBean(order, PayOrderRespVO.class));
     }
@@ -80,30 +84,34 @@ public class PayOrderController {
     @Parameter(name = "id", description = "编号", required = true, example = "1024")
     @PreAuthorize("@ss.hasPermission('pay:order:query')")
     public CommonResult<PayOrderDetailsRespVO> getOrderDetail(@RequestParam("id") Long id) {
-        PayOrderDO order = orderService.getOrder(id);
+        PayOrder order = orderApplicationService.get(id);
         if (order == null) {
             return success(null);
         }
 
-        // 拼接返回
-        PayAppDO app = appService.getApp(order.getAppId());
+        PayApp app = appApplicationService.get(order.getAppId());
         PayOrderExtensionDO orderExtension = orderService.getOrderExtension(order.getExtensionId());
-        return success(PayOrderConvert.INSTANCE.convert(order, orderExtension, app));
+        PayOrderDetailsRespVO respVO = BeanUtils.toBean(order, PayOrderDetailsRespVO.class);
+        if (orderExtension != null) {
+            respVO.setExtension(PayOrderConvert.INSTANCE.convert(orderExtension));
+        }
+        if (app != null) {
+            respVO.setAppName(app.getName());
+        }
+        return success(respVO);
     }
 
     @PostMapping("/submit")
     @Operation(summary = "提交支付订单")
     public CommonResult<PayOrderSubmitRespVO> submitPayOrder(@RequestBody PayOrderSubmitReqVO reqVO) {
-        // 1. 钱包支付事，需要额外传 user_id 和 user_type
         if (Objects.equals(reqVO.getChannelCode(), PayChannelEnum.WALLET.getCode())) {
             if (reqVO.getChannelExtras() == null) {
                 reqVO.setChannelExtras(Maps.newHashMapWithExpectedSize(1));
             }
-            PayWalletDO wallet = payWalletService.getOrCreateWallet(getLoginUserId(), getLoginUserType());
+            PayWallet wallet = walletApplicationService.getOrCreate(getLoginUserId(), getLoginUserType());
             reqVO.getChannelExtras().put(WalletPayClient.WALLET_ID_KEY, String.valueOf(wallet.getId()));
         }
 
-        // 2. 提交支付
         PayOrderSubmitRespVO respVO = orderService.submitOrder(reqVO, getClientIP());
         return success(respVO);
     }
@@ -117,9 +125,8 @@ public class PayOrderController {
             return success(new PageResult<>(pageResult.getTotal()));
         }
 
-        // 拼接返回
-        Map<Long, PayAppDO> appMap = appService.getAppMap(convertList(pageResult.getList(), PayOrderDO::getAppId));
-        return success(PayOrderConvert.INSTANCE.convertPage(pageResult, appMap));
+        return success(PayOrderConvert.INSTANCE.convertPage(pageResult,
+                appService.getAppMap(convertList(pageResult.getList(), PayOrderDO::getAppId))));
     }
 
     @GetMapping("/export-excel")
@@ -135,10 +142,8 @@ public class PayOrderController {
             return;
         }
 
-        // 拼接返回
-        Map<Long, PayAppDO> appMap = appService.getAppMap(convertList(list, PayOrderDO::getAppId));
-        List<PayOrderExcelVO> excelList = PayOrderConvert.INSTANCE.convertList(list, appMap);
-        // 导出 Excel
+        List<PayOrderExcelVO> excelList = PayOrderConvert.INSTANCE.convertList(list,
+                appService.getAppMap(convertList(list, PayOrderDO::getAppId)));
         ExcelUtils.write(response, "支付订单.xls", "数据", PayOrderExcelVO.class, excelList);
     }
 

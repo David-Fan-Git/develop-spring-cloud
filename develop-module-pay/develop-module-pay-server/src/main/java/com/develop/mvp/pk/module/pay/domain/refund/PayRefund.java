@@ -2,6 +2,8 @@ package com.develop.mvp.pk.module.pay.domain.refund;
 // DDD 角色：退款单聚合根 - AggregateRoot_Pay_Skill
 import java.time.LocalDateTime;
 import java.util.Objects;
+import lombok.Getter;
+@Getter
 public final class PayRefund {
     private final Long id; private final String no;
     private Long appId; private Long channelId; private String channelCode;

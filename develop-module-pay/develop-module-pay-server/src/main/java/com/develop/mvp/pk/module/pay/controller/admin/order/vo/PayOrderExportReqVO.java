@@ -15,6 +15,9 @@ public class PayOrderExportReqVO {
     @Schema(description = "应用编号", example = "1024")
     private Long appId;
 
+    @Schema(description = "渠道编号", example = "1888")
+    private Long channelId;
+
     @Schema(description = "渠道编码", example = "wx_app")
     private String channelCode;
 

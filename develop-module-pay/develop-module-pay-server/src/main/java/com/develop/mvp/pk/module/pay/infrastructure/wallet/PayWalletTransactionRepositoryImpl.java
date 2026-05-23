@@ -23,11 +23,16 @@ public class PayWalletTransactionRepositoryImpl implements PayWalletTransactionR
     }
     @Override public PayWalletTransaction save(PayWalletTransaction transaction) {
         PayWalletTransactionDO doObj = new PayWalletTransactionDO();
+        doObj.setId(transaction.id());
         doObj.setNo(transaction.no()); doObj.setWalletId(transaction.walletId());
         doObj.setBizType(transaction.bizType()); doObj.setBizId(transaction.bizId());
         doObj.setTitle(transaction.title()); doObj.setPrice(transaction.price());
         doObj.setBalance(transaction.balance());
-        if (transaction.id() == null) { mapper.insert(doObj); }
+        if (transaction.id() == null) {
+            mapper.insert(doObj);
+            return toDomain(doObj);
+        }
+        mapper.updateById(doObj);
         return transaction;
     }
     @Override public Optional<PayWalletTransaction> findByNo(String no) {

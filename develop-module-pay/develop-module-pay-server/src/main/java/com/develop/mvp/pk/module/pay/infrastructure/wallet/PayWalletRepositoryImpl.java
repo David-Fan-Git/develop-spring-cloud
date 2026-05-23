@@ -20,15 +20,16 @@ public class PayWalletRepositoryImpl implements PayWalletRepository {
                 .totalRecharge(doObj.getTotalRecharge());
     }
     @Override public PayWallet save(PayWallet wallet) {
+        PayWalletDO doObj = new PayWalletDO();
+        doObj.setId(wallet.id());
+        doObj.setUserId(wallet.userId()); doObj.setUserType(wallet.userType());
+        doObj.setBalance(wallet.balance()); doObj.setFreezePrice(wallet.freezePrice());
+        doObj.setTotalExpense(wallet.totalExpense()); doObj.setTotalRecharge(wallet.totalRecharge());
         if (wallet.id() == null) {
-            PayWalletDO doObj = new PayWalletDO();
-            doObj.setUserId(wallet.userId()); doObj.setUserType(wallet.userType());
-            doObj.setBalance(wallet.balance()); doObj.setFreezePrice(wallet.freezePrice());
-            doObj.setTotalExpense(wallet.totalExpense()); doObj.setTotalRecharge(wallet.totalRecharge());
             mapper.insert(doObj);
-            // Set the generated id back
-            return wallet;
+            return toDomain(doObj);
         }
+        mapper.updateById(doObj);
         return wallet;
     }
     @Override public PayWallet findById(Long id) { return toDomain(mapper.selectById(id)); }
@@ -41,11 +42,11 @@ public class PayWalletRepositoryImpl implements PayWalletRepository {
         PageResult<PayWalletDO> page = mapper.selectPage(req);
         return new PageResult<>(page.getList().stream().map(PayWalletRepositoryImpl::toDomain).collect(Collectors.toList()), page.getTotal());
     }
-    @Override public int updateBalance(Long id, int balanceDelta) { return 0; }
+    @Override public int updateBalance(Long id, int balanceDelta) { return mapper.updateWhenAdd(id, balanceDelta); }
     @Override public int updateWhenConsumption(Long id, Integer price) { return mapper.updateWhenConsumption(id, price); }
     @Override public int updateWhenConsumptionRefund(Long id, Integer price) { return mapper.updateWhenConsumptionRefund(id, price); }
     @Override public int updateWhenRecharge(Long id, Integer price) { return mapper.updateWhenRecharge(id, price); }
-    @Override public int updateWhenAdd(Long id, Integer price) { mapper.updateWhenAdd(id, price); return 1; }
+    @Override public int updateWhenAdd(Long id, Integer price) { return mapper.updateWhenAdd(id, price); }
     @Override public int freezePrice(Long id, Integer price) { return mapper.freezePrice(id, price); }
     @Override public int unFreezePrice(Long id, Integer price) { return mapper.unFreezePrice(id, price); }
     @Override public int updateWhenRechargeRefund(Long id, Integer price) { return mapper.updateWhenRechargeRefund(id, price); }

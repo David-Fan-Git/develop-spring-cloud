@@ -4,12 +4,13 @@ import cn.hutool.core.collection.CollUtil;
 import com.develop.mvp.pk.framework.common.enums.CommonStatusEnum;
 import com.develop.mvp.pk.framework.common.pojo.CommonResult;
 import com.develop.mvp.pk.framework.common.pojo.PageResult;
+import com.develop.mvp.pk.framework.common.util.object.BeanUtils;
+import com.develop.mvp.pk.module.pay.application.app.PayAppApplicationService;
 import com.develop.mvp.pk.module.pay.controller.admin.app.vo.*;
-import com.develop.mvp.pk.module.pay.convert.app.PayAppConvert;
-import com.develop.mvp.pk.module.pay.dal.dataobject.app.PayAppDO;
 import com.develop.mvp.pk.module.pay.dal.dataobject.channel.PayChannelDO;
-import com.develop.mvp.pk.module.pay.service.app.PayAppService;
+import com.develop.mvp.pk.module.pay.domain.app.PayApp;
 import com.develop.mvp.pk.module.pay.service.channel.PayChannelService;
+import com.develop.mvp.pk.framework.common.util.collection.CollectionUtils;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -21,6 +22,8 @@ import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
+import java.util.Map;
+import java.util.Set;
 
 import static com.develop.mvp.pk.framework.common.pojo.CommonResult.success;
 import static com.develop.mvp.pk.framework.common.util.collection.CollectionUtils.convertList;
@@ -33,7 +36,7 @@ import static com.develop.mvp.pk.framework.common.util.collection.CollectionUtil
 public class PayAppController {
 
     @Resource
-    private PayAppService appService;
+    private PayAppApplicationService appApplicationService;
     @Resource
     private PayChannelService channelService;
 
@@ -41,14 +44,16 @@ public class PayAppController {
     @Operation(summary = "创建支付应用信息")
     @PreAuthorize("@ss.hasPermission('pay:app:create')")
     public CommonResult<Long> createApp(@Valid @RequestBody PayAppCreateReqVO createReqVO) {
-        return success(appService.createApp(createReqVO));
+        return success(appApplicationService.create(createReqVO.getName(), createReqVO.getAppKey()).id());
     }
 
     @PutMapping("/update")
     @Operation(summary = "更新支付应用信息")
     @PreAuthorize("@ss.hasPermission('pay:app:update')")
     public CommonResult<Boolean> updateApp(@Valid @RequestBody PayAppUpdateReqVO updateReqVO) {
-        appService.updateApp(updateReqVO);
+        appApplicationService.update(updateReqVO.getId(), updateReqVO.getName(), updateReqVO.getAppKey(),
+                updateReqVO.getRemark(), updateReqVO.getOrderNotifyUrl(),
+                updateReqVO.getRefundNotifyUrl(), updateReqVO.getTransferNotifyUrl());
         return success(true);
     }
 
@@ -56,7 +61,7 @@ public class PayAppController {
     @Operation(summary = "更新支付应用状态")
     @PreAuthorize("@ss.hasPermission('pay:app:update')")
     public CommonResult<Boolean> updateAppStatus(@Valid @RequestBody PayAppUpdateStatusReqVO updateReqVO) {
-        appService.updateAppStatus(updateReqVO.getId(), updateReqVO.getStatus());
+        appApplicationService.updateStatus(updateReqVO.getId(), updateReqVO.getStatus());
         return success(true);
     }
 
@@ -65,7 +70,7 @@ public class PayAppController {
     @Parameter(name = "id", description = "编号", required = true)
     @PreAuthorize("@ss.hasPermission('pay:app:delete')")
     public CommonResult<Boolean> deleteApp(@RequestParam("id") Long id) {
-        appService.deleteApp(id);
+        appApplicationService.delete(id);
         return success(true);
     }
 
@@ -74,8 +79,8 @@ public class PayAppController {
     @Parameter(name = "id", description = "编号", required = true, example = "1024")
     @PreAuthorize("@ss.hasPermission('pay:app:query')")
     public CommonResult<PayAppRespVO> getApp(@RequestParam("id") Long id) {
-        PayAppDO app = appService.getApp(id);
-        return success(PayAppConvert.INSTANCE.convert(app));
+        PayApp app = appApplicationService.get(id);
+        return success(BeanUtils.toBean(app, PayAppRespVO.class));
     }
 
     @GetMapping("/page")
@@ -83,26 +88,31 @@ public class PayAppController {
     @PreAuthorize("@ss.hasPermission('pay:app:query')")
     public CommonResult<PageResult<PayAppPageItemRespVO>> getAppPage(@Valid PayAppPageReqVO pageVO) {
         // 得到应用分页列表
-        PageResult<PayAppDO> pageResult = appService.getAppPage(pageVO);
+        PageResult<PayApp> pageResult = appApplicationService.getPage(
+                pageVO.getName(), pageVO.getAppKey(), pageVO.getStatus(),
+                pageVO.getPageNo(), pageVO.getPageSize());
         if (CollUtil.isEmpty(pageResult.getList())) {
             return success(PageResult.empty());
         }
 
         // 得到所有的应用编号，查出所有的渠道，并移除未启用的渠道
         List<PayChannelDO> channels = channelService.getChannelListByAppIds(
-                convertList(pageResult.getList(), PayAppDO::getId));
+                convertList(pageResult.getList(), PayApp::getId));
         channels.removeIf(channel -> !CommonStatusEnum.ENABLE.getStatus().equals(channel.getStatus()));
 
         // 拼接后返回
-        return success(PayAppConvert.INSTANCE.convertPage(pageResult, channels));
+        PageResult<PayAppPageItemRespVO> voResult = BeanUtils.toBean(pageResult, PayAppPageItemRespVO.class);
+        Map<Long, Set<String>> appIdChannelMap = CollectionUtils.convertMultiMap2(channels, PayChannelDO::getAppId, PayChannelDO::getCode);
+        voResult.getList().forEach(app -> app.setChannelCodes(appIdChannelMap.get(app.getId())));
+        return success(voResult);
     }
 
     @GetMapping("/list")
     @Operation(summary = "获得应用列表")
     @PreAuthorize("@ss.hasPermission('pay:merchant:query')")
     public CommonResult<List<PayAppRespVO>> getAppList() {
-        List<PayAppDO> appListDO = appService.getAppList();
-        return success(PayAppConvert.INSTANCE.convertList(appListDO));
+        List<PayApp> appList = appApplicationService.getList();
+        return success(BeanUtils.toBean(appList, PayAppRespVO.class));
     }
 
 }

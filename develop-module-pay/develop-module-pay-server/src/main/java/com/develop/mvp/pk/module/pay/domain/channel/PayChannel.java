@@ -1,6 +1,8 @@
 package com.develop.mvp.pk.module.pay.domain.channel;
 // DDD 角色：支付渠道聚合根 - AggregateRoot_Pay_Skill
 import java.util.Objects;
+import lombok.Getter;
+@Getter
 public final class PayChannel {
     private final Long id;
     private final String code;

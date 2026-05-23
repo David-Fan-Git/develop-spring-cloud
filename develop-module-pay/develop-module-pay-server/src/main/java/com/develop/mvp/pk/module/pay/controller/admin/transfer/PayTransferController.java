@@ -5,12 +5,12 @@ import com.develop.mvp.pk.framework.common.pojo.CommonResult;
 import com.develop.mvp.pk.framework.common.pojo.PageResult;
 import com.develop.mvp.pk.framework.common.util.object.BeanUtils;
 import com.develop.mvp.pk.framework.excel.core.util.ExcelUtils;
+import com.develop.mvp.pk.module.pay.application.app.PayAppApplicationService;
+import com.develop.mvp.pk.module.pay.application.transfer.PayTransferApplicationService;
 import com.develop.mvp.pk.module.pay.controller.admin.transfer.vo.PayTransferPageReqVO;
 import com.develop.mvp.pk.module.pay.controller.admin.transfer.vo.PayTransferRespVO;
-import com.develop.mvp.pk.module.pay.dal.dataobject.app.PayAppDO;
-import com.develop.mvp.pk.module.pay.dal.dataobject.transfer.PayTransferDO;
-import com.develop.mvp.pk.module.pay.service.app.PayAppService;
-import com.develop.mvp.pk.module.pay.service.transfer.PayTransferService;
+import com.develop.mvp.pk.module.pay.domain.app.PayApp;
+import com.develop.mvp.pk.module.pay.domain.transfer.PayTransfer;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.annotation.Resource;
@@ -38,21 +38,21 @@ import static com.develop.mvp.pk.framework.common.util.collection.CollectionUtil
 public class PayTransferController {
 
     @Resource
-    private PayTransferService payTransferService;
+    private PayTransferApplicationService transferApplicationService;
     @Resource
-    private PayAppService payAppService;
+    private PayAppApplicationService appApplicationService;
 
     @GetMapping("/get")
     @Operation(summary = "获得转账订单")
     @PreAuthorize("@ss.hasPermission('pay:transfer:query')")
     public CommonResult<PayTransferRespVO> getTransfer(@RequestParam("id") Long id) {
-        PayTransferDO transfer = payTransferService.getTransfer(id);
+        PayTransfer transfer = transferApplicationService.get(id);
         if (transfer == null) {
             return success(new PayTransferRespVO());
         }
 
         // 拼接数据
-        PayAppDO app = payAppService.getApp(transfer.getAppId());
+        PayApp app = appApplicationService.get(transfer.getAppId());
         return success(BeanUtils.toBean(transfer, PayTransferRespVO.class, transferVO -> {
             if (app != null) {
                 transferVO.setAppName(app.getName());
@@ -64,10 +64,15 @@ public class PayTransferController {
     @Operation(summary = "获得转账订单分页")
     @PreAuthorize("@ss.hasPermission('pay:transfer:query')")
     public CommonResult<PageResult<PayTransferRespVO>> getTransferPage(@Valid PayTransferPageReqVO pageVO) {
-        PageResult<PayTransferDO> pageResult = payTransferService.getTransferPage(pageVO);
+        PageResult<PayTransfer> pageResult = transferApplicationService.getPage(
+                pageVO.getNo(), pageVO.getAppId(), pageVO.getChannelCode(),
+                pageVO.getMerchantTransferId(), pageVO.getStatus(),
+                pageVO.getPageNo(), pageVO.getPageSize());
 
         // 拼接数据
-        Map<Long, PayAppDO> apps = payAppService.getAppMap(convertList(pageResult.getList(), PayTransferDO::getAppId));
+        Map<Long, PayApp> apps = appApplicationService.getList(
+                convertList(pageResult.getList(), PayTransfer::getAppId)).stream()
+                .collect(java.util.stream.Collectors.toMap(PayApp::getId, a -> a));
         return success(BeanUtils.toBean(pageResult, PayTransferRespVO.class, transferVO -> {
             if (apps.containsKey(transferVO.getAppId())) {
                 transferVO.setAppName(apps.get(transferVO.getAppId()).getName());

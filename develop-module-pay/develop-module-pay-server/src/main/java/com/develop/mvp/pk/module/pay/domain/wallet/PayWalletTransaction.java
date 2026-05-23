@@ -1,12 +1,14 @@
 package com.develop.mvp.pk.module.pay.domain.wallet;
 // DDD 角色：钱包交易流水实体 - AggregateRoot_Pay_Skill
 import java.util.Objects;
+import lombok.Getter;
+@Getter
 public final class PayWalletTransaction {
     private final Long id;
     private String no; private Long walletId;
     private Integer bizType; private String bizId;
     private String title; private Integer price; private Integer balance;
-    public PayWalletTransaction(Long id) { this.id = Objects.requireNonNull(id); }
+    public PayWalletTransaction(Long id) { this.id = id; }
     public static PayWalletTransaction of(Long id) { return new PayWalletTransaction(id); }
     public Long id() { return id; } public String no() { return no; }
     public Long walletId() { return walletId; } public Integer bizType() { return bizType; }
@@ -21,6 +23,6 @@ public final class PayWalletTransaction {
     public PayWalletTransaction balance(Integer v) { balance = v; return this; }
     public boolean isIncome() { return price != null && price > 0; }
     public boolean isExpense() { return price != null && price < 0; }
-    @Override public boolean equals(Object o) { return o instanceof PayWalletTransaction t && id.equals(t.id); }
+    @Override public boolean equals(Object o) { return o instanceof PayWalletTransaction t && Objects.equals(id, t.id); }
     @Override public int hashCode() { return Objects.hash(id); }
 }

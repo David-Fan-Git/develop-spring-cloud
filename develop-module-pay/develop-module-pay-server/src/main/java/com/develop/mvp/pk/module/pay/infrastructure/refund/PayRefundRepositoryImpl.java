@@ -59,7 +59,9 @@ public class PayRefundRepositoryImpl implements PayRefundRepository {
     @Override public PageResult<PayRefund> findPage(Long appId, String channelCode, String merchantOrderId,
                                                      String merchantRefundId, Integer status, Integer pageNo, Integer pageSize) {
         var req = new com.develop.mvp.pk.module.pay.controller.admin.refund.vo.PayRefundPageReqVO();
-        req.setAppId(appId); if (pageNo != null) req.setPageNo(pageNo); if (pageSize != null) req.setPageSize(pageSize);
+        req.setAppId(appId); req.setChannelCode(channelCode); req.setMerchantOrderId(merchantOrderId);
+        req.setMerchantRefundId(merchantRefundId); req.setStatus(status);
+        if (pageNo != null) req.setPageNo(pageNo); if (pageSize != null) req.setPageSize(pageSize);
         PageResult<PayRefundDO> page = mapper.selectPage(req);
         return new PageResult<>(page.getList().stream().map(PayRefundRepositoryImpl::toDomain).collect(Collectors.toList()), page.getTotal());
     }

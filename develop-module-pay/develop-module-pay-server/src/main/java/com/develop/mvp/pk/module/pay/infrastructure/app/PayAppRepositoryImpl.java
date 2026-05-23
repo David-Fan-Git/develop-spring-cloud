@@ -38,7 +38,10 @@ public class PayAppRepositoryImpl implements PayAppRepository {
     @Override public List<PayApp> findByIds(Collection<Long> ids) { return mapper.selectByIds(ids).stream().map(PayAppRepositoryImpl::toDomain).collect(Collectors.toList()); }
     @Override public List<PayApp> findAll() { return mapper.selectList().stream().map(PayAppRepositoryImpl::toDomain).collect(Collectors.toList()); }
     @Override public PageResult<PayApp> findPage(String name, String appKey, Integer status, Integer pageNo, Integer pageSize) {
-        PageResult<PayAppDO> page = mapper.selectPage(new com.develop.mvp.pk.module.pay.controller.admin.app.vo.PayAppPageReqVO());
+        var req = new com.develop.mvp.pk.module.pay.controller.admin.app.vo.PayAppPageReqVO();
+        req.setName(name); req.setAppKey(appKey); req.setStatus(status);
+        if (pageNo != null) req.setPageNo(pageNo); if (pageSize != null) req.setPageSize(pageSize);
+        PageResult<PayAppDO> page = mapper.selectPage(req);
         return new PageResult<>(page.getList().stream().map(PayAppRepositoryImpl::toDomain).collect(Collectors.toList()), page.getTotal());
     }
     @Override public void deleteById(Long id) { mapper.deleteById(id); }

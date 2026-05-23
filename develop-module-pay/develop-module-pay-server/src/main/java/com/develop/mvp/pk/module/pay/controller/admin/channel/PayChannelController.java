@@ -1,12 +1,12 @@
 package com.develop.mvp.pk.module.pay.controller.admin.channel;
 
 import com.develop.mvp.pk.framework.common.pojo.CommonResult;
+import com.develop.mvp.pk.framework.common.util.object.BeanUtils;
+import com.develop.mvp.pk.module.pay.application.channel.PayChannelApplicationService;
 import com.develop.mvp.pk.module.pay.controller.admin.channel.vo.PayChannelCreateReqVO;
 import com.develop.mvp.pk.module.pay.controller.admin.channel.vo.PayChannelRespVO;
 import com.develop.mvp.pk.module.pay.controller.admin.channel.vo.PayChannelUpdateReqVO;
-import com.develop.mvp.pk.module.pay.convert.channel.PayChannelConvert;
-import com.develop.mvp.pk.module.pay.dal.dataobject.channel.PayChannelDO;
-import com.develop.mvp.pk.module.pay.service.channel.PayChannelService;
+import com.develop.mvp.pk.module.pay.domain.channel.PayChannel;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -29,20 +29,22 @@ import static com.develop.mvp.pk.framework.common.util.collection.CollectionUtil
 public class PayChannelController {
 
     @Resource
-    private PayChannelService channelService;
+    private PayChannelApplicationService channelApplicationService;
 
     @PostMapping("/create")
     @Operation(summary = "创建支付渠道 ")
     @PreAuthorize("@ss.hasPermission('pay:channel:create')")
     public CommonResult<Long> createChannel(@Valid @RequestBody PayChannelCreateReqVO createReqVO) {
-        return success(channelService.createChannel(createReqVO));
+        return success(channelApplicationService.create(createReqVO.getCode(), createReqVO.getAppId(),
+                createReqVO.getFeeRate(), createReqVO.getConfig()).id());
     }
 
     @PutMapping("/update")
     @Operation(summary = "更新支付渠道 ")
     @PreAuthorize("@ss.hasPermission('pay:channel:update')")
     public CommonResult<Boolean> updateChannel(@Valid @RequestBody PayChannelUpdateReqVO updateReqVO) {
-        channelService.updateChannel(updateReqVO);
+        channelApplicationService.update(updateReqVO.getId(), updateReqVO.getFeeRate(),
+                updateReqVO.getRemark(), updateReqVO.getConfig());
         return success(true);
     }
 
@@ -51,7 +53,7 @@ public class PayChannelController {
     @Parameter(name = "id", description = "编号", required = true)
     @PreAuthorize("@ss.hasPermission('pay:channel:delete')")
     public CommonResult<Boolean> deleteChannel(@RequestParam("id") Long id) {
-        channelService.deleteChannel(id);
+        channelApplicationService.delete(id);
         return success(true);
     }
 
@@ -62,21 +64,21 @@ public class PayChannelController {
     public CommonResult<PayChannelRespVO> getChannel(@RequestParam(value = "id", required = false) Long id,
                                                      @RequestParam(value = "appId", required = false) Long appId,
                                                      @RequestParam(value = "code", required = false) String code) {
-        PayChannelDO channel = null;
+        PayChannel channel = null;
         if (id != null) {
-            channel = channelService.getChannel(id);
+            channel = channelApplicationService.get(id);
         } else if (appId != null && code != null) {
-            channel = channelService.getChannelByAppIdAndCode(appId, code);
+            channel = channelApplicationService.getByAppIdAndCode(appId, code);
         }
-        return success(PayChannelConvert.INSTANCE.convert(channel));
+        return success(BeanUtils.toBean(channel, PayChannelRespVO.class));
     }
 
     @GetMapping("/get-enable-code-list")
     @Operation(summary = "获得指定应用的开启的支付渠道编码列表")
     @Parameter(name = "appId", description = "应用编号", required = true, example = "1")
     public CommonResult<Set<String>> getEnableChannelCodeList(@RequestParam("appId") Long appId) {
-        List<PayChannelDO> channels = channelService.getEnableChannelList(appId);
-        return success(convertSet(channels, PayChannelDO::getCode));
+        List<PayChannel> channels = channelApplicationService.getEnabledList(appId);
+        return success(convertSet(channels, PayChannel::getCode));
     }
 
 }

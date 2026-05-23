@@ -1,6 +1,8 @@
 package com.develop.mvp.pk.module.pay.domain.app;
 // DDD 角色：支付应用聚合根 - AggregateRoot_Pay_Skill
 import java.util.Objects;
+import lombok.Getter;
+@Getter
 public final class PayApp {
     private final Long id; private final String name;
     private String appKey; private Integer status; private String remark;

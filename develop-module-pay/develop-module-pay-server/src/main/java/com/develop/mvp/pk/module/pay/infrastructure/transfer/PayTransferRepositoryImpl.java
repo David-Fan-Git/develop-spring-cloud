@@ -56,7 +56,9 @@ public class PayTransferRepositoryImpl implements PayTransferRepository {
     @Override public PageResult<PayTransfer> findPage(String no, Long appId, String channelCode,
                                                        String merchantTransferId, Integer status, Integer pageNo, Integer pageSize) {
         var req = new com.develop.mvp.pk.module.pay.controller.admin.transfer.vo.PayTransferPageReqVO();
-        req.setAppId(appId); if (pageNo != null) req.setPageNo(pageNo); if (pageSize != null) req.setPageSize(pageSize);
+        req.setNo(no); req.setAppId(appId); req.setChannelCode(channelCode);
+        req.setMerchantTransferId(merchantTransferId); req.setStatus(status);
+        if (pageNo != null) req.setPageNo(pageNo); if (pageSize != null) req.setPageSize(pageSize);
         PageResult<PayTransferDO> page = mapper.selectPage(req);
         return new PageResult<>(page.getList().stream().map(PayTransferRepositoryImpl::toDomain).collect(Collectors.toList()), page.getTotal());
     }

@@ -2,6 +2,8 @@ package com.develop.mvp.pk.module.pay.domain.order;
 // DDD 角色：支付订单聚合根 - AggregateRoot_Pay_Skill
 import java.time.LocalDateTime;
 import java.util.Objects;
+import lombok.Getter;
+@Getter
 public final class PayOrder {
     private final Long id; private final String no;
     private Long appId; private Long channelId; private String channelCode;

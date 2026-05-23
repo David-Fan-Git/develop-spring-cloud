@@ -3,6 +3,8 @@ package com.develop.mvp.pk.module.pay.domain.transfer;
 import java.time.LocalDateTime;
 import java.util.Map;
 import java.util.Objects;
+import lombok.Getter;
+@Getter
 public final class PayTransfer {
     private final Long id; private final String no;
     private Long appId; private Long channelId; private String channelCode;
