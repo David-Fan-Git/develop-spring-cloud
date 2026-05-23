@@ -14,19 +14,33 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 # Full build (skip tests)
 mvn clean package -Dmaven.test.skip=true
 
+# Compile a module and its dependencies
+mvn compile -pl develop-module-system/develop-module-system-server -am
+
+# Package the boot server and required modules
+mvn clean package -pl develop-server -am -Dmaven.test.skip=true
+
 # Run tests for a single module
 mvn test -pl develop-module-system/develop-module-system-server
 
-# Run the server (after build)
-cd develop-server && mvn spring-boot:run
+# Run a single test class or method in a module
+mvn test -pl develop-module-system/develop-module-system-server -Dtest=AdminUserServiceImplTest
+mvn test -pl develop-module-system/develop-module-system-server -Dtest=AdminUserServiceImplTest#testCreateUser_success
 
-# Run the gateway
-cd develop-gateway && mvn spring-boot:run
+# Run the server from the reactor
+mvn spring-boot:run -pl develop-server -am
+
+# Run the gateway from the reactor
+mvn spring-boot:run -pl develop-gateway -am
 ```
+
+There is no repository-wide lint command in this checkout; use Maven compile/tests for Java validation.
 
 Configuration files: `develop-server/src/main/resources/application.yaml` (main) and per-profile variants (`application-local.yaml`, `application-dev.yaml`).
 
-The project uses `maven-surefire-plugin` 3.x with JUnit 5. There is a `develop-spring-boot-starter-test` in the framework that provides test base classes and utilities — extend those for new tests.
+The project uses `maven-surefire-plugin` 3.x with JUnit 5. Module tests use `src/test/resources/application-unit-test.yaml` and related SQL fixtures. There is a `develop-spring-boot-starter-test` in the framework that provides test base classes and utilities — extend those for new tests.
+
+The `develop-ui/` directory contains frontend checkouts, but no frontend `package.json` files were present during this initialization; do not assume a package manager or frontend command without checking the specific frontend project first.
 
 ## Module Architecture
 
@@ -40,9 +54,9 @@ develop-ui/                    # Frontend projects (Vue3-element-plus, Vue3-vben
 sql/                           # Database init scripts for MySQL, Oracle, PostgreSQL, SQL Server, DM, Kingbase, OpenGauss
 ```
 
-Business modules: system, infra, member, bpm, pay, report, mp, mall, crm, erp, iot, mes, wms, ai.
+Business modules: system, infra, member, bpm, pay, report, mp, mall, crm, erp, iot, mes, wms, ai. Most business modules have `api/` and `server/` Maven submodules; the API module exposes inter-module contracts, while the server module contains controllers, services/domain code, DAL, jobs, MQ, and configuration.
 
-The platform runs in one of two modes controlled by which module dependencies are uncommented in `develop-server/pom.xml`:
+The root `pom.xml` includes all backend modules in the Maven reactor, but the boot application runs only the modules declared as dependencies of `develop-server/pom.xml`. The platform runs in one of two modes controlled by which module dependencies are uncommented in `develop-server/pom.xml`:
 - **Minimal:** only `develop-module-system-server` + `develop-module-infra-server` (fast compile)
 - **Full:** uncomment additional modules (member, bpm, pay, report, mall, crm, erp, etc.)
 
@@ -69,7 +83,12 @@ infrastructure/{aggregate}/ # Repository implementations (MyBatis), external ada
 convert/                   # Object mapping (domain ↔ DO ↔ DTO), uses MapStruct
 ```
 
-**DDD skills** for existing aggregates live in `.claude/ddd-skills/`. Before modifying a domain aggregate, read its skill document first. When creating a new aggregate, generate a skill document following the five-step process in the project memory.
+**DDD skills** for existing aggregates live in `.claude/ddd-skills/`. Before modifying a domain aggregate, read its skill document first. When creating a new aggregate, use this process before writing code:
+1. Identify the domain intent, business responsibility, data boundary, and external dependencies.
+2. Create `.claude/ddd-skills/AggregateRoot_<Name>_Skill.md` with skill name, applicable scenarios, DDD building blocks, responsibility boundaries, dependencies/collaboration, invariants/constraints, rollback conditions, and acceptance criteria.
+3. Verify the skill against current code behavior, boundaries, dependencies, and invariants; revise the skill if anything does not match.
+4. Refactor only that aggregate/context according to the verified skill.
+5. Compile/test and check each acceptance criterion; if validation fails, revisit the analysis instead of broadening scope.
 
 ### Existing layers (coexisting)
 
