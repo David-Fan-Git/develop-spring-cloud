@@ -4,9 +4,11 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project Summary
 
-芋道 develop-cloud (Smart Cloud) — a Spring Cloud Alibaba microservices rapid-development platform. This is the **complete version** with all business modules. Derived from RuoYi-Vue-Pro.
+David develop-cloud (Smart Cloud) — a Spring Cloud Alibaba microservices rapid-development platform. This is the **complete version** with all business modules. Derived from RuoYi-Vue-Pro.
 
 **Tech stack:** Java 17, Spring Boot 3.5.x, Spring Cloud 2025.0.1, Spring Cloud Alibaba 2025.0.0.0, Maven, MyBatis Plus, Redis/Redisson, Lombok + MapStruct.
+
+Dependency versions are centralized in `develop-dependencies/pom.xml`; the root `pom.xml` controls the Maven reactor and compiler/plugin configuration. There is no Maven wrapper in this checkout, so use a local `mvn` with Java 17.
 
 ## Build & Run
 
@@ -14,11 +16,17 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 # Full build (skip tests)
 mvn clean package -Dmaven.test.skip=true
 
+# Full compile without packaging
+mvn compile
+
 # Compile a module and its dependencies
 mvn compile -pl develop-module-system/develop-module-system-server -am
 
 # Package the boot server and required modules
 mvn clean package -pl develop-server -am -Dmaven.test.skip=true
+
+# Package the gateway and required modules
+mvn clean package -pl develop-gateway -am -Dmaven.test.skip=true
 
 # Run tests for a single module
 mvn test -pl develop-module-system/develop-module-system-server
@@ -36,7 +44,7 @@ mvn spring-boot:run -pl develop-gateway -am
 
 There is no repository-wide lint command in this checkout; use Maven compile/tests for Java validation.
 
-Configuration files: `develop-server/src/main/resources/application.yaml` (main) and per-profile variants (`application-local.yaml`, `application-dev.yaml`).
+Configuration files: `develop-server/src/main/resources/application.yaml` (main) and per-profile variants (`application-local.yaml`, `application-dev.yaml`). `develop-gateway/src/main/resources/` has separate gateway configuration with the same profile pattern.
 
 The project uses `maven-surefire-plugin` 3.x with JUnit 5. Module tests use `src/test/resources/application-unit-test.yaml` and related SQL fixtures. There is a `develop-spring-boot-starter-test` in the framework that provides test base classes and utilities — extend those for new tests.
 
@@ -56,7 +64,9 @@ sql/                           # Database init scripts for MySQL, Oracle, Postgr
 
 Business modules: system, infra, member, bpm, pay, report, mp, mall, crm, erp, iot, mes, wms, ai. Most business modules have `api/` and `server/` Maven submodules; the API module exposes inter-module contracts, while the server module contains controllers, services/domain code, DAL, jobs, MQ, and configuration.
 
-The root `pom.xml` includes all backend modules in the Maven reactor, but the boot application runs only the modules declared as dependencies of `develop-server/pom.xml`. The platform runs in one of two modes controlled by which module dependencies are uncommented in `develop-server/pom.xml`:
+The root `pom.xml` includes all backend modules in the Maven reactor, but the boot application runs only the modules declared as dependencies of `develop-server/pom.xml`. `develop-server` is intentionally an empty container: it exposes REST APIs by depending on selected `develop-module-*-server` artifacts.
+
+The platform runs in one of two modes controlled by which module dependencies are uncommented in `develop-server/pom.xml`:
 - **Minimal:** only `develop-module-system-server` + `develop-module-infra-server` (fast compile)
 - **Full:** uncomment additional modules (member, bpm, pay, report, mall, crm, erp, etc.)
 
@@ -64,7 +74,7 @@ Java package base: `com.develop.mvp.pk`
 
 ### Larger modules with sub-domains
 
-`develop-module-mall` contains multiple sub-domains, each with their own api/server pair: product, promotion, trade, statistics.
+`develop-module-mall` contains multiple sub-domains, each with their own api/server pair: product, promotion, trade, statistics. These appear as separate Maven modules (`develop-module-product`, `develop-module-promotion`, `develop-module-trade`, `develop-module-statistics`) under the mall directory.
 
 ## DDD Architecture (current, in-progress)
 
@@ -83,12 +93,25 @@ infrastructure/{aggregate}/ # Repository implementations (MyBatis), external ada
 convert/                   # Object mapping (domain ↔ DO ↔ DTO), uses MapStruct
 ```
 
-**DDD skills** for existing aggregates live in `.claude/ddd-skills/`. Before modifying a domain aggregate, read its skill document first. When creating a new aggregate, use this process before writing code:
+**DDD skills** for existing aggregates live in `.claude/ddd-skills/`. Before modifying a domain aggregate or DDD skill, read `.claude/ddd-skills/DDD_Skill_Production_Readiness_Standard.md`; skills that do not meet that standard are drafts and must not be used for production refactoring without upgrading first. Before modifying a domain aggregate, read its skill document first. When creating a new aggregate, use this process before writing code:
 1. Identify the domain intent, business responsibility, data boundary, and external dependencies.
 2. Create `.claude/ddd-skills/AggregateRoot_<Name>_Skill.md` with skill name, applicable scenarios, DDD building blocks, responsibility boundaries, dependencies/collaboration, invariants/constraints, rollback conditions, and acceptance criteria.
 3. Verify the skill against current code behavior, boundaries, dependencies, and invariants; revise the skill if anything does not match.
 4. Refactor only that aggregate/context according to the verified skill.
 5. Compile/test and check each acceptance criterion; if validation fails, revisit the analysis instead of broadening scope.
+
+### Module structure standard
+
+Before changing module structure, API contracts, runtime units, or DDD layer placement, read `.claude/ddd-skills/Module_Structure_Standard.md`.
+
+The repository standard is:
+- Maven structure is organized by runtime units. `server` and `gateway` may both exist when they have independent runtime responsibilities, but every runtime unit must follow the same internal structure rules.
+- API modules use one stable contract with `local/remote` adapters for local module calls and remote Feign calls.
+- `controller/job/mq/framework` may remain as entry and technical configuration layers. Core business logic belongs in `domain/application/infrastructure/convert`.
+- `service/dal` are migration sources, not final homes for core business logic.
+- Module and aggregate code must preserve high cohesion, low coupling, clear responsibility boundaries, single responsibility, necessary functional comments, maintainability, and extensibility.
+- Use Java design patterns only for clear variation points or dependency isolation; do not add abstractions just to use a pattern.
+- `iot` and `mall` are not permanent exceptions. They must converge to the same runtime-unit, API-contract, and DDD-layer standards.
 
 ### Existing layers (coexisting)
 
@@ -121,6 +144,12 @@ Key starters and their responsibilities:
 | `develop-spring-boot-starter-biz-data-permission` | Row-level data permission filtering |
 | `develop-spring-boot-starter-excel` | Excel import/export |
 | `develop-spring-boot-starter-test` | Test base classes (extend for unit/integration tests) |
+
+## API and Integration Patterns
+
+- Business module API submodules expose internal contracts for inter-module calls. Server modules implement the business logic and can be aggregated into `develop-server`.
+- `develop-spring-boot-starter-rpc` provides Feign-based RPC support; `develop-server` excludes OpenFeign from this starter so the monolithic boot mode can start without remote calls.
+- Web/API documentation dependencies are managed through Springdoc OpenAPI 3 and Knife4j in `develop-dependencies/pom.xml`.
 
 ## Key Infrastructure Services
 
