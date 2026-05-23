@@ -13,7 +13,7 @@ public final class DictType {
     private final Integer status;
     private final String remark;
 
-    DictType(DictTypeId id, DictTypeName name, DictTypeKey type, Integer status, String remark) {
+    public DictType(DictTypeId id, DictTypeName name, DictTypeKey type, Integer status, String remark) {
         this.id = Objects.requireNonNull(id);
         this.name = Objects.requireNonNull(name);
         this.type = Objects.requireNonNull(type);

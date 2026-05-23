@@ -17,7 +17,7 @@ public final class DictData {
     private final String cssClass;
     private final String remark;
 
-    DictData(DictDataId id, DictTypeKey dictType, DictDataValue value, String label,
+    public DictData(DictDataId id, DictTypeKey dictType, DictDataValue value, String label,
              Integer sort, Integer status, String colorType, String cssClass, String remark) {
         this.id = Objects.requireNonNull(id);
         this.dictType = Objects.requireNonNull(dictType);
