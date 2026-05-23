@@ -6,6 +6,7 @@ import com.develop.mvp.pk.module.statistics.domain.productstatistics.ProductStat
 import com.develop.mvp.pk.module.statistics.domain.productstatistics.ProductStatisticsFactory;
 import com.develop.mvp.pk.module.statistics.domain.productstatistics.repository.ProductStatisticsRepository;
 import com.develop.mvp.pk.module.statistics.domain.productstatistics.valueobject.ProductStatisticsId;
+import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import org.springframework.stereotype.Repository;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -26,11 +27,11 @@ public class ProductStatisticsRepositoryImpl implements ProductStatisticsReposit
     @Transactional
     public ProductStatistics save(ProductStatistics stats) {
         ProductStatisticsDO statsDO = toDataObject(stats);
-        if (productStatisticsMapper.selectById(stats.id().value()) == null) {
+        if (stats.id() == null || productStatisticsMapper.selectById(stats.id().value()) == null) {
             productStatisticsMapper.insert(statsDO);
-        } else {
-            productStatisticsMapper.updateById(statsDO);
+            return toDomain(statsDO);
         }
+        productStatisticsMapper.updateById(statsDO);
         return stats;
     }
 
@@ -42,13 +43,14 @@ public class ProductStatisticsRepositoryImpl implements ProductStatisticsReposit
 
     @Override
     public ProductStatistics findBySpuIdAndDate(Long spuId, LocalDate date) {
-        ProductStatisticsDO statsDO = productStatisticsMapper.selectBySpuIdAndDate(spuId, date);
+        ProductStatisticsDO statsDO = productStatisticsMapper.selectOne(ProductStatisticsDO::getSpuId, spuId, ProductStatisticsDO::getTime, date);
         return statsDO != null ? toDomain(statsDO) : null;
     }
 
     @Override
     public List<ProductStatistics> findByDateBetween(LocalDate start, LocalDate end) {
-        return productStatisticsMapper.selectListByDateBetween(start, end).stream()
+        return productStatisticsMapper.selectList(new LambdaQueryWrapper<ProductStatisticsDO>()
+                        .between(ProductStatisticsDO::getTime, start, end)).stream()
                 .map(this::toDomain).collect(Collectors.toList());
     }
 
@@ -60,9 +62,9 @@ public class ProductStatisticsRepositoryImpl implements ProductStatisticsReposit
 
     private ProductStatisticsDO toDataObject(ProductStatistics stats) {
         ProductStatisticsDO statsDO = new ProductStatisticsDO();
-        statsDO.setId(stats.id().value());
+        statsDO.setId(stats.id() != null ? stats.id().value() : null);
         statsDO.setSpuId(stats.spuId());
-        statsDO.setDate(stats.date());
+        statsDO.setTime(stats.date());
         statsDO.setBrowseCount(stats.browseCount());
         statsDO.setFavoriteCount(stats.favoriteCount());
         statsDO.setCartCount(stats.cartCount());
@@ -74,7 +76,7 @@ public class ProductStatisticsRepositoryImpl implements ProductStatisticsReposit
 
     private ProductStatistics toDomain(ProductStatisticsDO statsDO) {
         return ProductStatisticsFactory.reconstitute(
-                statsDO.getId(), statsDO.getSpuId(), statsDO.getDate(),
+                statsDO.getId(), statsDO.getSpuId(), statsDO.getTime(),
                 statsDO.getBrowseCount(), statsDO.getFavoriteCount(),
                 statsDO.getCartCount(), statsDO.getOrderCount(),
                 statsDO.getOrderPayCount(), statsDO.getOrderPayPrice());

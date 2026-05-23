@@ -7,7 +7,7 @@ public final class TradeStatisticsFactory {
     private TradeStatisticsFactory() {}
 
     public static TradeStatistics create(Long id, LocalDate date) {
-        return new TradeStatistics(TradeStatisticsId.of(id), date, 0, 0, 0, 0, 0, 0);
+        return new TradeStatistics(id != null ? TradeStatisticsId.of(id) : null, date, 0, 0, 0, 0, 0, 0);
     }
 
     public static TradeStatistics reconstitute(Long id, LocalDate date,

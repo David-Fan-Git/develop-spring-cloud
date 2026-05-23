@@ -26,11 +26,11 @@ public class TradeStatisticsRepositoryImpl implements TradeStatisticsRepository 
     @Transactional
     public TradeStatistics save(TradeStatistics stats) {
         TradeStatisticsDO statsDO = toDataObject(stats);
-        if (tradeStatisticsMapper.selectById(stats.id().value()) == null) {
+        if (stats.id() == null || tradeStatisticsMapper.selectById(stats.id().value()) == null) {
             tradeStatisticsMapper.insert(statsDO);
-        } else {
-            tradeStatisticsMapper.updateById(statsDO);
+            return toDomain(statsDO);
         }
+        tradeStatisticsMapper.updateById(statsDO);
         return stats;
     }
 
@@ -42,34 +42,36 @@ public class TradeStatisticsRepositoryImpl implements TradeStatisticsRepository 
 
     @Override
     public TradeStatistics findByDate(LocalDate date) {
-        TradeStatisticsDO statsDO = tradeStatisticsMapper.selectByDate(date);
+        TradeStatisticsDO statsDO = tradeStatisticsMapper.selectByTimeBetween(
+                date.atStartOfDay(), date.plusDays(1).atStartOfDay());
         return statsDO != null ? toDomain(statsDO) : null;
     }
 
     @Override
     public List<TradeStatistics> findByDateBetween(LocalDate start, LocalDate end) {
-        return tradeStatisticsMapper.selectListByDateBetween(start, end).stream()
+        return tradeStatisticsMapper.selectListByTimeBetween(
+                        start.atStartOfDay(), end.plusDays(1).atStartOfDay()).stream()
                 .map(this::toDomain).collect(Collectors.toList());
     }
 
     private TradeStatisticsDO toDataObject(TradeStatistics stats) {
         TradeStatisticsDO statsDO = new TradeStatisticsDO();
-        statsDO.setId(stats.id().value());
-        statsDO.setDate(stats.date());
-        statsDO.setOrderCount(stats.orderCount());
+        statsDO.setId(stats.id() != null ? stats.id().value() : null);
+        statsDO.setTime(stats.date().atStartOfDay());
+        statsDO.setOrderCreateCount(stats.orderCount());
         statsDO.setOrderPayCount(stats.orderPayCount());
         statsDO.setOrderPayPrice(stats.orderPayPrice());
-        statsDO.setRefundCount(stats.refundCount());
-        statsDO.setRefundPrice(stats.refundPrice());
+        statsDO.setAfterSaleCount(stats.refundCount());
+        statsDO.setAfterSaleRefundPrice(stats.refundPrice());
         statsDO.setBrokerageSettlementPrice(stats.brokerageSettlementPrice());
         return statsDO;
     }
 
     private TradeStatistics toDomain(TradeStatisticsDO statsDO) {
         return TradeStatisticsFactory.reconstitute(
-                statsDO.getId(), statsDO.getDate(),
-                statsDO.getOrderCount(), statsDO.getOrderPayCount(),
-                statsDO.getOrderPayPrice(), statsDO.getRefundCount(),
-                statsDO.getRefundPrice(), statsDO.getBrokerageSettlementPrice());
+                statsDO.getId(), statsDO.getTime().toLocalDate(),
+                statsDO.getOrderCreateCount(), statsDO.getOrderPayCount(),
+                statsDO.getOrderPayPrice(), statsDO.getAfterSaleCount(),
+                statsDO.getAfterSaleRefundPrice(), statsDO.getBrokerageSettlementPrice());
     }
 }

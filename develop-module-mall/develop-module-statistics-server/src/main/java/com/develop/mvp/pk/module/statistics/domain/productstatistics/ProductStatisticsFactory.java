@@ -7,7 +7,7 @@ public final class ProductStatisticsFactory {
     private ProductStatisticsFactory() {}
 
     public static ProductStatistics create(Long id, Long spuId, LocalDate date) {
-        return new ProductStatistics(ProductStatisticsId.of(id), spuId, date, 0, 0, 0, 0, 0, 0);
+        return new ProductStatistics(id != null ? ProductStatisticsId.of(id) : null, spuId, date, 0, 0, 0, 0, 0, 0);
     }
 
     public static ProductStatistics reconstitute(Long id, Long spuId, LocalDate date,

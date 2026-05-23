@@ -5,7 +5,7 @@ package com.develop.mvp.pk.module.statistics.domain.productstatistics;
 // 验收标准 AC01/AC02：无 MyBatis/Spring 注解
 
 import com.develop.mvp.pk.module.statistics.domain.productstatistics.valueobject.ProductStatisticsId;
-import com.develop.mvp.pk.module.system.domain.user.event.DomainEvent;
+import com.develop.mvp.pk.module.statistics.domain.event.DomainEvent;
 
 import java.time.LocalDate;
 import java.util.ArrayList;
@@ -28,7 +28,7 @@ public final class ProductStatistics {
     ProductStatistics(ProductStatisticsId id, Long spuId, LocalDate date,
                       Integer browseCount, Integer favoriteCount, Integer cartCount,
                       Integer orderCount, Integer orderPayCount, Integer orderPayPrice) {
-        this.id = Objects.requireNonNull(id);
+        this.id = id;
         this.spuId = Objects.requireNonNull(spuId);
         this.date = Objects.requireNonNull(date);
         this.browseCount = browseCount != null ? browseCount : 0;
@@ -68,7 +68,7 @@ public final class ProductStatistics {
     public boolean equals(Object o) {
         if (this == o) return true;
         if (!(o instanceof ProductStatistics that)) return false;
-        return id.equals(that.id);
+        return Objects.equals(id, that.id);
     }
 
     @Override

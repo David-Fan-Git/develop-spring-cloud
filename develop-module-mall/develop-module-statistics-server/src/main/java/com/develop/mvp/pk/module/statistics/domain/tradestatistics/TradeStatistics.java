@@ -5,7 +5,7 @@ package com.develop.mvp.pk.module.statistics.domain.tradestatistics;
 // 验收标准 AC01/AC02：无 MyBatis/Spring 注解
 
 import com.develop.mvp.pk.module.statistics.domain.tradestatistics.valueobject.TradeStatisticsId;
-import com.develop.mvp.pk.module.system.domain.user.event.DomainEvent;
+import com.develop.mvp.pk.module.statistics.domain.event.DomainEvent;
 
 import java.time.LocalDate;
 import java.util.ArrayList;
@@ -27,7 +27,7 @@ public final class TradeStatistics {
     TradeStatistics(TradeStatisticsId id, LocalDate date, Integer orderCount, Integer orderPayCount,
                     Integer orderPayPrice, Integer refundCount, Integer refundPrice,
                     Integer brokerageSettlementPrice) {
-        this.id = Objects.requireNonNull(id);
+        this.id = id;
         this.date = Objects.requireNonNull(date);
         this.orderCount = orderCount != null ? orderCount : 0;
         this.orderPayCount = orderPayCount != null ? orderPayCount : 0;
@@ -71,7 +71,7 @@ public final class TradeStatistics {
     public boolean equals(Object o) {
         if (this == o) return true;
         if (!(o instanceof TradeStatistics that)) return false;
-        return id.equals(that.id);
+        return Objects.equals(id, that.id);
     }
 
     @Override
