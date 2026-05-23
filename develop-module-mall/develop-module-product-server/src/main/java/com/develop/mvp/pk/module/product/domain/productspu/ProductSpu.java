@@ -10,7 +10,7 @@ import com.develop.mvp.pk.module.product.domain.productspu.event.ProductSpuStatu
 import com.develop.mvp.pk.module.product.domain.productspu.valueobject.ProductSku;
 import com.develop.mvp.pk.module.product.domain.productspu.valueobject.ProductSpuId;
 import com.develop.mvp.pk.module.product.domain.productspu.valueobject.ProductSpuStatus;
-import com.develop.mvp.pk.module.system.domain.user.event.DomainEvent;
+import com.develop.mvp.pk.module.product.domain.event.DomainEvent;
 
 import java.util.*;
 import java.util.stream.Collectors;

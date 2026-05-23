@@ -8,7 +8,7 @@ import com.develop.mvp.pk.framework.common.enums.CommonStatusEnum;
 import com.develop.mvp.pk.module.product.domain.productbrand.event.ProductBrandStatusChangedEvent;
 import com.develop.mvp.pk.module.product.domain.productbrand.valueobject.ProductBrandId;
 import com.develop.mvp.pk.module.product.domain.productbrand.valueobject.ProductBrandName;
-import com.develop.mvp.pk.module.system.domain.user.event.DomainEvent;
+import com.develop.mvp.pk.module.product.domain.event.DomainEvent;
 
 import java.util.ArrayList;
 import java.util.List;

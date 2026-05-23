@@ -11,7 +11,7 @@ import com.develop.mvp.pk.module.product.domain.productspu.repository.ProductSpu
 import com.develop.mvp.pk.module.product.domain.productspu.valueobject.ProductSku;
 import com.develop.mvp.pk.module.product.domain.productspu.valueobject.ProductSpuId;
 import com.develop.mvp.pk.module.product.domain.productspu.valueobject.SkuProperty;
-import com.develop.mvp.pk.module.system.domain.user.event.DomainEventPublisher;
+import com.develop.mvp.pk.module.product.domain.event.DomainEventPublisher;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 

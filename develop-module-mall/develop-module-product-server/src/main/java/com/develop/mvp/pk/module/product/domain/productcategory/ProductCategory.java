@@ -9,7 +9,7 @@ import com.develop.mvp.pk.framework.common.enums.CommonStatusEnum;
 import com.develop.mvp.pk.module.product.domain.productcategory.event.ProductCategoryStatusChangedEvent;
 import com.develop.mvp.pk.module.product.domain.productcategory.valueobject.ProductCategoryId;
 import com.develop.mvp.pk.module.product.domain.productcategory.valueobject.ProductCategoryName;
-import com.develop.mvp.pk.module.system.domain.user.event.DomainEvent;
+import com.develop.mvp.pk.module.product.domain.event.DomainEvent;
 
 import java.util.ArrayList;
 import java.util.List;

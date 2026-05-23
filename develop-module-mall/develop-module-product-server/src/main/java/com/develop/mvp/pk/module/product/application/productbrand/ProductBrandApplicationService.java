@@ -8,7 +8,7 @@ import com.develop.mvp.pk.module.product.domain.productbrand.ProductBrandFactory
 import com.develop.mvp.pk.module.product.domain.productbrand.repository.ProductBrandRepository;
 import com.develop.mvp.pk.module.product.domain.productbrand.valueobject.ProductBrandId;
 import com.develop.mvp.pk.module.product.domain.productbrand.valueobject.ProductBrandName;
-import com.develop.mvp.pk.module.system.domain.user.event.DomainEventPublisher;
+import com.develop.mvp.pk.module.product.domain.event.DomainEventPublisher;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 

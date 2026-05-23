@@ -51,13 +51,13 @@ public class ProductCategoryRepositoryImpl implements ProductCategoryRepository 
 
     @Override
     public Optional<ProductCategory> findByName(String name) {
-        ProductCategoryDO categoryDO = productCategoryMapper.selectByName(name);
+        ProductCategoryDO categoryDO = productCategoryMapper.selectOne(ProductCategoryDO::getName, name);
         return Optional.ofNullable(categoryDO).map(this::toDomain);
     }
 
     @Override
     public List<ProductCategory> findByParentId(Long parentId) {
-        return productCategoryMapper.selectListByParentId(parentId).stream()
+        return productCategoryMapper.selectList(ProductCategoryDO::getParentId, parentId).stream()
                 .map(this::toDomain).collect(Collectors.toList());
     }
 

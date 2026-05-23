@@ -3,7 +3,7 @@ package com.develop.mvp.pk.module.product.domain.productbrand.event;
 // Skill: AggregateRoot_ProductBrand_Validation_Skill — 领域事件 ProductBrandStatusChangedEvent
 // DDD 角色：商品品牌状态变更后发布
 
-import com.develop.mvp.pk.module.system.domain.user.event.DomainEvent;
+import com.develop.mvp.pk.module.product.domain.event.DomainEvent;
 
 import java.time.LocalDateTime;
 

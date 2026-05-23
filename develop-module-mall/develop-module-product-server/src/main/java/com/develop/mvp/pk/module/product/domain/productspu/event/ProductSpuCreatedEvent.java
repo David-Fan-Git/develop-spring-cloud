@@ -3,7 +3,7 @@ package com.develop.mvp.pk.module.product.domain.productspu.event;
 // Skill: AggregateRoot_ProductSpu_Validation_Skill — 领域事件 ProductSpuCreatedEvent
 // DDD 角色：商品 SPU 创建成功后发布
 
-import com.develop.mvp.pk.module.system.domain.user.event.DomainEvent;
+import com.develop.mvp.pk.module.product.domain.event.DomainEvent;
 
 import java.time.LocalDateTime;
 

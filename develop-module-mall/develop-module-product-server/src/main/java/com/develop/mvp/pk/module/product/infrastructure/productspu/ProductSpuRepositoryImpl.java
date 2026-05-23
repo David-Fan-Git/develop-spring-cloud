@@ -77,7 +77,7 @@ public class ProductSpuRepositoryImpl implements ProductSpuRepository {
     public List<ProductSpu> findByIds(Collection<ProductSpuId> ids) {
         if (ids == null || ids.isEmpty()) return Collections.emptyList();
         List<Long> rawIds = ids.stream().map(ProductSpuId::value).collect(Collectors.toList());
-        return productSpuMapper.selectByIds(rawIds).stream()
+        return productSpuMapper.selectBatchIds(rawIds).stream()
                 .map(this::toDomainWithSkus).collect(Collectors.toList());
     }
 
