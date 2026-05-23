@@ -5,10 +5,12 @@ import com.develop.mvp.pk.module.member.controller.admin.signin.vo.config.Member
 import com.develop.mvp.pk.module.member.controller.admin.signin.vo.config.MemberSignInConfigUpdateReqVO;
 import com.develop.mvp.pk.module.member.controller.app.signin.vo.config.AppMemberSignInConfigRespVO;
 import com.develop.mvp.pk.module.member.dal.dataobject.signin.MemberSignInConfigDO;
+import com.develop.mvp.pk.module.member.domain.signin.MemberSignInConfig;
 import org.mapstruct.Mapper;
 import org.mapstruct.factory.Mappers;
 
 import java.util.List;
+import java.util.stream.Collectors;
 
 /**
  * 签到规则 Convert
@@ -30,4 +32,34 @@ public interface MemberSignInConfigConvert {
 
     List<AppMemberSignInConfigRespVO> convertList02(List<MemberSignInConfigDO> list);
 
+    // ── Domain object conversions ──
+
+    default MemberSignInConfigRespVO convert(MemberSignInConfig bean) {
+        if (bean == null) return null;
+        MemberSignInConfigRespVO vo = new MemberSignInConfigRespVO();
+        vo.setId(bean.id());
+        vo.setDay(bean.day());
+        vo.setPoint(bean.point());
+        vo.setExperience(bean.experience());
+        vo.setStatus(bean.status());
+        return vo;
+    }
+
+    default List<MemberSignInConfigRespVO> convertList(List<MemberSignInConfig> list) {
+        if (list == null) return null;
+        return list.stream().map(this::convert).collect(Collectors.toList());
+    }
+
+    default List<AppMemberSignInConfigRespVO> convertList02(List<MemberSignInConfig> list) {
+        if (list == null) return null;
+        return list.stream().map(c -> {
+            AppMemberSignInConfigRespVO vo = new AppMemberSignInConfigRespVO();
+            vo.setId(c.id());
+            vo.setDay(c.day());
+            vo.setPoint(c.point());
+            vo.setExperience(c.experience());
+            vo.setStatus(c.status());
+            return vo;
+        }).collect(Collectors.toList());
+    }
 }

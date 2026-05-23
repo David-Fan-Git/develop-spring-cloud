@@ -1,12 +1,12 @@
 package com.develop.mvp.pk.module.member.controller.admin.signin;
 
 import com.develop.mvp.pk.framework.common.pojo.CommonResult;
+import com.develop.mvp.pk.module.member.application.signin.MemberSignInConfigApplicationService;
 import com.develop.mvp.pk.module.member.controller.admin.signin.vo.config.MemberSignInConfigCreateReqVO;
 import com.develop.mvp.pk.module.member.controller.admin.signin.vo.config.MemberSignInConfigRespVO;
 import com.develop.mvp.pk.module.member.controller.admin.signin.vo.config.MemberSignInConfigUpdateReqVO;
 import com.develop.mvp.pk.module.member.convert.signin.MemberSignInConfigConvert;
-import com.develop.mvp.pk.module.member.dal.dataobject.signin.MemberSignInConfigDO;
-import com.develop.mvp.pk.module.member.service.signin.MemberSignInConfigService;
+import com.develop.mvp.pk.module.member.domain.signin.MemberSignInConfig;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -20,7 +20,6 @@ import java.util.List;
 
 import static com.develop.mvp.pk.framework.common.pojo.CommonResult.success;
 
-// TODO 芋艿：url
 @Tag(name = "管理后台 - 签到规则")
 @RestController
 @RequestMapping("/member/sign-in/config")
@@ -28,20 +27,22 @@ import static com.develop.mvp.pk.framework.common.pojo.CommonResult.success;
 public class MemberSignInConfigController {
 
     @Resource
-    private MemberSignInConfigService signInConfigService;
+    private MemberSignInConfigApplicationService signInConfigApplicationService;
 
     @PostMapping("/create")
     @Operation(summary = "创建签到规则")
     @PreAuthorize("@ss.hasPermission('point:sign-in-config:create')")
     public CommonResult<Long> createSignInConfig(@Valid @RequestBody MemberSignInConfigCreateReqVO createReqVO) {
-        return success(signInConfigService.createSignInConfig(createReqVO));
+        return success(signInConfigApplicationService.createSignInConfig(createReqVO.getDay(),
+                createReqVO.getPoint(), createReqVO.getExperience(), createReqVO.getStatus()));
     }
 
     @PutMapping("/update")
     @Operation(summary = "更新签到规则")
     @PreAuthorize("@ss.hasPermission('point:sign-in-config:update')")
     public CommonResult<Boolean> updateSignInConfig(@Valid @RequestBody MemberSignInConfigUpdateReqVO updateReqVO) {
-        signInConfigService.updateSignInConfig(updateReqVO);
+        signInConfigApplicationService.updateSignInConfig(updateReqVO.getId(), updateReqVO.getDay(),
+                updateReqVO.getPoint(), updateReqVO.getExperience(), updateReqVO.getStatus());
         return success(true);
     }
 
@@ -50,7 +51,7 @@ public class MemberSignInConfigController {
     @Parameter(name = "id", description = "编号", required = true)
     @PreAuthorize("@ss.hasPermission('point:sign-in-config:delete')")
     public CommonResult<Boolean> deleteSignInConfig(@RequestParam("id") Long id) {
-        signInConfigService.deleteSignInConfig(id);
+        signInConfigApplicationService.deleteSignInConfig(id);
         return success(true);
     }
 
@@ -59,7 +60,7 @@ public class MemberSignInConfigController {
     @Parameter(name = "id", description = "编号", required = true, example = "1024")
     @PreAuthorize("@ss.hasPermission('point:sign-in-config:query')")
     public CommonResult<MemberSignInConfigRespVO> getSignInConfig(@RequestParam("id") Long id) {
-        MemberSignInConfigDO signInConfig = signInConfigService.getSignInConfig(id);
+        MemberSignInConfig signInConfig = signInConfigApplicationService.get(id);
         return success(MemberSignInConfigConvert.INSTANCE.convert(signInConfig));
     }
 
@@ -67,7 +68,7 @@ public class MemberSignInConfigController {
     @Operation(summary = "获得签到规则列表")
     @PreAuthorize("@ss.hasPermission('point:sign-in-config:query')")
     public CommonResult<List<MemberSignInConfigRespVO>> getSignInConfigList() {
-        List<MemberSignInConfigDO> list = signInConfigService.getSignInConfigList();
+        List<MemberSignInConfig> list = signInConfigApplicationService.getList();
         return success(MemberSignInConfigConvert.INSTANCE.convertList(list));
     }
 

@@ -10,12 +10,14 @@ import com.develop.mvp.pk.module.member.controller.app.signin.vo.record.AppMembe
 import com.develop.mvp.pk.module.member.dal.dataobject.signin.MemberSignInConfigDO;
 import com.develop.mvp.pk.module.member.dal.dataobject.signin.MemberSignInRecordDO;
 import com.develop.mvp.pk.module.member.dal.dataobject.user.MemberUserDO;
+import com.develop.mvp.pk.module.member.domain.signin.MemberSignInRecord;
 import org.mapstruct.Mapper;
 import org.mapstruct.factory.Mappers;
 
 import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 
 import static com.develop.mvp.pk.framework.common.util.collection.CollectionUtils.convertMap;
 
@@ -31,7 +33,6 @@ public interface MemberSignInRecordConvert {
 
     default PageResult<MemberSignInRecordRespVO> convertPage(PageResult<MemberSignInRecordDO> pageResult, List<MemberUserDO> users) {
         PageResult<MemberSignInRecordRespVO> voPageResult = convertPage(pageResult);
-        // user 拼接
         Map<Long, MemberUserDO> userMap = convertMap(users, MemberUserDO::getId);
         voPageResult.getList().forEach(record -> MapUtils.findAndThen(userMap, record.getUserId(),
                 memberUserRespDTO -> record.setNickname(memberUserRespDTO.getNickname())));
@@ -45,30 +46,65 @@ public interface MemberSignInRecordConvert {
     AppMemberSignInRecordRespVO coverRecordToAppRecordVo(MemberSignInRecordDO memberSignInRecordDO);
 
     default MemberSignInRecordDO convert(Long userId, MemberSignInRecordDO lastRecord, List<MemberSignInConfigDO> configs) {
-        // 1. 计算是第几天签到
         configs.sort(Comparator.comparing(MemberSignInConfigDO::getDay));
-        MemberSignInConfigDO lastConfig = CollUtil.getLast(configs); // 最大签到天数配置
-        // 1.2. 计算今天是第几天签到 (只有连续签到才加否则重置为 1)
+        MemberSignInConfigDO lastConfig = CollUtil.getLast(configs);
         int day = 1;
         if (lastRecord != null && DateUtils.isYesterday(lastRecord.getCreateTime())) {
             day = lastRecord.getDay() + 1;
         }
-        // 1.3 判断是否超出了最大签到配置
         if (day > lastConfig.getDay()) {
-            day = 1; // 超过最大配置的天数，重置到第一天。(也就是说开启下一轮签到)
+            day = 1;
         }
-
-        // 2.1 初始化签到信息
         MemberSignInRecordDO record = new MemberSignInRecordDO().setUserId(userId)
                 .setDay(day).setPoint(0).setExperience(0);
-        // 2.2 获取签到对应的积分
         MemberSignInConfigDO config = CollUtil.findOne(configs, item -> ObjUtil.equal(item.getDay(), record.getDay()));
-        if (config == null) {
-            return record;
-        }
+        if (config == null) return record;
         record.setPoint(config.getPoint());
         record.setExperience(config.getExperience());
         return record;
     }
 
+    // ── Domain object conversions ──
+
+    default PageResult<MemberSignInRecordRespVO> convertPage(PageResult<MemberSignInRecord> pageResult, List<MemberUserDO> users) {
+        List<MemberSignInRecordRespVO> list = pageResult.getList().stream().map(r -> {
+            MemberSignInRecordRespVO vo = new MemberSignInRecordRespVO();
+            vo.setId(r.id());
+            vo.setUserId(r.userId());
+            vo.setDay(r.day());
+            vo.setPoint(r.point());
+            vo.setExperience(r.experience());
+            return vo;
+        }).collect(Collectors.toList());
+        PageResult<MemberSignInRecordRespVO> result = new PageResult<>(list, pageResult.getTotal());
+        Map<Long, MemberUserDO> userMap = convertMap(users, MemberUserDO::getId);
+        result.getList().forEach(record -> MapUtils.findAndThen(userMap, record.getUserId(),
+                memberUserRespDTO -> record.setNickname(memberUserRespDTO.getNickname())));
+        return result;
+    }
+
+    default AppMemberSignInRecordRespVO coverRecordToAppRecordVo(MemberSignInRecord record) {
+        if (record == null) return null;
+        AppMemberSignInRecordRespVO vo = new AppMemberSignInRecordRespVO();
+        vo.setId(record.id());
+        vo.setUserId(record.userId());
+        vo.setDay(record.day());
+        vo.setPoint(record.point());
+        vo.setExperience(record.experience());
+        return vo;
+    }
+
+    default PageResult<AppMemberSignInRecordRespVO> convertPage02(PageResult<MemberSignInRecord> pageResult) {
+        if (pageResult == null) return null;
+        List<AppMemberSignInRecordRespVO> list = pageResult.getList().stream().map(r -> {
+            AppMemberSignInRecordRespVO vo = new AppMemberSignInRecordRespVO();
+            vo.setId(r.id());
+            vo.setUserId(r.userId());
+            vo.setDay(r.day());
+            vo.setPoint(r.point());
+            vo.setExperience(r.experience());
+            return vo;
+        }).collect(Collectors.toList());
+        return new PageResult<>(list, pageResult.getTotal());
+    }
 }

@@ -10,6 +10,7 @@ import com.develop.mvp.pk.module.member.dal.dataobject.group.MemberGroupDO;
 import com.develop.mvp.pk.module.member.dal.dataobject.level.MemberLevelDO;
 import com.develop.mvp.pk.module.member.dal.dataobject.tag.MemberTagDO;
 import com.develop.mvp.pk.module.member.dal.dataobject.user.MemberUserDO;
+import com.develop.mvp.pk.module.member.domain.user.MemberUser;
 import org.mapstruct.Mapper;
 import org.mapstruct.Mapping;
 import org.mapstruct.Mappings;
@@ -47,16 +48,37 @@ public interface MemberUserConvert {
     @Mapping(source = "areaId", target = "areaName", qualifiedByName = "convertAreaIdToAreaName")
     MemberUserRespVO convert03(MemberUserDO bean);
 
+    // ── Domain ↔ VO 映射 ──
+    @Mapping(source = "nickname.value", target = "nickname")
+    @Mapping(source = "mobile.value", target = "mobile")
+    @Mapping(source = "status.code", target = "status")
+    MemberUserRespVO convert(MemberUser user);
+
+    default PageResult<MemberUserRespVO> convertPageFromDomain(PageResult<MemberUser> pageResult,
+                                                                List<MemberTagDO> tags,
+                                                                List<MemberLevelDO> levels,
+                                                                List<MemberGroupDO> groups) {
+        List<MemberUserRespVO> vos = pageResult.getList().stream().map(this::convert).toList();
+        PageResult<MemberUserRespVO> result = new PageResult<>(vos, pageResult.getTotal());
+        Map<Long, String> tagMap = convertMap(tags, MemberTagDO::getId, MemberTagDO::getName);
+        Map<Long, String> levelMap = convertMap(levels, MemberLevelDO::getId, MemberLevelDO::getName);
+        Map<Long, String> groupMap = convertMap(groups, MemberGroupDO::getId, MemberGroupDO::getName);
+        result.getList().forEach(user -> {
+            user.setTagNames(convertList(user.getTagIds(), tagMap::get));
+            user.setLevelName(levelMap.get(user.getLevelId()));
+            user.setGroupName(groupMap.get(user.getGroupId()));
+        });
+        return result;
+    }
+
     default PageResult<MemberUserRespVO> convertPage(PageResult<MemberUserDO> pageResult,
                                                      List<MemberTagDO> tags,
                                                      List<MemberLevelDO> levels,
                                                      List<MemberGroupDO> groups) {
         PageResult<MemberUserRespVO> result = convertPage(pageResult);
-        // 处理关联数据
         Map<Long, String> tagMap = convertMap(tags, MemberTagDO::getId, MemberTagDO::getName);
         Map<Long, String> levelMap = convertMap(levels, MemberLevelDO::getId, MemberLevelDO::getName);
         Map<Long, String> groupMap = convertMap(groups, MemberGroupDO::getId, MemberGroupDO::getName);
-        // 填充关联数据
         result.getList().forEach(user -> {
             user.setTagNames(convertList(user.getTagIds(), tagMap::get));
             user.setLevelName(levelMap.get(user.getLevelId()));

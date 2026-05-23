@@ -5,6 +5,7 @@ import cn.hutool.core.util.ZipUtil;
 import com.develop.mvp.pk.framework.common.pojo.CommonResult;
 import com.develop.mvp.pk.framework.common.pojo.PageResult;
 import com.develop.mvp.pk.framework.common.util.object.BeanUtils;
+import com.develop.mvp.pk.module.infra.application.codegen.CodegenApplicationService;
 import com.develop.mvp.pk.module.infra.controller.admin.codegen.vo.CodegenCreateListReqVO;
 import com.develop.mvp.pk.module.infra.controller.admin.codegen.vo.CodegenDetailRespVO;
 import com.develop.mvp.pk.module.infra.controller.admin.codegen.vo.CodegenPreviewRespVO;
@@ -15,6 +16,8 @@ import com.develop.mvp.pk.module.infra.controller.admin.codegen.vo.table.Databas
 import com.develop.mvp.pk.module.infra.convert.codegen.CodegenConvert;
 import com.develop.mvp.pk.module.infra.dal.dataobject.codegen.CodegenColumnDO;
 import com.develop.mvp.pk.module.infra.dal.dataobject.codegen.CodegenTableDO;
+import com.develop.mvp.pk.module.infra.domain.codegen.CodegenColumn;
+import com.develop.mvp.pk.module.infra.domain.codegen.CodegenTable;
 import com.develop.mvp.pk.module.infra.service.codegen.CodegenService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
@@ -32,6 +35,7 @@ import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 
 import static com.develop.mvp.pk.framework.common.pojo.CommonResult.success;
 import static com.develop.mvp.pk.framework.security.core.util.SecurityFrameworkUtils.getLoginUserNickname;
@@ -44,10 +48,12 @@ import static com.develop.mvp.pk.module.infra.framework.file.core.utils.FileType
 public class CodegenController {
 
     @Resource
-    private CodegenService codegenService;
+    private CodegenApplicationService codegenApplicationService;
+    @Resource
+    private CodegenService codegenService; // 保留，用于复杂生成逻辑
 
     @GetMapping("/db/table/list")
-    @Operation(summary = "获得数据库自带的表定义列表", description = "会过滤掉已经导入 Codegen 的表")
+    @Operation(summary = "获得数据库自带的表定义列表")
     @Parameters({
             @Parameter(name = "dataSourceConfigId", description = "数据源配置的编号", required = true, example = "1"),
             @Parameter(name = "name", description = "表名，模糊匹配", example = "develop"),
@@ -66,16 +72,22 @@ public class CodegenController {
     @Parameter(name = "dataSourceConfigId", description = "数据源配置的编号", required = true, example = "1")
     @PreAuthorize("@ss.hasPermission('infra:codegen:query')")
     public CommonResult<List<CodegenTableRespVO>> getCodegenTableList(@RequestParam(value = "dataSourceConfigId") Long dataSourceConfigId) {
-        List<CodegenTableDO> list = codegenService.getCodegenTableList(dataSourceConfigId);
-        return success(BeanUtils.toBean(list, CodegenTableRespVO.class));
+        List<CodegenTable> list = codegenApplicationService.getCodegenTableList(dataSourceConfigId);
+        return success(list.stream().map(this::toCodegenTableRespVO).collect(Collectors.toList()));
     }
 
     @GetMapping("/table/page")
     @Operation(summary = "获得表定义分页")
     @PreAuthorize("@ss.hasPermission('infra:codegen:query')")
     public CommonResult<PageResult<CodegenTableRespVO>> getCodegenTablePage(@Valid CodegenTablePageReqVO pageReqVO) {
-        PageResult<CodegenTableDO> pageResult = codegenService.getCodegenTablePage(pageReqVO);
-        return success(BeanUtils.toBean(pageResult, CodegenTableRespVO.class));
+        PageResult<CodegenTable> pageResult = codegenApplicationService.getCodegenTablePage(
+                pageReqVO.getDataSourceConfigId(), pageReqVO.getTableName(), pageReqVO.getTableComment(),
+                pageReqVO.getScene(), pageReqVO.getCreateTime(),
+                pageReqVO.getPageNo(), pageReqVO.getPageSize());
+        PageResult<CodegenTableRespVO> voPage = new PageResult<>(
+                pageResult.getList().stream().map(this::toCodegenTableRespVO).collect(Collectors.toList()),
+                pageResult.getTotal());
+        return success(voPage);
     }
 
     @GetMapping("/detail")
@@ -83,10 +95,10 @@ public class CodegenController {
     @Parameter(name = "tableId", description = "表编号", required = true, example = "1024")
     @PreAuthorize("@ss.hasPermission('infra:codegen:query')")
     public CommonResult<CodegenDetailRespVO> getCodegenDetail(@RequestParam("tableId") Long tableId) {
-        CodegenTableDO table = codegenService.getCodegenTable(tableId);
-        List<CodegenColumnDO> columns = codegenService.getCodegenColumnListByTableId(tableId);
-        // 拼装返回
-        return success(CodegenConvert.INSTANCE.convert(table, columns));
+        CodegenTable table = codegenApplicationService.getCodegenTable(tableId);
+        List<CodegenColumn> columns = codegenApplicationService.getCodegenColumnListByTableId(tableId);
+        return success(CodegenConvert.INSTANCE.convert(
+                toCodegenTableDO(table), toCodegenColumnDOList(columns)));
     }
 
     @Operation(summary = "基于数据库的表结构，创建代码生成器的表和字段定义")
@@ -118,7 +130,7 @@ public class CodegenController {
     @Parameter(name = "tableId", description = "表编号", required = true, example = "1024")
     @PreAuthorize("@ss.hasPermission('infra:codegen:delete')")
     public CommonResult<Boolean> deleteCodegen(@RequestParam("tableId") Long tableId) {
-        codegenService.deleteCodegen(tableId);
+        codegenApplicationService.deleteCodegen(tableId);
         return success(true);
     }
 
@@ -127,7 +139,7 @@ public class CodegenController {
     @Parameter(name = "tableIds", description = "表编号列表", required = true)
     @PreAuthorize("@ss.hasPermission('infra:codegen:delete')")
     public CommonResult<Boolean> deleteCodegenList(@RequestParam("tableIds") List<Long> tableIds) {
-        codegenService.deleteCodegenList(tableIds);
+        codegenApplicationService.deleteCodegenList(tableIds);
         return success(true);
     }
 
@@ -146,15 +158,91 @@ public class CodegenController {
     @PreAuthorize("@ss.hasPermission('infra:codegen:download')")
     public void downloadCodegen(@RequestParam("tableId") Long tableId,
                                 HttpServletResponse response) throws IOException {
-        // 生成代码
         Map<String, String> codes = codegenService.generationCodes(tableId);
-        // 构建 zip 包
         String[] paths = codes.keySet().toArray(new String[0]);
         ByteArrayInputStream[] ins = codes.values().stream().map(IoUtil::toUtf8Stream).toArray(ByteArrayInputStream[]::new);
         ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
         ZipUtil.zip(outputStream, paths, ins);
-        // 输出
         writeAttachment(response, "codegen.zip", outputStream.toByteArray());
     }
 
+    // ── 转换方法 ──
+
+    private CodegenTableRespVO toCodegenTableRespVO(CodegenTable table) {
+        if (table == null) return null;
+        CodegenTableRespVO vo = new CodegenTableRespVO();
+        vo.setId(table.id().value());
+        vo.setDataSourceConfigId(table.dataSourceConfigId());
+        vo.setTableName(table.tableName());
+        vo.setTableComment(table.tableComment());
+        vo.setClassName(table.className());
+        vo.setClassComment(table.classComment());
+        vo.setAuthor(table.author());
+        vo.setTemplateType(table.templateType());
+        vo.setScene(table.scene());
+        vo.setFrontType(table.frontType());
+        vo.setMasterTableId(table.masterTableId());
+        vo.setSubJoinColumnId(table.subJoinColumnId());
+        vo.setSubJoinMany(table.subJoinMany());
+        vo.setModuleName(table.moduleName());
+        vo.setBusinessName(table.businessName());
+        vo.setPackageName(table.packageName());
+        vo.setRemark(table.remark());
+        return vo;
+    }
+
+    private CodegenTableDO toCodegenTableDO(CodegenTable table) {
+        if (table == null) return null;
+        CodegenTableDO tableDO = new CodegenTableDO();
+        tableDO.setId(table.id().value());
+        tableDO.setDataSourceConfigId(table.dataSourceConfigId());
+        tableDO.setTableName(table.tableName());
+        tableDO.setTableComment(table.tableComment());
+        tableDO.setClassName(table.className());
+        tableDO.setClassComment(table.classComment());
+        tableDO.setAuthor(table.author());
+        tableDO.setTemplateType(table.templateType());
+        tableDO.setScene(table.scene());
+        tableDO.setFrontType(table.frontType());
+        tableDO.setMasterTableId(table.masterTableId());
+        tableDO.setSubJoinColumnId(table.subJoinColumnId());
+        tableDO.setSubJoinMany(table.subJoinMany());
+        tableDO.setModuleName(table.moduleName());
+        tableDO.setBusinessName(table.businessName());
+        tableDO.setPackageName(table.packageName());
+        tableDO.setRemark(table.remark());
+        return tableDO;
+    }
+
+    private List<CodegenColumnDO> toCodegenColumnDOList(List<CodegenColumn> columns) {
+        if (columns == null) return null;
+        return columns.stream().map(this::toCodegenColumnDO).collect(Collectors.toList());
+    }
+
+    private CodegenColumnDO toCodegenColumnDO(CodegenColumn column) {
+        if (column == null) return null;
+        CodegenColumnDO columnDO = new CodegenColumnDO();
+        columnDO.setId(column.id());
+        columnDO.setTableId(column.tableId());
+        columnDO.setColumnName(column.columnName());
+        columnDO.setOrdinalPosition(column.ordinalPosition());
+        columnDO.setDataType(column.dataType());
+        columnDO.setColumnType(column.columnType());
+        columnDO.setColumnComment(column.columnComment());
+        columnDO.setNullable(column.nullable());
+        columnDO.setPrimaryKey(column.primaryKey());
+        columnDO.setAutoIncrement(column.autoIncrement());
+        columnDO.setOrdinalBasis(column.ordinalBasis());
+        columnDO.setJavaType(column.javaType());
+        columnDO.setJavaField(column.javaField());
+        columnDO.setDictType(column.dictType());
+        columnDO.setExample(column.example());
+        columnDO.setCreateOperation(column.createOperation());
+        columnDO.setUpdateOperation(column.updateOperation());
+        columnDO.setListOperation(column.listOperation());
+        columnDO.setListOperationCondition(column.listOperationCondition());
+        columnDO.setListOperationResult(column.listOperationResult());
+        columnDO.setHtmlType(column.htmlType());
+        return columnDO;
+    }
 }

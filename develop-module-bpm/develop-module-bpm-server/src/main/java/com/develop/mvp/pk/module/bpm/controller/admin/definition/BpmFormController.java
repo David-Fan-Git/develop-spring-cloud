@@ -2,12 +2,11 @@ package com.develop.mvp.pk.module.bpm.controller.admin.definition;
 
 import com.develop.mvp.pk.framework.common.pojo.CommonResult;
 import com.develop.mvp.pk.framework.common.pojo.PageResult;
-import com.develop.mvp.pk.framework.common.util.object.BeanUtils;
+import com.develop.mvp.pk.module.bpm.application.form.BpmFormApplicationService;
 import com.develop.mvp.pk.module.bpm.controller.admin.definition.vo.form.BpmFormPageReqVO;
 import com.develop.mvp.pk.module.bpm.controller.admin.definition.vo.form.BpmFormRespVO;
 import com.develop.mvp.pk.module.bpm.controller.admin.definition.vo.form.BpmFormSaveReqVO;
-import com.develop.mvp.pk.module.bpm.dal.dataobject.definition.BpmFormDO;
-import com.develop.mvp.pk.module.bpm.service.definition.BpmFormService;
+import com.develop.mvp.pk.module.bpm.domain.form.BpmForm;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -18,9 +17,9 @@ import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
+import java.util.stream.Collectors;
 
 import static com.develop.mvp.pk.framework.common.pojo.CommonResult.success;
-import static com.develop.mvp.pk.framework.common.util.collection.CollectionUtils.convertList;
 
 @Tag(name = "管理后台 - 动态表单")
 @RestController
@@ -29,20 +28,23 @@ import static com.develop.mvp.pk.framework.common.util.collection.CollectionUtil
 public class BpmFormController {
 
     @Resource
-    private BpmFormService formService;
+    private BpmFormApplicationService formApplicationService;
 
     @PostMapping("/create")
     @Operation(summary = "创建动态表单")
     @PreAuthorize("@ss.hasPermission('bpm:form:create')")
     public CommonResult<Long> createForm(@Valid @RequestBody BpmFormSaveReqVO createReqVO) {
-        return success(formService.createForm(createReqVO));
+        return success(formApplicationService.create(
+                createReqVO.getName(), createReqVO.getStatus(), createReqVO.getConf(),
+                createReqVO.getFields(), createReqVO.getRemark()));
     }
 
     @PutMapping("/update")
     @Operation(summary = "更新动态表单")
     @PreAuthorize("@ss.hasPermission('bpm:form:update')")
     public CommonResult<Boolean> updateForm(@Valid @RequestBody BpmFormSaveReqVO updateReqVO) {
-        formService.updateForm(updateReqVO);
+        formApplicationService.update(updateReqVO.getId(), updateReqVO.getName(), updateReqVO.getStatus(),
+                updateReqVO.getConf(), updateReqVO.getFields(), updateReqVO.getRemark());
         return success(true);
     }
 
@@ -51,7 +53,7 @@ public class BpmFormController {
     @Parameter(name = "id", description = "编号", required = true)
     @PreAuthorize("@ss.hasPermission('bpm:form:delete')")
     public CommonResult<Boolean> deleteForm(@RequestParam("id") Long id) {
-        formService.deleteForm(id);
+        formApplicationService.delete(id);
         return success(true);
     }
 
@@ -60,24 +62,33 @@ public class BpmFormController {
     @Parameter(name = "id", description = "编号", required = true, example = "1024")
     @PreAuthorize("@ss.hasPermission('bpm:form:query')")
     public CommonResult<BpmFormRespVO> getForm(@RequestParam("id") Long id) {
-        BpmFormDO form = formService.getForm(id);
-        return success(BeanUtils.toBean(form, BpmFormRespVO.class));
+        BpmForm form = formApplicationService.get(id);
+        if (form == null) return success(null);
+        return success(toRespVO(form));
     }
 
     @GetMapping({"/list-all-simple", "/simple-list"})
     @Operation(summary = "获得动态表单的精简列表", description = "用于表单下拉框")
     public CommonResult<List<BpmFormRespVO>> getFormSimpleList() {
-        List<BpmFormDO> list = formService.getFormList();
-        return success(convertList(list, formDO -> // 只返回 id、name 字段
-                new BpmFormRespVO().setId(formDO.getId()).setName(formDO.getName())));
+        return success(formApplicationService.getAll().stream()
+                .map(f -> new BpmFormRespVO().setId(f.id().value()).setName(f.name().value()))
+                .collect(Collectors.toList()));
     }
 
     @GetMapping("/page")
     @Operation(summary = "获得动态表单分页")
     @PreAuthorize("@ss.hasPermission('bpm:form:query')")
     public CommonResult<PageResult<BpmFormRespVO>> getFormPage(@Valid BpmFormPageReqVO pageVO) {
-        PageResult<BpmFormDO> pageResult = formService.getFormPage(pageVO);
-        return success(BeanUtils.toBean(pageResult, BpmFormRespVO.class));
+        PageResult<BpmForm> pageResult = formApplicationService.getPage(
+                pageVO.getName(), pageVO.getPageNo(), pageVO.getPageSize());
+        PageResult<BpmFormRespVO> voPage = new PageResult<>(
+                pageResult.getList().stream().map(this::toRespVO).collect(Collectors.toList()),
+                pageResult.getTotal());
+        return success(voPage);
     }
 
+    private BpmFormRespVO toRespVO(BpmForm f) {
+        return new BpmFormRespVO().setId(f.id().value()).setName(f.name().value())
+                .setStatus(f.status().code()).setConf(f.conf()).setFields(f.fields()).setRemark(f.remark());
+    }
 }

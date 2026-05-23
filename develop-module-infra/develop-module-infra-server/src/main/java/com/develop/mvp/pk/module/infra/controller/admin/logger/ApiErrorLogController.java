@@ -6,10 +6,11 @@ import com.develop.mvp.pk.framework.common.pojo.PageParam;
 import com.develop.mvp.pk.framework.common.pojo.PageResult;
 import com.develop.mvp.pk.framework.common.util.object.BeanUtils;
 import com.develop.mvp.pk.framework.excel.core.util.ExcelUtils;
+import com.develop.mvp.pk.module.infra.application.logger.ApiErrorLogApplicationService;
 import com.develop.mvp.pk.module.infra.controller.admin.logger.vo.apierrorlog.ApiErrorLogPageReqVO;
 import com.develop.mvp.pk.module.infra.controller.admin.logger.vo.apierrorlog.ApiErrorLogRespVO;
 import com.develop.mvp.pk.module.infra.dal.dataobject.logger.ApiErrorLogDO;
-import com.develop.mvp.pk.module.infra.service.logger.ApiErrorLogService;
+import com.develop.mvp.pk.module.infra.domain.logger.ApiErrorLog;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.Parameters;
@@ -23,6 +24,7 @@ import org.springframework.web.bind.annotation.*;
 
 import java.io.IOException;
 import java.util.List;
+import java.util.stream.Collectors;
 
 import static com.develop.mvp.pk.framework.apilog.core.enums.OperateTypeEnum.EXPORT;
 import static com.develop.mvp.pk.framework.common.pojo.CommonResult.success;
@@ -35,7 +37,7 @@ import static com.develop.mvp.pk.framework.security.core.util.SecurityFrameworkU
 public class ApiErrorLogController {
 
     @Resource
-    private ApiErrorLogService apiErrorLogService;
+    private ApiErrorLogApplicationService apiErrorLogApplicationService;
 
     @PutMapping("/update-status")
     @Operation(summary = "更新 API 错误日志的状态")
@@ -46,7 +48,7 @@ public class ApiErrorLogController {
     @PreAuthorize("@ss.hasPermission('infra:api-error-log:update-status')")
     public CommonResult<Boolean> updateApiErrorLogProcess(@RequestParam("id") Long id,
                                                           @RequestParam("processStatus") Integer processStatus) {
-        apiErrorLogService.updateApiErrorLogProcess(id, processStatus, getLoginUserId());
+        apiErrorLogApplicationService.processApiErrorLog(id, processStatus, getLoginUserId());
         return success(true);
     }
 
@@ -55,7 +57,7 @@ public class ApiErrorLogController {
     @Parameter(name = "id", description = "编号", required = true, example = "1024")
     @PreAuthorize("@ss.hasPermission('infra:api-error-log:query')")
     public CommonResult<ApiErrorLogRespVO> getApiErrorLog(@RequestParam("id") Long id) {
-        ApiErrorLogDO apiErrorLog = apiErrorLogService.getApiErrorLog(id);
+        ApiErrorLog apiErrorLog = apiErrorLogApplicationService.getApiErrorLog(id);
         return success(BeanUtils.toBean(apiErrorLog, ApiErrorLogRespVO.class));
     }
 
@@ -63,7 +65,13 @@ public class ApiErrorLogController {
     @Operation(summary = "获得 API 错误日志分页")
     @PreAuthorize("@ss.hasPermission('infra:api-error-log:query')")
     public CommonResult<PageResult<ApiErrorLogRespVO>> getApiErrorLogPage(@Valid ApiErrorLogPageReqVO pageReqVO) {
-        PageResult<ApiErrorLogDO> pageResult = apiErrorLogService.getApiErrorLogPage(pageReqVO);
+        com.develop.mvp.pk.module.infra.domain.logger.repository.ApiErrorLogPageQuery query =
+                new com.develop.mvp.pk.module.infra.domain.logger.repository.ApiErrorLogPageQuery(
+                        pageReqVO.getUserId(), pageReqVO.getUserType(), pageReqVO.getApplicationName(),
+                        pageReqVO.getRequestUrl(), pageReqVO.getBeginTime(), pageReqVO.getDuration(),
+                        pageReqVO.getResultCode(), pageReqVO.getProcessStatus(),
+                        pageReqVO.getPageNo(), pageReqVO.getPageSize());
+        PageResult<ApiErrorLog> pageResult = apiErrorLogApplicationService.getApiErrorLogPage(query);
         return success(BeanUtils.toBean(pageResult, ApiErrorLogRespVO.class));
     }
 
@@ -74,10 +82,16 @@ public class ApiErrorLogController {
     public void exportApiErrorLogExcel(@Valid ApiErrorLogPageReqVO exportReqVO,
                                        HttpServletResponse response) throws IOException {
         exportReqVO.setPageSize(PageParam.PAGE_SIZE_NONE);
-        List<ApiErrorLogDO> list = apiErrorLogService.getApiErrorLogPage(exportReqVO).getList();
-        // 导出 Excel
-        ExcelUtils.write(response, "API 错误日志.xls", "数据", ApiErrorLogRespVO.class,
-                BeanUtils.toBean(list, ApiErrorLogRespVO.class));
+        com.develop.mvp.pk.module.infra.domain.logger.repository.ApiErrorLogPageQuery query =
+                new com.develop.mvp.pk.module.infra.domain.logger.repository.ApiErrorLogPageQuery(
+                        exportReqVO.getUserId(), exportReqVO.getUserType(), exportReqVO.getApplicationName(),
+                        exportReqVO.getRequestUrl(), exportReqVO.getBeginTime(), exportReqVO.getDuration(),
+                        exportReqVO.getResultCode(), exportReqVO.getProcessStatus(),
+                        exportReqVO.getPageNo(), exportReqVO.getPageSize());
+        PageResult<ApiErrorLog> pageResult = apiErrorLogApplicationService.getApiErrorLogPage(query);
+        List<ApiErrorLogRespVO> list = pageResult.getList().stream()
+                .map(log -> BeanUtils.toBean(log, ApiErrorLogRespVO.class))
+                .collect(Collectors.toList());
+        ExcelUtils.write(response, "API 错误日志.xls", "数据", ApiErrorLogRespVO.class, list);
     }
-
 }

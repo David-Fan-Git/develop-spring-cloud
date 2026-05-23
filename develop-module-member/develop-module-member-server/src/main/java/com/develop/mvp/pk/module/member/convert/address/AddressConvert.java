@@ -7,12 +7,14 @@ import com.develop.mvp.pk.module.member.controller.app.address.vo.AppAddressCrea
 import com.develop.mvp.pk.module.member.controller.app.address.vo.AppAddressRespVO;
 import com.develop.mvp.pk.module.member.controller.app.address.vo.AppAddressUpdateReqVO;
 import com.develop.mvp.pk.module.member.dal.dataobject.address.MemberAddressDO;
+import com.develop.mvp.pk.module.member.domain.address.MemberAddress;
 import org.mapstruct.Mapper;
 import org.mapstruct.Mapping;
 import org.mapstruct.Named;
 import org.mapstruct.factory.Mappers;
 
 import java.util.List;
+import java.util.stream.Collectors;
 
 /**
  * 用户收件地址 Convert
@@ -42,4 +44,42 @@ public interface AddressConvert {
 
     List<AddressRespVO> convertList2(List<MemberAddressDO> list);
 
+    // ── Domain object conversions ──
+
+    default AppAddressRespVO convert(MemberAddress bean) {
+        if (bean == null) return null;
+        AppAddressRespVO vo = new AppAddressRespVO();
+        vo.setId(bean.id());
+        vo.setUserId(bean.userId());
+        vo.setName(bean.name());
+        vo.setMobile(bean.mobile());
+        vo.setAreaId(bean.areaId());
+        vo.setDetailAddress(bean.detailAddress());
+        vo.setDefaultStatus(bean.defaultStatus());
+        vo.setAreaName(AreaUtils.format(bean.areaId()));
+        return vo;
+    }
+
+    default List<AppAddressRespVO> convertList(List<MemberAddress> list) {
+        if (list == null) return null;
+        return list.stream().map(this::convert).collect(Collectors.toList());
+    }
+
+    default AddressRespVO convertAddressRespVO(MemberAddress bean) {
+        if (bean == null) return null;
+        AddressRespVO vo = new AddressRespVO();
+        vo.setId(bean.id());
+        vo.setUserId(bean.userId());
+        vo.setName(bean.name());
+        vo.setMobile(bean.mobile());
+        vo.setAreaId(bean.areaId());
+        vo.setDetailAddress(bean.detailAddress());
+        vo.setDefaultStatus(bean.defaultStatus());
+        return vo;
+    }
+
+    default List<AddressRespVO> convertList2(List<MemberAddress> list) {
+        if (list == null) return null;
+        return list.stream().map(this::convertAddressRespVO).collect(Collectors.toList());
+    }
 }

@@ -2,7 +2,7 @@
 
 ## 1. 技能名称
 
-`AggregateRoot_Tenant_Validation_Skill` — 租户（Tenant）聚合根的领域建模与重构技能
+`AggregateRoot_Tenant_Validation_Skill` — 租户（Tenant）聚合根的领域建模
 
 ## 2. 适用场景
 

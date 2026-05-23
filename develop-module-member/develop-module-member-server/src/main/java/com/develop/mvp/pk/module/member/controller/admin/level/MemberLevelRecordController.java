@@ -6,7 +6,7 @@ import com.develop.mvp.pk.module.member.controller.admin.level.vo.record.MemberL
 import com.develop.mvp.pk.module.member.controller.admin.level.vo.record.MemberLevelRecordRespVO;
 import com.develop.mvp.pk.module.member.convert.level.MemberLevelRecordConvert;
 import com.develop.mvp.pk.module.member.dal.dataobject.level.MemberLevelRecordDO;
-import com.develop.mvp.pk.module.member.service.level.MemberLevelRecordService;
+import com.develop.mvp.pk.module.member.dal.mysql.level.MemberLevelRecordMapper;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -29,14 +29,14 @@ import static com.develop.mvp.pk.framework.common.pojo.CommonResult.success;
 public class MemberLevelRecordController {
 
     @Resource
-    private MemberLevelRecordService levelLogService;
+    private MemberLevelRecordMapper levelLogMapper;
 
     @GetMapping("/get")
     @Operation(summary = "获得会员等级记录")
     @Parameter(name = "id", description = "编号", required = true, example = "1024")
     @PreAuthorize("@ss.hasPermission('member:level-record:query')")
     public CommonResult<MemberLevelRecordRespVO> getLevelRecord(@RequestParam("id") Long id) {
-        MemberLevelRecordDO levelLog = levelLogService.getLevelRecord(id);
+        MemberLevelRecordDO levelLog = levelLogMapper.selectById(id);
         return success(MemberLevelRecordConvert.INSTANCE.convert(levelLog));
     }
 
@@ -45,7 +45,7 @@ public class MemberLevelRecordController {
     @PreAuthorize("@ss.hasPermission('member:level-record:query')")
     public CommonResult<PageResult<MemberLevelRecordRespVO>> getLevelRecordPage(
             @Valid MemberLevelRecordPageReqVO pageVO) {
-        PageResult<MemberLevelRecordDO> pageResult = levelLogService.getLevelRecordPage(pageVO);
+        PageResult<MemberLevelRecordDO> pageResult = levelLogMapper.selectPage(pageVO);
         return success(MemberLevelRecordConvert.INSTANCE.convertPage(pageResult));
     }
 

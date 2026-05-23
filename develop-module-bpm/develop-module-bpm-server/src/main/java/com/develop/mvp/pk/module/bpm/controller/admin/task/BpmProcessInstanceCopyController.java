@@ -6,14 +6,14 @@ import com.develop.mvp.pk.framework.common.pojo.PageResult;
 import com.develop.mvp.pk.framework.common.util.collection.MapUtils;
 import com.develop.mvp.pk.framework.common.util.date.DateUtils;
 import com.develop.mvp.pk.framework.common.util.object.BeanUtils;
+import com.develop.mvp.pk.module.bpm.application.copy.BpmProcessInstanceCopyApplicationService;
 import com.develop.mvp.pk.module.bpm.controller.admin.base.user.UserSimpleBaseVO;
 import com.develop.mvp.pk.module.bpm.controller.admin.task.vo.cc.BpmProcessInstanceCopyRespVO;
 import com.develop.mvp.pk.module.bpm.controller.admin.task.vo.instance.BpmProcessInstanceCopyPageReqVO;
 import com.develop.mvp.pk.module.bpm.dal.dataobject.definition.BpmProcessDefinitionInfoDO;
-import com.develop.mvp.pk.module.bpm.dal.dataobject.task.BpmProcessInstanceCopyDO;
+import com.develop.mvp.pk.module.bpm.domain.copy.BpmProcessInstanceCopy;
 import com.develop.mvp.pk.module.bpm.framework.flowable.core.util.FlowableUtils;
 import com.develop.mvp.pk.module.bpm.service.definition.BpmProcessDefinitionService;
-import com.develop.mvp.pk.module.bpm.service.task.BpmProcessInstanceCopyService;
 import com.develop.mvp.pk.module.bpm.service.task.BpmProcessInstanceService;
 import com.develop.mvp.pk.module.system.api.user.AdminUserApi;
 import com.develop.mvp.pk.module.system.api.user.dto.AdminUserRespDTO;
@@ -42,7 +42,7 @@ import static com.develop.mvp.pk.framework.security.core.util.SecurityFrameworkU
 public class BpmProcessInstanceCopyController {
 
     @Resource
-    private BpmProcessInstanceCopyService processInstanceCopyService;
+    private BpmProcessInstanceCopyApplicationService processInstanceCopyApplicationService;
     @Resource
     private BpmProcessInstanceService processInstanceService;
     @Resource
@@ -56,24 +56,25 @@ public class BpmProcessInstanceCopyController {
     @PreAuthorize("@ss.hasPermission('bpm:process-instance-cc:query')")
     public CommonResult<PageResult<BpmProcessInstanceCopyRespVO>> getProcessInstanceCopyPage(
             @Valid BpmProcessInstanceCopyPageReqVO pageReqVO) {
-        PageResult<BpmProcessInstanceCopyDO> pageResult = processInstanceCopyService.getProcessInstanceCopyPage(
-                getLoginUserId(), pageReqVO);
+        PageResult<BpmProcessInstanceCopy> pageResult = processInstanceCopyApplicationService.getPage(
+                getLoginUserId(), pageReqVO.getProcessInstanceName(),
+                pageReqVO.getPageNo(), pageReqVO.getPageSize());
         if (CollUtil.isEmpty(pageResult.getList())) {
             return success(new PageResult<>(pageResult.getTotal()));
         }
 
         // 拼接返回
         Map<String, HistoricProcessInstance> processInstanceMap = processInstanceService.getHistoricProcessInstanceMap(
-                convertSet(pageResult.getList(), BpmProcessInstanceCopyDO::getProcessInstanceId));
+                convertSet(pageResult.getList(), BpmProcessInstanceCopy::processInstanceId));
         Map<Long, AdminUserRespDTO> userMap = adminUserApi.getUserMap(convertListByFlatMap(pageResult.getList(),
-                copy -> Stream.of(copy.getStartUserId(), copy.getUserId())));
+                copy -> Stream.of(copy.startUserId(), copy.userId())));
         Map<String, BpmProcessDefinitionInfoDO> processDefinitionInfoMap = processDefinitionService.getProcessDefinitionInfoMap(
-                convertSet(pageResult.getList(), BpmProcessInstanceCopyDO::getProcessDefinitionId));
+                convertSet(pageResult.getList(), BpmProcessInstanceCopy::processDefinitionId));
         return success(convertPage(pageResult, copy -> {
-            BpmProcessInstanceCopyRespVO copyVO = BeanUtils.toBean(copy, BpmProcessInstanceCopyRespVO.class);
-            MapUtils.findAndThen(userMap, copy.getUserId(),
+            BpmProcessInstanceCopyRespVO copyVO = toRespVO(copy);
+            MapUtils.findAndThen(userMap, copy.userId(),
                     user -> copyVO.setCreateUser(BeanUtils.toBean(user, UserSimpleBaseVO.class)));
-            MapUtils.findAndThen(userMap, copy.getStartUserId(),
+            MapUtils.findAndThen(userMap, copy.startUserId(),
                     user -> copyVO.setStartUser(BeanUtils.toBean(user, UserSimpleBaseVO.class)));
             MapUtils.findAndThen(processInstanceMap, copyVO.getProcessInstanceId(),
                     processInstance -> {
@@ -86,4 +87,11 @@ public class BpmProcessInstanceCopyController {
         }));
     }
 
+    private BpmProcessInstanceCopyRespVO toRespVO(BpmProcessInstanceCopy c) {
+        return new BpmProcessInstanceCopyRespVO()
+                .setId(c.id().value())
+                .setProcessInstanceName(c.processInstanceName()).setProcessInstanceId(c.processInstanceId())
+                .setActivityId(c.activityId()).setActivityName(c.activityName())
+                .setTaskId(c.taskId()).setReason(c.reason());
+    }
 }

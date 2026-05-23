@@ -1,10 +1,10 @@
 package com.develop.mvp.pk.module.member.controller.app.level;
 
 import com.develop.mvp.pk.framework.common.pojo.CommonResult;
+import com.develop.mvp.pk.module.member.application.level.MemberLevelApplicationService;
 import com.develop.mvp.pk.module.member.controller.app.level.vo.level.AppMemberLevelRespVO;
 import com.develop.mvp.pk.module.member.convert.level.MemberLevelConvert;
-import com.develop.mvp.pk.module.member.dal.dataobject.level.MemberLevelDO;
-import com.develop.mvp.pk.module.member.service.level.MemberLevelService;
+import com.develop.mvp.pk.module.member.domain.level.MemberLevel;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.annotation.security.PermitAll;
@@ -25,13 +25,13 @@ import static com.develop.mvp.pk.framework.common.pojo.CommonResult.success;
 public class AppMemberLevelController {
 
     @Resource
-    private MemberLevelService levelService;
+    private MemberLevelApplicationService levelApplicationService;
 
     @GetMapping("/list")
     @Operation(summary = "获得会员等级列表")
     @PermitAll
     public CommonResult<List<AppMemberLevelRespVO>> getLevelList() {
-        List<MemberLevelDO> result = levelService.getEnableLevelList();
+        List<MemberLevel> result = levelApplicationService.getEnableList();
         return success(MemberLevelConvert.INSTANCE.convertList02(result));
     }
 

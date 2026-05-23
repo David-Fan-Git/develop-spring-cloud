@@ -1,14 +1,11 @@
 package com.develop.mvp.pk.module.member.controller.app.point;
 
 import com.develop.mvp.pk.framework.common.pojo.CommonResult;
-import com.develop.mvp.pk.framework.common.pojo.PageParam;
 import com.develop.mvp.pk.framework.common.pojo.PageResult;
-import com.develop.mvp.pk.framework.common.util.object.BeanUtils;
+import com.develop.mvp.pk.module.member.application.point.MemberPointRecordApplicationService;
 import com.develop.mvp.pk.module.member.controller.app.point.vo.AppMemberPointRecordPageReqVO;
 import com.develop.mvp.pk.module.member.controller.app.point.vo.AppMemberPointRecordRespVO;
-import com.develop.mvp.pk.module.member.convert.point.MemberPointRecordConvert;
-import com.develop.mvp.pk.module.member.dal.dataobject.point.MemberPointRecordDO;
-import com.develop.mvp.pk.module.member.service.point.MemberPointRecordService;
+import com.develop.mvp.pk.module.member.domain.point.MemberPointRecord;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import org.springframework.validation.annotation.Validated;
@@ -18,6 +15,8 @@ import org.springframework.web.bind.annotation.RestController;
 
 import jakarta.annotation.Resource;
 import jakarta.validation.Valid;
+import java.util.List;
+import java.util.stream.Collectors;
 
 import static com.develop.mvp.pk.framework.common.pojo.CommonResult.success;
 import static com.develop.mvp.pk.framework.security.core.util.SecurityFrameworkUtils.getLoginUserId;
@@ -29,14 +28,30 @@ import static com.develop.mvp.pk.framework.security.core.util.SecurityFrameworkU
 public class AppMemberPointRecordController {
 
     @Resource
-    private MemberPointRecordService pointRecordService;
+    private MemberPointRecordApplicationService pointRecordApplicationService;
 
     @GetMapping("/page")
     @Operation(summary = "获得用户积分记录分页")
     public CommonResult<PageResult<AppMemberPointRecordRespVO>> getPointRecordPage(
             @Valid AppMemberPointRecordPageReqVO pageReqVO) {
-        PageResult<MemberPointRecordDO> pageResult = pointRecordService.getPointRecordPage(getLoginUserId(), pageReqVO);
-        return success(BeanUtils.toBean(pageResult, AppMemberPointRecordRespVO.class));
+        PageResult<MemberPointRecord> pageResult = pointRecordApplicationService.getPointRecordPage(
+                getLoginUserId(),
+                pageReqVO.getCreateTime() != null && pageReqVO.getCreateTime().length > 0 ? pageReqVO.getCreateTime()[0] : null,
+                pageReqVO.getCreateTime() != null && pageReqVO.getCreateTime().length > 1 ? pageReqVO.getCreateTime()[1] : null,
+                pageReqVO.getAddStatus(), pageReqVO.getPageNo(), pageReqVO.getPageSize());
+        List<AppMemberPointRecordRespVO> list = pageResult.getList().stream().map(r -> {
+            AppMemberPointRecordRespVO vo = new AppMemberPointRecordRespVO();
+            vo.setId(r.id());
+            vo.setUserId(r.userId());
+            vo.setBizId(r.bizId());
+            vo.setBizType(r.bizType());
+            vo.setTitle(r.title());
+            vo.setDescription(r.description());
+            vo.setPoint(r.point());
+            vo.setTotalPoint(r.totalPoint());
+            return vo;
+        }).collect(Collectors.toList());
+        return success(new PageResult<>(list, pageResult.getTotal()));
     }
 
 }

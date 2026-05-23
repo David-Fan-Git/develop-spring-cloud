@@ -2,10 +2,10 @@ package com.develop.mvp.pk.module.infra.controller.admin.db;
 
 import com.develop.mvp.pk.framework.common.pojo.CommonResult;
 import com.develop.mvp.pk.framework.common.util.object.BeanUtils;
+import com.develop.mvp.pk.module.infra.application.db.DataSourceConfigApplicationService;
 import com.develop.mvp.pk.module.infra.controller.admin.db.vo.DataSourceConfigRespVO;
 import com.develop.mvp.pk.module.infra.controller.admin.db.vo.DataSourceConfigSaveReqVO;
-import com.develop.mvp.pk.module.infra.dal.dataobject.db.DataSourceConfigDO;
-import com.develop.mvp.pk.module.infra.service.db.DataSourceConfigService;
+import com.develop.mvp.pk.module.infra.domain.db.DataSourceConfig;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -16,6 +16,7 @@ import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
+import java.util.stream.Collectors;
 
 import static com.develop.mvp.pk.framework.common.pojo.CommonResult.success;
 
@@ -26,20 +27,24 @@ import static com.develop.mvp.pk.framework.common.pojo.CommonResult.success;
 public class DataSourceConfigController {
 
     @Resource
-    private DataSourceConfigService dataSourceConfigService;
+    private DataSourceConfigApplicationService dataSourceConfigApplicationService;
 
     @PostMapping("/create")
     @Operation(summary = "创建数据源配置")
     @PreAuthorize("@ss.hasPermission('infra:data-source-config:create')")
     public CommonResult<Long> createDataSourceConfig(@Valid @RequestBody DataSourceConfigSaveReqVO createReqVO) {
-        return success(dataSourceConfigService.createDataSourceConfig(createReqVO));
+        return success(dataSourceConfigApplicationService.createDataSourceConfig(
+                createReqVO.getName(), createReqVO.getUrl(),
+                createReqVO.getUsername(), createReqVO.getPassword()));
     }
 
     @PutMapping("/update")
     @Operation(summary = "更新数据源配置")
     @PreAuthorize("@ss.hasPermission('infra:data-source-config:update')")
     public CommonResult<Boolean> updateDataSourceConfig(@Valid @RequestBody DataSourceConfigSaveReqVO updateReqVO) {
-        dataSourceConfigService.updateDataSourceConfig(updateReqVO);
+        dataSourceConfigApplicationService.updateDataSourceConfig(
+                updateReqVO.getId(), updateReqVO.getName(), updateReqVO.getUrl(),
+                updateReqVO.getUsername(), updateReqVO.getPassword());
         return success(true);
     }
 
@@ -48,7 +53,7 @@ public class DataSourceConfigController {
     @Parameter(name = "id", description = "编号", required = true)
     @PreAuthorize("@ss.hasPermission('infra:data-source-config:delete')")
     public CommonResult<Boolean> deleteDataSourceConfig(@RequestParam("id") Long id) {
-        dataSourceConfigService.deleteDataSourceConfig(id);
+        dataSourceConfigApplicationService.deleteDataSourceConfig(id);
         return success(true);
     }
 
@@ -57,7 +62,7 @@ public class DataSourceConfigController {
     @Parameter(name = "ids", description = "编号列表", required = true)
     @PreAuthorize("@ss.hasPermission('infra:data-source-config:delete')")
     public CommonResult<Boolean> deleteDataSourceConfigList(@RequestParam("ids") List<Long> ids) {
-        dataSourceConfigService.deleteDataSourceConfigList(ids);
+        dataSourceConfigApplicationService.deleteDataSourceConfigList(ids);
         return success(true);
     }
 
@@ -66,16 +71,28 @@ public class DataSourceConfigController {
     @Parameter(name = "id", description = "编号", required = true, example = "1024")
     @PreAuthorize("@ss.hasPermission('infra:data-source-config:query')")
     public CommonResult<DataSourceConfigRespVO> getDataSourceConfig(@RequestParam("id") Long id) {
-        DataSourceConfigDO config = dataSourceConfigService.getDataSourceConfig(id);
-        return success(BeanUtils.toBean(config, DataSourceConfigRespVO.class));
+        DataSourceConfig config = dataSourceConfigApplicationService.getDataSourceConfig(id);
+        return success(toDataSourceConfigRespVO(config));
     }
 
     @GetMapping("/list")
     @Operation(summary = "获得数据源配置列表")
     @PreAuthorize("@ss.hasPermission('infra:data-source-config:query')")
     public CommonResult<List<DataSourceConfigRespVO>> getDataSourceConfigList() {
-        List<DataSourceConfigDO> list = dataSourceConfigService.getDataSourceConfigList();
-        return success(BeanUtils.toBean(list, DataSourceConfigRespVO.class));
+        List<DataSourceConfig> list = dataSourceConfigApplicationService.getDataSourceConfigList();
+        return success(list.stream().map(this::toDataSourceConfigRespVO).collect(Collectors.toList()));
     }
 
+    // ── 转换方法 ──
+
+    private DataSourceConfigRespVO toDataSourceConfigRespVO(DataSourceConfig config) {
+        if (config == null) return null;
+        DataSourceConfigRespVO vo = new DataSourceConfigRespVO();
+        vo.setId(config.id().value());
+        vo.setName(config.name().value());
+        vo.setUrl(config.url().value());
+        vo.setUsername(config.username());
+        vo.setPassword(config.password());
+        return vo;
+    }
 }

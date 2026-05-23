@@ -2,13 +2,13 @@ package com.develop.mvp.pk.module.member.controller.admin.tag;
 
 import com.develop.mvp.pk.framework.common.pojo.CommonResult;
 import com.develop.mvp.pk.framework.common.pojo.PageResult;
+import com.develop.mvp.pk.module.member.application.tag.MemberTagApplicationService;
 import com.develop.mvp.pk.module.member.controller.admin.tag.vo.MemberTagCreateReqVO;
 import com.develop.mvp.pk.module.member.controller.admin.tag.vo.MemberTagPageReqVO;
 import com.develop.mvp.pk.module.member.controller.admin.tag.vo.MemberTagRespVO;
 import com.develop.mvp.pk.module.member.controller.admin.tag.vo.MemberTagUpdateReqVO;
 import com.develop.mvp.pk.module.member.convert.tag.MemberTagConvert;
-import com.develop.mvp.pk.module.member.dal.dataobject.tag.MemberTagDO;
-import com.develop.mvp.pk.module.member.service.tag.MemberTagService;
+import com.develop.mvp.pk.module.member.domain.tag.MemberTag;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -30,20 +30,20 @@ import static com.develop.mvp.pk.framework.common.pojo.CommonResult.success;
 public class MemberTagController {
 
     @Resource
-    private MemberTagService tagService;
+    private MemberTagApplicationService tagApplicationService;
 
     @PostMapping("/create")
     @Operation(summary = "创建会员标签")
     @PreAuthorize("@ss.hasPermission('member:tag:create')")
     public CommonResult<Long> createTag(@Valid @RequestBody MemberTagCreateReqVO createReqVO) {
-        return success(tagService.createTag(createReqVO));
+        return success(tagApplicationService.createTag(createReqVO.getName()));
     }
 
     @PutMapping("/update")
     @Operation(summary = "更新会员标签")
     @PreAuthorize("@ss.hasPermission('member:tag:update')")
     public CommonResult<Boolean> updateTag(@Valid @RequestBody MemberTagUpdateReqVO updateReqVO) {
-        tagService.updateTag(updateReqVO);
+        tagApplicationService.updateTag(updateReqVO.getId(), updateReqVO.getName());
         return success(true);
     }
 
@@ -52,7 +52,7 @@ public class MemberTagController {
     @Parameter(name = "id", description = "编号", required = true)
     @PreAuthorize("@ss.hasPermission('member:tag:delete')")
     public CommonResult<Boolean> deleteTag(@RequestParam("id") Long id) {
-        tagService.deleteTag(id);
+        tagApplicationService.deleteTag(id);
         return success(true);
     }
 
@@ -61,16 +61,14 @@ public class MemberTagController {
     @Parameter(name = "id", description = "编号", required = true, example = "1024")
     @PreAuthorize("@ss.hasPermission('member:tag:query')")
     public CommonResult<MemberTagRespVO> getMemberTag(@RequestParam("id") Long id) {
-        MemberTagDO tag = tagService.getTag(id);
+        MemberTag tag = tagApplicationService.get(id);
         return success(MemberTagConvert.INSTANCE.convert(tag));
     }
 
     @GetMapping("/list-all-simple")
-    @Operation(summary = "获取会员标签精简信息列表", description = "只包含被开启的会员标签，主要用于前端的下拉选项")
+    @Operation(summary = "获取会员标签精简信息列表")
     public CommonResult<List<MemberTagRespVO>> getSimpleTagList() {
-        // 获用户列表，只要开启状态的
-        List<MemberTagDO> list = tagService.getTagList();
-        // 排序后，返回给前端
+        List<MemberTag> list = tagApplicationService.getList();
         return success(MemberTagConvert.INSTANCE.convertList(list));
     }
 
@@ -79,7 +77,7 @@ public class MemberTagController {
     @Parameter(name = "ids", description = "编号列表", required = true, example = "1024,2048")
     @PreAuthorize("@ss.hasPermission('member:tag:query')")
     public CommonResult<List<MemberTagRespVO>> getMemberTagList(@RequestParam("ids") Collection<Long> ids) {
-        List<MemberTagDO> list = tagService.getTagList(ids);
+        List<MemberTag> list = tagApplicationService.getList(ids);
         return success(MemberTagConvert.INSTANCE.convertList(list));
     }
 
@@ -87,7 +85,8 @@ public class MemberTagController {
     @Operation(summary = "获得会员标签分页")
     @PreAuthorize("@ss.hasPermission('member:tag:query')")
     public CommonResult<PageResult<MemberTagRespVO>> getTagPage(@Valid MemberTagPageReqVO pageVO) {
-        PageResult<MemberTagDO> pageResult = tagService.getTagPage(pageVO);
+        PageResult<MemberTag> pageResult = tagApplicationService.getPage(
+                pageVO.getName(), null, null, pageVO.getPageNo(), pageVO.getPageSize());
         return success(MemberTagConvert.INSTANCE.convertPage(pageResult));
     }
 

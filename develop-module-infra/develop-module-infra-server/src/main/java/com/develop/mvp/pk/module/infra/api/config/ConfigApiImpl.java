@@ -1,25 +1,23 @@
 package com.develop.mvp.pk.module.infra.api.config;
 
 import com.develop.mvp.pk.framework.common.pojo.CommonResult;
-import com.develop.mvp.pk.module.infra.dal.dataobject.config.ConfigDO;
-import com.develop.mvp.pk.module.infra.service.config.ConfigService;
+import com.develop.mvp.pk.module.infra.application.config.ConfigApplicationService;
 import jakarta.annotation.Resource;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.RestController;
 
 import static com.develop.mvp.pk.framework.common.pojo.CommonResult.success;
 
-@RestController // 提供 RESTful API 接口，给 Feign 调用
+@RestController
 @Validated
 public class ConfigApiImpl implements ConfigApi {
 
     @Resource
-    private ConfigService configService;
+    private ConfigApplicationService configApplicationService;
 
     @Override
     public CommonResult<String> getConfigValueByKey(String key) {
-        ConfigDO config = configService.getConfigByKey(key);
-        return success(config != null ? config.getValue() : null);
+        String value = configApplicationService.getConfigValueByKey(key);
+        return success(value);
     }
-
 }

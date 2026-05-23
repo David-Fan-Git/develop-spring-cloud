@@ -2,10 +2,10 @@ package com.develop.mvp.pk.module.member.controller.app.signin;
 
 import com.develop.mvp.pk.framework.common.enums.CommonStatusEnum;
 import com.develop.mvp.pk.framework.common.pojo.CommonResult;
+import com.develop.mvp.pk.module.member.application.signin.MemberSignInConfigApplicationService;
 import com.develop.mvp.pk.module.member.controller.app.signin.vo.config.AppMemberSignInConfigRespVO;
 import com.develop.mvp.pk.module.member.convert.signin.MemberSignInConfigConvert;
-import com.develop.mvp.pk.module.member.dal.dataobject.signin.MemberSignInConfigDO;
-import com.develop.mvp.pk.module.member.service.signin.MemberSignInConfigService;
+import com.develop.mvp.pk.module.member.domain.signin.MemberSignInConfig;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.annotation.security.PermitAll;
@@ -26,13 +26,13 @@ import static com.develop.mvp.pk.framework.common.pojo.CommonResult.success;
 public class AppMemberSignInConfigController {
 
     @Resource
-    private MemberSignInConfigService signInConfigService;
+    private MemberSignInConfigApplicationService signInConfigApplicationService;
 
     @GetMapping("/list")
     @Operation(summary = "获得签到规则列表")
     @PermitAll
     public CommonResult<List<AppMemberSignInConfigRespVO>> getSignInConfigList() {
-        List<MemberSignInConfigDO> pageResult = signInConfigService.getSignInConfigList(CommonStatusEnum.ENABLE.getStatus());
+        List<MemberSignInConfig> pageResult = signInConfigApplicationService.getListByStatus(CommonStatusEnum.ENABLE.getStatus());
         return success(MemberSignInConfigConvert.INSTANCE.convertList02(pageResult));
     }
 

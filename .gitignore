@@ -73,3 +73,6 @@ functions/mock
 screenshot
 .firebase
 sessionStore
+
+# Claude pipeline triggers (auto-generated)
+.claude/pipeline/

@@ -6,7 +6,7 @@ import com.develop.mvp.pk.module.member.controller.admin.level.vo.experience.Mem
 import com.develop.mvp.pk.module.member.controller.admin.level.vo.experience.MemberExperienceRecordRespVO;
 import com.develop.mvp.pk.module.member.convert.level.MemberExperienceRecordConvert;
 import com.develop.mvp.pk.module.member.dal.dataobject.level.MemberExperienceRecordDO;
-import com.develop.mvp.pk.module.member.service.level.MemberExperienceRecordService;
+import com.develop.mvp.pk.module.member.dal.mysql.level.MemberExperienceRecordMapper;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -29,14 +29,14 @@ import static com.develop.mvp.pk.framework.common.pojo.CommonResult.success;
 public class MemberExperienceRecordController {
 
     @Resource
-    private MemberExperienceRecordService experienceLogService;
+    private MemberExperienceRecordMapper experienceLogMapper;
 
     @GetMapping("/get")
     @Operation(summary = "获得会员经验记录")
     @Parameter(name = "id", description = "编号", required = true, example = "1024")
     @PreAuthorize("@ss.hasPermission('member:experience-record:query')")
     public CommonResult<MemberExperienceRecordRespVO> getExperienceRecord(@RequestParam("id") Long id) {
-        MemberExperienceRecordDO experienceLog = experienceLogService.getExperienceRecord(id);
+        MemberExperienceRecordDO experienceLog = experienceLogMapper.selectById(id);
         return success(MemberExperienceRecordConvert.INSTANCE.convert(experienceLog));
     }
 
@@ -45,7 +45,7 @@ public class MemberExperienceRecordController {
     @PreAuthorize("@ss.hasPermission('member:experience-record:query')")
     public CommonResult<PageResult<MemberExperienceRecordRespVO>> getExperienceRecordPage(
             @Valid MemberExperienceRecordPageReqVO pageVO) {
-        PageResult<MemberExperienceRecordDO> pageResult = experienceLogService.getExperienceRecordPage(pageVO);
+        PageResult<MemberExperienceRecordDO> pageResult = experienceLogMapper.selectPage(pageVO);
         return success(MemberExperienceRecordConvert.INSTANCE.convertPage(pageResult));
     }
 

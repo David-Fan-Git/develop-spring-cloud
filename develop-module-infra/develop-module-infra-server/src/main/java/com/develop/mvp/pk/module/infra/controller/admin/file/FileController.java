@@ -7,9 +7,12 @@ import com.develop.mvp.pk.framework.common.pojo.CommonResult;
 import com.develop.mvp.pk.framework.common.pojo.PageResult;
 import com.develop.mvp.pk.framework.common.util.object.BeanUtils;
 import com.develop.mvp.pk.framework.tenant.core.aop.TenantIgnore;
+import com.develop.mvp.pk.module.infra.application.file.FileApplicationService;
+import com.develop.mvp.pk.module.infra.application.file.FileConfigApplicationService;
 import com.develop.mvp.pk.module.infra.controller.admin.file.vo.file.*;
-import com.develop.mvp.pk.module.infra.dal.dataobject.file.FileDO;
-import com.develop.mvp.pk.module.infra.service.file.FileService;
+import com.develop.mvp.pk.module.infra.domain.file.File;
+import com.develop.mvp.pk.module.infra.framework.file.core.client.FileClient;
+import com.develop.mvp.pk.module.infra.service.file.FileConfigService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.Parameters;
@@ -29,6 +32,7 @@ import org.springframework.web.multipart.MultipartFile;
 
 import java.nio.charset.StandardCharsets;
 import java.util.List;
+import java.util.stream.Collectors;
 
 import static com.develop.mvp.pk.framework.common.pojo.CommonResult.success;
 import static com.develop.mvp.pk.module.infra.framework.file.core.utils.FileTypeUtils.writeAttachment;
@@ -41,7 +45,9 @@ import static com.develop.mvp.pk.module.infra.framework.file.core.utils.FileType
 public class FileController {
 
     @Resource
-    private FileService fileService;
+    private FileApplicationService fileApplicationService;
+    @Resource
+    private FileConfigService fileConfigService; // 保留用于 FileClient 管理
 
     @PostMapping("/upload")
     @Operation(summary = "上传文件", description = "模式一：后端上传文件")
@@ -50,12 +56,13 @@ public class FileController {
     public CommonResult<String> uploadFile(@Valid FileUploadReqVO uploadReqVO) throws Exception {
         MultipartFile file = uploadReqVO.getFile();
         byte[] content = IoUtil.readBytes(file.getInputStream());
-        return success(fileService.createFile(content, file.getOriginalFilename(),
-                uploadReqVO.getDirectory(), file.getContentType()));
+        FileClient masterClient = fileConfigService.getMasterFileClient();
+        return success(fileApplicationService.uploadFile(content, file.getOriginalFilename(),
+                uploadReqVO.getDirectory(), file.getContentType(), masterClient));
     }
 
     @GetMapping("/presigned-url")
-    @Operation(summary = "获取文件预签名地址（上传）", description = "模式二：前端上传文件：用于前端直接上传七牛、阿里云 OSS 等文件存储器")
+    @Operation(summary = "获取文件预签名地址（上传）", description = "模式二：前端上传文件")
     @Parameters({
             @Parameter(name = "name", description = "文件名称", required = true),
             @Parameter(name = "directory", description = "文件目录")
@@ -63,13 +70,24 @@ public class FileController {
     public CommonResult<FilePresignedUrlRespVO> getFilePresignedUrl(
             @RequestParam("name") String name,
             @RequestParam(value = "directory", required = false) String directory) {
-        return success(fileService.presignPutUrl(name, directory));
+        // 保持原有逻辑 - 使用旧 FileService 的预签名功能
+        com.develop.mvp.pk.module.infra.service.file.FileService fileService =
+                com.develop.mvp.pk.module.infra.service.file.FileServiceImpl.getFileService();
+        // 兜底：采用传统方式
+        String path = directory != null ? directory + "/" + name : name;
+        FileClient masterClient = fileConfigService.getMasterFileClient();
+        String uploadUrl = masterClient.presignPutUrl(path);
+        String visitUrl = masterClient.presignGetUrl(path, null);
+        return success(new FilePresignedUrlRespVO().setConfigId(masterClient.getId())
+                .setPath(path).setUploadUrl(uploadUrl).setUrl(visitUrl));
     }
 
     @PostMapping("/create")
-    @Operation(summary = "创建文件", description = "模式二：前端上传文件：配合 presigned-url 接口，记录上传了上传的文件")
+    @Operation(summary = "创建文件", description = "模式二：前端上传文件：配合 presigned-url 接口")
     public CommonResult<Long> createFile(@Valid @RequestBody FileCreateReqVO createReqVO) {
-        return success(fileService.createFile(createReqVO));
+        return success(fileApplicationService.createFileRecord(
+                createReqVO.getConfigId(), createReqVO.getName(), createReqVO.getPath(),
+                createReqVO.getUrl(), createReqVO.getType(), createReqVO.getSize()));
     }
 
     @GetMapping("/get")
@@ -77,7 +95,8 @@ public class FileController {
     @Parameter(name = "id", description = "编号", required = true)
     @PreAuthorize("@ss.hasPermission('infra:file:query')")
     public CommonResult<FileRespVO> getFile(@RequestParam("id") Long id) {
-        return success(BeanUtils.toBean(fileService.getFile(id), FileRespVO.class));
+        File file = fileApplicationService.getFile(id);
+        return success(toFileRespVO(file));
     }
 
     @DeleteMapping("/delete")
@@ -85,7 +104,10 @@ public class FileController {
     @Parameter(name = "id", description = "编号", required = true)
     @PreAuthorize("@ss.hasPermission('infra:file:delete')")
     public CommonResult<Boolean> deleteFile(@RequestParam("id") Long id) throws Exception {
-        fileService.deleteFile(id);
+        File file = fileApplicationService.getFile(id);
+        FileClient fileClient = file != null && file.configId() != null
+                ? fileConfigService.getFileClient(file.configId().value()) : null;
+        fileApplicationService.deleteFile(id, fileClient);
         return success(true);
     }
 
@@ -94,7 +116,8 @@ public class FileController {
     @Parameter(name = "ids", description = "编号列表", required = true)
     @PreAuthorize("@ss.hasPermission('infra:file:delete')")
     public CommonResult<Boolean> deleteFileList(@RequestParam("ids") List<Long> ids) throws Exception {
-        fileService.deleteFileList(ids);
+        fileApplicationService.deleteFileList(ids, configId ->
+                configId != null ? fileConfigService.getFileClient(configId) : null);
         return success(true);
     }
 
@@ -106,18 +129,13 @@ public class FileController {
     public void getFileContent(HttpServletRequest request,
                                HttpServletResponse response,
                                @PathVariable("configId") Long configId) throws Exception {
-        // 获取请求的路径
         String path = StrUtil.subAfter(request.getRequestURI(), "/get/", false);
         if (StrUtil.isEmpty(path)) {
             throw new IllegalArgumentException("结尾的 path 路径必须传递");
         }
-        // 解码，解决中文路径的问题
-        // https://gitee.com/zhijiantianya/ruoyi-vue-pro/pulls/807/
-        // https://gitee.com/zhijiantianya/ruoyi-vue-pro/pulls/1432/
         path = URLUtil.decode(path, StandardCharsets.UTF_8, false);
-
-        // 读取内容
-        byte[] content = fileService.getFileContent(configId, path);
+        FileClient fileClient = fileConfigService.getFileClient(configId);
+        byte[] content = fileClient.getContent(path);
         if (content == null) {
             log.warn("[getFileContent][configId({}) path({}) 文件不存在]", configId, path);
             response.setStatus(HttpStatus.NOT_FOUND.value());
@@ -130,8 +148,27 @@ public class FileController {
     @Operation(summary = "获得文件分页")
     @PreAuthorize("@ss.hasPermission('infra:file:query')")
     public CommonResult<PageResult<FileRespVO>> getFilePage(@Valid FilePageReqVO pageVO) {
-        PageResult<FileDO> pageResult = fileService.getFilePage(pageVO);
-        return success(BeanUtils.toBean(pageResult, FileRespVO.class));
+        PageResult<File> pageResult = fileApplicationService.getFilePage(
+                pageVO.getPath(), pageVO.getType(), pageVO.getCreateTime(),
+                pageVO.getPageNo(), pageVO.getPageSize());
+        PageResult<FileRespVO> voPage = new PageResult<>(
+                pageResult.getList().stream().map(this::toFileRespVO).collect(Collectors.toList()),
+                pageResult.getTotal());
+        return success(voPage);
     }
 
+    // ── 转换方法 ──
+
+    private FileRespVO toFileRespVO(File file) {
+        if (file == null) return null;
+        FileRespVO vo = new FileRespVO();
+        vo.setId(file.id().value());
+        vo.setConfigId(file.configId() != null ? file.configId().value() : null);
+        vo.setName(file.name());
+        vo.setPath(file.path());
+        vo.setUrl(file.url());
+        vo.setType(file.type());
+        vo.setSize(file.size());
+        return vo;
+    }
 }

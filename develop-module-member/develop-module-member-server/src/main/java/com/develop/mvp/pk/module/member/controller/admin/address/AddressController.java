@@ -1,10 +1,10 @@
 package com.develop.mvp.pk.module.member.controller.admin.address;
 
 import com.develop.mvp.pk.framework.common.pojo.CommonResult;
+import com.develop.mvp.pk.module.member.application.address.MemberAddressApplicationService;
 import com.develop.mvp.pk.module.member.controller.admin.address.vo.AddressRespVO;
 import com.develop.mvp.pk.module.member.convert.address.AddressConvert;
-import com.develop.mvp.pk.module.member.dal.dataobject.address.MemberAddressDO;
-import com.develop.mvp.pk.module.member.service.address.AddressService;
+import com.develop.mvp.pk.module.member.domain.address.MemberAddress;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -27,14 +27,14 @@ import static com.develop.mvp.pk.framework.common.pojo.CommonResult.success;
 public class AddressController {
 
     @Resource
-    private AddressService addressService;
+    private MemberAddressApplicationService addressApplicationService;
 
     @GetMapping("/list")
     @Operation(summary = "获得用户收件地址列表")
     @Parameter(name = "userId", description = "用户编号", required = true)
     @PreAuthorize("@ss.hasPermission('member:user:query')")
     public CommonResult<List<AddressRespVO>> getAddressList(@RequestParam("userId") Long userId) {
-        List<MemberAddressDO> list = addressService.getAddressList(userId);
+        List<MemberAddress> list = addressApplicationService.getAddressList(userId);
         return success(AddressConvert.INSTANCE.convertList2(list));
     }
 

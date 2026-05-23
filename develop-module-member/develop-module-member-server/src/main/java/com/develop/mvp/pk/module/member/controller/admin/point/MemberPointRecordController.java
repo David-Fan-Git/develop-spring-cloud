@@ -2,13 +2,13 @@ package com.develop.mvp.pk.module.member.controller.admin.point;
 
 import com.develop.mvp.pk.framework.common.pojo.CommonResult;
 import com.develop.mvp.pk.framework.common.pojo.PageResult;
+import com.develop.mvp.pk.module.member.application.point.MemberPointRecordApplicationService;
 import com.develop.mvp.pk.module.member.controller.admin.point.vo.recrod.MemberPointRecordPageReqVO;
 import com.develop.mvp.pk.module.member.controller.admin.point.vo.recrod.MemberPointRecordRespVO;
 import com.develop.mvp.pk.module.member.convert.point.MemberPointRecordConvert;
-import com.develop.mvp.pk.module.member.dal.dataobject.point.MemberPointRecordDO;
 import com.develop.mvp.pk.module.member.dal.dataobject.user.MemberUserDO;
-import com.develop.mvp.pk.module.member.service.point.MemberPointRecordService;
-import com.develop.mvp.pk.module.member.service.user.MemberUserService;
+import com.develop.mvp.pk.module.member.dal.mysql.user.MemberUserMapper;
+import com.develop.mvp.pk.module.member.domain.point.MemberPointRecord;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -32,24 +32,22 @@ import static com.develop.mvp.pk.framework.common.util.collection.CollectionUtil
 public class MemberPointRecordController {
 
     @Resource
-    private MemberPointRecordService pointRecordService;
-
+    private MemberPointRecordApplicationService pointRecordApplicationService;
     @Resource
-    private MemberUserService memberUserService;
+    private MemberUserMapper memberUserMapper;
 
     @GetMapping("/page")
     @Operation(summary = "获得用户积分记录分页")
     @PreAuthorize("@ss.hasPermission('point:record:query')")
     public CommonResult<PageResult<MemberPointRecordRespVO>> getPointRecordPage(@Valid MemberPointRecordPageReqVO pageVO) {
-        // 执行分页查询
-        PageResult<MemberPointRecordDO> pageResult = pointRecordService.getPointRecordPage(pageVO);
+        PageResult<MemberPointRecord> pageResult = pointRecordApplicationService.getPointRecordPage(
+                pageVO.getNickname(), pageVO.getUserId(), pageVO.getBizType(), pageVO.getTitle(),
+                pageVO.getPageNo(), pageVO.getPageSize());
         if (CollectionUtils.isEmpty(pageResult.getList())) {
             return success(PageResult.empty(pageResult.getTotal()));
         }
-
-        // 拼接结果返回
-        List<MemberUserDO> users = memberUserService.getUserList(
-                convertSet(pageResult.getList(), MemberPointRecordDO::getUserId));
+        List<MemberUserDO> users = memberUserMapper.selectByIds(
+                convertSet(pageResult.getList(), MemberPointRecord::userId));
         return success(MemberPointRecordConvert.INSTANCE.convertPage(pageResult, users));
     }
 

@@ -32,37 +32,58 @@ The project uses `maven-surefire-plugin` 3.x with JUnit 5. There is a `develop-s
 
 ```
 develop-dependencies/          # BOM — all dependency versions (single pom)
-develop-framework/             # 17 shared starters (web, security, mybatis, redis, mq, rpc, job, excel, test…)
+develop-framework/             # Shared starters (web, security, mybatis, redis, mq, rpc, job, excel, test…)
 develop-gateway/               # Spring Cloud Gateway (standalone boot app)
 develop-server/                # Monolithic boot app — aggregates develop-module-*-server as Maven dependencies
 develop-module-{name}/         # Business modules, each split into api/ and server/ sub-modules
-develop-ui/                    # 5 frontend projects (Vue3-element-plus, Vue3-vben, Vue2, uni-app admin, uni-app mall)
+develop-ui/                    # Frontend projects (Vue3-element-plus, Vue3-vben, Vue2, uni-app)
 sql/                           # Database init scripts for MySQL, Oracle, PostgreSQL, SQL Server, DM, Kingbase, OpenGauss
 ```
+
+Business modules: system, infra, member, bpm, pay, report, mp, mall, crm, erp, iot, mes, wms, ai.
 
 The platform runs in one of two modes controlled by which module dependencies are uncommented in `develop-server/pom.xml`:
 - **Minimal:** only `develop-module-system-server` + `develop-module-infra-server` (fast compile)
 - **Full:** uncomment additional modules (member, bpm, pay, report, mall, crm, erp, etc.)
 
-## Business Module Pattern
-
-Every `develop-module-{name}/` follows this internal structure:
-
-```
-develop-module-{name}/
-  develop-module-{name}-api/     # Interfaces, DTOs, API contracts (can be shared across modules)
-  develop-module-{name}-server/  # Implementation: controllers, services, DAL
-```
-
-Some larger modules (e.g., `develop-module-mall`) contain multiple sub-domains, each with their own api/server pair (product, promotion, trade, statistics).
-
 Java package base: `com.develop.mvp.pk`
 
-Within a `-server` module, the typical layer layout under `com.develop.mvp.pk.module.{name}/`:
-- `controller/` — REST endpoints
-- `service/` — business logic interfaces and implementations
-- `dal/` — MyBatis Plus mapper interfaces and entity classes
-- `framework/` — module-local Spring configuration (auto-configurations, interceptors, etc.)
+### Larger modules with sub-domains
+
+`develop-module-mall` contains multiple sub-domains, each with their own api/server pair: product, promotion, trade, statistics.
+
+## DDD Architecture (current, in-progress)
+
+The project has been undergoing a DDD refactoring. The new layer layout under `com.develop.mvp.pk.module.{name}/`:
+
+```
+domain/{aggregate}/        # Aggregate root, value objects, repository interface, domain events, factory, domain services
+  ├── AggregateRoot.java   # Pure Java class — no Spring/MyBatis annotations, constructor-injected value objects
+  ├── repository/          # Repository interface (defined in domain, no infrastructure imports)
+  ├── valueobject/         # Value objects (TenantId, TenantName, TenantStatus…)
+  ├── event/               # Domain events
+  └── service/             # Domain services (e.g., uniqueness checkers)
+
+application/{aggregate}/   # Application services — use case orchestration, calls repositories via interfaces
+infrastructure/{aggregate}/ # Repository implementations (MyBatis), external adapters — depends on domain + dal
+convert/                   # Object mapping (domain ↔ DO ↔ DTO), uses MapStruct
+```
+
+**DDD skills** for existing aggregates live in `.claude/ddd-skills/`. Before modifying a domain aggregate, read its skill document first. When creating a new aggregate, generate a skill document following the five-step process in the project memory.
+
+### Existing layers (coexisting)
+
+Some code still follows the pre-DDD three-layer pattern:
+
+```
+controller/    # REST endpoints (admin/app sub-directories for multi-terminal)
+service/       # Business logic interfaces and implementations
+dal/           # MyBatis Plus mapper interfaces + data objects (mysql/ and redis/ sub-directories)
+framework/     # Module-local Spring configuration (auto-configurations, interceptors, etc.)
+api/           # Internal API contracts for inter-module calls
+mq/            # Message producers/consumers
+job/           # XXL-Job scheduled tasks
+```
 
 ## Framework Starters (develop-framework)
 

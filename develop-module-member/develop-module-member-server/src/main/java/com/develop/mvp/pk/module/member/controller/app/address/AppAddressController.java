@@ -1,12 +1,12 @@
 package com.develop.mvp.pk.module.member.controller.app.address;
 
 import com.develop.mvp.pk.framework.common.pojo.CommonResult;
+import com.develop.mvp.pk.module.member.application.address.MemberAddressApplicationService;
 import com.develop.mvp.pk.module.member.controller.app.address.vo.AppAddressCreateReqVO;
 import com.develop.mvp.pk.module.member.controller.app.address.vo.AppAddressRespVO;
 import com.develop.mvp.pk.module.member.controller.app.address.vo.AppAddressUpdateReqVO;
 import com.develop.mvp.pk.module.member.convert.address.AddressConvert;
-import com.develop.mvp.pk.module.member.dal.dataobject.address.MemberAddressDO;
-import com.develop.mvp.pk.module.member.service.address.AddressService;
+import com.develop.mvp.pk.module.member.domain.address.MemberAddress;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.Operation;
@@ -27,18 +27,22 @@ import static com.develop.mvp.pk.framework.security.core.util.SecurityFrameworkU
 public class AppAddressController {
 
     @Resource
-    private AddressService addressService;
+    private MemberAddressApplicationService addressApplicationService;
 
     @PostMapping("/create")
     @Operation(summary = "创建用户收件地址")
     public CommonResult<Long> createAddress(@Valid @RequestBody AppAddressCreateReqVO createReqVO) {
-        return success(addressService.createAddress(getLoginUserId(), createReqVO));
+        return success(addressApplicationService.createAddress(getLoginUserId(),
+                createReqVO.getName(), createReqVO.getMobile(), createReqVO.getAreaId(),
+                createReqVO.getDetailAddress(), createReqVO.getDefaultStatus()));
     }
 
     @PutMapping("/update")
     @Operation(summary = "更新用户收件地址")
     public CommonResult<Boolean> updateAddress(@Valid @RequestBody AppAddressUpdateReqVO updateReqVO) {
-        addressService.updateAddress(getLoginUserId(), updateReqVO);
+        addressApplicationService.updateAddress(getLoginUserId(), updateReqVO.getId(),
+                updateReqVO.getName(), updateReqVO.getMobile(), updateReqVO.getAreaId(),
+                updateReqVO.getDetailAddress(), updateReqVO.getDefaultStatus());
         return success(true);
     }
 
@@ -46,7 +50,7 @@ public class AppAddressController {
     @Operation(summary = "删除用户收件地址")
     @Parameter(name = "id", description = "编号", required = true)
     public CommonResult<Boolean> deleteAddress(@RequestParam("id") Long id) {
-        addressService.deleteAddress(getLoginUserId(), id);
+        addressApplicationService.deleteAddress(getLoginUserId(), id);
         return success(true);
     }
 
@@ -54,21 +58,21 @@ public class AppAddressController {
     @Operation(summary = "获得用户收件地址")
     @Parameter(name = "id", description = "编号", required = true, example = "1024")
     public CommonResult<AppAddressRespVO> getAddress(@RequestParam("id") Long id) {
-        MemberAddressDO address = addressService.getAddress(getLoginUserId(), id);
+        MemberAddress address = addressApplicationService.getAddress(getLoginUserId(), id);
         return success(AddressConvert.INSTANCE.convert(address));
     }
 
     @GetMapping("/get-default")
     @Operation(summary = "获得默认的用户收件地址")
     public CommonResult<AppAddressRespVO> getDefaultUserAddress() {
-        MemberAddressDO address = addressService.getDefaultUserAddress(getLoginUserId());
+        MemberAddress address = addressApplicationService.getDefaultUserAddress(getLoginUserId());
         return success(AddressConvert.INSTANCE.convert(address));
     }
 
     @GetMapping("/list")
     @Operation(summary = "获得用户收件地址列表")
     public CommonResult<List<AppAddressRespVO>> getAddressList() {
-        List<MemberAddressDO> list = addressService.getAddressList(getLoginUserId());
+        List<MemberAddress> list = addressApplicationService.getAddressList(getLoginUserId());
         return success(AddressConvert.INSTANCE.convertList(list));
     }
 

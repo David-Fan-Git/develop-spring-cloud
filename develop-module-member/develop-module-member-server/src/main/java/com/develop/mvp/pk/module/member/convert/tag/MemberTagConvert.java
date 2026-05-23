@@ -5,10 +5,12 @@ import com.develop.mvp.pk.module.member.controller.admin.tag.vo.MemberTagCreateR
 import com.develop.mvp.pk.module.member.controller.admin.tag.vo.MemberTagRespVO;
 import com.develop.mvp.pk.module.member.controller.admin.tag.vo.MemberTagUpdateReqVO;
 import com.develop.mvp.pk.module.member.dal.dataobject.tag.MemberTagDO;
+import com.develop.mvp.pk.module.member.domain.tag.MemberTag;
 import org.mapstruct.Mapper;
 import org.mapstruct.factory.Mappers;
 
 import java.util.List;
+import java.util.stream.Collectors;
 
 /**
  * 会员标签 Convert
@@ -30,4 +32,23 @@ public interface MemberTagConvert {
 
     PageResult<MemberTagRespVO> convertPage(PageResult<MemberTagDO> page);
 
+    // ── Domain object conversions ──
+
+    default MemberTagRespVO convert(MemberTag bean) {
+        if (bean == null) return null;
+        MemberTagRespVO vo = new MemberTagRespVO();
+        vo.setId(bean.id());
+        vo.setName(bean.name());
+        return vo;
+    }
+
+    default List<MemberTagRespVO> convertList(List<MemberTag> list) {
+        if (list == null) return null;
+        return list.stream().map(this::convert).collect(Collectors.toList());
+    }
+
+    default PageResult<MemberTagRespVO> convertPage(PageResult<MemberTag> page) {
+        if (page == null) return null;
+        return new PageResult<>(page.getList().stream().map(this::convert).collect(Collectors.toList()), page.getTotal());
+    }
 }
