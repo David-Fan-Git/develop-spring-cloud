@@ -11,6 +11,7 @@ import com.develop.mvp.pk.module.trade.domain.tradeorder.TradeOrder;
 import com.develop.mvp.pk.module.trade.domain.tradeorder.TradeOrderFactory;
 import com.develop.mvp.pk.module.trade.domain.tradeorder.repository.TradeOrderRepository;
 import com.develop.mvp.pk.module.trade.domain.tradeorder.valueobject.OrderItem;
+import com.develop.mvp.pk.module.trade.domain.tradeorder.valueobject.OrderItemProperty;
 import com.develop.mvp.pk.module.trade.domain.tradeorder.valueobject.TradeOrderId;
 import org.springframework.stereotype.Repository;
 import org.springframework.transaction.annotation.Transactional;
@@ -35,21 +36,23 @@ public class TradeOrderRepositoryImpl implements TradeOrderRepository {
     @Transactional
     public TradeOrder save(TradeOrder order) {
         TradeOrderDO orderDO = toDataObject(order);
-        if (tradeOrderMapper.selectById(order.id().value()) == null) {
+        TradeOrder persistedOrder;
+        if (order.id() == null || tradeOrderMapper.selectById(order.id().value()) == null) {
             tradeOrderMapper.insert(orderDO);
+            persistedOrder = toDomain(orderDO);
         } else {
             tradeOrderMapper.updateById(orderDO);
+            persistedOrder = order;
         }
-        // Save items
         for (OrderItem item : order.items()) {
-            TradeOrderItemDO itemDO = toItemDataObject(item, order.id().value());
+            TradeOrderItemDO itemDO = toItemDataObject(item, persistedOrder.id().value());
             if (item.id() != null && tradeOrderItemMapper.selectById(item.id()) != null) {
                 tradeOrderItemMapper.updateById(itemDO);
             } else {
                 tradeOrderItemMapper.insert(itemDO);
             }
         }
-        return order;
+        return persistedOrder;
     }
 
     @Override
@@ -60,7 +63,7 @@ public class TradeOrderRepositoryImpl implements TradeOrderRepository {
 
     @Override
     public TradeOrder findByNo(String no) {
-        TradeOrderDO orderDO = tradeOrderMapper.selectByNo(no);
+        TradeOrderDO orderDO = tradeOrderMapper.selectOne(TradeOrderDO::getNo, no);
         return orderDO != null ? toDomain(orderDO) : null;
     }
 
@@ -86,7 +89,7 @@ public class TradeOrderRepositoryImpl implements TradeOrderRepository {
         reqVO.setCreateTime(createTime);
         reqVO.setPageNo(pageNo);
         reqVO.setPageSize(pageSize);
-        PageResult<TradeOrderDO> doPage = tradeOrderMapper.selectPage(reqVO);
+        PageResult<TradeOrderDO> doPage = tradeOrderMapper.selectPage(reqVO, null);
         return new PageResult<>(
                 doPage.getList().stream().map(this::toDomain).collect(Collectors.toList()),
                 doPage.getTotal());
@@ -106,7 +109,7 @@ public class TradeOrderRepositoryImpl implements TradeOrderRepository {
         List<TradeOrderItemDO> itemDOs = tradeOrderItemMapper.selectListByOrderId(orderDO.getId());
         List<OrderItem> items = itemDOs.stream().map(i -> new OrderItem(
                 i.getId(), i.getUserId(), i.getCartId(), i.getSpuId(), i.getSpuName(),
-                i.getSkuId(), i.getProperties(), i.getPicUrl(), i.getCount(),
+                i.getSkuId(), toDomainProperties(i.getProperties()), i.getPicUrl(), i.getCount(),
                 i.getCommentStatus(), i.getPrice(), i.getDiscountPrice(), i.getDeliveryPrice(),
                 i.getAdjustPrice(), i.getPayPrice(), i.getCouponPrice(), i.getPointPrice(),
                 i.getUsePoint(), i.getGivePoint(), i.getVipPrice(),
@@ -137,7 +140,7 @@ public class TradeOrderRepositoryImpl implements TradeOrderRepository {
 
     private TradeOrderDO toDataObject(TradeOrder order) {
         TradeOrderDO orderDO = new TradeOrderDO();
-        orderDO.setId(order.id().value()); orderDO.setNo(order.no());
+        orderDO.setId(order.id() != null ? order.id().value() : null); orderDO.setNo(order.no());
         orderDO.setType(order.type()); orderDO.setTerminal(order.terminal());
         orderDO.setUserId(order.userId()); orderDO.setUserIp(order.userIp());
         orderDO.setUserRemark(order.userRemark()); orderDO.setStatus(order.status());
@@ -180,7 +183,7 @@ public class TradeOrderRepositoryImpl implements TradeOrderRepository {
         itemDO.setUserId(item.userId()); itemDO.setCartId(item.cartId());
         itemDO.setSpuId(item.spuId()); itemDO.setSpuName(item.spuName());
         itemDO.setSkuId(item.skuId()); itemDO.setCount(item.count());
-        itemDO.setProperties(item.properties());
+        itemDO.setProperties(toDataObjectProperties(item.properties()));
         itemDO.setPicUrl(item.picUrl()); itemDO.setCommentStatus(item.commentStatus());
         itemDO.setPrice(item.price()); itemDO.setDiscountPrice(item.discountPrice());
         itemDO.setDeliveryPrice(item.deliveryPrice()); itemDO.setAdjustPrice(item.adjustPrice());
@@ -189,5 +192,24 @@ public class TradeOrderRepositoryImpl implements TradeOrderRepository {
         itemDO.setGivePoint(item.givePoint()); itemDO.setVipPrice(item.vipPrice());
         itemDO.setAfterSaleId(item.afterSaleId()); itemDO.setAfterSaleStatus(item.afterSaleStatus());
         return itemDO;
+    }
+
+    private List<OrderItemProperty> toDomainProperties(List<TradeOrderItemDO.Property> properties) {
+        return properties == null ? List.of() : properties.stream()
+                .map(property -> new OrderItemProperty(property.getPropertyId(), property.getPropertyName(),
+                        property.getValueId(), property.getValueName()))
+                .collect(Collectors.toList());
+    }
+
+    private List<TradeOrderItemDO.Property> toDataObjectProperties(List<OrderItemProperty> properties) {
+        return properties == null ? List.of() : properties.stream()
+                .map(property -> {
+                    TradeOrderItemDO.Property dataObjectProperty = new TradeOrderItemDO.Property();
+                    dataObjectProperty.setPropertyId(property.propertyId());
+                    dataObjectProperty.setPropertyName(property.propertyName());
+                    dataObjectProperty.setValueId(property.valueId());
+                    dataObjectProperty.setValueName(property.valueName());
+                    return dataObjectProperty;
+                }).collect(Collectors.toList());
     }
 }

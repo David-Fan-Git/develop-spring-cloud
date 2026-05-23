@@ -7,7 +7,7 @@ import com.develop.mvp.pk.module.trade.domain.tradeorder.TradeOrder;
 import com.develop.mvp.pk.module.trade.domain.tradeorder.TradeOrderFactory;
 import com.develop.mvp.pk.module.trade.domain.tradeorder.repository.TradeOrderRepository;
 import com.develop.mvp.pk.module.trade.domain.tradeorder.valueobject.TradeOrderId;
-import com.develop.mvp.pk.module.system.domain.user.event.DomainEventPublisher;
+import com.develop.mvp.pk.module.trade.domain.event.DomainEventPublisher;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -40,7 +40,7 @@ public class TradeOrderApplicationService {
         TradeOrder order = TradeOrderFactory.create(id, no, type, terminal, userId, userIp,
                 userRemark, totalPrice, discountPrice, deliveryPrice, adjustPrice, payPrice,
                 deliveryType, receiverName, receiverMobile, receiverAreaId, receiverDetailAddress, items);
-        tradeOrderRepository.save(order);
+        order = tradeOrderRepository.save(order);
         publishEvents(order);
         return order;
     }

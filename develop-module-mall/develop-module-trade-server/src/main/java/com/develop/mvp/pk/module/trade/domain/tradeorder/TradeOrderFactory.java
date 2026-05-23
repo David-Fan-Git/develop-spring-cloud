@@ -18,13 +18,13 @@ public final class TradeOrderFactory {
                                      Integer deliveryType, String receiverName, String receiverMobile,
                                      Integer receiverAreaId, String receiverDetailAddress,
                                      List<OrderItem> items) {
-        return new TradeOrder(TradeOrderId.of(id), no, type, terminal, userId,
-                userIp, userRemark, null, null, null, null, null, null, null, null,
-                null, false, null, null, totalPrice, discountPrice, deliveryPrice,
+        return new TradeOrder(id != null ? TradeOrderId.of(id) : null, no, type, terminal, userId,
+                userIp, userRemark, null, null, null, null, null, null, false,
+                null, null, false, null, null, totalPrice, discountPrice, deliveryPrice,
                 adjustPrice, payPrice, deliveryType, null, null, null, null,
                 receiverName, receiverMobile, receiverAreaId, receiverDetailAddress,
                 null, null, null, 0, null, null, null, null, null, null, null,
-                null, null, null, null, null, null, null, null, null, null, items);
+                null, null, null, null, null, null, null, null, null, items);
     }
 
     public static TradeOrder reconstitute(Long id, String no, Integer type, Integer terminal, Long userId,

@@ -6,7 +6,7 @@ import com.develop.mvp.pk.module.trade.domain.cart.Cart;
 import com.develop.mvp.pk.module.trade.domain.cart.CartFactory;
 import com.develop.mvp.pk.module.trade.domain.cart.repository.CartRepository;
 import com.develop.mvp.pk.module.trade.domain.cart.valueobject.CartId;
-import com.develop.mvp.pk.module.system.domain.user.event.DomainEventPublisher;
+import com.develop.mvp.pk.module.trade.domain.event.DomainEventPublisher;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -34,9 +34,7 @@ public class CartApplicationService {
             cartRepository.save(existing);
             return existing;
         }
-        Cart cart = CartFactory.create(null, userId, spuId, skuId, count, true);
-        cartRepository.save(cart);
-        return cart;
+        return cartRepository.save(CartFactory.create(null, userId, spuId, skuId, count, true));
     }
 
     @Transactional

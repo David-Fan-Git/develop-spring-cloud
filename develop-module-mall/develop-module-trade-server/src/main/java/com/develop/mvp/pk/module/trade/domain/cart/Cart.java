@@ -5,7 +5,7 @@ package com.develop.mvp.pk.module.trade.domain.cart;
 // 验收标准 AC01/AC02：无 MyBatis/Spring 注解
 
 import com.develop.mvp.pk.module.trade.domain.cart.valueobject.CartId;
-import com.develop.mvp.pk.module.system.domain.user.event.DomainEvent;
+import com.develop.mvp.pk.module.trade.domain.event.DomainEvent;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -22,7 +22,7 @@ public final class Cart {
     private final List<DomainEvent> events = new ArrayList<>();
 
     Cart(CartId id, Long userId, Long spuId, Long skuId, Integer count, Boolean selected) {
-        this.id = Objects.requireNonNull(id);
+        this.id = id;
         this.userId = Objects.requireNonNull(userId, "用户编号不能为空");
         this.spuId = Objects.requireNonNull(spuId, "SPU编号不能为空");
         this.skuId = Objects.requireNonNull(skuId, "SKU编号不能为空");
@@ -55,7 +55,7 @@ public final class Cart {
     public boolean equals(Object o) {
         if (this == o) return true;
         if (!(o instanceof Cart that)) return false;
-        return id.equals(that.id);
+        return Objects.equals(id, that.id);
     }
 
     @Override

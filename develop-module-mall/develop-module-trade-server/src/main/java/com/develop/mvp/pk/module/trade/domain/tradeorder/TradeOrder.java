@@ -11,7 +11,7 @@ import com.develop.mvp.pk.module.trade.domain.tradeorder.valueobject.TradeOrderI
 import com.develop.mvp.pk.module.trade.enums.order.TradeOrderCancelTypeEnum;
 import com.develop.mvp.pk.module.trade.enums.order.TradeOrderRefundStatusEnum;
 import com.develop.mvp.pk.module.trade.enums.order.TradeOrderStatusEnum;
-import com.develop.mvp.pk.module.system.domain.user.event.DomainEvent;
+import com.develop.mvp.pk.module.trade.domain.event.DomainEvent;
 
 import java.time.LocalDateTime;
 import java.util.*;
@@ -106,7 +106,7 @@ public final class TradeOrder {
                Long seckillActivityId, Long bargainActivityId, Long bargainRecordId,
                Long combinationActivityId, Long combinationHeadId, Long combinationRecordId,
                Long pointActivityId, List<OrderItem> items) {
-        this.id = Objects.requireNonNull(id);
+        this.id = id;
         this.no = no; this.type = type; this.terminal = terminal;
         this.userId = Objects.requireNonNull(userId);
         this.userIp = userIp; this.userRemark = userRemark;
@@ -195,8 +195,8 @@ public final class TradeOrder {
     /** 更新收货地址 */
     public void updateReceiver(String receiverName, String receiverMobile, Integer receiverAreaId,
                                 String receiverDetailAddress) {
-        if (!TradeOrderStatusEnum.UNPAID.getStatus().equals(this.status)) {
-            throw new IllegalStateException("只有未支付订单才能修改收货地址");
+        if (!TradeOrderStatusEnum.UNDELIVERED.getStatus().equals(this.status)) {
+            throw new IllegalStateException("只有待发货订单才能修改收货地址");
         }
         this.receiverName = receiverName;
         this.receiverMobile = receiverMobile;
@@ -287,7 +287,7 @@ public final class TradeOrder {
     public boolean equals(Object o) {
         if (this == o) return true;
         if (!(o instanceof TradeOrder that)) return false;
-        return id.equals(that.id);
+        return Objects.equals(id, that.id);
     }
 
     @Override

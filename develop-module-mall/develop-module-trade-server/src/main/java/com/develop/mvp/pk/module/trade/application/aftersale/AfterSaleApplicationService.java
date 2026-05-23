@@ -7,7 +7,7 @@ import com.develop.mvp.pk.module.trade.domain.aftersale.AfterSale;
 import com.develop.mvp.pk.module.trade.domain.aftersale.AfterSaleFactory;
 import com.develop.mvp.pk.module.trade.domain.aftersale.repository.AfterSaleRepository;
 import com.develop.mvp.pk.module.trade.domain.aftersale.valueobject.AfterSaleId;
-import com.develop.mvp.pk.module.system.domain.user.event.DomainEventPublisher;
+import com.develop.mvp.pk.module.trade.domain.event.DomainEventPublisher;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -36,7 +36,7 @@ public class AfterSaleApplicationService {
                                  Integer status, Integer refundPrice) {
         AfterSale afterSale = AfterSaleFactory.create(id, no, userId, orderId, orderItemId,
                 spuId, skuId, count, type, reason, description, proofPictures, status, refundPrice);
-        afterSaleRepository.save(afterSale);
+        afterSale = afterSaleRepository.save(afterSale);
         return afterSale.id().value();
     }
 

@@ -12,7 +12,7 @@ public final class AfterSaleFactory {
                                     Long spuId, Long skuId, Integer count, Integer type,
                                     String reason, String description, String[] proofPictures,
                                     Integer status, Integer refundPrice) {
-        return new AfterSale(AfterSaleId.of(id), no, userId, orderId, orderItemId,
+        return new AfterSale(id != null ? AfterSaleId.of(id) : null, no, userId, orderId, orderItemId,
                 spuId, skuId, count, type, reason, description, proofPictures,
                 status, refundPrice, null, null, null, null, null, null);
     }

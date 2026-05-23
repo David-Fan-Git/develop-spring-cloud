@@ -11,7 +11,7 @@ public final class OrderItem {
     private final Long spuId;
     private final String spuName;
     private final Long skuId;
-    private final List<com.develop.mvp.pk.module.trade.dal.dataobject.order.TradeOrderItemDO.Property> properties;
+    private final List<OrderItemProperty> properties;
     private final String picUrl;
     private final Integer count;
     private final Boolean commentStatus;
@@ -29,7 +29,7 @@ public final class OrderItem {
     private final Integer afterSaleStatus;
 
     public OrderItem(Long id, Long userId, Long cartId, Long spuId, String spuName, Long skuId,
-                     List<com.develop.mvp.pk.module.trade.dal.dataobject.order.TradeOrderItemDO.Property> properties,
+                     List<OrderItemProperty> properties,
                      String picUrl, Integer count, Boolean commentStatus,
                      Integer price, Integer discountPrice, Integer deliveryPrice, Integer adjustPrice,
                      Integer payPrice, Integer couponPrice, Integer pointPrice, Integer usePoint,
@@ -50,7 +50,7 @@ public final class OrderItem {
     public Long id() { return id; } public Long userId() { return userId; }
     public Long cartId() { return cartId; } public Long spuId() { return spuId; }
     public String spuName() { return spuName; } public Long skuId() { return skuId; }
-    public List<com.develop.mvp.pk.module.trade.dal.dataobject.order.TradeOrderItemDO.Property> properties() { return properties; }
+    public List<OrderItemProperty> properties() { return properties; }
     public String picUrl() { return picUrl; } public Integer count() { return count; }
     public Boolean commentStatus() { return commentStatus; } public Integer price() { return price; }
     public Integer discountPrice() { return discountPrice; } public Integer deliveryPrice() { return deliveryPrice; }

@@ -28,11 +28,11 @@ public class AfterSaleRepositoryImpl implements AfterSaleRepository {
     @Transactional
     public AfterSale save(AfterSale afterSale) {
         AfterSaleDO afterSaleDO = toDataObject(afterSale);
-        if (afterSaleMapper.selectById(afterSale.id().value()) == null) {
+        if (afterSale.id() == null || afterSaleMapper.selectById(afterSale.id().value()) == null) {
             afterSaleMapper.insert(afterSaleDO);
-        } else {
-            afterSaleMapper.updateById(afterSaleDO);
+            return toDomain(afterSaleDO);
         }
+        afterSaleMapper.updateById(afterSaleDO);
         return afterSale;
     }
 
@@ -44,7 +44,7 @@ public class AfterSaleRepositoryImpl implements AfterSaleRepository {
 
     @Override
     public AfterSale findByNo(String no) {
-        AfterSaleDO afterSaleDO = afterSaleMapper.selectByNo(no);
+        AfterSaleDO afterSaleDO = afterSaleMapper.selectOne(AfterSaleDO::getNo, no);
         return afterSaleDO != null ? toDomain(afterSaleDO) : null;
     }
 
@@ -77,7 +77,7 @@ public class AfterSaleRepositoryImpl implements AfterSaleRepository {
 
     private AfterSaleDO toDataObject(AfterSale afterSale) {
         AfterSaleDO afterSaleDO = new AfterSaleDO();
-        afterSaleDO.setId(afterSale.id().value()); afterSaleDO.setNo(afterSale.no());
+        afterSaleDO.setId(afterSale.id() != null ? afterSale.id().value() : null); afterSaleDO.setNo(afterSale.no());
         afterSaleDO.setUserId(afterSale.userId()); afterSaleDO.setOrderId(afterSale.orderId());
         afterSaleDO.setOrderItemId(afterSale.orderItemId());
         afterSaleDO.setSpuId(afterSale.spuId()); afterSaleDO.setSkuId(afterSale.skuId());

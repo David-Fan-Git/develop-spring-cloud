@@ -8,6 +8,7 @@ import com.develop.mvp.pk.module.trade.domain.cart.Cart;
 import com.develop.mvp.pk.module.trade.domain.cart.CartFactory;
 import com.develop.mvp.pk.module.trade.domain.cart.repository.CartRepository;
 import com.develop.mvp.pk.module.trade.domain.cart.valueobject.CartId;
+import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import org.springframework.stereotype.Repository;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -25,11 +26,11 @@ public class CartRepositoryImpl implements CartRepository {
     @Transactional
     public Cart save(Cart cart) {
         CartDO cartDO = toDataObject(cart);
-        if (cartMapper.selectById(cart.id().value()) == null) {
+        if (cart.id() == null || cartMapper.selectById(cart.id().value()) == null) {
             cartMapper.insert(cartDO);
-        } else {
-            cartMapper.updateById(cartDO);
+            return toDomain(cartDO);
         }
+        cartMapper.updateById(cartDO);
         return cart;
     }
 
@@ -39,7 +40,7 @@ public class CartRepositoryImpl implements CartRepository {
 
     @Override
     @Transactional
-    public void deleteByUserId(Long userId) { cartMapper.deleteByUserId(userId); }
+    public void deleteByUserId(Long userId) { cartMapper.delete(CartDO::getUserId, userId); }
 
     @Override
     public Cart findById(CartId id) {
@@ -62,24 +63,31 @@ public class CartRepositoryImpl implements CartRepository {
     @Override
     @Transactional
     public void deleteSelectedByUserId(Long userId) {
-        cartMapper.deleteByUserIdAndSelected(userId, true);
+        cartMapper.delete(new LambdaQueryWrapper<CartDO>()
+                .eq(CartDO::getUserId, userId).eq(CartDO::getSelected, true));
     }
 
     @Override
     @Transactional
     public void selectAllByUserId(Long userId) {
-        cartMapper.updateSelectedByUserId(userId, true);
+        CartDO updateDO = new CartDO();
+        updateDO.setSelected(true);
+        cartMapper.update(updateDO, new LambdaQueryWrapper<CartDO>()
+                .eq(CartDO::getUserId, userId));
     }
 
     @Override
     @Transactional
     public void unselectAllByUserId(Long userId) {
-        cartMapper.updateSelectedByUserId(userId, false);
+        CartDO updateDO = new CartDO();
+        updateDO.setSelected(false);
+        cartMapper.update(updateDO, new LambdaQueryWrapper<CartDO>()
+                .eq(CartDO::getUserId, userId));
     }
 
     private CartDO toDataObject(Cart cart) {
         CartDO cartDO = new CartDO();
-        cartDO.setId(cart.id().value());
+        cartDO.setId(cart.id() != null ? cart.id().value() : null);
         cartDO.setUserId(cart.userId());
         cartDO.setSpuId(cart.spuId());
         cartDO.setSkuId(cart.skuId());

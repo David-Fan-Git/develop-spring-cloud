@@ -5,7 +5,7 @@ package com.develop.mvp.pk.module.trade.domain.aftersale;
 // 验收标准 AC01/AC02：无 MyBatis/Spring 注解
 
 import com.develop.mvp.pk.module.trade.domain.aftersale.valueobject.AfterSaleId;
-import com.develop.mvp.pk.module.system.domain.user.event.DomainEvent;
+import com.develop.mvp.pk.module.trade.domain.event.DomainEvent;
 
 import java.time.LocalDateTime;
 import java.util.ArrayList;
@@ -41,7 +41,7 @@ public final class AfterSale {
               String description, String[] proofPictures, Integer status, Integer refundPrice,
               String rejectReason, String payChannelCode, Long payRefundId,
               LocalDateTime auditTime, LocalDateTime refuseTime, LocalDateTime refundTime) {
-        this.id = Objects.requireNonNull(id);
+        this.id = id;
         this.no = no; this.userId = Objects.requireNonNull(userId);
         this.orderId = Objects.requireNonNull(orderId);
         this.orderItemId = Objects.requireNonNull(orderItemId);
@@ -108,7 +108,7 @@ public final class AfterSale {
     public boolean equals(Object o) {
         if (this == o) return true;
         if (!(o instanceof AfterSale that)) return false;
-        return id.equals(that.id);
+        return Objects.equals(id, that.id);
     }
 
     @Override
