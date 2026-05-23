@@ -17,4 +17,10 @@ public class AiModelPageReqVO extends PageParam {
     @Schema(description = "模型平台", example = "OpenAI")
     private String platform;
 
+    @Schema(description = "模型类型", example = "1")
+    private Integer type;
+
+    @Schema(description = "状态", example = "0")
+    private Integer status;
+
 }

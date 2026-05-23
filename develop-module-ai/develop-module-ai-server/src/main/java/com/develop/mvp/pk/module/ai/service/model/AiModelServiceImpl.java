@@ -55,6 +55,7 @@ public class AiModelServiceImpl implements AiModelService {
         // 1. 校验
         AiPlatformEnum.validatePlatform(createReqVO.getPlatform());
         apiKeyService.validateApiKey(createReqVO.getKeyId());
+        validateModelUnique(null, createReqVO.getPlatform(), createReqVO.getType(), createReqVO.getModel());
 
         // 2. 插入
         AiModelDO model = BeanUtils.toBean(createReqVO, AiModelDO.class);
@@ -68,6 +69,7 @@ public class AiModelServiceImpl implements AiModelService {
         validateModelExists(updateReqVO.getId());
         AiPlatformEnum.validatePlatform(updateReqVO.getPlatform());
         apiKeyService.validateApiKey(updateReqVO.getKeyId());
+        validateModelUnique(updateReqVO.getId(), updateReqVO.getPlatform(), updateReqVO.getType(), updateReqVO.getModel());
 
         // 2. 更新
         AiModelDO updateObj = BeanUtils.toBean(updateReqVO, AiModelDO.class);
@@ -90,6 +92,13 @@ public class AiModelServiceImpl implements AiModelService {
         return model;
     }
 
+    private void validateModelUnique(Long id, String platform, Integer type, String model) {
+        AiModelDO existing = modelMapper.selectByPlatformTypeAndModel(platform, type, model);
+        if (existing != null && !existing.getId().equals(id)) {
+            throw exception(MODEL_EXISTS);
+        }
+    }
+
     @Override
     public AiModelDO getModel(Long id) {
         return modelMapper.selectById(id);
@@ -106,7 +115,9 @@ public class AiModelServiceImpl implements AiModelService {
 
     @Override
     public PageResult<AiModelDO> getModelPage(AiModelPageReqVO pageReqVO) {
-        return modelMapper.selectPage(pageReqVO);
+        return modelMapper.selectPage(new com.develop.mvp.pk.module.ai.domain.model.repository.AiModelPageQuery(
+                pageReqVO.getName(), pageReqVO.getModel(), pageReqVO.getPlatform(),
+                pageReqVO.getType(), pageReqVO.getStatus(), pageReqVO.getPageNo(), pageReqVO.getPageSize()));
     }
 
     @Override

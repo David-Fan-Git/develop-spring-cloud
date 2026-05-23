@@ -16,6 +16,7 @@ public interface ErrorCodeConstants {
     // ========== API 模型 1-040-001-000 ==========
     ErrorCode MODEL_NOT_EXISTS = new ErrorCode(1_040_001_000, "模型不存在!");
     ErrorCode MODEL_DISABLE = new ErrorCode(1_040_001_001, "模型({})已禁用!");
+    ErrorCode MODEL_EXISTS = new ErrorCode(1_040_001_004, "模型已存在!");
     ErrorCode MODEL_DEFAULT_NOT_EXISTS = new ErrorCode(1_040_001_002, "操作失败，找不到默认模型");
     ErrorCode MODEL_USE_TYPE_ERROR = new ErrorCode(1_040_001_003, "操作失败，该模型的模型类型不正确");
 
