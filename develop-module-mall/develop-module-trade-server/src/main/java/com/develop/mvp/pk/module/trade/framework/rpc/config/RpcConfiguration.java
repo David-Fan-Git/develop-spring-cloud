@@ -21,10 +21,10 @@ import com.develop.mvp.pk.module.promotion.api.discount.DiscountActivityApi;
 import com.develop.mvp.pk.module.promotion.api.point.PointActivityApi;
 import com.develop.mvp.pk.module.promotion.api.reward.RewardActivityApi;
 import com.develop.mvp.pk.module.promotion.api.seckill.SeckillActivityApi;
-import com.develop.mvp.pk.module.system.api.notify.NotifyMessageSendApi;
-import com.develop.mvp.pk.module.system.api.social.SocialClientApi;
-import com.develop.mvp.pk.module.system.api.social.SocialUserApi;
-import com.develop.mvp.pk.module.system.api.user.AdminUserApi;
+import com.develop.mvp.pk.module.system.api.notify.remote.NotifyMessageSendRemoteClient;
+import com.develop.mvp.pk.module.system.api.social.remote.SocialClientRemoteClient;
+import com.develop.mvp.pk.module.system.api.social.remote.SocialUserRemoteClient;
+import com.develop.mvp.pk.module.system.api.user.remote.AdminUserRemoteClient;
 import org.springframework.cloud.openfeign.EnableFeignClients;
 import org.springframework.context.annotation.Configuration;
 
@@ -35,7 +35,7 @@ import org.springframework.context.annotation.Configuration;
         MemberUserApi.class, MemberPointApi.class, MemberLevelApi.class, MemberAddressApi.class, MemberConfigApi.class,
         ProductSpuApi.class, ProductSkuApi.class, ProductCommentApi.class, ProductCategoryApi.class,
         PayOrderApi.class, PayRefundApi.class, PayTransferApi.class, PayWalletApi.class,
-        AdminUserApi.class, NotifyMessageSendApi.class, SocialClientApi.class, SocialUserApi.class
+        AdminUserRemoteClient.class, NotifyMessageSendRemoteClient.class, SocialClientRemoteClient.class, SocialUserRemoteClient.class
 })
 public class RpcConfiguration {
 }

@@ -11,7 +11,6 @@ import feign.FeignIgnore;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.tags.Tag;
-import org.springframework.cloud.openfeign.FeignClient;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 
@@ -22,7 +21,6 @@ import java.util.Map;
 
 import static com.develop.mvp.pk.module.system.api.user.AdminUserApi.PREFIX;
 
-@FeignClient(name = ApiConstants.NAME) // TODO 芋艿：fallbackFactory =
 @Tag(name = "RPC 服务 - 管理员用户")
 @AutoTrans(namespace = PREFIX, fields = {"nickname"})
 public interface AdminUserApi extends AutoTransable<AdminUserRespDTO> {

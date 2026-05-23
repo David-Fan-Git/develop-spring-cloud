@@ -5,13 +5,11 @@ import com.develop.mvp.pk.module.system.api.mail.dto.MailSendSingleToUserReqDTO;
 import com.develop.mvp.pk.module.system.enums.ApiConstants;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import io.swagger.v3.oas.annotations.Operation;
-import org.springframework.cloud.openfeign.FeignClient;
 import org.springframework.web.bind.annotation.PostMapping;
 
 import jakarta.validation.Valid;
 import org.springframework.web.bind.annotation.RequestBody;
 
-@FeignClient(name = ApiConstants.NAME) // TODO 芋艿：fallbackFactory =
 @Tag(name = "RPC 服务 - 邮件发送")
 public interface MailSendApi {
 

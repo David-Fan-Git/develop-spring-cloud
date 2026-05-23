@@ -2,21 +2,21 @@ package com.develop.mvp.pk.module.bpm.framework.rpc.config;
 
 import com.develop.mvp.pk.module.bpm.api.event.CrmContractStatusListener;
 import com.develop.mvp.pk.module.bpm.api.event.CrmReceivableStatusListener;
-import com.develop.mvp.pk.module.system.api.dept.DeptApi;
-import com.develop.mvp.pk.module.system.api.dept.PostApi;
-import com.develop.mvp.pk.module.system.api.dict.DictDataApi;
-import com.develop.mvp.pk.module.system.api.permission.PermissionApi;
-import com.develop.mvp.pk.module.system.api.permission.RoleApi;
-import com.develop.mvp.pk.module.system.api.sms.SmsSendApi;
-import com.develop.mvp.pk.module.system.api.user.AdminUserApi;
+import com.develop.mvp.pk.module.system.api.dept.remote.DeptRemoteClient;
+import com.develop.mvp.pk.module.system.api.dept.remote.PostRemoteClient;
+import com.develop.mvp.pk.module.system.api.dict.remote.DictDataRemoteClient;
+import com.develop.mvp.pk.module.system.api.permission.remote.PermissionRemoteClient;
+import com.develop.mvp.pk.module.system.api.permission.remote.RoleRemoteClient;
+import com.develop.mvp.pk.module.system.api.sms.remote.SmsSendRemoteClient;
+import com.develop.mvp.pk.module.system.api.user.remote.AdminUserRemoteClient;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean;
 import org.springframework.cloud.openfeign.EnableFeignClients;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
 @Configuration(value = "bpmRpcConfiguration", proxyBeanMethods = false)
-@EnableFeignClients(clients = {RoleApi.class, DeptApi.class, PostApi.class, AdminUserApi.class, SmsSendApi.class, DictDataApi.class,
-        PermissionApi.class})
+@EnableFeignClients(clients = {RoleRemoteClient.class, DeptRemoteClient.class, PostRemoteClient.class, AdminUserRemoteClient.class, SmsSendRemoteClient.class, DictDataRemoteClient.class,
+        PermissionRemoteClient.class})
 public class RpcConfiguration {
 
     // ========== 特殊：解决微 develop-cloud 微服务场景下，跨服务（进程）无法 Listener 的问题 ==========

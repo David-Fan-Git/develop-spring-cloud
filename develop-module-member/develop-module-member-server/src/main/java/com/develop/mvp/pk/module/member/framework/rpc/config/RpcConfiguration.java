@@ -1,13 +1,13 @@
 package com.develop.mvp.pk.module.member.framework.rpc.config;
 
-import com.develop.mvp.pk.module.system.api.logger.LoginLogApi;
-import com.develop.mvp.pk.module.system.api.sms.SmsCodeApi;
-import com.develop.mvp.pk.module.system.api.social.SocialClientApi;
-import com.develop.mvp.pk.module.system.api.social.SocialUserApi;
+import com.develop.mvp.pk.module.system.api.logger.remote.LoginLogRemoteClient;
+import com.develop.mvp.pk.module.system.api.sms.remote.SmsCodeRemoteClient;
+import com.develop.mvp.pk.module.system.api.social.remote.SocialClientRemoteClient;
+import com.develop.mvp.pk.module.system.api.social.remote.SocialUserRemoteClient;
 import org.springframework.cloud.openfeign.EnableFeignClients;
 import org.springframework.context.annotation.Configuration;
 
 @Configuration(value = "memberRpcConfiguration", proxyBeanMethods = false)
-@EnableFeignClients(clients = {SmsCodeApi.class, LoginLogApi.class, SocialUserApi.class, SocialClientApi.class})
+@EnableFeignClients(clients = {SmsCodeRemoteClient.class, LoginLogRemoteClient.class, SocialUserRemoteClient.class, SocialClientRemoteClient.class})
 public class RpcConfiguration {
 }
