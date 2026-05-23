@@ -26,11 +26,11 @@ public class FileConfigRepositoryImpl implements FileConfigRepository {
     @Override
     public FileConfig save(FileConfig config) {
         FileConfigDO configDO = toDataObject(config);
-        if (fileConfigMapper.selectById(config.id().value()) == null) {
+        if (config.id() == null || fileConfigMapper.selectById(config.id().value()) == null) {
             fileConfigMapper.insert(configDO);
-        } else {
-            fileConfigMapper.updateById(configDO);
+            return toDomain(configDO);
         }
+        fileConfigMapper.updateById(configDO);
         return config;
     }
 
@@ -87,10 +87,11 @@ public class FileConfigRepositoryImpl implements FileConfigRepository {
 
     private FileConfigDO toDataObject(FileConfig config) {
         FileConfigDO configDO = new FileConfigDO();
-        configDO.setId(config.id().value());
+        configDO.setId(config.id() != null ? config.id().value() : null);
         configDO.setName(config.name().value());
         configDO.setStorage(config.storage());
         configDO.setMaster(config.master());
+        configDO.setConfig(config.config());
         configDO.setRemark(config.remark());
         return configDO;
     }
@@ -101,6 +102,7 @@ public class FileConfigRepositoryImpl implements FileConfigRepository {
                 configDO.getName(),
                 configDO.getStorage(),
                 configDO.getMaster(),
+                configDO.getConfig(),
                 configDO.getRemark()
         );
     }

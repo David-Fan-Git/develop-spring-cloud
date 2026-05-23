@@ -35,7 +35,7 @@ public final class CodegenTable {
 
     private final List<DomainEvent> events = new ArrayList<>();
 
-    CodegenTable(CodegenTableId id, String tableName, String tableComment, String className,
+    public CodegenTable(CodegenTableId id, String tableName, String tableComment, String className,
                  String classComment, String author, Integer templateType, Integer scene,
                  Integer frontType, Long masterTableId, Long subJoinColumnId,
                  Integer subJoinMany, String moduleName, String businessName,

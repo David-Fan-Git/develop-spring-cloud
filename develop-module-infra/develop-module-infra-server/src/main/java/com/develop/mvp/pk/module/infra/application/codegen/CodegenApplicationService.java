@@ -40,7 +40,7 @@ public class CodegenApplicationService {
                                          java.util.function.BiFunction<String, Long, CodegenTable> tableBuilder) {
         List<Long> ids = new java.util.ArrayList<>();
         for (String tableName : tableNames) {
-            CodegenTable table = tableBuilder.apply(author, tableName);
+            CodegenTable table = tableBuilder.apply(author, dataSourceConfigId);
             table = codegenRepository.save(table);
             table.markCreated();
             publishEvents(table);

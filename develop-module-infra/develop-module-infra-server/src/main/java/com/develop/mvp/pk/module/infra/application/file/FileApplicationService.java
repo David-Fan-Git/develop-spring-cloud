@@ -54,6 +54,7 @@ public class FileApplicationService {
      * 上传文件并保存记录
      */
     @Transactional
+    @SneakyThrows
     public String uploadFile(byte[] content, String name, String directory, String type,
                               FileClient fileClient) {
         // 处理 type 和 name
@@ -76,7 +77,7 @@ public class FileApplicationService {
         String url = fileClient.upload(content, path, type);
 
         // 创建领域对象并保存
-        File file = FileFactory.create(null, fileClient.getId(), name, path, url, type, (long) content.length);
+        File file = FileFactory.create(fileClient.getId(), name, path, url, type, (long) content.length);
         file = fileRepository.save(file);
         file.markUploaded();
         publishEvents(file);
@@ -87,7 +88,7 @@ public class FileApplicationService {
     public Long createFileRecord(Long configId, String name, String path, String url,
                                   String type, Long size) {
         url = HttpUtils.removeUrlQuery(url);
-        File file = FileFactory.create(null, configId, name, path, url, type, size);
+        File file = FileFactory.create(configId, name, path, url, type, size);
         file = fileRepository.save(file);
         file.markUploaded();
         publishEvents(file);

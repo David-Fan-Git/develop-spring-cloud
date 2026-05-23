@@ -26,11 +26,11 @@ public class FileRepositoryImpl implements FileRepository {
     @Override
     public File save(File file) {
         FileDO fileDO = toDataObject(file);
-        if (fileMapper.selectById(file.id().value()) == null) {
+        if (file.id() == null || fileMapper.selectById(file.id().value()) == null) {
             fileMapper.insert(fileDO);
-        } else {
-            fileMapper.updateById(fileDO);
+            return toDomain(fileDO);
         }
+        fileMapper.updateById(fileDO);
         return file;
     }
 
@@ -75,7 +75,7 @@ public class FileRepositoryImpl implements FileRepository {
 
     private FileDO toDataObject(File file) {
         FileDO fileDO = new FileDO();
-        fileDO.setId(file.id().value());
+        fileDO.setId(file.id() != null ? file.id().value() : null);
         fileDO.setConfigId(file.configId() != null ? file.configId().value() : null);
         fileDO.setName(file.name());
         fileDO.setPath(file.path());

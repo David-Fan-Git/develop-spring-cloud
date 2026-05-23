@@ -12,10 +12,16 @@ public final class DataSourceConfigFactory {
     private DataSourceConfigFactory() {}
 
     /** 创建新数据源配置 */
+    public static DataSourceConfig create(String name, String url, String username, String password) {
+        return new DataSourceConfig(null, DataSourceConfigName.of(name), DataSourceConfigUrl.of(url),
+                username, password);
+    }
+
+    /** 创建新数据源配置 */
     public static DataSourceConfig create(Long id, String name, String url,
                                           String username, String password) {
         return new DataSourceConfig(
-                DataSourceConfigId.of(id),
+                id != null ? DataSourceConfigId.of(id) : null,
                 DataSourceConfigName.of(name),
                 DataSourceConfigUrl.of(url),
                 username, password

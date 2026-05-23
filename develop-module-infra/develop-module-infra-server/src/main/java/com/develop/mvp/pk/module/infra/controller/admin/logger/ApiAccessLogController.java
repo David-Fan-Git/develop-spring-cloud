@@ -1,6 +1,5 @@
 package com.develop.mvp.pk.module.infra.controller.admin.logger;
 
-import com.develop.mvp.pk.framework.apilog.core.annotation.ApiAccessLog;
 import com.develop.mvp.pk.framework.common.pojo.CommonResult;
 import com.develop.mvp.pk.framework.common.pojo.PageParam;
 import com.develop.mvp.pk.framework.common.pojo.PageResult;
@@ -65,7 +64,7 @@ public class ApiAccessLogController {
     @GetMapping("/export-excel")
     @Operation(summary = "导出API 访问日志 Excel")
     @PreAuthorize("@ss.hasPermission('infra:api-access-log:export')")
-    @ApiAccessLog(operateType = EXPORT)
+    @com.develop.mvp.pk.framework.apilog.core.annotation.ApiAccessLog(operateType = EXPORT)
     public void exportApiAccessLogExcel(@Valid ApiAccessLogPageReqVO exportReqVO,
                                         HttpServletResponse response) throws IOException {
         exportReqVO.setPageSize(PageParam.PAGE_SIZE_NONE);

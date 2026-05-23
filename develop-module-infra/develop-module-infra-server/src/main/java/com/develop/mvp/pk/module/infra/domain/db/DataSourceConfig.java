@@ -25,9 +25,9 @@ public final class DataSourceConfig {
 
     private final List<DomainEvent> events = new ArrayList<>();
 
-    DataSourceConfig(DataSourceConfigId id, DataSourceConfigName name, DataSourceConfigUrl url,
+    public DataSourceConfig(DataSourceConfigId id, DataSourceConfigName name, DataSourceConfigUrl url,
                      String username, String password) {
-        this.id = Objects.requireNonNull(id, "dataSourceConfigId 不能为空");
+        this.id = id;
         this.name = Objects.requireNonNull(name, "dataSourceConfigName 不能为空");
         this.url = Objects.requireNonNull(url, "dataSourceConfigUrl 不能为空");
         this.username = username;
@@ -53,10 +53,13 @@ public final class DataSourceConfig {
 
     /** 是否为 Master 数据源 */
     public boolean isMaster() {
-        return id.isMaster();
+        return id != null && id.isMaster();
     }
 
     public void markCreated() {
+        if (this.id == null) {
+            throw new IllegalStateException("数据源配置创建事件必须包含已持久化编号");
+        }
         events.add(new DataSourceConfigCreatedEvent(this.id.value(), this.name.value()));
     }
 
@@ -82,7 +85,7 @@ public final class DataSourceConfig {
     public boolean equals(Object o) {
         if (this == o) return true;
         if (!(o instanceof DataSourceConfig that)) return false;
-        return id.equals(that.id);
+        return Objects.equals(id, that.id);
     }
 
     @Override

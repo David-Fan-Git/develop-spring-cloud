@@ -9,6 +9,7 @@ import com.develop.mvp.pk.framework.common.util.string.StrUtils;
 import com.develop.mvp.pk.framework.tenant.core.context.TenantContextHolder;
 import com.develop.mvp.pk.framework.tenant.core.util.TenantUtils;
 import com.develop.mvp.pk.module.infra.dal.dataobject.logger.ApiAccessLogDO;
+import com.develop.mvp.pk.module.infra.dal.mysql.logger.ApiAccessLogMapper;
 import com.develop.mvp.pk.module.infra.domain.event.DomainEventPublisher;
 import com.develop.mvp.pk.module.infra.domain.logger.ApiAccessLog;
 import com.develop.mvp.pk.module.infra.domain.logger.repository.ApiAccessLogPageQuery;
@@ -25,11 +26,14 @@ import static com.develop.mvp.pk.module.infra.dal.dataobject.logger.ApiAccessLog
 public class ApiAccessLogApplicationService {
 
     private final ApiAccessLogRepository apiAccessLogRepository;
+    private final ApiAccessLogMapper apiAccessLogMapper;
     private final DomainEventPublisher eventPublisher;
 
     public ApiAccessLogApplicationService(ApiAccessLogRepository apiAccessLogRepository,
+                                           ApiAccessLogMapper apiAccessLogMapper,
                                            DomainEventPublisher eventPublisher) {
         this.apiAccessLogRepository = apiAccessLogRepository;
+        this.apiAccessLogMapper = apiAccessLogMapper;
         this.eventPublisher = eventPublisher;
     }
 
@@ -41,9 +45,9 @@ public class ApiAccessLogApplicationService {
                 apiAccessLog.getResultMsg(), RESULT_MSG_MAX_LENGTH));
 
         if (TenantContextHolder.getTenantId() != null) {
-            // 通过 DO 直接插入（日志模块避免复杂 DDD 映射）
-            com.develop.mvp.pk.module.infra.dal.mysql.logger.ApiAccessLogMapper mapper =
-                    com.develop.mvp.pk.module.infra.service.logger.ApiAccessLogServiceImpl.getMapper();
+            apiAccessLogMapper.insert(apiAccessLog);
+        } else {
+            TenantUtils.executeIgnore(() -> apiAccessLogMapper.insert(apiAccessLog));
         }
     }
 

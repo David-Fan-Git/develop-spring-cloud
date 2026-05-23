@@ -68,8 +68,8 @@ public class ApiErrorLogController {
         com.develop.mvp.pk.module.infra.domain.logger.repository.ApiErrorLogPageQuery query =
                 new com.develop.mvp.pk.module.infra.domain.logger.repository.ApiErrorLogPageQuery(
                         pageReqVO.getUserId(), pageReqVO.getUserType(), pageReqVO.getApplicationName(),
-                        pageReqVO.getRequestUrl(), pageReqVO.getBeginTime(), pageReqVO.getDuration(),
-                        pageReqVO.getResultCode(), pageReqVO.getProcessStatus(),
+                        pageReqVO.getRequestUrl(), pageReqVO.getExceptionTime(), null, null,
+                        pageReqVO.getProcessStatus(),
                         pageReqVO.getPageNo(), pageReqVO.getPageSize());
         PageResult<ApiErrorLog> pageResult = apiErrorLogApplicationService.getApiErrorLogPage(query);
         return success(BeanUtils.toBean(pageResult, ApiErrorLogRespVO.class));
@@ -78,15 +78,15 @@ public class ApiErrorLogController {
     @GetMapping("/export-excel")
     @Operation(summary = "导出 API 错误日志 Excel")
     @PreAuthorize("@ss.hasPermission('infra:api-error-log:export')")
-    @ApiAccessLog(operateType = EXPORT)
+    @com.develop.mvp.pk.framework.apilog.core.annotation.ApiAccessLog(operateType = EXPORT)
     public void exportApiErrorLogExcel(@Valid ApiErrorLogPageReqVO exportReqVO,
                                        HttpServletResponse response) throws IOException {
         exportReqVO.setPageSize(PageParam.PAGE_SIZE_NONE);
         com.develop.mvp.pk.module.infra.domain.logger.repository.ApiErrorLogPageQuery query =
                 new com.develop.mvp.pk.module.infra.domain.logger.repository.ApiErrorLogPageQuery(
                         exportReqVO.getUserId(), exportReqVO.getUserType(), exportReqVO.getApplicationName(),
-                        exportReqVO.getRequestUrl(), exportReqVO.getBeginTime(), exportReqVO.getDuration(),
-                        exportReqVO.getResultCode(), exportReqVO.getProcessStatus(),
+                        exportReqVO.getRequestUrl(), exportReqVO.getExceptionTime(), null, null,
+                        exportReqVO.getProcessStatus(),
                         exportReqVO.getPageNo(), exportReqVO.getPageSize());
         PageResult<ApiErrorLog> pageResult = apiErrorLogApplicationService.getApiErrorLogPage(query);
         List<ApiErrorLogRespVO> list = pageResult.getList().stream()

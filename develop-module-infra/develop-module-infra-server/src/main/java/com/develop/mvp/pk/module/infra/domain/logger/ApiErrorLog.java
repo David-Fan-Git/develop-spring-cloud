@@ -34,7 +34,7 @@ public final class ApiErrorLog {
 
     private final List<DomainEvent> events = new ArrayList<>();
 
-    ApiErrorLog(Long id, String traceId, Long userId, Integer userType,
+    public ApiErrorLog(Long id, String traceId, Long userId, Integer userType,
                 String applicationName, String requestMethod, Integer requestParams,
                 String requestUrl, String userIp, String userAgent,
                 LocalDateTime exceptionTime, String exceptionName,

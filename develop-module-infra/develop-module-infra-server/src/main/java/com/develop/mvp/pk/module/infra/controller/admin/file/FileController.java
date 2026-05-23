@@ -8,7 +8,6 @@ import com.develop.mvp.pk.framework.common.pojo.PageResult;
 import com.develop.mvp.pk.framework.common.util.object.BeanUtils;
 import com.develop.mvp.pk.framework.tenant.core.aop.TenantIgnore;
 import com.develop.mvp.pk.module.infra.application.file.FileApplicationService;
-import com.develop.mvp.pk.module.infra.application.file.FileConfigApplicationService;
 import com.develop.mvp.pk.module.infra.controller.admin.file.vo.file.*;
 import com.develop.mvp.pk.module.infra.domain.file.File;
 import com.develop.mvp.pk.module.infra.framework.file.core.client.FileClient;
@@ -70,10 +69,7 @@ public class FileController {
     public CommonResult<FilePresignedUrlRespVO> getFilePresignedUrl(
             @RequestParam("name") String name,
             @RequestParam(value = "directory", required = false) String directory) {
-        // 保持原有逻辑 - 使用旧 FileService 的预签名功能
-        com.develop.mvp.pk.module.infra.service.file.FileService fileService =
-                com.develop.mvp.pk.module.infra.service.file.FileServiceImpl.getFileService();
-        // 兜底：采用传统方式
+        // 使用 master FileClient 生成文件预签名地址
         String path = directory != null ? directory + "/" + name : name;
         FileClient masterClient = fileConfigService.getMasterFileClient();
         String uploadUrl = masterClient.presignPutUrl(path);

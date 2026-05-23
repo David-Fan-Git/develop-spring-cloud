@@ -30,7 +30,7 @@ public final class ApiAccessLog {
 
     private final List<DomainEvent> events = new ArrayList<>();
 
-    ApiAccessLog(Long id, String traceId, Long userId, Integer userType,
+    public ApiAccessLog(Long id, String traceId, Long userId, Integer userType,
                  String applicationName, String requestMethod, Integer requestParams,
                  String responseBody, String requestUrl, String userIp, String userAgent,
                  LocalDateTime beginTime, LocalDateTime endTime, Integer duration,

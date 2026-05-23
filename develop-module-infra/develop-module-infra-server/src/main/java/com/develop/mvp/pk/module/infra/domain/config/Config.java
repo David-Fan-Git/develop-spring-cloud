@@ -26,7 +26,7 @@ public final class Config {
 
     private final List<DomainEvent> events = new ArrayList<>();
 
-    Config(ConfigId id, ConfigKey key, String value, String name, String category,
+    public Config(ConfigId id, ConfigKey key, String value, String name, String category,
            ConfigType type, ConfigVisible visible, String remark) {
         this.id = Objects.requireNonNull(id, "configId 不能为空");
         this.key = Objects.requireNonNull(key, "configKey 不能为空");

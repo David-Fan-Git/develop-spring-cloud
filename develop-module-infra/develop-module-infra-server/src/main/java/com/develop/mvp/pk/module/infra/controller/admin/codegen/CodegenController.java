@@ -81,8 +81,8 @@ public class CodegenController {
     @PreAuthorize("@ss.hasPermission('infra:codegen:query')")
     public CommonResult<PageResult<CodegenTableRespVO>> getCodegenTablePage(@Valid CodegenTablePageReqVO pageReqVO) {
         PageResult<CodegenTable> pageResult = codegenApplicationService.getCodegenTablePage(
-                pageReqVO.getDataSourceConfigId(), pageReqVO.getTableName(), pageReqVO.getTableComment(),
-                pageReqVO.getScene(), pageReqVO.getCreateTime(),
+                null, pageReqVO.getTableName(), pageReqVO.getTableComment(),
+                null, pageReqVO.getCreateTime(),
                 pageReqVO.getPageNo(), pageReqVO.getPageSize());
         PageResult<CodegenTableRespVO> voPage = new PageResult<>(
                 pageResult.getList().stream().map(this::toCodegenTableRespVO).collect(Collectors.toList()),
@@ -172,7 +172,7 @@ public class CodegenController {
         if (table == null) return null;
         CodegenTableRespVO vo = new CodegenTableRespVO();
         vo.setId(table.id().value());
-        vo.setDataSourceConfigId(table.dataSourceConfigId());
+        vo.setDataSourceConfigId(table.dataSourceConfigId() != null ? table.dataSourceConfigId().intValue() : null);
         vo.setTableName(table.tableName());
         vo.setTableComment(table.tableComment());
         vo.setClassName(table.className());
@@ -183,10 +183,9 @@ public class CodegenController {
         vo.setFrontType(table.frontType());
         vo.setMasterTableId(table.masterTableId());
         vo.setSubJoinColumnId(table.subJoinColumnId());
-        vo.setSubJoinMany(table.subJoinMany());
+        vo.setSubJoinMany(Integer.valueOf(1).equals(table.subJoinMany()));
         vo.setModuleName(table.moduleName());
         vo.setBusinessName(table.businessName());
-        vo.setPackageName(table.packageName());
         vo.setRemark(table.remark());
         return vo;
     }
@@ -206,10 +205,9 @@ public class CodegenController {
         tableDO.setFrontType(table.frontType());
         tableDO.setMasterTableId(table.masterTableId());
         tableDO.setSubJoinColumnId(table.subJoinColumnId());
-        tableDO.setSubJoinMany(table.subJoinMany());
+        tableDO.setSubJoinMany(Integer.valueOf(1).equals(table.subJoinMany()));
         tableDO.setModuleName(table.moduleName());
         tableDO.setBusinessName(table.businessName());
-        tableDO.setPackageName(table.packageName());
         tableDO.setRemark(table.remark());
         return tableDO;
     }
@@ -227,12 +225,9 @@ public class CodegenController {
         columnDO.setColumnName(column.columnName());
         columnDO.setOrdinalPosition(column.ordinalPosition());
         columnDO.setDataType(column.dataType());
-        columnDO.setColumnType(column.columnType());
         columnDO.setColumnComment(column.columnComment());
         columnDO.setNullable(column.nullable());
         columnDO.setPrimaryKey(column.primaryKey());
-        columnDO.setAutoIncrement(column.autoIncrement());
-        columnDO.setOrdinalBasis(column.ordinalBasis());
         columnDO.setJavaType(column.javaType());
         columnDO.setJavaField(column.javaField());
         columnDO.setDictType(column.dictType());
@@ -240,7 +235,8 @@ public class CodegenController {
         columnDO.setCreateOperation(column.createOperation());
         columnDO.setUpdateOperation(column.updateOperation());
         columnDO.setListOperation(column.listOperation());
-        columnDO.setListOperationCondition(column.listOperationCondition());
+        columnDO.setListOperationCondition(
+                Boolean.TRUE.equals(column.listOperationCondition()) ? "true" : "false");
         columnDO.setListOperationResult(column.listOperationResult());
         columnDO.setHtmlType(column.htmlType());
         return columnDO;

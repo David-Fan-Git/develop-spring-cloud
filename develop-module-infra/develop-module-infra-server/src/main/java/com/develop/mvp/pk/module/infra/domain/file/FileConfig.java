@@ -10,6 +10,7 @@ import com.develop.mvp.pk.module.infra.domain.file.event.FileConfigDeletedEvent;
 import com.develop.mvp.pk.module.infra.domain.file.event.FileConfigMasterChangedEvent;
 import com.develop.mvp.pk.module.infra.domain.file.valueobject.FileConfigId;
 import com.develop.mvp.pk.module.infra.domain.file.valueobject.FileConfigName;
+import com.develop.mvp.pk.module.infra.framework.file.core.client.FileClientConfig;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -21,23 +22,27 @@ public final class FileConfig {
     private final FileConfigName name;
     private Integer storage;
     private Boolean master;
+    private FileClientConfig config;
     private String remark;
 
     private final List<DomainEvent> events = new ArrayList<>();
 
-    FileConfig(FileConfigId id, FileConfigName name, Integer storage, Boolean master, String remark) {
-        this.id = Objects.requireNonNull(id, "fileConfigId 不能为空");
+    public FileConfig(FileConfigId id, FileConfigName name, Integer storage, Boolean master,
+                      FileClientConfig config, String remark) {
+        this.id = id;
         this.name = Objects.requireNonNull(name, "fileConfigName 不能为空");
         this.storage = storage;
         this.master = master != null ? master : false;
+        this.config = config;
         this.remark = remark;
     }
 
     // ── 业务方法 ──
 
     /** 更新文件配置 */
-    public void updateProfile(Integer storage, String name, String remark) {
+    public void updateProfile(Integer storage, String name, FileClientConfig config, String remark) {
         this.storage = storage;
+        this.config = config;
         this.remark = remark;
     }
 
@@ -60,6 +65,9 @@ public final class FileConfig {
     }
 
     public void markCreated() {
+        if (this.id == null) {
+            throw new IllegalStateException("文件配置创建事件必须包含已持久化编号");
+        }
         events.add(new FileConfigCreatedEvent(this.id.value(), this.name.value()));
     }
 
@@ -73,6 +81,7 @@ public final class FileConfig {
     public FileConfigName name() { return name; }
     public Integer storage() { return storage; }
     public Boolean master() { return master; }
+    public FileClientConfig config() { return config; }
     public String remark() { return remark; }
 
     public List<DomainEvent> pullEvents() {
@@ -85,7 +94,7 @@ public final class FileConfig {
     public boolean equals(Object o) {
         if (this == o) return true;
         if (!(o instanceof FileConfig that)) return false;
-        return id.equals(that.id);
+        return Objects.equals(id, that.id);
     }
 
     @Override

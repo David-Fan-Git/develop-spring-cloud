@@ -36,7 +36,8 @@ public class FileConfigController {
     @PreAuthorize("@ss.hasPermission('infra:file-config:create')")
     public CommonResult<Long> createFileConfig(@Valid @RequestBody FileConfigSaveReqVO createReqVO) {
         return success(fileConfigApplicationService.createFileConfig(
-                createReqVO.getName(), createReqVO.getStorage(), false, createReqVO.getRemark()));
+                createReqVO.getName(), createReqVO.getStorage(), false,
+                createReqVO.getConfig(), createReqVO.getRemark()));
     }
 
     @PutMapping("/update")
@@ -44,7 +45,8 @@ public class FileConfigController {
     @PreAuthorize("@ss.hasPermission('infra:file-config:update')")
     public CommonResult<Boolean> updateFileConfig(@Valid @RequestBody FileConfigSaveReqVO updateReqVO) {
         fileConfigApplicationService.updateFileConfig(
-                updateReqVO.getId(), updateReqVO.getName(), updateReqVO.getStorage(), updateReqVO.getRemark());
+                updateReqVO.getId(), updateReqVO.getName(), updateReqVO.getStorage(),
+                updateReqVO.getConfig(), updateReqVO.getRemark());
         return success(true);
     }
 
@@ -113,6 +115,7 @@ public class FileConfigController {
         vo.setName(config.name().value());
         vo.setStorage(config.storage());
         vo.setMaster(config.master());
+        vo.setConfig(config.config());
         vo.setRemark(config.remark());
         return vo;
     }

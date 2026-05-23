@@ -11,10 +11,15 @@ public final class FileFactory {
     private FileFactory() {}
 
     /** 创建新文件记录 */
+    public static File create(Long configId, String name, String path, String url, String type, Long size) {
+        return new File(null, configId != null ? FileConfigId.of(configId) : null, name, path, url, type, size);
+    }
+
+    /** 创建新文件记录 */
     public static File create(Long id, Long configId, String name, String path,
                               String url, String type, Long size) {
         return new File(
-                FileId.of(id),
+                id != null ? FileId.of(id) : null,
                 configId != null ? FileConfigId.of(configId) : null,
                 name, path, url, type, size
         );

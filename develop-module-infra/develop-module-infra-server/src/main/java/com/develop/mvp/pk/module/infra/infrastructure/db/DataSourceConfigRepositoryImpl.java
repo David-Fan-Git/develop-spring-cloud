@@ -24,11 +24,11 @@ public class DataSourceConfigRepositoryImpl implements DataSourceConfigRepositor
     @Override
     public DataSourceConfig save(DataSourceConfig config) {
         DataSourceConfigDO configDO = toDataObject(config);
-        if (dataSourceConfigMapper.selectById(config.id().value()) == null) {
+        if (config.id() == null || dataSourceConfigMapper.selectById(config.id().value()) == null) {
             dataSourceConfigMapper.insert(configDO);
-        } else {
-            dataSourceConfigMapper.updateById(configDO);
+            return toDomain(configDO);
         }
+        dataSourceConfigMapper.updateById(configDO);
         return config;
     }
 
@@ -56,7 +56,7 @@ public class DataSourceConfigRepositoryImpl implements DataSourceConfigRepositor
 
     private DataSourceConfigDO toDataObject(DataSourceConfig config) {
         DataSourceConfigDO configDO = new DataSourceConfigDO();
-        configDO.setId(config.id().value());
+        configDO.setId(config.id() != null ? config.id().value() : null);
         configDO.setName(config.name().value());
         configDO.setUrl(config.url().value());
         configDO.setUsername(config.username());

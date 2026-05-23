@@ -67,10 +67,8 @@ public class CodegenRepositoryImpl implements CodegenRepository {
     @Override
     public PageResult<CodegenTable> findPage(CodegenTablePageQuery query) {
         var reqVO = new com.develop.mvp.pk.module.infra.controller.admin.codegen.vo.table.CodegenTablePageReqVO();
-        reqVO.setDataSourceConfigId(query.dataSourceConfigId());
         reqVO.setTableName(query.tableName());
         reqVO.setTableComment(query.tableComment());
-        reqVO.setScene(query.scene());
         reqVO.setCreateTime(query.createTime());
         reqVO.setPageNo(query.pageNo());
         reqVO.setPageSize(query.pageSize());
@@ -143,10 +141,9 @@ public class CodegenRepositoryImpl implements CodegenRepository {
         tableDO.setFrontType(table.frontType());
         tableDO.setMasterTableId(table.masterTableId());
         tableDO.setSubJoinColumnId(table.subJoinColumnId());
-        tableDO.setSubJoinMany(table.subJoinMany());
+        tableDO.setSubJoinMany(Integer.valueOf(1).equals(table.subJoinMany()));
         tableDO.setModuleName(table.moduleName());
         tableDO.setBusinessName(table.businessName());
-        tableDO.setPackageName(table.packageName());
         tableDO.setRemark(table.remark());
         return tableDO;
     }
@@ -164,10 +161,10 @@ public class CodegenRepositoryImpl implements CodegenRepository {
                 tableDO.getFrontType(),
                 tableDO.getMasterTableId(),
                 tableDO.getSubJoinColumnId(),
-                tableDO.getSubJoinMany(),
+                Boolean.TRUE.equals(tableDO.getSubJoinMany()) ? 1 : 0,
                 tableDO.getModuleName(),
                 tableDO.getBusinessName(),
-                tableDO.getPackageName(),
+                null,
                 tableDO.getDataSourceConfigId(),
                 tableDO.getRemark()
         );
@@ -180,12 +177,9 @@ public class CodegenRepositoryImpl implements CodegenRepository {
         columnDO.setColumnName(column.columnName());
         columnDO.setOrdinalPosition(column.ordinalPosition());
         columnDO.setDataType(column.dataType());
-        columnDO.setColumnType(column.columnType());
         columnDO.setColumnComment(column.columnComment());
         columnDO.setNullable(column.nullable());
         columnDO.setPrimaryKey(column.primaryKey());
-        columnDO.setAutoIncrement(column.autoIncrement());
-        columnDO.setOrdinalBasis(column.ordinalBasis());
         columnDO.setJavaType(column.javaType());
         columnDO.setJavaField(column.javaField());
         columnDO.setDictType(column.dictType());
@@ -193,7 +187,8 @@ public class CodegenRepositoryImpl implements CodegenRepository {
         columnDO.setCreateOperation(column.createOperation());
         columnDO.setUpdateOperation(column.updateOperation());
         columnDO.setListOperation(column.listOperation());
-        columnDO.setListOperationCondition(column.listOperationCondition());
+        columnDO.setListOperationCondition(
+                Boolean.TRUE.equals(column.listOperationCondition()) ? "true" : "false");
         columnDO.setListOperationResult(column.listOperationResult());
         columnDO.setHtmlType(column.htmlType());
         return columnDO;
@@ -206,12 +201,12 @@ public class CodegenRepositoryImpl implements CodegenRepository {
                 columnDO.getColumnName(),
                 columnDO.getOrdinalPosition(),
                 columnDO.getDataType(),
-                columnDO.getColumnType(),
+                null,
                 columnDO.getColumnComment(),
                 columnDO.getNullable(),
                 columnDO.getPrimaryKey(),
-                columnDO.getAutoIncrement(),
-                columnDO.getOrdinalBasis(),
+                null,
+                null,
                 columnDO.getJavaType(),
                 columnDO.getJavaField(),
                 columnDO.getDictType(),
@@ -219,7 +214,7 @@ public class CodegenRepositoryImpl implements CodegenRepository {
                 columnDO.getCreateOperation(),
                 columnDO.getUpdateOperation(),
                 columnDO.getListOperation(),
-                columnDO.getListOperationCondition(),
+                "true".equalsIgnoreCase(columnDO.getListOperationCondition()),
                 columnDO.getListOperationResult(),
                 columnDO.getHtmlType()
         );

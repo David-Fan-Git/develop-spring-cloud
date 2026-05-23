@@ -81,7 +81,7 @@ public class ApiErrorLogRepositoryImpl implements ApiErrorLogRepository {
         reqVO.setUserType(query.userType());
         reqVO.setApplicationName(query.applicationName());
         reqVO.setRequestUrl(query.requestUrl());
-        reqVO.setBeginTime(query.beginTime());
+        reqVO.setExceptionTime(query.beginTime());
         reqVO.setProcessStatus(query.processStatus());
         reqVO.setPageNo(query.pageNo());
         reqVO.setPageSize(query.pageSize());

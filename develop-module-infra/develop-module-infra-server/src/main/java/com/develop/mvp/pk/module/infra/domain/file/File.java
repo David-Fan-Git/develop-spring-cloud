@@ -25,8 +25,8 @@ public final class File {
 
     private final List<DomainEvent> events = new ArrayList<>();
 
-    File(FileId id, FileConfigId configId, String name, String path, String url, String type, Long size) {
-        this.id = Objects.requireNonNull(id, "fileId 不能为空");
+    public File(FileId id, FileConfigId configId, String name, String path, String url, String type, Long size) {
+        this.id = id;
         this.configId = configId;
         this.name = name;
         this.path = path;
@@ -38,6 +38,9 @@ public final class File {
     // ── 业务方法 ──
 
     public void markUploaded() {
+        if (this.id == null) {
+            throw new IllegalStateException("文件上传事件必须包含已持久化编号");
+        }
         events.add(new FileUploadedEvent(this.id.value(), this.name, this.path, this.url));
     }
 
@@ -65,7 +68,7 @@ public final class File {
     public boolean equals(Object o) {
         if (this == o) return true;
         if (!(o instanceof File that)) return false;
-        return id.equals(that.id);
+        return Objects.equals(id, that.id);
     }
 
     @Override

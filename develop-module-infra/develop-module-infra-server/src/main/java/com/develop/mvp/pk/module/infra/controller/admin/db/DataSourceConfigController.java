@@ -92,7 +92,6 @@ public class DataSourceConfigController {
         vo.setName(config.name().value());
         vo.setUrl(config.url().value());
         vo.setUsername(config.username());
-        vo.setPassword(config.password());
         return vo;
     }
 }

@@ -8,17 +8,23 @@ import cn.hutool.core.io.resource.ResourceUtil;
 import cn.hutool.core.util.IdUtil;
 import cn.hutool.core.util.StrUtil;
 import com.develop.mvp.pk.framework.common.pojo.PageResult;
+import com.develop.mvp.pk.framework.common.util.json.JsonUtils;
+import com.develop.mvp.pk.framework.common.util.validation.ValidationUtils;
 import com.develop.mvp.pk.module.infra.domain.config.valueobject.ConfigVisible;
 import com.develop.mvp.pk.module.infra.domain.event.DomainEventPublisher;
 import com.develop.mvp.pk.module.infra.domain.file.FileConfig;
 import com.develop.mvp.pk.module.infra.domain.file.repository.FileConfigPageQuery;
 import com.develop.mvp.pk.module.infra.domain.file.repository.FileConfigRepository;
 import com.develop.mvp.pk.module.infra.domain.file.valueobject.FileConfigId;
+import com.develop.mvp.pk.module.infra.framework.file.core.client.FileClientConfig;
+import com.develop.mvp.pk.module.infra.framework.file.core.enums.FileStorageEnum;
 import com.develop.mvp.pk.module.infra.infrastructure.file.FileConfigFactory;
+import jakarta.validation.Validator;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
+import java.util.Map;
 
 import static com.develop.mvp.pk.framework.common.exception.util.ServiceExceptionUtil.exception;
 import static com.develop.mvp.pk.module.infra.enums.ErrorCodeConstants.FILE_CONFIG_DELETE_FAIL_MASTER;
@@ -29,18 +35,23 @@ public class FileConfigApplicationService {
 
     private final FileConfigRepository fileConfigRepository;
     private final DomainEventPublisher eventPublisher;
+    private final Validator validator;
 
     public FileConfigApplicationService(FileConfigRepository fileConfigRepository,
-                                         DomainEventPublisher eventPublisher) {
+                                         DomainEventPublisher eventPublisher,
+                                         Validator validator) {
         this.fileConfigRepository = fileConfigRepository;
         this.eventPublisher = eventPublisher;
+        this.validator = validator;
     }
 
     // ── 命令 ──
 
     @Transactional
-    public Long createFileConfig(String name, Integer storage, Boolean master, String remark) {
-        FileConfig config = FileConfigFactory.create(null, name, storage, master, remark);
+    public Long createFileConfig(String name, Integer storage, Boolean master,
+                                  Map<String, Object> clientConfig, String remark) {
+        FileConfig config = FileConfigFactory.create(name, storage, master,
+                parseClientConfig(storage, clientConfig), remark);
         config = fileConfigRepository.save(config);
         config.markCreated();
         publishEvents(config);
@@ -48,9 +59,10 @@ public class FileConfigApplicationService {
     }
 
     @Transactional
-    public void updateFileConfig(Long id, String name, Integer storage, String remark) {
+    public void updateFileConfig(Long id, String name, Integer storage,
+                                  Map<String, Object> clientConfig, String remark) {
         FileConfig config = findExistingConfig(FileConfigId.of(id));
-        config.updateProfile(storage, name, remark);
+        config.updateProfile(storage, name, parseClientConfig(storage, clientConfig), remark);
         fileConfigRepository.save(config);
         publishEvents(config);
     }
@@ -119,6 +131,13 @@ public class FileConfigApplicationService {
     }
 
     // ── 私有方法 ──
+
+    private FileClientConfig parseClientConfig(Integer storage, Map<String, Object> config) {
+        Class<? extends FileClientConfig> configClass = FileStorageEnum.getByStorage(storage).getConfigClass();
+        FileClientConfig clientConfig = JsonUtils.parseObject2(JsonUtils.toJsonString(config), configClass);
+        ValidationUtils.validate(validator, clientConfig);
+        return clientConfig;
+    }
 
     private FileConfig findExistingConfig(FileConfigId id) {
         FileConfig config = fileConfigRepository.findById(id);
