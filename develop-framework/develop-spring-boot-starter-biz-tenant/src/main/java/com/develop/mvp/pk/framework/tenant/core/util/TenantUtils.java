@@ -10,7 +10,7 @@ import static com.develop.mvp.pk.framework.web.core.util.WebFrameworkUtils.HEADE
 /**
  * 多租户 Util
  *
- * @author 芋道源码
+ * @author David
  */
 public class TenantUtils {
 

@@ -44,7 +44,7 @@ import static com.develop.mvp.pk.framework.common.util.json.JsonUtils.toJsonStri
  *
  * 目的：记录 API 访问日志到数据库中
  *
- * @author 芋道源码
+ * @author David
  */
 @Slf4j
 public class ApiAccessLogFilter extends ApiRequestFilter {

@@ -17,7 +17,7 @@ import static org.junit.jupiter.api.Assertions.*;
 /**
  * {@link IotWebSocketClient} 的单元测试
  *
- * @author HUIHUI
+ * @author David
  */
 class IotWebSocketClientTest {
 

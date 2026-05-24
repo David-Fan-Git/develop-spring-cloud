@@ -11,7 +11,7 @@ import lombok.Data;
 @Data
 public class PayDemoWithdrawCreateReqVO {
 
-    @Schema(description = "提现标题", requiredMode = Schema.RequiredMode.REQUIRED, example = "芋艿是一种菜")
+    @Schema(description = "提现标题", requiredMode = Schema.RequiredMode.REQUIRED, example = "David是一种菜")
     @NotEmpty(message = "提现标题不能为空")
     private String subject;
 

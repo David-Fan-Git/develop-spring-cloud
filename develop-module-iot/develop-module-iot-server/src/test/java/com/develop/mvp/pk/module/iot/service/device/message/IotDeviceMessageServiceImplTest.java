@@ -38,7 +38,7 @@ import static org.mockito.Mockito.*;
  * handleUpstreamDeviceMessage 与 sendDeviceMessage 下行成功路径依赖 SpringUtil.getBean 的自调用
  * createDeviceLogAsync，更适合放到集成测试，本类不展开。
  *
- * @author 芋道源码
+ * @author David
  */
 public class IotDeviceMessageServiceImplTest extends BaseMockitoUnitTest {
 

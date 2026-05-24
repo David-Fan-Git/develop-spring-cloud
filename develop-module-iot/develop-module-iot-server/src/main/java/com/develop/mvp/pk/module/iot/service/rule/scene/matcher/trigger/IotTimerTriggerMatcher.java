@@ -13,7 +13,7 @@ import org.springframework.stereotype.Component;
  *
  * 注意：定时触发器不依赖设备消息，主要用于定时任务场景
  *
- * @author HUIHUI
+ * @author David
  */
 @Component
 public class IotTimerTriggerMatcher implements IotSceneRuleTriggerMatcher {

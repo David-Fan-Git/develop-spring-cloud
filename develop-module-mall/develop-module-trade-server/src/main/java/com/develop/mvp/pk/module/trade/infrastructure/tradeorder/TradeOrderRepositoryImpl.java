@@ -89,7 +89,7 @@ public class TradeOrderRepositoryImpl implements TradeOrderRepository {
         reqVO.setCreateTime(createTime);
         reqVO.setPageNo(pageNo);
         reqVO.setPageSize(pageSize);
-        PageResult<TradeOrderDO> doPage = tradeOrderMapper.selectPage(reqVO, null);
+        PageResult<TradeOrderDO> doPage = tradeOrderMapper.selectPage(reqVO, (java.util.Set<Long>) null);
         return new PageResult<>(
                 doPage.getList().stream().map(this::toDomain).collect(Collectors.toList()),
                 doPage.getTotal());

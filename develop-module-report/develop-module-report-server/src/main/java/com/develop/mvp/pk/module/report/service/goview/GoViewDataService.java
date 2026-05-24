@@ -5,7 +5,7 @@ import com.develop.mvp.pk.module.report.controller.admin.goview.vo.data.GoViewDa
 /**
  * GoView 数据 Service 接口
  *
- * @author 芋道源码
+ * @author David
  */
 public interface GoViewDataService {
 

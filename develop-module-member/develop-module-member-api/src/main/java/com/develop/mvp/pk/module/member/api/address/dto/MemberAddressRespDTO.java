@@ -13,7 +13,7 @@ public class MemberAddressRespDTO {
     @Schema(description = "用户编号", requiredMode = Schema.RequiredMode.REQUIRED, example = "2048")
     private Long userId;
 
-    @Schema(description = "收件人名称", requiredMode = Schema.RequiredMode.REQUIRED, example = "芋道")
+    @Schema(description = "收件人名称", requiredMode = Schema.RequiredMode.REQUIRED, example = "David")
     private String name;
 
     @Schema(description = "手机号", requiredMode = Schema.RequiredMode.REQUIRED, example = "15601691300")
@@ -22,7 +22,7 @@ public class MemberAddressRespDTO {
     @Schema(description = "地区编号", requiredMode = Schema.RequiredMode.REQUIRED, example = "2666")
     private Integer areaId;
 
-    @Schema(description = "收件详细地址", requiredMode = Schema.RequiredMode.REQUIRED, example = "芋道源码 88 小区 106 号")
+    @Schema(description = "收件详细地址", requiredMode = Schema.RequiredMode.REQUIRED, example = "David 88 小区 106 号")
     private String detailAddress;
 
     @Schema(description = "是否默认", requiredMode = Schema.RequiredMode.REQUIRED, example = "true")

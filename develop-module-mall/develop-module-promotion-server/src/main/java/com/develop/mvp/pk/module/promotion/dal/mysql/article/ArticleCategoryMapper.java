@@ -12,7 +12,7 @@ import java.util.List;
 /**
  * 文章分类 Mapper
  *
- * @author HUIHUI
+ * @author David
  */
 @Mapper
 public interface ArticleCategoryMapper extends BaseMapperX<ArticleCategoryDO> {

@@ -13,7 +13,7 @@ import org.springframework.stereotype.Component;
 /**
  * 商品统计 Job
  *
- * @author owen
+ * @author David
  */
 @Component
 public class ProductStatisticsJob {

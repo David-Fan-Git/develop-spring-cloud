@@ -14,7 +14,7 @@ import java.util.List;
 /**
  * 文章管理 Convert
  *
- * @author HUIHUI
+ * @author David
  */
 @Mapper
 public interface ArticleConvert {

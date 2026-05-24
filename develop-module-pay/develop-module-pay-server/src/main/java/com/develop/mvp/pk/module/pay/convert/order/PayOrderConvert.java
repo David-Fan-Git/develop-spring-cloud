@@ -6,7 +6,6 @@ import com.develop.mvp.pk.framework.common.util.collection.MapUtils;
 import com.develop.mvp.pk.module.pay.api.order.dto.PayOrderCreateReqDTO;
 import com.develop.mvp.pk.module.pay.api.order.dto.PayOrderRespDTO;
 import com.develop.mvp.pk.module.pay.controller.admin.order.vo.*;
-import com.develop.mvp.pk.module.pay.dal.dataobject.app.PayAppDO;
 import com.develop.mvp.pk.module.pay.dal.dataobject.order.PayOrderDO;
 import com.develop.mvp.pk.module.pay.dal.dataobject.order.PayOrderExtensionDO;
 import com.develop.mvp.pk.module.pay.framework.pay.core.client.dto.order.PayOrderUnifiedReqDTO;
@@ -20,7 +19,7 @@ import java.util.Map;
 /**
  * 支付订单 Convert
  *
- * @author aquan
+ * @author David
  */
 @Mapper
 public interface PayOrderConvert {
@@ -31,28 +30,20 @@ public interface PayOrderConvert {
 
     PayOrderRespDTO convert2(PayOrderDO order);
 
-    default PayOrderDetailsRespVO convert(PayOrderDO order, PayOrderExtensionDO orderExtension, PayAppDO app) {
-        PayOrderDetailsRespVO respVO = convertDetail(order);
-        respVO.setExtension(convert(orderExtension));
-        if (app != null) {
-            respVO.setAppName(app.getName());
-        }
-        return respVO;
-    }
     PayOrderDetailsRespVO convertDetail(PayOrderDO bean);
     PayOrderDetailsRespVO.PayOrderExtension convert(PayOrderExtensionDO bean);
 
-    default PageResult<PayOrderPageItemRespVO> convertPage(PageResult<PayOrderDO> page, Map<Long, PayAppDO> appMap) {
+    default PageResult<PayOrderPageItemRespVO> convertPage(PageResult<PayOrderDO> page, Map<Long, String> appNameMap) {
         PageResult<PayOrderPageItemRespVO> result = convertPage(page);
-        result.getList().forEach(order -> MapUtils.findAndThen(appMap, order.getAppId(), app -> order.setAppName(app.getName())));
+        result.getList().forEach(order -> MapUtils.findAndThen(appNameMap, order.getAppId(), order::setAppName));
         return result;
     }
     PageResult<PayOrderPageItemRespVO> convertPage(PageResult<PayOrderDO> page);
 
-    default List<PayOrderExcelVO> convertList(List<PayOrderDO> list, Map<Long, PayAppDO> appMap) {
+    default List<PayOrderExcelVO> convertList(List<PayOrderDO> list, Map<Long, String> appNameMap) {
         return CollectionUtils.convertList(list, order -> {
             PayOrderExcelVO excelVO = convertExcel(order);
-            MapUtils.findAndThen(appMap, order.getAppId(), app -> excelVO.setAppName(app.getName()));
+            MapUtils.findAndThen(appNameMap, order.getAppId(), excelVO::setAppName);
             return excelVO;
         });
     }

@@ -17,7 +17,7 @@ public final class TenantFactory {
     public static Tenant create(Long id, String name, Long contactUserId, String contactName,
                                  String contactMobile, List<String> websites,
                                  Long packageId, LocalDateTime expireTime, Integer accountCount) {
-        return new Tenant(
+        Tenant tenant = new Tenant(
                 TenantId.of(id),
                 TenantName.of(name),
                 contactUserId,
@@ -29,6 +29,8 @@ public final class TenantFactory {
                 TenantExpireTime.of(expireTime),
                 accountCount
         );
+        tenant.recordCreated();
+        return tenant;
     }
 
     /** 从持久化数据重建 Tenant 聚合（供仓储实现调用） */

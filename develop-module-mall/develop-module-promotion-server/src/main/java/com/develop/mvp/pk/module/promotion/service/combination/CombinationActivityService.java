@@ -16,7 +16,7 @@ import java.util.List;
 /**
  * 拼团活动 Service 接口
  *
- * @author HUIHUI
+ * @author David
  */
 public interface CombinationActivityService {
 

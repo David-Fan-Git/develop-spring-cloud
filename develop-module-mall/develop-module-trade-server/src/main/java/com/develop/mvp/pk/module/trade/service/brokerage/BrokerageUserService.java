@@ -14,7 +14,7 @@ import jakarta.validation.constraints.NotNull;
 /**
  * 分销用户 Service 接口
  *
- * @author owen
+ * @author David
  */
 public interface BrokerageUserService {
 

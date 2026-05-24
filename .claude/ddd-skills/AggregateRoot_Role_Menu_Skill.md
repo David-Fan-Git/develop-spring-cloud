@@ -1,140 +1,583 @@
-# DDD Skill: AggregateRoot_Role_Menu_Skill
+---
+name: aggregateroot-role-menu-skill
+description: Use when refactoring or validating system RBAC Role, Menu, Permission, role-menu, user-role, menu tree, permission check, and dept data-permission code under the DDD architecture.
+type: ddd-aggregate-skill
+module: system
+status: production-ready
+last_verified: 2026-05-24
+---
 
-## 1. 技能名称
+# AggregateRoot Role/Menu Skill
 
-`AggregateRoot_Role_Menu_Skill` — 角色(Role)与菜单(Menu)聚合根的领域建模与重构技能
+## 0. Purpose
 
-## 2. 适用场景
+This skill is the production refactoring contract for the system RBAC boundary: Role, Menu, Permission, RoleMenu, UserRole, menu filtering, permission checking, and department data permission.
 
-本技能针对 **RBAC 权限模型** 的核心领域，覆盖：
+Use it before changing any of these areas:
 
-- **Role**: 创建/更新/删除角色、数据权限设置、角色校验
-- **Menu**: 创建/更新/删除菜单（树形结构）、菜单过滤
-- **Permission**: 用户-角色分配、角色-菜单分配、权限判断、数据权限查询
+- `develop-module-system/develop-module-system-server/src/main/java/com/develop/mvp/pk/module/system/controller/admin/permission/`
+- `develop-module-system/develop-module-system-server/src/main/java/com/develop/mvp/pk/module/system/service/permission/`
+- `develop-module-system/develop-module-system-server/src/main/java/com/develop/mvp/pk/module/system/domain/permission/`
+- `develop-module-system/develop-module-system-server/src/main/java/com/develop/mvp/pk/module/system/application/permission/`
+- `develop-module-system/develop-module-system-server/src/main/java/com/develop/mvp/pk/module/system/infrastructure/permission/`
+- `develop-module-system/develop-module-system-server/src/main/java/com/develop/mvp/pk/module/system/dal/dataobject/permission/`
+- `develop-module-system/develop-module-system-api/src/main/java/com/develop/mvp/pk/module/system/api/permission/`
 
-## 3. DDD 构造块
+Role/Menu DDD migration is not complete. Treat existing `service/permission/*ServiceImpl.java` classes as the behavior source until the new DDD path proves equivalent through tests and compile checks.
 
-### 3.1 聚合根
+## 1. Baseline Failure Findings
 
-| 聚合根 | 类名 | 角色 |
-|--------|------|------|
-| Role | `domain.permission.Role` | 角色聚合根，封装角色身份、状态、数据范围，内部持有菜单关联 |
-| Menu | `domain.permission.Menu` | 菜单聚合根，树形结构，封装菜单属性与层级校验 |
+The previous version of this skill was not production-safe. A clean agent using it could incorrectly:
 
-### 3.2 值对象（Role 聚合）
+- Replace Controller behavior without preserving URLs, HTTP methods, request/response VO shape, permissions, export behavior, or pagination semantics.
+- Move RBAC logic into `domain` while dropping Spring cache eviction, `@DSTransactional`, `@Transactional`, `@LogRecord`, or data permission behavior.
+- Treat Menu as tenant-owned data and break `MenuDO`'s tenant-ignore/global-menu semantics plus tenant package filtering.
+- Ignore strict permission matching in `PermissionServiceImpl#hasAnyPermissions`: unknown permission strings return `false`, not ignored.
+- Drop super-admin fallback in permission checks.
+- Drop `processRoleDeleted`, `processMenuDeleted`, or `processUserDeleted` cleanup side effects.
+- Use current DDD draft `Role`/`Menu` constructors as-is even though they reject `null` IDs and require data not supplied by create VOs.
+- Convert domain exceptions such as `IllegalStateException` / `IllegalArgumentException` directly to API errors, losing existing `ErrorCodeConstants` contracts.
 
-| 值对象 | 类名 | 封装字段 | 不变式 |
-|--------|------|---------|--------|
-| 角色ID | `RoleId` | Long value | 非空 |
-| 角色名称 | `RoleName` | String value | 非空，同租户不可重复 |
-| 角色编码 | `RoleCode` | String value | 非空，同租户不可重复，禁止使用 SUPER_ADMIN |
-| 角色类型 | `RoleType` | Integer code | SYSTEM(1)/CUSTOM(2)，系统角色不可删除 |
-| 角色状态 | `RoleStatus` | Integer code | ENABLE/DISABLE |
-| 数据范围 | `DataScope` | Integer scope + Set<Long> deptIds | ALL/DEPT_CUSTOM/DEPT_ONLY/DEPT_AND_CHILD/SELF |
+## 2. Reproducibility Contract
 
-### 3.3 值对象（Menu 聚合）
+Before changing code, verify this skill against current source. If source behavior differs from this document, update this skill first and do not proceed with code refactoring until the conflict is resolved.
 
-| 值对象 | 类名 | 封装字段 | 不变式 |
-|--------|------|---------|--------|
-| 菜单ID | `MenuId` | Long value | 非空 |
-| 菜单名称 | `MenuName` | String value | 同父节点下不可重复 |
-| 菜单类型 | `MenuType` | Integer type | DIR(1)/MENU(2)/BUTTON(3) |
-| 权限标识 | `MenuPermission` | String value | 格式: system:module:action |
+Required production skill sections are:
 
-### 3.4 仓储接口
+- Current Source Anchors
+- Fixed Data Model
+- Required Method Signatures
+- Business Rules
+- Error Code Contract
+- Transaction Contract
+- Integration Contract
+- Mapping Rules
+- Current Conflict Notes
+- Acceptance Criteria
+- Verification Commands
+- Red Flags
+- Rollback Conditions
+- AI Self-Check
 
-- `RoleRepository` — 领域层接口，封装 Role 持久化
-- `MenuRepository` — 领域层接口，封装 Menu 持久化
+## 3. Current Source Anchors
 
-### 3.5 领域服务
+### 3.1 External entrypoints
 
-| 领域服务 | 职责 |
-|---------|------|
-| `PermissionChecker` | 权限判断（hasAnyPermissions, hasAnyRoles） |
-| `RoleMenuAssigner` | 角色-菜单分配（跨Role-Menu聚合） |
-| `UserRoleAssigner` | 用户-角色分配（跨User-Role聚合） |
+- `develop-module-system/develop-module-system-server/src/main/java/com/develop/mvp/pk/module/system/controller/admin/permission/RoleController.java`
+  - Base path `/system/role`; preserves create/update/delete/delete-list/get/page/list-all-simple+simple-list/export-excel.
+  - Excel export writes `角色数据.xls` sheet `数据` with `RoleRespVO`.
+- `develop-module-system/develop-module-system-server/src/main/java/com/develop/mvp/pk/module/system/controller/admin/permission/MenuController.java`
+  - Base path `/system/menu`; preserves create/update/delete/delete-list/list/get and simple menu list aliases `"/list-all-simple"` and `"simple-list"`.
+- `develop-module-system/develop-module-system-server/src/main/java/com/develop/mvp/pk/module/system/controller/admin/permission/PermissionController.java`
+  - Base path `/system/permission`; preserves list-role-menus, assign-role-menu, assign-role-data-scope, list-user-roles, and assign-user-role.
+  - `assign-role-menu` filters request menu IDs through `TenantService.handleTenantMenu` before assignment.
+- `develop-module-system/develop-module-system-server/src/main/java/com/develop/mvp/pk/module/system/controller/admin/auth/AuthController.java`
 
-### 3.6 领域事件
+Controllers define the stable external API. A DDD refactor must not change:
 
-| 事件 | 触发时机 |
-|------|---------|
-| `RoleCreatedEvent` | 角色创建成功 |
-| `RoleDeletedEvent` | 角色删除（发布后由订阅者清理 UserRole + RoleMenu） |
-| `MenuDeletedEvent` | 菜单删除（发布后由订阅者清理 RoleMenu） |
-| `UserRoleAssignedEvent` | 用户分配角色成功 |
+- URL paths
+- HTTP methods
+- request VO fields
+- response VO fields
+- `@PreAuthorize` expressions
+- export behavior
+- pagination behavior
+- tree/list ordering semantics
 
-## 4. 职责边界
+### 3.2 API contracts and RPC adapters
 
-### 4.1 Role 聚合根规则
+- `develop-module-system/develop-module-system-api/src/main/java/com/develop/mvp/pk/module/system/api/permission/RoleApi.java`
+- `develop-module-system/develop-module-system-api/src/main/java/com/develop/mvp/pk/module/system/api/permission/PermissionApi.java`
+- `develop-module-system/develop-module-system-api/src/main/java/com/develop/mvp/pk/module/system/api/permission/remote/RoleRemoteClient.java`
+- `develop-module-system/develop-module-system-api/src/main/java/com/develop/mvp/pk/module/system/api/permission/remote/PermissionRemoteClient.java`
 
-| 编号 | 规则 | 原代码 |
-|------|------|--------|
-| RR01 | 创建时默认状态 ENABLED，默认 DataScope=ALL | `createRole()` L64-65 |
-| RR02 | 名称在同租户不可重复 | `validateRoleDuplicate()` L154-157 |
-| RR03 | 编码在同租户不可重复 | `validateRoleDuplicate()` L163-167 |
-| RR04 | 禁止使用 SUPER_ADMIN 编码创建角色 | `validateRoleDuplicate()` L150-152 |
-| RR05 | 系统角色(type=SYSTEM)不可删除/修改 | `validateRoleForUpdate()` L181-183 |
-| RR06 | 删除角色时需清理 UserRole + RoleMenu 关联数据 | `deleteRole()` L119 |
+API-contract rule:
 
-### 4.2 Menu 聚合根规则
+- Business callers inject stable `RoleApi` / `PermissionApi`.
+- Feign identity stays only on `remote/*RemoteClient`.
+- `RoleRemoteClient` uses `contextId = "systemRoleRemoteClient"`; `PermissionRemoteClient` uses `contextId = "systemPermissionRemoteClient"`.
+- Server-local implementations implement stable APIs and must not depend on remote clients.
+- `PermissionApiImpl` is `@Primary` because `PermissionApi` extends framework `PermissionCommonApi`; do not remove this while both beans/contracts coexist.
 
-| 编号 | 规则 | 原代码 |
-|------|------|--------|
-| MR01 | 父菜单必须存在且类型为 DIR 或 MENU | `validateParentMenu()` L222-239 |
-| MR02 | 不能设置自己为父菜单 | `validateParentMenu()` L227-228 |
-| MR03 | 同父节点下菜单名不可重复 | `validateMenuName()` L252-264 |
-| MR04 | 组件名(componentName)全局不可重复 | `validateMenuComponentName()` L272-288 |
-| MR05 | 删除菜单时，需先检查是否有子菜单 | `deleteMenu()` L94-96 |
-| MR06 | 按钮类型菜单需清空 component/icon/path | `initMenuProperty()` L297-305 |
+### 3.3 Legacy behavior source
 
-### 4.3 严禁外泄
+- `develop-module-system/develop-module-system-server/src/main/java/com/develop/mvp/pk/module/system/service/permission/RoleServiceImpl.java`
+- `develop-module-system/develop-module-system-server/src/main/java/com/develop/mvp/pk/module/system/service/permission/MenuServiceImpl.java`
+- `develop-module-system/develop-module-system-server/src/main/java/com/develop/mvp/pk/module/system/service/permission/PermissionServiceImpl.java`
 
-| 禁止 | 应由谁处理 |
-|------|----------|
-| Role 聚合直接操作 RoleMapper | RoleRepository |
-| Menu 聚合直接操作 MenuMapper | MenuRepository |
-| 权限判断直接查数据库 | PermissionChecker 领域服务（内部用缓存） |
-| Role 聚合包含 User 引用 | 仅通过 UserRole 关联表引用 userId |
+These files are the current behavior source for rules, errors, cache, transaction, tenant filtering, and side effects.
 
-## 5. 不变式
+### 3.4 Current DDD draft source
 
-| 编号 | 不变式 |
-|------|--------|
-| RI01 | Role.name 在同租户内唯一 |
-| RI02 | Role.code 在同租户内唯一 |
-| RI03 | 系统角色(type=SYSTEM)永久存在，不可删除 |
-| RI04 | Menu.parentId 必须指向存在的 DIR 或 MENU 类型节点 |
-| RI05 | Menu 不能作为自己的父节点 |
-| RI06 | 相同父节点下 Menu.name 唯一 |
-| RI07 | BUTTON 类型的 Menu 不展示在侧边栏（无 component/icon/path） |
+- `develop-module-system/develop-module-system-server/src/main/java/com/develop/mvp/pk/module/system/domain/permission/Role.java`
+- `develop-module-system/develop-module-system-server/src/main/java/com/develop/mvp/pk/module/system/domain/permission/Menu.java`
+- `develop-module-system/develop-module-system-server/src/main/java/com/develop/mvp/pk/module/system/domain/permission/factory/RoleFactory.java`
+- `develop-module-system/develop-module-system-server/src/main/java/com/develop/mvp/pk/module/system/domain/permission/factory/MenuFactory.java`
+- `develop-module-system/develop-module-system-server/src/main/java/com/develop/mvp/pk/module/system/domain/permission/repository/RoleRepository.java`
+- `develop-module-system/develop-module-system-server/src/main/java/com/develop/mvp/pk/module/system/domain/permission/repository/MenuRepository.java`
+- `develop-module-system/develop-module-system-server/src/main/java/com/develop/mvp/pk/module/system/application/permission/RoleApplicationService.java`
+- `develop-module-system/develop-module-system-server/src/main/java/com/develop/mvp/pk/module/system/application/permission/MenuApplicationService.java`
+- `develop-module-system/develop-module-system-server/src/main/java/com/develop/mvp/pk/module/system/application/permission/PermissionApplicationService.java`
+- `develop-module-system/develop-module-system-server/src/main/java/com/develop/mvp/pk/module/system/infrastructure/permission/RoleRepositoryImpl.java`
+- `develop-module-system/develop-module-system-server/src/main/java/com/develop/mvp/pk/module/system/infrastructure/permission/MenuRepositoryImpl.java`
 
-## 6. 验收标准
+Current DDD draft is not authoritative when it conflicts with legacy service behavior.
 
-| 编号 | 验收标准 | 验证方法 |
-|------|---------|---------|
-| AC01 | Role 类无 MyBatis/Spring 注解 | 代码审查 |
-| AC02 | Menu 类无 MyBatis/Spring 注解 | 代码审查 |
-| AC03 | RoleId, RoleName, RoleCode, RoleType, RoleStatus, DataScope 为不可变值对象 | 代码审查 |
-| AC04 | MenuId, MenuName, MenuType, MenuPermission 为不可变值对象 | 代码审查 |
-| AC05 | RoleRepository/MenuRepository 接口在领域层 | 代码审查 |
-| AC06 | 编译通过 | mvn compile |
-| AC07 | Controller 使用新 ApplicationService | 代码审查 |
-| AC08 | 领域服务 PermissionChecker/UserRoleAssigner/RoleMenuAssigner 在领域层定义 | 代码审查 |
+### 3.5 Persistence source
 
-## 7. 分步执行计划
+- `develop-module-system/develop-module-system-server/src/main/java/com/develop/mvp/pk/module/system/dal/dataobject/permission/RoleDO.java`
+- `develop-module-system/develop-module-system-server/src/main/java/com/develop/mvp/pk/module/system/dal/dataobject/permission/MenuDO.java`
+- `develop-module-system/develop-module-system-server/src/main/java/com/develop/mvp/pk/module/system/dal/dataobject/permission/RoleMenuDO.java`
+- `develop-module-system/develop-module-system-server/src/main/java/com/develop/mvp/pk/module/system/dal/dataobject/permission/UserRoleDO.java`
+- `develop-module-system/develop-module-system-server/src/main/java/com/develop/mvp/pk/module/system/dal/mysql/permission/RoleMapper.java`
+- `develop-module-system/develop-module-system-server/src/main/java/com/develop/mvp/pk/module/system/dal/mysql/permission/MenuMapper.java`
+- `develop-module-system/develop-module-system-server/src/main/java/com/develop/mvp/pk/module/system/dal/mysql/permission/RoleMenuMapper.java`
+- `develop-module-system/develop-module-system-server/src/main/java/com/develop/mvp/pk/module/system/dal/mysql/permission/UserRoleMapper.java`
 
-**阶段 1**: 创建值对象（Role: RoleId/RoleName/RoleCode/RoleType/RoleStatus/DataScope; Menu: MenuId/MenuName/MenuType/MenuPermission）
-**阶段 2**: 创建领域事件 + 仓储接口
-**阶段 3**: 创建 Role 聚合根 + Menu 聚合根 + 工厂
-**阶段 4**: 创建领域服务接口（PermissionChecker/UserRoleAssigner/RoleMenuAssigner）
-**阶段 5**: 实现基础设施层（RepositoryImpl + 领域服务Impl）
-**阶段 6**: 创建应用层（PermissionApplicationService）
-**阶段 7**: 适配 Controller
-**阶段 8**: 编译验证
+### 3.6 Error and mapping anchors
 
-## 8. 回滚条件
+- `develop-module-system/develop-module-system-api/src/main/java/com/develop/mvp/pk/module/system/enums/ErrorCodeConstants.java`
+- `develop-module-system/develop-module-system-server/src/main/java/com/develop/mvp/pk/module/system/controller/admin/permission/vo/role/RolePageReqVO.java`
+- `develop-module-system/develop-module-system-server/src/main/java/com/develop/mvp/pk/module/system/controller/admin/permission/vo/role/RoleRespVO.java`
+- `develop-module-system/develop-module-system-server/src/main/java/com/develop/mvp/pk/module/system/controller/admin/permission/vo/role/RoleSaveReqVO.java`
+- `develop-module-system/develop-module-system-server/src/main/java/com/develop/mvp/pk/module/system/controller/admin/permission/vo/role/RoleSimpleRespVO.java`
+- `develop-module-system/develop-module-system-server/src/main/java/com/develop/mvp/pk/module/system/controller/admin/permission/vo/menu/MenuListReqVO.java`
+- `develop-module-system/develop-module-system-server/src/main/java/com/develop/mvp/pk/module/system/controller/admin/permission/vo/menu/MenuRespVO.java`
+- `develop-module-system/develop-module-system-server/src/main/java/com/develop/mvp/pk/module/system/controller/admin/permission/vo/menu/MenuSaveVO.java`
+- `develop-module-system/develop-module-system-server/src/main/java/com/develop/mvp/pk/module/system/controller/admin/permission/vo/menu/MenuSimpleRespVO.java`
+- `develop-module-system/develop-module-system-server/src/main/java/com/develop/mvp/pk/module/system/controller/admin/permission/vo/permission/PermissionAssignRoleDataScopeReqVO.java`
+- `develop-module-system/develop-module-system-server/src/main/java/com/develop/mvp/pk/module/system/controller/admin/permission/vo/permission/PermissionAssignRoleMenuReqVO.java`
+- `develop-module-system/develop-module-system-server/src/main/java/com/develop/mvp/pk/module/system/controller/admin/permission/vo/permission/PermissionAssignUserRoleReqVO.java`
+- `develop-module-system/develop-module-system-api/src/main/java/com/develop/mvp/pk/module/system/api/permission/dto/DeptDataPermissionRespDTO.java`
 
-1. 编译失败
-2. Role/Menu 聚合注入基础设施依赖
-3. 值对象存在 setter
-4. Controller 权限校验行为回归
+There is no dedicated `convert/permission/*Convert.java` in the current source tree. Legacy Role/Menu/Permission mapping is performed through Controller/Service code, `BeanUtils`, mapper methods, and DO/VO/DTO classes. Do not assume a MapStruct permission convert exists; if one is introduced during refactoring, it must be covered by tests and preserve the VO/DTO fields above.
+
+### 3.7 Regression tests
+
+- `develop-module-system/develop-module-system-server/src/test/java/com/develop/mvp/pk/module/system/service/permission/RoleServiceImplTest.java`
+- `develop-module-system/develop-module-system-server/src/test/java/com/develop/mvp/pk/module/system/service/permission/MenuServiceImplTest.java`
+- `develop-module-system/develop-module-system-server/src/test/java/com/develop/mvp/pk/module/system/service/permission/PermissionServiceTest.java`
+- `develop-module-system/develop-module-system-server/src/test/java/com/develop/mvp/pk/module/system/service/auth/AdminAuthServiceImplTest.java`
+
+Add or update tests near these existing tests unless the repository already has equivalent DDD application-service tests.
+
+## 4. Fixed Data Model
+
+### 4.1 Role
+
+Source of truth: `RoleDO` and `RoleSaveReqVO`.
+
+Required fields to preserve:
+
+- `id: Long`
+- `name: String`
+- `code: String`
+- `sort: Integer`
+- `status: Integer`
+- `type: Integer`
+- `remark: String`
+- `dataScope: Integer`
+- `dataScopeDeptIds: Set<Long>` or equivalent persisted representation
+- `tenantId: Long` from `TenantBaseDO`, when present on persistence model
+- `createTime`, `updateTime`, `creator`, `updater`, `deleted` persistence metadata
+
+Defaults:
+
+- Create role default `type` is `RoleTypeEnum.CUSTOM.getType()` unless an explicit type is supplied by internal service path.
+- Create role default `status` is `CommonStatusEnum.ENABLE.getStatus()` when request status is null.
+- Create role default `dataScope` is `DataScopeEnum.ALL.getScope()`.
+
+### 4.2 Menu
+
+Source of truth: `MenuDO` and `MenuSaveVO`.
+
+Required fields to preserve:
+
+- `id: Long`
+- `name: String`
+- `permission: String`
+- `type: Integer`
+- `sort: Integer`
+- `parentId: Long`
+- `path: String`
+- `icon: String`
+- `component: String`
+- `componentName: String`
+- `status: Integer`
+- `visible: Boolean` or current equivalent
+- `keepAlive: Boolean` or current equivalent
+- `alwaysShow: Boolean` or current equivalent
+- persistence metadata
+
+Menu is global system metadata. Do not add tenant ownership to `Menu` or `MenuDO`. Tenant-specific visibility is applied by tenant package/menu filtering, not by changing the menu row's tenant identity.
+
+Defaults and normalization:
+
+- Button menu type clears `component`, `componentName`, `icon`, and `path` to empty string, matching legacy `MenuServiceImpl#initMenuProperty`.
+- Parent validation must treat root parent according to existing `MenuId.ROOT` / `MenuSaveVO` behavior.
+
+### 4.3 RoleMenu and UserRole
+
+Role-menu and user-role are association records, not entities embedded by object reference.
+
+Required fields to preserve:
+
+- `RoleMenuDO.roleId`
+- `RoleMenuDO.menuId`
+- `UserRoleDO.userId`
+- `UserRoleDO.roleId`
+- persistence metadata if present
+
+The domain must reference cross-aggregate associations by IDs only.
+
+## 5. Required Method Signatures
+
+Do not force these exact signatures if current code already has equivalent names, but every capability must exist with equivalent input/output and behavior.
+
+### 5.1 Role aggregate
+
+```java
+public final class Role {
+    public RoleId id();
+    public RoleName name();
+    public RoleCode code();
+    public Integer sort();
+    public RoleStatus status();
+    public RoleType type();
+    public String remark();
+    public Long tenantId();
+    public DataScope dataScope();
+
+    public void rename(RoleName name);
+    public void changeCode(RoleCode code);
+    public void changeBaseInfo(RoleName name, RoleCode code, Integer sort, String remark);
+    public void changeStatus(RoleStatus status);
+    public void changeDataScope(DataScope dataScope);
+    public void markDeleted();
+    public boolean isSystem();
+}
+```
+
+Creation must support database-generated IDs. Do not require a non-null `RoleId` before insert unless the application layer allocates IDs before construction.
+
+### 5.2 Menu aggregate
+
+```java
+public final class Menu {
+    public MenuId id();
+    public MenuName name();
+    public MenuPermission permission();
+    public MenuType type();
+    public Integer sort();
+    public MenuId parentId();
+    public String path();
+    public String icon();
+    public String component();
+    public String componentName();
+    public Integer status();
+
+    public void changeBaseInfo(...);
+    public void validateParentAgainst(Menu parent);
+    public boolean isButton();
+    public boolean isDirOrMenu();
+    public void markDeleted();
+}
+```
+
+Creation must support database-generated IDs. Do not require a non-null `MenuId` before insert unless the application layer allocates IDs before construction.
+
+### 5.3 Role repository port
+
+```java
+public interface RoleRepository {
+    Role save(Role role);
+    void update(Role role);
+    void deleteById(Long id);
+    Role findById(Long id);
+    Role findByName(String name);
+    Role findByCode(String code);
+    PageResult<Role> findPage(...);
+    List<Role> findList(...);
+}
+```
+
+### 5.4 Menu repository port
+
+```java
+public interface MenuRepository {
+    Menu save(Menu menu);
+    void update(Menu menu);
+    void deleteById(Long id);
+    Menu findById(Long id);
+    Menu findByParentIdAndName(Long parentId, String name);
+    Menu findByComponentName(String componentName);
+    List<Menu> findByParentId(Long parentId);
+    List<Menu> findList(...);
+}
+```
+
+### 5.5 Permission application/service capabilities
+
+The DDD application layer must preserve these public use cases:
+
+- Create/update/delete/get/page/list Role.
+- Create/update/delete/get/list Menu.
+- Assign menus to a role.
+- Assign roles to a user.
+- Process role deletion cleanup.
+- Process menu deletion cleanup.
+- Process user deletion cleanup.
+- Check user permissions and roles.
+- Build department data permission result.
+
+If legacy service interfaces remain public, they may delegate to application services. Do not break existing consumers during migration.
+
+## 6. Business Rules
+
+### 6.1 Role rules
+
+- Role name must be unique under existing repository semantics.
+- Role code must be unique under existing repository semantics.
+- Creating or updating a role with super-admin code is forbidden for normal custom roles.
+- System roles cannot be updated or deleted.
+- Role delete must clean both user-role and role-menu associations.
+- Role cache eviction must remain equivalent for create/update/delete and assign-menu side effects.
+- Role `LogRecord` behavior must remain equivalent if the public service method still carries operation-log responsibility.
+
+### 6.2 Menu rules
+
+- Parent menu cannot be the menu itself.
+- Non-root parent menu must exist.
+- Parent menu type must be directory or menu.
+- Menu name must be unique under the same parent.
+- Component name must remain unique according to existing legacy semantics.
+- Delete menu must fail when child menus exist.
+- Delete menu must clean role-menu associations.
+- Button menu must clear `component`, `componentName`, `icon`, and `path`.
+- Menu cache eviction must remain equivalent.
+- Tenant menu filtering must remain in the application/service/query path, not in menu persistence.
+- Disabled menu filtering must recursively remove menus whose own status is disabled or whose parent chain is disabled.
+
+### 6.3 Permission rules
+
+- `hasAnyPermissions(userId, permissions...)` returns true when requested permissions are empty, matching legacy behavior.
+- If the user has no roles, permission checks return false.
+- Every requested permission string must match an existing menu permission; unknown permission strings return false.
+- Permission checks must preserve the super-admin role fallback.
+- `assignRoleMenu` must replace role-menu associations by diffing current and requested menu IDs.
+- `assignUserRole` must replace user-role associations by diffing current and requested role IDs.
+- `processRoleDeleted` must remove both `UserRoleDO` and `RoleMenuDO` records for the role.
+- `processMenuDeleted` must remove `RoleMenuDO` records for the menu.
+- `processUserDeleted` must remove `UserRoleDO` records for the user.
+
+### 6.4 Department data permission rules
+
+Preserve `PermissionServiceImpl#getDeptDataPermission` semantics:
+
+- Method must ignore data-permission filtering via `@DataPermission(enable = false)` or equivalent boundary behavior.
+- A user with no roles gets `self = true`.
+- `DataScopeEnum.ALL` sets `all = true`.
+- `DataScopeEnum.DEPT_CUSTOM` adds custom department IDs and must include the user's own department.
+- `DataScopeEnum.DEPT_ONLY` adds the user's own department.
+- `DataScopeEnum.DEPT_AND_CHILD` adds the user's department and child departments.
+- `DataScopeEnum.SELF` sets `self = true`.
+- Disabled roles must not grant department data permission unless legacy code explicitly includes them.
+
+## 7. Error Code Contract
+
+Do not replace existing business exceptions with raw Java exceptions at Controller/API boundaries. Error constants live in `develop-module-system/develop-module-system-api/src/main/java/com/develop/mvp/pk/module/system/enums/ErrorCodeConstants.java`.
+
+| Business scenario | Required constant | Parameters | Boundary |
+| --- | --- | --- | --- |
+| create/update role uses super-admin code | `ROLE_ADMIN_CODE_ERROR` | `code` | application/service maps domain validation to `ServiceException` |
+| create/update role duplicate name | `ROLE_NAME_DUPLICATE` | `name` | application/service |
+| create/update role duplicate code | `ROLE_CODE_DUPLICATE` | `code` | application/service |
+| update/delete/get role missing | `ROLE_NOT_EXISTS` | none | application/service |
+| update/delete system role | `ROLE_CAN_NOT_UPDATE_SYSTEM_TYPE_ROLE` | none | application/service |
+| role disabled during validation | `ROLE_IS_DISABLE` | `name` | application/service |
+| create/update menu parent is itself | `MENU_PARENT_ERROR` | none | application/service |
+| create/update menu parent missing | `MENU_PARENT_NOT_EXISTS` | none | application/service |
+| create/update menu parent is not dir/menu | `MENU_PARENT_NOT_DIR_OR_MENU` | none | application/service |
+| create/update menu duplicate name under parent | `MENU_NAME_DUPLICATE` | none | application/service |
+| create/update menu duplicate component name | `MENU_COMPONENT_NAME_DUPLICATE` | none | application/service |
+| update/delete/get menu missing | `MENU_NOT_EXISTS` | none | application/service |
+| delete menu with child menus | `MENU_EXISTS_CHILDREN` | none | application/service |
+| assign roles to missing user | `USER_NOT_EXISTS` | none | application/service |
+| assign disabled role where legacy validation rejects it | `ROLE_IS_DISABLE` | `name` | application/service |
+
+Role-menu and user-role assignment validation must continue to use the same role/menu/user validation paths as legacy `PermissionServiceImpl`, `RoleServiceImpl`, and `MenuServiceImpl`; do not invent new error constants.
+
+Domain may use typed results or domain exceptions internally only if the application layer maps them back to existing `ErrorCodeConstants` before crossing the boundary.
+
+## 8. Transaction Contract
+
+Preserve these transaction boundaries unless tests prove an equivalent boundary:
+
+- Role create/update/delete public operations that write DB state must remain transactional when the legacy service is transactional.
+- Menu delete must remain transactional because it deletes menu and role-menu associations.
+- `PermissionServiceImpl#assignRoleMenu` uses `@DSTransactional` and must keep cross-datasource transaction semantics.
+- `PermissionServiceImpl#assignUserRole` uses `@DSTransactional` and must keep cross-datasource transaction semantics.
+- `processRoleDeleted` must remain transactional because it deletes user-role and role-menu associations.
+- `processMenuDeleted` currently has no explicit transaction and evicts `MENU_ROLE_ID_LIST` for the deleted menu id; preserve its observable association cleanup and cache behavior.
+- `processUserDeleted` currently has no explicit transaction and evicts `USER_ROLE_ID_LIST` for the deleted user id; preserve its observable association cleanup and cache behavior.
+- Operation-log context updates must stay inside the same logical use case.
+
+Do not move transaction annotations into pure domain classes. Put them on application service, legacy service facade, or infrastructure adapter boundary.
+
+## 9. Cache Contract
+
+Preserve cache keys and eviction breadth from legacy services:
+
+- Role cache by role ID must evict on role update/delete.
+- Permission menu-ID list cache must evict when menu permission changes, menu is deleted, or role-menu assignment changes.
+- Menu role-ID list cache must evict when role-menu assignment or role/menu deletion changes associations.
+- User role-ID list cache must evict when user-role assignment changes or user/role deletion changes associations.
+- `assignRoleMenu` currently evicts both `MENU_ROLE_ID_LIST` and `PERMISSION_MENU_ID_LIST` with `allEntries = true`.
+- `assignUserRole` currently evicts `USER_ROLE_ID_LIST` by `userId` only.
+- `processRoleDeleted` currently evicts both `MENU_ROLE_ID_LIST` and `USER_ROLE_ID_LIST` with `allEntries = true`.
+- `processMenuDeleted` currently evicts `MENU_ROLE_ID_LIST` by `menuId` only.
+- `processUserDeleted` currently evicts `USER_ROLE_ID_LIST` by `userId` only.
+- Any `allEntries = true` eviction in legacy code must not be narrowed unless tests prove no stale cache can remain.
+- Self-invocation cache AOP patterns such as `SpringUtil.getBean(getClass())` must be preserved or replaced with an equivalent non-self-invocation boundary.
+
+## 10. Integration Contract
+
+Preserve collaborations with:
+
+- `TenantService` / tenant menu package filtering for menu list visibility and assign-role-menu request filtering.
+- `AdminUserService` for user existence, user department, and dept-data-permission input.
+- `DeptService` for department child expansion.
+- `RoleService` role validation used by permission assignment.
+- `MenuService` menu validation used by role-menu assignment.
+- `LogRecordContext` and `@LogRecord` for role operation logs.
+- `DataPermissionUtils` / `@DataPermission(enable = false)` behavior.
+- API contracts `RoleApi` and `PermissionApi`.
+
+Do not introduce remote RPC calls inside domain classes. Remote/local integration belongs in application or infrastructure adapters.
+
+## 11. Mapping Rules
+
+- Controller VO shape stays unchanged.
+- API DTO shape stays unchanged.
+- DO table field shape stays unchanged.
+- Domain-to-DO conversion must preserve all persistence fields needed for update and response mapping.
+- Domain-to-VO conversion must preserve fields currently returned by Controller endpoints.
+- Role update must actually mutate or replace `name`, `code`, `sort`, `remark`, `status`, and `dataScope` where applicable.
+- Menu update must actually mutate or replace menu fields used by list/tree/route responses.
+- Avoid constructing Controller request VOs in repository implementations. If current draft does this, mark it as boundary debt and do not spread it.
+
+## 12. Current Conflict Notes
+
+Resolve these before production code migration:
+
+- Current `Role` constructor requires non-null `RoleId` and non-null `tenantId`, but create flows may supply neither before insert.
+- Current `Menu` constructor requires non-null `MenuId` and `parentId`; create flows must verify whether generated IDs/root parent are compatible.
+- Current `Role#update(...)` appears to be a no-op because mutable fields are final or not assigned. Production refactor must make updates effective.
+- Current `Role#markDeleted()` throws `IllegalStateException`; public behavior must map to `ROLE_CAN_NOT_UPDATE_SYSTEM_TYPE_ROLE`.
+- Current `Menu#validateParentAgainst(...)` throws `IllegalArgumentException`; public behavior must map to `MENU_PARENT_*` errors.
+- Current `Menu` constructor clears only `component` and `componentName` for button menus; legacy behavior also clears `icon` and `path`.
+- Current DDD application services may not yet preserve all cache, transaction, operation-log, tenant filtering, and data-permission behavior from legacy services.
+- `PermissionApiImpl` currently requires `@Primary` due to the `PermissionCommonApi` inheritance/bean overlap; dropping it can create ambiguous bean resolution.
+- `MenuController#getSimpleMenuList` currently exposes both `/list-all-simple` and `simple-list` aliases; preserve both exact aliases during Controller migration.
+
+## 13. Acceptance Criteria
+
+A Role/Menu/Permission DDD refactor is acceptable only when all items below are true:
+
+- Domain classes contain no Spring, MyBatis, web, Feign, cache, transaction, or persistence annotations.
+- Domain repository interfaces live in `domain/permission/repository` and do not import infrastructure or DAL classes.
+- Infrastructure repository implementations are the only DDD layer that directly uses Mappers/DOs.
+- Controller external behavior is unchanged.
+- `RoleApi` / `PermissionApi` external contracts are unchanged.
+- Existing service interfaces either remain behavior-compatible or become thin facades over application services.
+- All role validation errors use existing error codes.
+- All menu validation errors use existing error codes.
+- Role create/update/delete preserve cache eviction and operation-log behavior.
+- Menu create/update/delete preserve cache eviction and child/association cleanup behavior.
+- Role-menu and user-role assignment preserve `@DSTransactional` semantics and cache eviction breadth.
+- Dept data permission preserves data-permission bypass and data-scope semantics.
+- Tenant menu filtering still happens for menu queries and assign-role-menu request filtering where currently applied.
+- Button menu normalization clears component, componentName, icon, and path.
+- `PermissionApiImpl` remains `@Primary` while `PermissionApi` extends `PermissionCommonApi` and overlapping beans/contracts exist.
+- Menu simple-list aliases preserve both `/list-all-simple` and `simple-list`.
+- Tests cover id-null creation compatibility or the chosen ID allocation strategy.
+- Tests cover effective Role update; no no-op update may pass review.
+
+## 14. Verification Commands
+
+Run targeted checks after each small refactor batch:
+
+```bash
+mvn test -pl develop-module-system/develop-module-system-server -Dtest=RoleServiceImplTest -DskipITs
+mvn test -pl develop-module-system/develop-module-system-server -Dtest=MenuServiceImplTest -DskipITs
+mvn test -pl develop-module-system/develop-module-system-server -Dtest=PermissionServiceTest -DskipITs
+mvn compile -pl develop-module-system/develop-module-system-api -am -DskipTests
+mvn compile -pl develop-module-system/develop-module-system-server -am -DskipTests
+```
+
+If Controller behavior changes or API DTO mapping changes, also run affected controller/API tests or add regression tests before continuing.
+
+Before migrating Controller or legacy service calls to the DDD application path, regression coverage must exist for these named behaviors. If current tests do not contain equivalent methods, add them first and run them with `-Dtest=Class#method`:
+
+- `RoleServiceImplTest#testCreateRole_allowsDatabaseGeneratedId` or equivalent: create role path must not fail because domain `RoleId` is null before insert.
+- `RoleServiceImplTest#testUpdateRole_mutatesNameCodeSortRemark` or equivalent: role update must change persisted/returned fields and cannot be a no-op.
+- `MenuServiceImplTest#testCreateOrUpdateButtonMenu_clearsDisplayFields` or equivalent: button menu normalization clears `component`, `componentName`, `icon`, and `path`.
+- `PermissionServiceTest#testHasAnyPermissions_unknownPermissionReturnsFalse` or equivalent: unknown permission string returns false.
+- `PermissionServiceTest#testHasAnyPermissions_superAdminFallback` or equivalent: super-admin role still grants permissions after strict menu matching rules are applied.
+- `PermissionServiceTest#testGetDeptDataPermission_ignoresDataPermissionAndPreservesScopes` or equivalent: department data permission preserves all/self/custom/own/child semantics.
+
+For documentation-only skill edits, run at least:
+
+```bash
+git diff --check -- .claude/ddd-skills/AggregateRoot_Role_Menu_Skill.md
+grep -n "^## " .claude/ddd-skills/AggregateRoot_Role_Menu_Skill.md
+```
+
+## 15. Common Mistakes
+
+- Treating Role and Menu as one large aggregate with object references between them. Use IDs for cross-aggregate associations.
+- Moving `@CacheEvict` behavior into domain or dropping it entirely.
+- Replacing `@DSTransactional` with plain `@Transactional` without proof.
+- Changing menu tenant behavior by adding tenant ownership to Menu rows.
+- Forgetting recursive disabled-parent menu filtering.
+- Allowing unknown permission strings to pass permission checks.
+- Forgetting super-admin fallback.
+- Keeping current no-op `Role#update(...)` and assuming repository update fixed it.
+- Mapping domain exceptions directly to generic 500/400 responses instead of existing error codes.
+
+## 16. Red Flags
+
+Stop the refactor immediately if any of these appear:
+
+- Controller path, method, VO, permission annotation, export, or pagination changes are required.
+- Role/menu/error code behavior differs from legacy service tests.
+- Cache eviction breadth is narrowed without a regression test.
+- `@DSTransactional` is removed from role-menu or user-role assignment paths.
+- Tenant menu filtering disappears from menu query paths.
+- Domain classes import Spring, MyBatis, Feign, Mapper, DO, Controller VO, or Cache APIs.
+- A create flow passes `null` into a value object that rejects null without an explicit ID allocation strategy.
+- Role update still does not modify the fields users can update.
+
+## 17. Rollback Conditions
+
+Rollback the current batch if:
+
+- `develop-module-system/develop-module-system-server` no longer compiles.
+- Existing Role/Menu/Permission service tests fail for behavior unrelated to the intended change.
+- Any public API/Controller contract changes without explicit user approval.
+- Cache, transaction, tenant, or data-permission behavior cannot be proven equivalent.
+- A migration requires changing database schema or seed data outside the approved batch.
+
+## 18. AI Self-Check
+
+Before reporting completion, answer yes to all:
+
+- Did I compare the DDD code against `RoleServiceImpl`, `MenuServiceImpl`, and `PermissionServiceImpl`?
+- Did I preserve existing error codes instead of introducing generic exceptions?
+- Did I preserve cache eviction keys and `allEntries` breadth?
+- Did I preserve `@DSTransactional` where used by assignment operations?
+- Did I preserve tenant menu filtering and disabled-parent filtering?
+- Did I cover the current Role/Menu id-null creation conflicts?
+- Did I prove Role update is not a no-op?
+- For code/refactor changes, did I run fresh compile/test commands and read their output before claiming completion?
+- For documentation-only skill edits, did I run the section 14 documentation checks and read their output before claiming completion?

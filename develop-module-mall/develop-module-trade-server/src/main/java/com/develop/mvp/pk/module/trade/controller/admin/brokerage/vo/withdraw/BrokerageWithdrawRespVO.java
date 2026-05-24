@@ -15,7 +15,7 @@ public class BrokerageWithdrawRespVO {
     @Schema(description = "用户编号", requiredMode = Schema.RequiredMode.REQUIRED, example = "11436")
     private Long userId;
 
-    @Schema(description = "用户昵称", requiredMode = Schema.RequiredMode.REQUIRED, example = "芋艿")
+    @Schema(description = "用户昵称", requiredMode = Schema.RequiredMode.REQUIRED, example = "David")
     private String userNickname;
 
     @Schema(description = "提现金额", requiredMode = Schema.RequiredMode.REQUIRED, example = "18781")

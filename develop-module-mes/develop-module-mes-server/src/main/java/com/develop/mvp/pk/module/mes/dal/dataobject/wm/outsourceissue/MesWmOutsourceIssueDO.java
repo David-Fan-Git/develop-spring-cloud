@@ -15,7 +15,7 @@ import com.develop.mvp.pk.module.mes.enums.DictTypeConstants;
 /**
  * MES 外协发料单 DO
  *
- * @author 芋道源码
+ * @author David
  */
 @TableName("mes_wm_outsource_issue")
 @KeySequence("mes_wm_outsource_issue_seq")

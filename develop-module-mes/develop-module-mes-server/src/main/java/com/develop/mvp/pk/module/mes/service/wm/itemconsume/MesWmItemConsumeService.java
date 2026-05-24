@@ -6,7 +6,7 @@ import com.develop.mvp.pk.module.mes.dal.dataobject.wm.itemconsume.MesWmItemCons
 /**
  * MES 物料消耗记录 Service 接口
  *
- * @author 芋道源码
+ * @author David
  */
 public interface MesWmItemConsumeService {
 

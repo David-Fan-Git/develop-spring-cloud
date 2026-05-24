@@ -29,7 +29,7 @@ import java.time.Duration;
  *
  * @param <Config>   配置信息类型，用于初始化生产者
  * @param <Producer> 生产者类型，负责将数据发送到目标系统
- * @author HUIHUI
+ * @author David
  */
 @Slf4j
 public abstract class IotDataRuleCacheableAction<Config, Producer> implements IotDataRuleAction {

@@ -19,7 +19,7 @@ import static com.develop.mvp.pk.framework.common.util.collection.CollectionUtil
 /**
  * 会员积分、等级的 {@link TradeOrderHandler} 实现类
  *
- * @author owen
+ * @author David
  */
 @Component
 public class TradeMemberPointOrderHandler implements TradeOrderHandler {

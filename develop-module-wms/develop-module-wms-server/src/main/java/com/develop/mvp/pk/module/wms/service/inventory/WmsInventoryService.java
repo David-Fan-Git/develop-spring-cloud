@@ -12,7 +12,7 @@ import java.util.List;
 /**
  * WMS 库存 Service 接口
  *
- * @author 芋道源码
+ * @author David
  */
 public interface WmsInventoryService {
 

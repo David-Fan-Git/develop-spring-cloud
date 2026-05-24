@@ -11,7 +11,7 @@ import java.time.LocalDateTime;
 /**
  * 拼团商品 DO
  *
- * @author HUIHUI
+ * @author David
  */
 @TableName("promotion_combination_product")
 @KeySequence("promotion_combination_product_seq") // 用于 Oracle、PostgreSQL、Kingbase、DB2、H2 数据库的主键自增。如果是 MySQL 等数据库，可不写。

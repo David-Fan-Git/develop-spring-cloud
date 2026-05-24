@@ -20,7 +20,7 @@ import java.util.List;
 /**
  * IoT 设备服务调用的 {@link IotSceneRuleAction} 实现类
  *
- * @author HUIHUI
+ * @author David
  */
 @Component
 @Slf4j

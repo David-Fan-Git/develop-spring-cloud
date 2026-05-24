@@ -9,7 +9,7 @@ import com.develop.mvp.pk.module.system.dal.dataobject.logger.OperateLogDO;
 /**
  * 操作日志 Service 接口
  *
- * @author 芋道源码
+ * @author David
  */
 public interface OperateLogService {
 

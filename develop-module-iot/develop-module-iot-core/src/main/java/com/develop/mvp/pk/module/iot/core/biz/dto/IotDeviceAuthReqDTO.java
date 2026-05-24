@@ -8,7 +8,7 @@ import lombok.NoArgsConstructor;
 /**
  * IoT 设备认证 Request DTO
  *
- * @author 芋道源码
+ * @author David
  */
 @Data
 @NoArgsConstructor

@@ -7,7 +7,7 @@ import com.develop.mvp.pk.module.member.dal.dataobject.level.MemberLevelRecordDO
 /**
  * 会员等级记录 Service 接口
  *
- * @author owen
+ * @author David
  */
 public interface MemberLevelRecordService {
 

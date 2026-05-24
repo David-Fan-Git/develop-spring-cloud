@@ -13,7 +13,7 @@ import org.apache.ibatis.annotations.Mapper;
 /**
  * 线索 Mapper
  *
- * @author Wanwan
+ * @author David
  */
 @Mapper
 public interface CrmClueMapper extends BaseMapperX<CrmClueDO> {

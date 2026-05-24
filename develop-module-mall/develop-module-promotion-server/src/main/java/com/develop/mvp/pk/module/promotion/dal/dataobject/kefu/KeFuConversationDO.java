@@ -13,7 +13,7 @@ import java.time.LocalDateTime;
 /**
  * 客服会话 DO
  *
- * @author HUIHUI
+ * @author David
  */
 @TableName("promotion_kefu_conversation")
 @KeySequence("promotion_kefu_conversation_seq") // 用于 Oracle、PostgreSQL、Kingbase、DB2、H2 数据库的主键自增。如果是 MySQL 等数据库，可不写。

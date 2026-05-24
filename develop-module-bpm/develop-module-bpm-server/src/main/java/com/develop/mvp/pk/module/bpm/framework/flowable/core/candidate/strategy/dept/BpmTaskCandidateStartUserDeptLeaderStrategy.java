@@ -22,7 +22,7 @@ import static com.develop.mvp.pk.framework.common.util.collection.SetUtils.asSet
 /**
  * 发起人的部门负责人, 可以是上级部门负责人 {@link BpmTaskCandidateStrategy} 实现类
  *
- * @author jason
+ * @author David
  */
 @Component
 public class BpmTaskCandidateStartUserDeptLeaderStrategy extends AbstractBpmTaskCandidateDeptLeaderStrategy {

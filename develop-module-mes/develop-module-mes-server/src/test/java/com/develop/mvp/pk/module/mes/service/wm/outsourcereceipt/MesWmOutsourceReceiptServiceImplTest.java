@@ -29,7 +29,7 @@ import static org.mockito.Mockito.*;
 /**
  * {@link MesWmOutsourceReceiptServiceImpl} 的单元测试
  *
- * @author 芋道源码
+ * @author David
  */
 @Import(MesWmOutsourceReceiptServiceImpl.class)
 public class MesWmOutsourceReceiptServiceImplTest extends BaseDbUnitTest {

@@ -17,7 +17,7 @@ import java.util.Set;
 /**
  * 部门的负责人 {@link BpmTaskCandidateStrategy} 抽象类
  *
- * @author jason
+ * @author David
  */
 public abstract class AbstractBpmTaskCandidateDeptLeaderStrategy implements BpmTaskCandidateStrategy {
 

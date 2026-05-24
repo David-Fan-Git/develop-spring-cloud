@@ -12,7 +12,7 @@ import java.util.List;
 /**
  * CRM 销售漏斗 Mapper
  *
- * @author HUIHUI
+ * @author David
  */
 @Mapper
 public interface CrmStatisticsFunnelMapper {

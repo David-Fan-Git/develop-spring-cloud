@@ -11,7 +11,7 @@ import lombok.NoArgsConstructor;
 /**
  * 数据权限转移 Request BO
  *
- * @author HUIHUI
+ * @author David
  */
 @Data
 @NoArgsConstructor

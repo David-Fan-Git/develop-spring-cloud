@@ -8,7 +8,7 @@ import com.develop.mvp.pk.module.infra.dal.dataobject.logger.ApiErrorLogDO;
 /**
  * API 错误日志 Service 接口
  *
- * @author 芋道源码
+ * @author David
  */
 public interface ApiErrorLogService {
 

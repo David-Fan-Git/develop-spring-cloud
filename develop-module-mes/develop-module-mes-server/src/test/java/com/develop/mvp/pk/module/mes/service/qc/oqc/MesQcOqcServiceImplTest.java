@@ -29,7 +29,7 @@ import static org.mockito.Mockito.*;
 /**
  * {@link MesQcOqcServiceImpl} 的单元测试类
  *
- * @author 芋道源码
+ * @author David
  */
 @Import(MesQcOqcServiceImpl.class)
 public class MesQcOqcServiceImplTest extends BaseDbUnitTest {

@@ -8,7 +8,7 @@ import jakarta.validation.constraints.NotNull;
 /**
  * 订单发货时通知创建 Req BO
  *
- * @author HUIHUI
+ * @author David
  */
 @Data
 public class TradeOrderMessageWhenDeliveryOrderReqBO {

@@ -20,9 +20,9 @@ import static com.develop.mvp.pk.framework.common.util.json.JsonUtils.toJsonStri
  *
  * 文档：<a href="https://pay.weixin.qq.com/wiki/doc/apiv3/open/pay/chapter2_5_3.shtml">App 支付</a>
  *
- * // TODO 芋艿：未详细测试，因为手头没 App
+ * // TODO David：未详细测试，因为手头没 App
  *
- * @author 芋道源码
+ * @author David
  */
 @Slf4j
 public class WxAppPayClient extends AbstractWxPayClient {

@@ -5,7 +5,7 @@ import com.develop.mvp.pk.module.trade.framework.delivery.core.enums.ExpressClie
 /**
  * 快递客户端工厂接口：用于创建和缓存快递客户端
  *
- * @author jason
+ * @author David
  */
 public interface ExpressClientFactory {
 

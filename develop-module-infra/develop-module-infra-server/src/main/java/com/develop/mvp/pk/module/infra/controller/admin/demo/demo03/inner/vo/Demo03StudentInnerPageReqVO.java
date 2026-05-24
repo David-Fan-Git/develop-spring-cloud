@@ -13,7 +13,7 @@ import static com.develop.mvp.pk.framework.common.util.date.DateUtils.FORMAT_YEA
 @Data
 public class Demo03StudentInnerPageReqVO extends PageParam {
 
-    @Schema(description = "名字", example = "芋艿")
+    @Schema(description = "名字", example = "David")
     private String name;
 
     @Schema(description = "性别")

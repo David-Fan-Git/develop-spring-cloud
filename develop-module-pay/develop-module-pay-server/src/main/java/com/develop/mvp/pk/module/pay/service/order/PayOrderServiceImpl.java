@@ -7,9 +7,11 @@ import cn.hutool.extra.spring.SpringUtil;
 import com.develop.mvp.pk.framework.common.pojo.PageResult;
 import com.develop.mvp.pk.framework.common.util.date.LocalDateTimeUtils;
 import com.develop.mvp.pk.framework.common.util.number.MoneyUtils;
+import com.develop.mvp.pk.module.pay.application.channel.PayChannelApplicationService;
 import com.develop.mvp.pk.module.pay.framework.pay.core.client.PayClient;
 import com.develop.mvp.pk.module.pay.framework.pay.core.client.dto.order.PayOrderRespDTO;
 import com.develop.mvp.pk.module.pay.framework.pay.core.client.dto.order.PayOrderUnifiedReqDTO;
+import com.develop.mvp.pk.module.pay.framework.pay.core.client.PayClientConfig;
 import com.develop.mvp.pk.framework.tenant.core.util.TenantUtils;
 import com.develop.mvp.pk.module.pay.api.order.dto.PayOrderCreateReqDTO;
 import com.develop.mvp.pk.module.pay.controller.admin.order.vo.PayOrderExportReqVO;
@@ -20,6 +22,7 @@ import com.develop.mvp.pk.module.pay.convert.order.PayOrderConvert;
 import com.develop.mvp.pk.module.pay.dal.dataobject.app.PayAppDO;
 import com.develop.mvp.pk.module.pay.dal.dataobject.channel.PayChannelDO;
 import com.develop.mvp.pk.module.pay.dal.dataobject.order.PayOrderDO;
+import com.develop.mvp.pk.module.pay.domain.channel.PayChannel;
 import com.develop.mvp.pk.module.pay.dal.dataobject.order.PayOrderExtensionDO;
 import com.develop.mvp.pk.module.pay.dal.mysql.order.PayOrderExtensionMapper;
 import com.develop.mvp.pk.module.pay.dal.mysql.order.PayOrderMapper;
@@ -28,7 +31,6 @@ import com.develop.mvp.pk.module.pay.enums.notify.PayNotifyTypeEnum;
 import com.develop.mvp.pk.module.pay.enums.order.PayOrderStatusEnum;
 import com.develop.mvp.pk.module.pay.framework.pay.config.PayProperties;
 import com.develop.mvp.pk.module.pay.service.app.PayAppService;
-import com.develop.mvp.pk.module.pay.service.channel.PayChannelService;
 import com.develop.mvp.pk.module.pay.service.notify.PayNotifyService;
 import com.google.common.annotations.VisibleForTesting;
 import lombok.extern.slf4j.Slf4j;
@@ -50,7 +52,7 @@ import static com.develop.mvp.pk.module.pay.enums.ErrorCodeConstants.*;
 /**
  * 支付订单 Service 实现类
  *
- * @author aquan
+ * @author David
  */
 @Service
 @Validated
@@ -70,7 +72,7 @@ public class PayOrderServiceImpl implements PayOrderService {
     @Resource
     private PayAppService appService;
     @Resource
-    private PayChannelService channelService;
+    private PayChannelApplicationService channelApplicationService;
     @Resource
     private PayNotifyService notifyService;
 
@@ -144,7 +146,7 @@ public class PayOrderServiceImpl implements PayOrderService {
         PayOrderDO order = validateOrderCanSubmit(reqVO.getId());
         // 1.32 校验支付渠道是否有效
         PayChannelDO channel = validateChannelCanSubmit(order.getAppId(), reqVO.getChannelCode());
-        PayClient<?> client = channelService.getPayClient(channel.getId());
+        PayClient<?> client = channelApplicationService.getPayClient(channel.getId());
 
         // 2. 插入 PayOrderExtensionDO
         String no = noRedisDAO.generate(payProperties.getOrderNoPrefix());
@@ -222,7 +224,7 @@ public class PayOrderServiceImpl implements PayOrderService {
                 throw exception(PAY_ORDER_EXTENSION_IS_PAID);
             }
             // 情况二：调用三方接口，查询支付单状态，是不是已支付
-            PayClient<?> payClient = channelService.getPayClient(orderExtension.getChannelId());
+            PayClient<?> payClient = channelApplicationService.getPayClient(orderExtension.getChannelId());
             if (payClient == null) {
                 log.error("[validateOrderCanSubmit][渠道编号({}) 找不到对应的支付客户端]", orderExtension.getChannelId());
                 return;
@@ -240,8 +242,8 @@ public class PayOrderServiceImpl implements PayOrderService {
         // 校验 App
         appService.validPayApp(appId);
         // 校验支付渠道是否有效
-        PayChannelDO channel = channelService.validPayChannel(appId, channelCode);
-        PayClient<?> client = channelService.getPayClient(channel.getId());
+        PayChannelDO channel = toChannelDO(channelApplicationService.valid(appId, channelCode));
+        PayClient<?> client = channelApplicationService.getPayClient(channel.getId());
         if (client == null) {
             log.error("[validatePayChannelCanSubmit][渠道编号({}) 找不到对应的支付客户端]", channel.getId());
             throw exception(CHANNEL_NOT_FOUND);
@@ -262,7 +264,7 @@ public class PayOrderServiceImpl implements PayOrderService {
     @Override
     public void notifyOrder(Long channelId, PayOrderRespDTO notify) {
         // 校验支付渠道是否有效
-        PayChannelDO channel = channelService.validPayChannel(channelId);
+        PayChannelDO channel = toChannelDO(channelApplicationService.valid(channelId));
         // 更新支付订单为已支付
         TenantUtils.execute(channel.getTenantId(), () -> getSelf().notifyOrder(channel, notify));
     }
@@ -493,7 +495,7 @@ public class PayOrderServiceImpl implements PayOrderService {
     private boolean syncOrder(PayOrderExtensionDO orderExtension) {
         try {
             // 1.1 查询支付订单信息
-            PayClient<?> payClient = channelService.getPayClient(orderExtension.getChannelId());
+            PayClient<?> payClient = channelApplicationService.getPayClient(orderExtension.getChannelId());
             if (payClient == null) {
                 log.error("[syncOrder][渠道编号({}) 找不到对应的支付客户端]", orderExtension.getChannelId());
                 return false;
@@ -556,7 +558,7 @@ public class PayOrderServiceImpl implements PayOrderService {
                     return false;
                 }
                 // 情况二：调用三方接口，查询支付单状态，是不是已支付/已退款
-                PayClient<?> payClient = channelService.getPayClient(orderExtension.getChannelId());
+                PayClient<?> payClient = channelApplicationService.getPayClient(orderExtension.getChannelId());
                 if (payClient == null) {
                     log.error("[expireOrder][渠道编号({}) 找不到对应的支付客户端]", orderExtension.getChannelId());
                     return false;
@@ -603,6 +605,14 @@ public class PayOrderServiceImpl implements PayOrderService {
      *
      * @return 自己
      */
+    private PayChannelDO toChannelDO(PayChannel channel) {
+        PayChannelDO channelDO = new PayChannelDO().setId(channel.id()).setCode(channel.code()).setStatus(channel.status())
+                .setFeeRate(channel.feeRate()).setRemark(channel.remark()).setAppId(channel.appId())
+                .setConfig((PayClientConfig) channel.config());
+        channelDO.setTenantId(channel.tenantId());
+        return channelDO;
+    }
+
     private PayOrderServiceImpl getSelf() {
         return SpringUtil.getBean(getClass());
     }

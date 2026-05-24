@@ -12,7 +12,7 @@ import java.util.Map;
 /**
  * 统一转账 Request DTO
  *
- * @author jason
+ * @author David
  */
 @Data
 public class PayTransferUnifiedReqDTO {

@@ -36,7 +36,7 @@ import static com.develop.mvp.pk.module.ai.enums.ErrorCodeConstants.*;
 /**
  * AI 知识库文档 Service 实现类
  *
- * @author xiaoxin
+ * @author David
  */
 @Service
 @Slf4j

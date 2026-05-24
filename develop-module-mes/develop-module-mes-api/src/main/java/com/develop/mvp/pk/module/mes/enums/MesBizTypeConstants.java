@@ -6,7 +6,7 @@ package com.develop.mvp.pk.module.mes.enums;
  * 集中管理业务类型枚举的编号，按业务域分段。
  * 各枚举类引用此处常量，避免硬编码数字。（也避免冲突！！！）
  *
- * @author 芋道源码
+ * @author David
  */
 public final class MesBizTypeConstants {
 
@@ -47,8 +47,8 @@ public final class MesBizTypeConstants {
 
     // ========== CAL 排班模块 [200, 300) ==========
 
-    // TODO @芋艿【暂时忽略】：MesProWorkOrderTypeEnum
-    // TODO @芋艿【暂时忽略】：MesProWorkOrderSourceTypeEnum
+    // TODO @David【暂时忽略】：MesProWorkOrderTypeEnum
+    // TODO @David【暂时忽略】：MesProWorkOrderSourceTypeEnum
 
     // ========== PRO 生产模块 [300, 400) ==========
 

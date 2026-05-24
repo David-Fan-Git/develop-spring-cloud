@@ -21,7 +21,7 @@ import static com.develop.mvp.pk.module.mp.enums.ErrorCodeConstants.*;
 /**
  * 公众号统计 Service 实现类
  *
- * @author 芋道源码
+ * @author David
  */
 @Service
 public class MpStatisticsServiceImpl implements MpStatisticsService {

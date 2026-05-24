@@ -11,7 +11,7 @@ import reactor.core.publisher.Flux;
 /**
  * 字节豆包 {@link ChatModel} 实现类
  *
- * @author fansili
+ * @author David
  */
 @Slf4j
 @RequiredArgsConstructor

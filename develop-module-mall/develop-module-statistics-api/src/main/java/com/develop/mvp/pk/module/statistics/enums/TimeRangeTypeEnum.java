@@ -9,7 +9,7 @@ import java.util.Arrays;
 /**
  * 时间范围类型的枚举
  *
- * @author owen
+ * @author David
  */
 @AllArgsConstructor
 @Getter

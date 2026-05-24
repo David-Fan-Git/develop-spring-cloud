@@ -9,7 +9,7 @@ import java.util.Arrays;
 /**
  * BPM 自动去重的类型的枚举
  *
- * @author Lesan
+ * @author David
  */
 @Getter
 @AllArgsConstructor

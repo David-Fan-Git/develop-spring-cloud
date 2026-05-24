@@ -1,229 +1,773 @@
-# DDD Skill: AggregateRoot_MallStatistics_Skill
+---
+name: aggregateroot-mall-statistics-skill
+description: Use when refactoring or validating Mall Statistics DDD code, product/trade statistics jobs, statistics admin dashboards, time-range comparisons, ProductSpuApi enrichment, and statistics local/remote API boundaries.
+type: ddd-aggregate-skill
+module: mall-statistics
+status: production-ready
+last_verified: 2026-05-24
+---
 
-## 1. 技能名称
-`AggregateRoot_MallStatistics_Skill` — 商城统计域(Statistics)聚合根的领域建模与重构技能
+# DDD Skill: Mall Statistics Aggregate Roots
 
-## 2. 适用场景
-商城统计子域：商品统计(ProductStatistics)、交易统计(TradeStatistics)、交易订单统计(TradeOrderStatistics)、售后统计(AfterSaleStatistics)、分销统计(BrokerageStatistics)、钱包统计(PayWalletStatistics)。
+## Overview
 
-## 3. DDD 构造块
+Mall Statistics is a read/aggregation context for admin dashboards and scheduled daily snapshots. The production behavior source is still the legacy Controller + Service + Mapper path; current DDD code is partial and must not replace legacy behavior until every external contract in this skill is preserved.
 
-### 3.1 聚合根
-- **ProductStatistics** — 商品统计聚合根，按天+SPU粒度记录浏览量/访客数/收藏量/加购量/下单数/支付数/支付金额/访客支付转化率
-- **TradeStatistics** — 交易统计聚合根，按天粒度记录订单/退款/佣金/充值的数据汇总
+The context currently has two DDD aggregate candidates:
 
-### 3.2 值对象
-- `ProductStatisticsId` — 商品统计标识值对象
-- `TradeStatisticsId` — 交易统计标识值对象
-- `StatisticsDate` — 统计日期值对象（LocalDate封装，含beginOfDay/endOfDay计算）
-- `BrowseConvertPercent` — 访客转化率值对象（百分比整数，0-100范围校验）
-- `StatisticsSummary` — 统计汇总值对象(含订单数/支付数/支付金额/退款金额等)
-- 不可变类，构造方法自校验
+- `ProductStatistics`: daily product statistics at `LocalDate + spuId` granularity.
+- `TradeStatistics`: daily trade statistics at `LocalDateTime` day granularity.
 
-### 3.3 仓储接口
-- `ProductStatisticsRepository` — save/findBySpuIdAndTime/findPageGroupBySpuId/findByTimeBetween/saveBatch(批量写入)/deleteByTime
-- `TradeStatisticsRepository` — save/findByTimeBetween/deleteByTime/findOrderCreateCountSumAndOrderPayPriceSumByTimeBetween
-- 所有Repository定义在domain层，无infrastructure imports
+Member and pay dashboards are part of the same statistics runtime module, but they are legacy query/read-model services today. Do not force them into the two aggregates unless a scoped production skill is created for those read models.
 
-### 3.4 领域事件
-- `ProductStatisticsUpdatedEvent` — 商品统计数据刷新事件
-- `TradeStatisticsUpdatedEvent` — 交易统计数据刷新事件
-- `StatisticsTaskCompletedEvent` — 统计任务完成事件
+## When to Use
 
-### 3.5 工厂
-- `ProductStatisticsFactory` — 创建商品统计聚合根，含转化率计算、默认值初始化
-- `TradeStatisticsFactory` — 创建交易统计聚合根，含多维度数据组装
+Use this skill when changing any of these areas:
 
-### 3.6 领域服务
-- `ProductStatisticsDomainService` — 商品统计计算服务（浏览转化率计算、排名计算）
-- `TradeStatisticsDomainService` — 交易统计计算服务（多维度汇总：订单+售后+佣金+充值）
-- `StatisticsComparisonDomainService` — 数据对比分析服务（当前周期 vs 上一周期）
+- `develop-module-mall/develop-module-statistics-*` Maven modules.
+- Product statistics admin APIs, exports, rank pages, jobs, or daily snapshot generation.
+- Trade statistics admin APIs, exports, summary cards, order count dashboards, or trend comparisons.
+- Statistics DDD classes under `domain/productstatistics`, `domain/tradestatistics`, `application/*`, or `infrastructure/*`.
+- Statistics mapper SQL, BO/VO conversions, time-range comparison rules, or `TimeRangeTypeEnum`.
+- `ProductSpuApi` enrichment for product statistics rank pages.
 
-## 4. 职责边界
+Do not use this skill for product catalog business rules, trade order lifecycle rules, pay channel/pay order rules, member profile rules, or promotion activity rules. Those belong to their own aggregate skills.
 
-### R01 — 商品统计数据按天+SPU唯一
-每天每个SPU只有一条统计记录。二次运行统计任务前需检查是否已存在(`selectCountByTimeBetween`)，已存在则跳过。
-- Source: `ProductStatisticsServiceImpl.statisticsProduct()` lines 83-91
+## Reproducibility Contract
 
-### R02 — 商品统计的访客转化率计算
-转化率 = 下单支付人数(orderPayCount) / 浏览用户数(browseUserCount) * 100。除数为0时不做计算。
-- Source: `ProductStatisticsServiceImpl.statisticsProduct()` lines 105-109
+A clean agent must be able to reproduce the same refactor from only this skill plus the current codebase. Before changing Java code:
 
-### R03 — 商品统计分页批量处理
-为避免商品表数据量大导致超时，每次最多处理100条记录(pageSize=100)，分批查询和插入。
-- Source: `ProductStatisticsServiceImpl.statisticsProduct()` lines 97-113
+1. Read `DDD_Skill_Production_Readiness_Standard.md` and `Module_Structure_Standard.md`.
+2. Read every source anchor listed below.
+3. Treat legacy Controller/Service/Mapper behavior as the external contract.
+4. Compare current DDD code to the fixed data model and conflict notes.
+5. Stop if a proposed change would alter routes, permissions, VO fields, Excel output, idempotence messages, time-window semantics, or mapper aggregate formulas.
+6. Compile the target module and run the domain tests listed in Verification Commands.
 
-### R04 — 商品统计排名默认按浏览量倒序
-分页查询商品统计排名时，默认排序字段为`browseCount`降序。
-- Source: `ProductStatisticsServiceImpl.getProductStatisticsRankPage()` line 45
+## Baseline Failure Findings
 
-### R05 — 商品统计数据分析支持同比对比
-`getProductStatisticsAnalyse`返回当前时段数据和上一对照时段数据的`DataComparisonRespVO`，对照时段长度与当前时段相同。
-- Source: `ProductStatisticsServiceImpl.getProductStatisticsAnalyse()` lines 49-61
+The previous draft was not production-ready because it lacked:
 
-### R06 — 交易统计按天唯一
-每天一条交易统计记录。统计前检查`selectByTimeBetween`，已存在则跳过。
-- Source: `TradeStatisticsServiceImpl.statisticsTrade()` lines 98-107
+- YAML frontmatter and trigger metadata.
+- Exact source anchors for Controller, VO, DO, Mapper, legacy Service, DDD classes, Job, RPC config, and tests.
+- Fixed data model for `ProductStatisticsDO`, `TradeStatisticsDO`, BOs, VOs, and current DDD models.
+- Exact controller route, permission, export file, time comparison, and idempotence contracts.
+- Current conflict notes showing that the DDD model is smaller than the persistence model.
+- Verification commands and rollback conditions tied to current module behavior.
 
-### R07 — 交易统计多维度汇总[重要]
-每日交易统计从四个维度汇总：
-1. 订单维度(`TradeOrderStatisticsService.getOrderSummary`)：下单数、支付订单数、支付金额
-2. 售后维度(`AfterSaleStatisticsService.getAfterSaleSummary`)：退款单数、退款金额
-3. 佣金维度(`BrokerageStatisticsService.getBrokerageSettlementPriceSummary`)：已结算佣金
-4. 充值维度(`PayWalletStatisticsService.getWalletSummary`)：充值金额、充值人数
-- Source: `TradeStatisticsServiceImpl.statisticsTrade()` lines 109-131
+## Current Source Anchors
 
-### R08 — 交易趋势支持按年月日分组
-订单趋势查询：按年统计时以月份分组(`groupByMonth`)；其他(天/周/月)以天分组(`groupByDay`)。
-- Source: `TradeOrderStatisticsServiceImpl.getOrderCountTrend()` lines 99-106
+### API module
 
-### R09 — 交易数据对比分析
-`getTradeStatisticsAnalyse`返回当前时段与上一对照时段的`DataComparisonRespVO`。另`getOrderComparison`返回当日与昨日的对比。
-- Source: `TradeStatisticsServiceImpl.getTradeStatisticsAnalyse()` lines 62-71, `TradeOrderStatisticsServiceImpl.getOrderComparison()` lines 70-74
+- `develop-module-mall/develop-module-statistics-api/src/main/java/com/develop/mvp/pk/module/statistics/enums/TimeRangeTypeEnum.java`
+- `develop-module-mall/develop-module-statistics-api/src/main/java/com/develop/mvp/pk/module/statistics/package-info.java`
 
-### R10 — 售后统计按退款时间维度
-售后统计的`getAfterSaleSummary`以`refundTime`为时间维度汇总退款单数和退款金额。
-- Source: `AfterSaleStatisticsServiceImpl.getAfterSaleSummary()` lines 25-27
+The statistics API module currently exposes no cross-module business API contract. It only exposes `TimeRangeTypeEnum` and package metadata.
 
-### R11 — 分销佣金统计按解冻时间维度
-佣金统计的`getBrokerageSettlementPriceSummary`以`unfreezeTime`为时间维度，筛选已结算的订单佣金。
-- Source: `BrokerageStatisticsServiceImpl.getBrokerageSettlementPriceSummary()` lines 26-29
+### Admin controllers
 
-### R12 — 交易统计按状态+配送类型查询
-`getCountByStatusAndDeliveryType`按订单状态和配送类型(快递/自提)聚合订单数量，用于看板展示。
-- Source: `TradeOrderStatisticsServiceImpl.getCountByStatusAndDeliveryType()` lines 65-68
+- `develop-module-mall/develop-module-statistics-server/src/main/java/com/develop/mvp/pk/module/statistics/controller/admin/product/ProductStatisticsController.java`
+- `develop-module-mall/develop-module-statistics-server/src/main/java/com/develop/mvp/pk/module/statistics/controller/admin/trade/TradeStatisticsController.java`
+- `develop-module-mall/develop-module-statistics-server/src/main/java/com/develop/mvp/pk/module/statistics/controller/admin/member/MemberStatisticsController.java`
+- `develop-module-mall/develop-module-statistics-server/src/main/java/com/develop/mvp/pk/module/statistics/controller/admin/pay/PayStatisticsController.java`
 
-## 5. 依赖与协作
+### Product statistics VO
 
-### 5.1 模块内依赖
-- `TradeStatistics` → `TradeOrderStatisticsService`: 获取订单统计汇总
-- `TradeStatistics` → `AfterSaleStatisticsService`: 获取售后统计汇总
-- `TradeStatistics` → `BrokerageStatisticsService`: 获取佣金统计汇总
-- `TradeStatistics` → `PayWalletStatisticsService`: 获取钱包充值统计汇总
+- `controller/admin/common/vo/DataComparisonRespVO.java`
+- `controller/admin/product/vo/ProductStatisticsReqVO.java`
+- `controller/admin/product/vo/ProductStatisticsRespVO.java`
 
-### 5.2 模块间依赖
-- `ProductStatistics` → `product`: 从product模块的浏览/收藏/加购/下单/支付行为表统计数据
-- `TradeStatistics` → `trade`: 从trade模块的订单/售后/佣金表统计数据
-- `TradeStatistics` → `pay`: 从pay模块的钱包充值表统计数据
-- `TradeOrderStatistics` → `pay`: 从pay模块的订单支付状态判断
+### Trade statistics VO
 
-## 6. 不变式与约束
+- `controller/admin/trade/vo/TradeSummaryRespVO.java`
+- `controller/admin/trade/vo/TradeTrendReqVO.java`
+- `controller/admin/trade/vo/TradeTrendSummaryRespVO.java`
+- `controller/admin/trade/vo/TradeTrendSummaryExcelVO.java`
+- `controller/admin/trade/vo/TradeOrderCountRespVO.java`
+- `controller/admin/trade/vo/TradeOrderSummaryRespVO.java`
+- `controller/admin/trade/vo/TradeOrderTrendReqVO.java`
+- `controller/admin/trade/vo/TradeOrderTrendRespVO.java`
 
-### I01 — 数据幂等性
-每日统计任务可重复执行，同一日期+SPU(或日期)的数据已存在则跳过不重复写入。
-- ProductStatistics: `selectCountByTimeBetween > 0`时跳过
-- TradeStatistics: `selectByTimeBetween`非null时跳过
+### Member and pay statistics VO
 
-### I02 — 转化率范围
-`browseConvertPercent = orderPayCount / browseUserCount * 100`，结果在[0, 100]区间。
-- 当`browseUserCount = 0`时，转化率保持null或不处理
+- `controller/admin/member/vo/MemberAnalyseDataRespVO.java`
+- `controller/admin/member/vo/MemberAnalyseReqVO.java`
+- `controller/admin/member/vo/MemberAnalyseRespVO.java`
+- `controller/admin/member/vo/MemberAreaStatisticsRespVO.java`
+- `controller/admin/member/vo/MemberCountRespVO.java`
+- `controller/admin/member/vo/MemberRegisterCountRespVO.java`
+- `controller/admin/member/vo/MemberSexStatisticsRespVO.java`
+- `controller/admin/member/vo/MemberSummaryRespVO.java`
+- `controller/admin/member/vo/MemberTerminalStatisticsRespVO.java`
+- `controller/admin/pay/vo/PaySummaryRespVO.java`
 
-### I03 — 对照分析时段一致性
-对比分析时，对照时段长度与当前时段长度严格相等。例如7天数据对照前7天。
+### Persistence model
 
-### I04 — 商品统计排名边界
-- 默认按浏览量排序，支持其他维度排序
-- 分页查询不限制数据量
+- `dal/dataobject/product/ProductStatisticsDO.java`
+- `dal/dataobject/trade/TradeStatisticsDO.java`
 
-## 7. 验收标准
+### Mappers
 
-### AC01 — 聚合根纯净性
-聚合根类无MyBatis/Spring注解，不注入Mapper。
-- 验证方法: grep聚合根文件确认
+- `dal/mysql/product/ProductStatisticsMapper.java`
+- `dal/mysql/trade/TradeStatisticsMapper.java`
+- `dal/mysql/trade/TradeOrderStatisticsMapper.java`
+- `dal/mysql/trade/AfterSaleStatisticsMapper.java`
+- `dal/mysql/trade/BrokerageStatisticsMapper.java`
+- `dal/mysql/pay/PayWalletStatisticsMapper.java`
+- `dal/mysql/member/MemberStatisticsMapper.java`
+- `dal/mysql/infra/ApiAccessLogStatisticsMapper.java`
 
-### AC02 — 值对象不可变性
-值对象为final class或record，字段final，无setter。
-- 验证方法: 检查值对象文件
+### Legacy services
 
-### AC03 — 仓储接口在领域层
-Repository定义在`domain/{aggregate}/repository/`。
-- 验证方法: 检查import语句
+- `service/product/ProductStatisticsService.java`
+- `service/product/ProductStatisticsServiceImpl.java`
+- `service/trade/TradeStatisticsService.java`
+- `service/trade/TradeStatisticsServiceImpl.java`
+- `service/trade/TradeOrderStatisticsService.java`
+- `service/trade/TradeOrderStatisticsServiceImpl.java`
+- `service/trade/AfterSaleStatisticsService.java`
+- `service/trade/AfterSaleStatisticsServiceImpl.java`
+- `service/trade/BrokerageStatisticsService.java`
+- `service/trade/BrokerageStatisticsServiceImpl.java`
+- `service/pay/PayWalletStatisticsService.java`
+- `service/pay/PayWalletStatisticsServiceImpl.java`
+- `service/member/MemberStatisticsService.java`
+- `service/member/MemberStatisticsServiceImpl.java`
+- `service/infra/ApiAccessLogStatisticsService.java`
+- `service/infra/ApiAccessLogStatisticsServiceImpl.java`
 
-### AC04 — 仓储实现在基础设施层
-Repository实现在`infrastructure/{aggregate}/`。
-- 验证方法: 确认文件位置
+### Service BO
 
-### AC05 — 统计任务幂等性
-同一日期的统计任务重复执行不会产生重复数据。
-- 验证方法: 统计任务重复执行后验证数据唯一性
+- `service/trade/bo/TradeSummaryRespBO.java`
+- `service/trade/bo/TradeOrderSummaryRespBO.java`
+- `service/trade/bo/AfterSaleSummaryRespBO.java`
+- `service/trade/bo/WalletSummaryRespBO.java`
+- `service/trade/bo/MemberAreaStatisticsRespBO.java`
+- `service/pay/bo/RechargeSummaryRespBO.java`
+- `service/member/bo/MemberAreaStatisticsRespBO.java`
 
-### AC06 — 对比分析时段一致
-对照时段长度等于当前时段长度。
-- 验证方法: 检查时段计算逻辑
+### Convert
 
-### AC07 — 编译通过
-- 验证方法: `mvn compile -pl develop-module-mall/develop-module-statistics-server`
+- `convert/trade/TradeStatisticsConvert.java`
+- `convert/member/MemberStatisticsConvert.java`
+- `convert/pay/PayStatisticsConvert.java`
 
-## 8. 目录结构规划
+### Current DDD code
 
+- `domain/productstatistics/ProductStatistics.java`
+- `domain/productstatistics/ProductStatisticsFactory.java`
+- `domain/productstatistics/valueobject/ProductStatisticsId.java`
+- `domain/productstatistics/ProductStatisticsRepository.java`
+- `domain/tradestatistics/TradeStatistics.java`
+- `domain/tradestatistics/TradeStatisticsFactory.java`
+- `domain/tradestatistics/valueobject/TradeStatisticsId.java`
+- `domain/tradestatistics/TradeStatisticsRepository.java`
+- `application/productstatistics/ProductStatisticsApplicationService.java`
+- `application/tradestatistics/TradeStatisticsApplicationService.java`
+- `infrastructure/productstatistics/ProductStatisticsRepositoryImpl.java`
+- `infrastructure/tradestatistics/TradeStatisticsRepositoryImpl.java`
+
+### Jobs and integration
+
+- `job/product/ProductStatisticsJob.java`
+- `job/trade/TradeStatisticsJob.java`
+- `framework/rpc/config/RpcConfiguration.java`
+
+### Tests
+
+- `develop-module-mall/develop-module-statistics-server/src/test/java/com/develop/mvp/pk/module/statistics/domain/productstatistics/ProductStatisticsTest.java`
+- `develop-module-mall/develop-module-statistics-server/src/test/java/com/develop/mvp/pk/module/statistics/domain/tradestatistics/TradeStatisticsTest.java`
+
+Current tests only verify that factories allow transient ids. They do not verify daily aggregation, conversion percentage, idempotence, export contracts, or trade multi-source aggregation.
+
+## Fixed API Contract
+
+### Statistics API module
+
+`develop-module-statistics-api` currently has no stable `XxxApi` contract and no Feign client. Do not invent a statistics RPC API during DDD refactoring.
+
+### TimeRangeTypeEnum
+
+`TimeRangeTypeEnum` exposes these integer values:
+
+| Enum | type | Meaning |
+| --- | ---: | --- |
+| `DAY` | 1 | Day range |
+| `WEEK` | 7 | Week range |
+| `MONTH` | 30 | Month range |
+| `YEAR` | 365 | Year range |
+
+`ARRAYS` must remain derived from `values()` and used by `@InEnum` validation.
+
+### Product statistics routes
+
+Base route: `/statistics/product`
+
+| Method | Path | Permission | Response |
+| --- | --- | --- | --- |
+| GET | `/analyse` | `statistics:product:query` | `CommonResult<DataComparisonRespVO<ProductStatisticsRespVO>>` |
+| GET | `/list` | `statistics:product:query` | `CommonResult<List<ProductStatisticsRespVO>>` |
+| GET | `/export-excel` | `statistics:product:export` | Excel response |
+| GET | `/rank-page` | `statistics:product:query` | `CommonResult<PageResult<ProductStatisticsRespVO>>` |
+
+Product Excel output must keep file name `商品状况.xls`, sheet name `数据`, and row class `ProductStatisticsRespVO`.
+
+### Trade statistics routes
+
+Base route: `/statistics/trade`
+
+| Method | Path | Permission | Response |
+| --- | --- | --- | --- |
+| GET | `/summary` | `statistics:trade:query` | `CommonResult<DataComparisonRespVO<TradeSummaryRespVO>>` |
+| GET | `/analyse` | `statistics:trade:query` | `CommonResult<DataComparisonRespVO<TradeTrendSummaryRespVO>>` |
+| GET | `/list` | `statistics:trade:query` | `CommonResult<List<TradeTrendSummaryRespVO>>` |
+| GET | `/export-excel` | `statistics:trade:export` | Excel response |
+| GET | `/order-count` | `statistics:trade:query` | `CommonResult<TradeOrderCountRespVO>` |
+| GET | `/order-comparison` | `statistics:trade:query` | `CommonResult<DataComparisonRespVO<TradeOrderSummaryRespVO>>` |
+| GET | `/order-count-trend` | `statistics:trade:query` | `CommonResult<List<DataComparisonRespVO<TradeOrderTrendRespVO>>>` |
+
+Trade Excel output must keep file name `交易状况.xls`, sheet name `数据`, and row class `TradeTrendSummaryExcelVO`.
+
+## Fixed Data Model
+
+### ProductStatisticsDO
+
+Table: `product_statistics`
+
+| Field | Type | Contract |
+| --- | --- | --- |
+| `id` | `Long` | Primary key |
+| `time` | `LocalDate` | Statistics date |
+| `spuId` | `Long` | Product SPU id |
+| `browseCount` | `Integer` | Browse count |
+| `browseUserCount` | `Integer` | Browse user count |
+| `favoriteCount` | `Integer` | Favorite count |
+| `cartCount` | `Integer` | Cart count |
+| `orderCount` | `Integer` | Ordered item count |
+| `orderPayCount` | `Integer` | Paid item count |
+| `orderPayPrice` | `Integer` | Paid amount in cents |
+| `afterSaleCount` | `Integer` | Refund item count |
+| `afterSaleRefundPrice` | `Integer` | Refund amount in cents |
+| `browseConvertPercent` | `Integer` | Visitor payment conversion percent |
+
+### TradeStatisticsDO
+
+Table: `trade_statistics`
+
+| Field | Type | Contract |
+| --- | --- | --- |
+| `id` | `Long` | Primary key |
+| `time` | `LocalDateTime` | Statistics day timestamp |
+| `orderCreateCount` | `Integer` | Created order count |
+| `orderPayCount` | `Integer` | Paid order item count |
+| `orderPayPrice` | `Integer` | Order paid amount in cents |
+| `afterSaleCount` | `Integer` | Refund order count |
+| `afterSaleRefundPrice` | `Integer` | Refund amount in cents |
+| `brokerageSettlementPrice` | `Integer` | Settled brokerage in cents |
+| `walletPayPrice` | `Integer` | Wallet payment amount in cents |
+| `rechargePayCount` | `Integer` | Recharge paid order count |
+| `rechargePayPrice` | `Integer` | Recharge paid amount in cents |
+| `rechargeRefundCount` | `Integer` | Recharge refund count |
+| `rechargeRefundPrice` | `Integer` | Recharge refund amount in cents |
+
+### ProductStatisticsRespVO
+
+| Field | Type | Contract |
+| --- | --- | --- |
+| `id` | `Long` | Statistics row id |
+| `time` | `LocalDate` | JSON format `yyyy-MM-dd`, Excel column `统计日期` |
+| `spuId` | `Long` | Excel column `商品SPU编号` |
+| `name` | `String` | Product name, enriched from `ProductSpuApi` on rank page |
+| `picUrl` | `String` | Product cover image, enriched from `ProductSpuApi` on rank page |
+| `browseCount` | `Integer` | Excel column `浏览量` |
+| `browseUserCount` | `Integer` | Excel column `访客量` |
+| `favoriteCount` | `Integer` | Excel column `收藏数量` |
+| `cartCount` | `Integer` | Excel column `加购数量` |
+| `orderCount` | `Integer` | Excel column `下单件数` |
+| `orderPayCount` | `Integer` | Excel column `支付件数` |
+| `orderPayPrice` | `Integer` | Excel column `支付金额，单位：分` |
+| `afterSaleCount` | `Integer` | Excel column `退款件数` |
+| `afterSaleRefundPrice` | `Integer` | Excel column `退款金额，单位：分` |
+| `browseConvertPercent` | `Integer` | Visitor payment conversion percent |
+
+### TradeTrendSummaryRespVO and Excel VO
+
+| Field | RespVO Type | Excel Column | Contract |
+| --- | --- | --- | --- |
+| `date` | `LocalDate` | `日期` | Date derived from `TradeStatisticsDO.time.toLocalDate()` |
+| `turnoverPrice` | `Integer` | `营业额` | `orderPayPrice + rechargePayPrice` |
+| `orderPayPrice` | `Integer` | `商品支付金额` | Order paid amount |
+| `walletPayPrice` | `Integer` | `余额支付金额` | Wallet payment amount |
+| `afterSaleRefundPrice` | `Integer` | `商品退款金额` | Refund amount |
+| `brokerageSettlementPrice` | `Integer` | `支付佣金金额` | Settled brokerage amount |
+| `rechargePrice` | `Integer` | `充值金额` | Recharge amount field exposed by mapper/converter |
+| `expensePrice` | `Integer` | `支出金额` | `walletPayPrice + brokerageSettlementPrice + afterSaleRefundPrice` |
+
+### Trade dashboard VO and BO
+
+| Class | Fields |
+| --- | --- |
+| `TradeSummaryRespVO` | `yesterdayOrderCount`, `yesterdayPayPrice`, `monthOrderCount`, `monthPayPrice` |
+| `TradeOrderSummaryRespVO` | `orderPayCount`, `orderPayPrice` |
+| `TradeOrderCountRespVO` | `undelivered`, `pickUp`, `afterSaleApply`, `auditingWithdraw` |
+| `TradeOrderTrendReqVO` | `type`, `beginTime`, `endTime`; `type` is required and validated by `TimeRangeTypeEnum` |
+| `TradeOrderTrendRespVO` | `date`, `orderPayCount`, `orderPayPrice` |
+| `TradeSummaryRespBO` | `count`, `summary` |
+| `TradeOrderSummaryRespBO` | `orderCreateCount`, `orderPayCount`, `orderPayPrice` |
+| `AfterSaleSummaryRespBO` | `afterSaleCount`, `afterSaleRefundPrice` |
+| `WalletSummaryRespBO` | `walletPayPrice`, `rechargePayCount`, `rechargePayPrice`, `rechargeRefundCount`, `rechargeRefundPrice` |
+
+### DataComparisonRespVO
+
+`DataComparisonRespVO<T>` contains exactly:
+
+- `value`: current data.
+- `reference`: comparison data.
+
+Do not rename fields or invert semantics.
+
+## Current DDD Model
+
+### ProductStatistics current fields
+
+Current domain fields are:
+
+- `ProductStatisticsId id`
+- `Long spuId`
+- `LocalDate date`
+- `Integer browseCount`
+- `Integer favoriteCount`
+- `Integer cartCount`
+- `Integer orderCount`
+- `Integer orderPayCount`
+- `Integer orderPayPrice`
+
+Missing compared to `ProductStatisticsDO` and external VO:
+
+- `browseUserCount`
+- `afterSaleCount`
+- `afterSaleRefundPrice`
+- `browseConvertPercent`
+
+### TradeStatistics current fields
+
+Current domain fields are:
+
+- `TradeStatisticsId id`
+- `LocalDate date`
+- `Integer orderCount`
+- `Integer orderPayCount`
+- `Integer orderPayPrice`
+- `Integer refundCount`
+- `Integer refundPrice`
+- `Integer brokerageSettlementPrice`
+
+Missing compared to `TradeStatisticsDO` and external VO:
+
+- `walletPayPrice`
+- `rechargePayCount`
+- `rechargePayPrice`
+- `rechargeRefundCount`
+- `rechargeRefundPrice`
+
+Naming differences that must be mapped explicitly:
+
+| Domain | DO |
+| --- | --- |
+| `orderCount` | `orderCreateCount` |
+| `refundCount` | `afterSaleCount` |
+| `refundPrice` | `afterSaleRefundPrice` |
+| `date` | `time.toLocalDate()` or `date.atStartOfDay()` |
+
+## Required Method Signatures and Capabilities
+
+### Legacy product service capabilities to preserve
+
+`ProductStatisticsService` behavior must remain equivalent to these capabilities:
+
+```java
+ProductStatisticsRespVO getProductStatisticsAnalyse(ProductStatisticsReqVO reqVO);
+List<ProductStatisticsDO> getProductStatisticsList(ProductStatisticsReqVO reqVO);
+PageResult<ProductStatisticsDO> getProductStatisticsRankPage(ProductStatisticsReqVO reqVO, SortablePageParam pageParam);
+String statisticsProduct(Integer days);
 ```
-develop-module-statistics-server/src/main/java/com/develop/mvp/pk/module/statistics/
-├── domain/
-│   ├── productstatistics/
-│   │   ├── ProductStatistics.java             (聚合根)
-│   │   ├── ProductStatisticsFactory.java
-│   │   ├── valueobject/
-│   │   │   └── ProductStatisticsId.java
-│   │   ├── repository/
-│   │   │   └── ProductStatisticsRepository.java
-│   │   └── event/
-│   │       └── ProductStatisticsUpdatedEvent.java
-│   ├── tradestatistics/
-│   │   ├── TradeStatistics.java               (聚合根)
-│   │   ├── TradeStatisticsFactory.java
-│   │   ├── valueobject/
-│   │   │   ├── TradeStatisticsId.java
-│   │   │   ├── StatisticsDate.java            (value object)
-│   │   │   └── StatisticsSummary.java         (value object)
-│   │   ├── repository/
-│   │   │   └── TradeStatisticsRepository.java
-│   │   └── event/
-│   │       └── TradeStatisticsUpdatedEvent.java
-│   ├── service/
-│   │   ├── ProductStatisticsDomainService.java
-│   │   ├── TradeStatisticsDomainService.java
-│   │   └── StatisticsComparisonDomainService.java
-│   └── event/
-│       ├── DomainEvent.java
-│       └── DomainEventPublisher.java
-├── application/
-│   ├── ProductStatisticsApplicationService.java
-│   └── TradeStatisticsApplicationService.java
-├── infrastructure/productstatistics/
-│   ├── ProductStatisticsRepositoryImpl.java
-│   └── TradeStatisticsRepositoryImpl.java
-└── convert/
+
+Implementation requirements:
+
+- `getProductStatisticsAnalyse` builds a previous reference range with the same duration as the requested range.
+- `getProductStatisticsRankPage` applies default sorting by `ProductStatisticsDO::getBrowseCount`.
+- `statisticsProduct(Integer days)` runs one day at a time for `today.minusDays(1..days)`, sorts daily result messages, and joins them with `\n`.
+- `statisticsProduct(LocalDateTime date)` is idempotent and returns the existing-data message when data already exists.
+
+### Legacy trade service capabilities to preserve
+
+`TradeStatisticsService` behavior must remain equivalent to these capabilities:
+
+```java
+DataComparisonRespVO<TradeSummaryRespVO> getTradeSummaryComparison();
+DataComparisonRespVO<TradeTrendSummaryRespVO> getTradeStatisticsAnalyse(TradeTrendReqVO reqVO);
+List<TradeTrendSummaryRespVO> getTradeStatisticsList(TradeTrendReqVO reqVO);
+String statisticsTrade(Integer days);
 ```
 
-## 9. 回滚条件
+Implementation requirements:
 
-以下任一情况应回滚当前步骤：
-1. 编译失败
-2. 统计任务重复执行产生重复数据（幂等性失效）
-3. 统计汇总数据与直接查询源表数据不一致
-4. 原有管理端统计分析接口行为变化
-5. 转化率计算错误（除零/精度问题）
+- Summary comparison compares yesterday vs before yesterday and this month vs last month.
+- Trend analysis compares the requested range against an immediately preceding range of the same duration.
+- Daily statistics are built from order, after-sale, brokerage, and wallet summaries.
+- Existing daily data returns the existing-data message instead of inserting another row.
 
-## 10. 分步执行计划
+### Legacy trade order service capabilities to preserve
 
-### Step 1: 完善已有聚合根
-- 1.1 审查`ProductStatistics`：补充增量更新方法(incrementBrowseCount/incrementFavoriteCount等)、转化率计算方法
-- 1.2 审查`TradeStatistics`：补充多维度数据初始化方法、汇总更新方法
+```java
+TradeOrderCountRespVO getOrderCount();
+DataComparisonRespVO<TradeOrderSummaryRespVO> getOrderComparison();
+List<DataComparisonRespVO<TradeOrderTrendRespVO>> getOrderCountTrendComparison(TradeOrderTrendReqVO reqVO);
+```
 
-### Step 2: 创建领域服务
-- 2.1 `ProductStatisticsDomainService` — 商品日统计计算
-- 2.2 `TradeStatisticsDomainService` — 交易日统计计算（编排订单/售后/佣金/充值四个维度）
-- 2.3 `StatisticsComparisonDomainService` — 对照分析计算
+Implementation requirements:
 
-### Step 3: 完善仓储接口与实现
-- 3.1 补齐ProductStatisticsRepository的批量查询/写入方法
-- 3.2 补齐TradeStatisticsRepository的时间范围查询方法
+- Order count dashboard includes undelivered, pick-up, after-sale applying, and auditing withdraw counts.
+- Order comparison compares today with yesterday.
+- Trend comparison compares requested range with immediately preceding range.
+- `TimeRangeTypeEnum.YEAR` groups by month; day/week/month group by day.
 
-### Step 4: 创建应用服务
-- 4.1 商品统计应用服务：排名/分析/定时统计
-- 4.2 交易统计应用服务：汇总/趋势/分析/定时统计
+### Target ProductStatistics aggregate signatures
 
-### Step 5: 验证
-- 5.1 运行全部单元测试
-- 5.2 编译通过
-- 5.3 幂等性验证通过
+When upgrading DDD code, the product aggregate must be capable of representing all persisted fields:
+
+```java
+public final class ProductStatistics {
+    public ProductStatisticsId id();
+    public Long spuId();
+    public LocalDate date();
+    public Integer browseCount();
+    public Integer browseUserCount();
+    public Integer favoriteCount();
+    public Integer cartCount();
+    public Integer orderCount();
+    public Integer orderPayCount();
+    public Integer orderPayPrice();
+    public Integer afterSaleCount();
+    public Integer afterSaleRefundPrice();
+    public Integer browseConvertPercent();
+    public void calculateBrowseConvertPercent();
+}
+```
+
+The factory must support transient creation and full reconstitution:
+
+```java
+public static ProductStatistics create(Long id, Long spuId, LocalDate date);
+public static ProductStatistics reconstitute(Long id, Long spuId, LocalDate date,
+        Integer browseCount, Integer browseUserCount, Integer favoriteCount, Integer cartCount,
+        Integer orderCount, Integer orderPayCount, Integer orderPayPrice,
+        Integer afterSaleCount, Integer afterSaleRefundPrice, Integer browseConvertPercent);
+```
+
+The repository must not lose fields during round trips:
+
+```java
+ProductStatistics save(ProductStatistics statistics);
+ProductStatistics findById(ProductStatisticsId id);
+ProductStatistics findBySpuIdAndDate(Long spuId, LocalDate date);
+List<ProductStatistics> findByDateBetween(LocalDate start, LocalDate end);
+List<ProductStatistics> findBySpuId(Long spuId);
+```
+
+If batch daily snapshot generation is migrated, add repository methods only in the same scoped change that replaces the legacy mapper path.
+
+### Target TradeStatistics aggregate signatures
+
+When upgrading DDD code, the trade aggregate must be capable of representing all persisted fields:
+
+```java
+public final class TradeStatistics {
+    public TradeStatisticsId id();
+    public LocalDate date();
+    public Integer orderCreateCount();
+    public Integer orderPayCount();
+    public Integer orderPayPrice();
+    public Integer afterSaleCount();
+    public Integer afterSaleRefundPrice();
+    public Integer brokerageSettlementPrice();
+    public Integer walletPayPrice();
+    public Integer rechargePayCount();
+    public Integer rechargePayPrice();
+    public Integer rechargeRefundCount();
+    public Integer rechargeRefundPrice();
+    public Integer turnoverPrice();
+    public Integer expensePrice();
+}
+```
+
+The factory must support transient creation and full reconstitution:
+
+```java
+public static TradeStatistics create(Long id, LocalDate date);
+public static TradeStatistics reconstitute(Long id, LocalDate date,
+        Integer orderCreateCount, Integer orderPayCount, Integer orderPayPrice,
+        Integer afterSaleCount, Integer afterSaleRefundPrice, Integer brokerageSettlementPrice,
+        Integer walletPayPrice, Integer rechargePayCount, Integer rechargePayPrice,
+        Integer rechargeRefundCount, Integer rechargeRefundPrice);
+```
+
+The repository must not lose fields during round trips:
+
+```java
+TradeStatistics save(TradeStatistics statistics);
+TradeStatistics findById(TradeStatisticsId id);
+TradeStatistics findByDate(LocalDate date);
+List<TradeStatistics> findByDateBetween(LocalDate start, LocalDate end);
+```
+
+## Business Rules
+
+### Product statistics rules
+
+1. Daily product statistics are idempotent by date. If any product statistics rows already exist for the day range, the job returns `yyyy-MM-dd 数据已存在，如果需要重新统计，请先删除对应的数据` and does not insert.
+2. Daily product snapshot generation pages source aggregation with page size `100`.
+3. Snapshot row `time` is set to the target `LocalDate` before insert.
+4. `browseConvertPercent = 100 * orderPayCount / browseUserCount` only when `browseUserCount` is not null and not zero.
+5. Product statistics list groups by `time` and aggregates numeric fields.
+6. Product statistics rank page groups by `spuId` and defaults sorting to `browseCount`.
+7. Rank page enriches product `name` and `picUrl` through `ProductSpuApi#getSpuList(spuIds).getCheckedData()`.
+8. Product analysis compares the requested period with the immediately preceding period of the same duration.
+
+### Trade statistics rules
+
+1. Daily trade statistics are idempotent by date. If a row exists for the day range, the job returns `yyyy-MM-dd 数据已存在，如果需要重新统计，请先删除对应的数据` and does not insert.
+2. Daily trade statistics compose four sources:
+   - order summary: `orderCreateCount`, `orderPayCount`, `orderPayPrice`;
+   - after-sale summary: `afterSaleCount`, `afterSaleRefundPrice`;
+   - brokerage settlement: `brokerageSettlementPrice`;
+   - wallet summary: `walletPayPrice`, `rechargePayCount`, `rechargePayPrice`, `rechargeRefundCount`, `rechargeRefundPrice`.
+3. `turnoverPrice = orderPayPrice + rechargePayPrice`.
+4. `expensePrice = walletPayPrice + brokerageSettlementPrice + afterSaleRefundPrice`.
+5. Trade analysis compares the requested period with the immediately preceding period of the same duration.
+6. Trade summary comparison uses yesterday vs before yesterday and this month vs last month.
+7. Order comparison uses today vs yesterday.
+8. Order trend comparison uses current requested range and an immediately preceding reference range.
+9. Year trend groups by month; other trend types group by day.
+
+### Member and pay statistics rules inside this module
+
+1. Member analysis comparison uses the requested range and an immediately preceding range.
+2. Member count comparison uses today vs yesterday and includes visit IP count from access logs.
+3. Member area statistics adds an unknown area row with `id = null` and `name = "未知"`.
+4. Pay wallet summary combines recharge paid data, recharge refund data, and wallet payment amount.
+5. These rules are read-model behavior and should remain in their legacy services unless a scoped skill promotes them.
+
+## Mapper and Conversion Contracts
+
+### ProductStatisticsMapper
+
+Required capabilities:
+
+- `selectPageGroupBySpuId(ProductStatisticsReqVO reqVO, SortablePageParam pageParam)` groups by `spuId` and selects `spuId` plus aggregate expressions.
+- `selectListByTimeBetween(ProductStatisticsReqVO reqVO)` groups by `time` and selects `time` plus aggregate expressions.
+- Aggregate wrapper must keep sums for browse, visitor, favorite, cart, order, paid count, paid amount, after-sale count, and refund amount.
+- Aggregate wrapper must keep average for `browseConvertPercent`.
+- `selectStatisticsResultPageByTimeBetween(IPage<ProductStatisticsDO> page, LocalDateTime beginTime, LocalDateTime endTime)` is the source for daily product snapshots.
+
+### TradeStatisticsMapper
+
+Required capabilities:
+
+- `selectOrderCreateCountSumAndOrderPayPriceSumByTimeBetween(beginTime, endTime)` returns `TradeSummaryRespBO`.
+- `selectVoByTimeBetween(beginTime, endTime)` returns aggregated `TradeTrendSummaryRespVO`.
+- `selectExpensePriceByTimeBetween(beginTime, endTime)` returns total expense.
+- `selectByTimeBetween(beginTime, endTime)` finds the existing daily row.
+
+### TradeStatisticsConvert
+
+Required conversions:
+
+- `convert(TradeSummaryRespBO yesterdayData, TradeSummaryRespBO beforeYesterdayData, TradeSummaryRespBO monthData, TradeSummaryRespBO lastMonthData)` produces `DataComparisonRespVO<TradeSummaryRespVO>`.
+- `convert(TradeSummaryRespBO yesterdayData, TradeSummaryRespBO monthData)` maps `count/summary` to yesterday/month order count and pay price.
+- `convert(LocalDateTime time, TradeOrderSummaryRespBO orderSummary, AfterSaleSummaryRespBO afterSaleSummary, Integer brokerageSettlementPrice, WalletSummaryRespBO walletSummary)` creates `TradeStatisticsDO`.
+- `convert(TradeStatisticsDO)` sets `date`, `turnoverPrice`, and `expensePrice` after MapStruct mapping.
+- `convert(Long undelivered, Long pickUp, Long afterSaleApply, Long auditingWithdraw)` creates `TradeOrderCountRespVO`.
+
+## Transaction Contract
+
+- Daily snapshot insert operations must remain atomic per invocation path. If refactored into application services, use `@Transactional(rollbackFor = Exception.class)` on write orchestration.
+- Read-only dashboard aggregation methods may remain non-transactional unless existing code already declares otherwise.
+- Do not move transaction annotations into domain objects.
+- Domain objects must remain pure Java and must not import Spring transaction APIs.
+
+## Job Contract
+
+### ProductStatisticsJob
+
+- Annotation: `@XxlJob("productStatisticsJob")`.
+- Annotation: `@TenantJob`.
+- Method signature: `public String execute(String param)`.
+- Blank param defaults to `"1"`.
+- Param must parse as a positive integer.
+- Invalid param throws `RuntimeException("商品统计任务的参数只能为是正整数")`.
+- Success response wraps service result as `商品统计:\n{result}`.
+
+### TradeStatisticsJob
+
+- Annotation: `@XxlJob("tradeStatisticsJob")`.
+- Annotation: `@TenantJob`.
+- Method signature: `public String execute(String param)`.
+- Blank param defaults to `"1"`.
+- Param must parse as a positive integer.
+- Invalid param throws `RuntimeException("交易统计任务的参数只能为是正整数")`.
+- Success response wraps service result as `交易统计:\n{result}`.
+
+## Integration Contract
+
+### RPC scanning
+
+`framework/rpc/config/RpcConfiguration.java` must keep:
+
+```java
+@Configuration(value = "statisticsRpcConfiguration", proxyBeanMethods = false)
+@EnableFeignClients(clients = {ProductSpuApi.class})
+public class RpcConfiguration {
+}
+```
+
+Only product SPU enrichment is currently scanned. Do not add Feign clients unless current code introduces a real cross-module API dependency.
+
+### ProductSpuApi enrichment
+
+Product rank page must:
+
+1. Collect SPU ids from the ranked page.
+2. Call `productSpuApi.getSpuList(spuIds).getCheckedData()`.
+3. Fill `name` and `picUrl` into `ProductStatisticsRespVO`.
+4. Preserve page metadata.
+
+## Current Conflict Notes
+
+### C01 — ProductStatistics domain loses persisted fields
+
+Current `ProductStatistics` and its repository implementation only map a subset of `ProductStatisticsDO`. Any save/reconstitute round trip can lose `browseUserCount`, `afterSaleCount`, `afterSaleRefundPrice`, and `browseConvertPercent`. Do not route production daily snapshots through current DDD code until these fields are added and tested.
+
+### C02 — TradeStatistics domain loses wallet and recharge fields
+
+Current `TradeStatistics` and its repository implementation only map a subset of `TradeStatisticsDO`. Any save/reconstitute round trip can lose wallet and recharge fields required by trade dashboard VO. Do not route production daily snapshots through current DDD code until these fields are added and tested.
+
+### C03 — ProductStatisticsApplicationService saves before incrementing
+
+Current `ProductStatisticsApplicationService#recordMetric` saves a newly loaded/created aggregate before increment methods are called. This likely prevents increments from being persisted. Treat current application service record methods as non-production until persistence-after-mutation tests exist.
+
+### C04 — DDD repositories use different day boundary style than legacy code
+
+Legacy daily jobs use `beginOfDay` and `endOfDay`; current `TradeStatisticsRepositoryImpl#findByDate` uses `[date.atStartOfDay(), date.plusDays(1).atStartOfDay()]`. Do not change this behavior casually. If unifying boundaries, add tests against the mapper behavior and confirm no duplicate or missed daily rows.
+
+### C05 — Existing tests are insufficient
+
+Current domain tests only assert transient id support. They do not guard the production contracts in this skill.
+
+## Acceptance Criteria
+
+A Mall Statistics DDD refactor is acceptable only when all relevant criteria pass:
+
+1. Product and trade admin routes, HTTP methods, permissions, request VO fields, response VO fields, and Excel file names are unchanged.
+2. `TimeRangeTypeEnum` integer values remain unchanged.
+3. Product daily statistics remain idempotent and preserve the existing duplicate-data message.
+4. Trade daily statistics remain idempotent and preserve the existing duplicate-data message.
+5. Product conversion percent calculation preserves integer percentage semantics and null/zero guard.
+6. Product rank page still defaults to browse count sorting and enriches `name`/`picUrl` through `ProductSpuApi`.
+7. Trade daily snapshot still aggregates order, after-sale, brokerage, and wallet sources.
+8. `turnoverPrice` and `expensePrice` formulas are unchanged.
+9. Trend comparison periods and grouping rules are unchanged.
+10. Domain objects remain free of Spring, MyBatis, mapper, controller VO, Feign, Redis, and HTTP dependencies.
+11. Repository interfaces remain in the domain package and infrastructure implementations remain under infrastructure.
+12. Full DO ↔ domain round trips preserve every field listed in Fixed Data Model.
+13. Jobs keep `@XxlJob`, `@TenantJob`, default param behavior, invalid param messages, and result prefixes.
+14. Maven compile for the statistics server succeeds.
+15. Domain tests cover more than transient id when production code is changed.
+
+## Verification Commands
+
+Run after changing this skill document:
+
+```bash
+git diff --check -- .claude/ddd-skills/AggregateRoot_MallStatistics_Skill.md
+grep -n "^## " .claude/ddd-skills/AggregateRoot_MallStatistics_Skill.md
+```
+
+Run after changing Statistics Java code:
+
+```bash
+mvn test -pl develop-module-mall/develop-module-statistics-server -Dtest=ProductStatisticsTest,TradeStatisticsTest
+mvn compile -pl develop-module-mall/develop-module-statistics-server -am -DskipTests
+```
+
+Run targeted grep checks after DDD migration:
+
+```bash
+grep -R "org.springframework\|com.baomidou\|Mapper\|DO\|FeignClient\|RestTemplate" develop-module-mall/develop-module-statistics-server/src/main/java/com/develop/mvp/pk/module/statistics/domain
+```
+
+Expected: no forbidden domain imports. Investigate any match before claiming success.
+
+## Common Mistakes
+
+| Mistake | Why it breaks production behavior |
+| --- | --- |
+| Treating statistics as a command-heavy transactional domain | Most behavior is read-model aggregation and scheduled snapshots; forcing all dashboards into aggregates adds risk without preserving contracts. |
+| Reusing current DDD repositories for production snapshots without adding missing fields | Current mappings lose persisted and VO-required fields. |
+| Changing `TradeTrendSummaryRespVO.rechargePrice` mapping name casually | Excel and mapper/converter behavior rely on the current exposed field. |
+| Moving ProductSpu enrichment into the domain | Domain must not call RPC APIs or depend on DTOs. |
+| Replacing legacy idempotence with upsert | Current jobs return existing-data messages and do not rewrite rows. |
+| Changing trend date range math | Dashboard comparisons depend on immediately preceding same-duration ranges. |
+| Removing `@TenantJob` | Statistics jobs are tenant-aware. |
+| Assuming tests prove business correctness | Current tests only cover transient ids. |
+
+## Rationalization Table
+
+| Rationalization | Required response |
+| --- | --- |
+| "This is just statistics, exact fields are not domain-critical." | Stop. Statistics VO and Excel fields are the product contract. Preserve every field. |
+| "The current DDD model already compiles, so it is safe to use." | Stop. It compiles while missing persisted fields. Add field-preservation tests first. |
+| "We can calculate turnover and expense in the frontend." | Stop. Current backend VO already calculates them. Preserve backend behavior. |
+| "Upsert is better than idempotent skip." | Stop. Existing job semantics are skip-with-message; changing it is a product behavior change. |
+| "Member/pay stats are in the same module, so include them in Product/Trade aggregates." | Stop. They are legacy read models unless separately scoped. |
+| "Feign enrichment can live in the aggregate for convenience." | Stop. Domain cannot depend on RPC. Use application/infrastructure orchestration. |
+
+## Red Flags
+
+Stop the refactor immediately if any of these happens:
+
+- A controller route, permission string, request field, response field, or Excel file name changes.
+- A daily statistics job inserts duplicate rows on repeated execution.
+- Product statistics rank page loses product name or cover image enrichment.
+- A DDD save/reconstitute path drops any DO field listed in this skill.
+- Domain code imports Spring, MyBatis, Mapper, DO, Controller VO, Feign, Redis, or RPC client classes.
+- `TimeRangeTypeEnum` values change.
+- Trend comparison range or year/month grouping behavior changes without explicit user approval.
+- Compilation errors spread outside `develop-module-statistics` and direct dependencies.
+
+## Rollback Conditions
+
+Rollback the current Statistics refactor batch if:
+
+1. `mvn compile -pl develop-module-mall/develop-module-statistics-server -am -DskipTests` fails because of this batch.
+2. Existing product/trade admin API contracts change.
+3. Daily job idempotence or messages change unintentionally.
+4. Mapper aggregate formulas diverge from current behavior.
+5. DDD repositories lose fields during persistence round trip.
+6. A required dependency would force domain code to import infrastructure or RPC classes.
+
+Rollback means revert only this batch's Statistics changes. Do not reset unrelated user changes.
+
+## AI Self-Check
+
+Before reporting completion, answer these checks from current code and command output:
+
+- Did I read the current source anchors, not rely on memory?
+- Did I preserve product/trade routes, permissions, VO fields, and Excel names?
+- Did I preserve `TimeRangeTypeEnum` values and validation usage?
+- Did I preserve product daily idempotence and conversion percent semantics?
+- Did I preserve trade multi-source aggregation and derived formulas?
+- Did I keep `ProductSpuApi` outside the domain?
+- Did I add or update tests for any production behavior I changed?
+- Did I run the verification commands in this session and read the output?
+- Did I avoid changing Java business code while only upgrading this skill?

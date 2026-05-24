@@ -12,7 +12,7 @@ import java.util.List;
 /**
  * WMS 仓库 Mapper
  *
- * @author 芋道源码
+ * @author David
  */
 @Mapper
 public interface WmsWarehouseMapper extends BaseMapperX<WmsWarehouseDO> {

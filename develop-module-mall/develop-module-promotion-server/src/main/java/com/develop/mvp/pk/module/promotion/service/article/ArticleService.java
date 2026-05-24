@@ -13,7 +13,7 @@ import java.util.List;
 /**
  * 文章 Service 接口
  *
- * @author HUIHUI
+ * @author David
  */
 public interface ArticleService {
 

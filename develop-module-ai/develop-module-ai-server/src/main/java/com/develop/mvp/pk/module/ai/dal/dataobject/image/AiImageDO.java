@@ -22,7 +22,7 @@ import java.util.Map;
 /**
  * AI 绘画 DO
  *
- * @author fansili
+ * @author David
  */
 @TableName(value = "ai_image", autoResultMap = true)
 @KeySequence("ai_image_seq") // 用于 Oracle、PostgreSQL、Kingbase、DB2、H2 数据库的主键自增。如果是 MySQL 等数据库，可不写。

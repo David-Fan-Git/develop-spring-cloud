@@ -13,7 +13,7 @@ import java.util.List;
 /**
  * AI 绘图 Mapper
  *
- * @author fansili
+ * @author David
  */
 @Mapper
 public interface AiImageMapper extends BaseMapperX<AiImageDO> {

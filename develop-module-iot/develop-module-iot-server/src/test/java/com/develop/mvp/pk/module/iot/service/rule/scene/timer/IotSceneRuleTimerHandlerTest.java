@@ -20,7 +20,7 @@ import static org.mockito.Mockito.*;
 /**
  * {@link IotSceneRuleTimerHandler} 的单元测试类
  *
- * @author HUIHUI
+ * @author David
  */
 @ExtendWith(MockitoExtension.class)
 public class IotSceneRuleTimerHandlerTest {

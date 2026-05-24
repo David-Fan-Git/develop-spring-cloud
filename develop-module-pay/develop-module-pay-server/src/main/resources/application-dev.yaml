@@ -111,9 +111,9 @@ spring:
         username: admin
         password: admin
 
---- #################### 芋道相关配置 ####################
+--- #################### David相关配置 ####################
 
-# 芋道配置项，设置当前项目所有自定义的配置
+# David配置项，设置当前项目所有自定义的配置
 develop:
   pay:
     order-notify-url: http://yunai.natapp1.cc/admin-api/pay/notify/order # 支付渠道的【支付】回调地址

@@ -5,7 +5,7 @@ import lombok.Data;
 /**
  * IoT RocketMQ 配置 {@link IotAbstractDataSinkConfig} 实现类
  *
- * @author HUIHUI
+ * @author David
  */
 @Data
 public class IotDataSinkRocketMQConfig extends IotAbstractDataSinkConfig {

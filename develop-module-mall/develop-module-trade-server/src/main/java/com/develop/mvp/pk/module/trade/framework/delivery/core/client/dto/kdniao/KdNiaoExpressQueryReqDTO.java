@@ -7,7 +7,7 @@ import lombok.Data;
 /**
  * 快递鸟快递查询 Req DTO
  *
- * @author jason
+ * @author David
  */
 @Data
 @JsonInclude(JsonInclude.Include.NON_NULL)

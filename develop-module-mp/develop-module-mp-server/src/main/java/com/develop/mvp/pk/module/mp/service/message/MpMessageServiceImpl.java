@@ -41,7 +41,7 @@ import static com.develop.mvp.pk.module.mp.enums.ErrorCodeConstants.MESSAGE_SEND
 /**
  * 粉丝消息 Service 实现类
  *
- * @author 芋道源码
+ * @author David
  */
 @Service
 @Validated

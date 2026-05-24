@@ -17,10 +17,10 @@ import static com.develop.mvp.pk.framework.common.util.date.DateUtils.FORMAT_YEA
 @ToString(callSuper = true)
 public class TenantPageReqVO extends PageParam {
 
-    @Schema(description = "租户名", example = "芋道")
+    @Schema(description = "租户名", example = "David")
     private String name;
 
-    @Schema(description = "联系人", example = "芋艿")
+    @Schema(description = "联系人", example = "David")
     private String contactName;
 
     @Schema(description = "联系手机", example = "15601691300")

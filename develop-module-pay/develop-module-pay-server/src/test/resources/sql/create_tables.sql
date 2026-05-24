@@ -6,6 +6,7 @@ CREATE TABLE IF NOT EXISTS "pay_app" (
     "remark"            varchar(255)           DEFAULT NULL,
     `order_notify_url`    varchar(1024) NOT NULL,
     `refund_notify_url` varchar(1024) NOT NULL,
+    `transfer_notify_url` varchar(1024) DEFAULT NULL,
     "creator"           varchar(64)            DEFAULT '',
     "create_time"       datetime      NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "updater"           varchar(64)            DEFAULT '',

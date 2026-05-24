@@ -20,7 +20,7 @@ import static cn.hutool.core.exceptions.ExceptionUtil.getRootCauseMessage;
 /**
  * 邮件日志 Service 实现类
  *
- * @author wangjingyi
+ * @author David
  * @since 2022-03-21
  */
 @Service

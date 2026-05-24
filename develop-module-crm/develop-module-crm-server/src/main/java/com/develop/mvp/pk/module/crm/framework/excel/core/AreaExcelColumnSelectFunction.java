@@ -10,7 +10,7 @@ import java.util.List;
 /**
  * 地区下拉框数据源的 {@link ExcelColumnSelectFunction} 实现类
  *
- * @author HUIHUI
+ * @author David
  */
 @Service
 public class AreaExcelColumnSelectFunction implements ExcelColumnSelectFunction {

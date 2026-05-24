@@ -19,7 +19,7 @@ import java.util.Objects;
  *
  * 文档：<a href="https://opendocs.alipay.com/open/270/105898">电脑网站支付</a>
  *
- * @author XGD
+ * @author David
  */
 @Slf4j
 public class AlipayPcPayClient extends AbstractAlipayPayClient {

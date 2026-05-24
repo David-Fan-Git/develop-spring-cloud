@@ -46,7 +46,7 @@ import static com.develop.mvp.pk.framework.common.exception.util.ServiceExceptio
  * 1. 自定义 FC 认证
  * 2. 轮询响应 → 点位翻译 → thing.property.post
  *
- * @author 芋道源码
+ * @author David
  */
 @Slf4j
 public class IotModbusTcpServerUpstreamHandler {

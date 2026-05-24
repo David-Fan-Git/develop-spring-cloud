@@ -6,7 +6,7 @@ import lombok.Getter;
 /**
  * AI 内置聊天角色的枚举
  *
- * @author xiaoxin
+ * @author David
  */
 @AllArgsConstructor
 @Getter

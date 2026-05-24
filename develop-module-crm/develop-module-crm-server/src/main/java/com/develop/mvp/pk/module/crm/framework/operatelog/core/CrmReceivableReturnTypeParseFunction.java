@@ -11,7 +11,7 @@ import static com.develop.mvp.pk.module.crm.enums.DictTypeConstants.CRM_RECEIVAB
 /**
  * CRM 回款方式的 {@link IParseFunction} 实现类
  *
- * @author HUIHUI
+ * @author David
  */
 @Slf4j
 @Component

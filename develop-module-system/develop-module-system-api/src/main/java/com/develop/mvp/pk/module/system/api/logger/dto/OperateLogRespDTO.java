@@ -21,7 +21,7 @@ public class OperateLogRespDTO implements VO {
     @Schema(description = "用户编号", requiredMode = Schema.RequiredMode.REQUIRED, example = "666")
     @Trans(type = TransType.AUTO_TRANS, key = AdminUserApi.PREFIX, fields = "nickname", ref = "userName")
     private Long userId;
-    @Schema(description = "用户名称", requiredMode = Schema.RequiredMode.REQUIRED, example = "芋道")
+    @Schema(description = "用户名称", requiredMode = Schema.RequiredMode.REQUIRED, example = "David")
     private String userName;
     @Schema(description = "用户类型，参见 UserTypeEnum 枚举", requiredMode = Schema.RequiredMode.REQUIRED, example = "2" )
     private Integer userType;
@@ -32,7 +32,7 @@ public class OperateLogRespDTO implements VO {
     @Schema(description = "操作模块业务编号", requiredMode = Schema.RequiredMode.REQUIRED, example = "188")
     private Long bizId;
     @Schema(description = "操作内容", requiredMode = Schema.RequiredMode.REQUIRED,
-            example = "修改编号为 1 的用户信息，将性别从男改成女，将姓名从芋道改成源码")
+            example = "修改编号为 1 的用户信息，将性别从男改成女，将姓名从David改成源码")
     private String action;
     @Schema(description = "拓展字段", example = "{\"orderId\": \"1\"}")
     private String extra;

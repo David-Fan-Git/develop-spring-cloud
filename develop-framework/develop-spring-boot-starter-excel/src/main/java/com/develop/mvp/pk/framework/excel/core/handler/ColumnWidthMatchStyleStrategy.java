@@ -20,7 +20,7 @@ import java.util.Map;
  * 相比 {@link LongestMatchColumnWidthStyleStrategy} 来说，额外处理了 DATE 类型！
  *
  * @see <a href="https://github.com/YunaiV/develop-cloud/pull/196/">添加自适应列宽处理器，并替换默认列宽策略</a>
- * @author hmb
+ * @author David
  */
 public class ColumnWidthMatchStyleStrategy extends AbstractColumnWidthStyleStrategy {
 

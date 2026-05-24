@@ -9,7 +9,7 @@ import java.util.Arrays;
 /**
  * 客服消息的类型枚举
  *
- * @author HUIHUI
+ * @author David
  */
 @AllArgsConstructor
 @Getter

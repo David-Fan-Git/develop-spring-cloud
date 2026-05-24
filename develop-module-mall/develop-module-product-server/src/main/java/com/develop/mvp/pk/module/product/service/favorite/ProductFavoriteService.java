@@ -9,7 +9,7 @@ import jakarta.validation.Valid;
 /**
  * 商品收藏 Service 接口
  *
- * @author jason
+ * @author David
  */
 public interface ProductFavoriteService {
 

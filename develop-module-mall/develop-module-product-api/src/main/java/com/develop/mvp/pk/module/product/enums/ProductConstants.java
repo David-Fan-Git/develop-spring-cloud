@@ -3,7 +3,7 @@ package com.develop.mvp.pk.module.product.enums;
 /**
  * Product 常量
  *
- * @author HUIHUI
+ * @author David
  */
 public interface ProductConstants {
 

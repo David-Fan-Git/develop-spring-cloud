@@ -10,7 +10,7 @@ public final class ReportProjectFactory {
     public static ReportProject create(String name, String picUrl, String content,
                                         Integer status, String remark) {
         return new ReportProject(
-                null,
+                (Long) null,
                 name,
                 picUrl,
                 content,

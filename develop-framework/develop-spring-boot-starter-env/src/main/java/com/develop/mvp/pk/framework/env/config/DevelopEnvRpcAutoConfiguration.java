@@ -17,7 +17,7 @@ import java.util.List;
 /**
  * 多环境的 RPC 组件的自动配置
  *
- * @author 芋道源码
+ * @author David
  */
 @AutoConfiguration
 @EnableConfigurationProperties(EnvProperties.class)

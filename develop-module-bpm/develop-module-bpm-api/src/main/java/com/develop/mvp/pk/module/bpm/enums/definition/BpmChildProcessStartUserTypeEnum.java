@@ -10,7 +10,7 @@ import java.util.Arrays;
 /**
  * BPM 子流程发起人类型枚举
  *
- * @author Lesan
+ * @author David
  */
 @Getter
 @AllArgsConstructor

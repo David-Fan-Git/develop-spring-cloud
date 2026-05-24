@@ -15,7 +15,7 @@ import static com.develop.mvp.pk.framework.common.exception.enums.GlobalErrorCod
 /**
  * 演示 Filter，禁止用户发起写操作，避免影响测试数据
  *
- * @author 芋道源码
+ * @author David
  */
 public class DemoFilter extends OncePerRequestFilter {
 

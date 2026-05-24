@@ -5,7 +5,7 @@ import com.develop.mvp.pk.framework.desensitize.core.slider.annotation.PasswordD
 /**
  * {@link PasswordDesensitize} 的码脱敏处理器
  *
- * @author gaibu
+ * @author David
  */
 public class PasswordDesensitization extends AbstractSliderDesensitizationHandler<PasswordDesensitize> {
     @Override

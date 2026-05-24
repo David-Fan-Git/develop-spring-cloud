@@ -7,7 +7,7 @@ import java.util.List;
 /**
  * CRM 客户画像 Service 接口
  *
- * @author HUIHUI
+ * @author David
  */
 public interface CrmStatisticsPortraitService {
 

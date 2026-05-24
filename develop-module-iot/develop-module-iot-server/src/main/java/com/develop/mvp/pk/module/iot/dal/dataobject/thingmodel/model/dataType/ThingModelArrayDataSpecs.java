@@ -13,7 +13,7 @@ import java.util.List;
 /**
  * IoT 物模型数据类型为数组的 DataSpec 定义
  *
- * @author HUIHUI
+ * @author David
  */
 @Data
 @EqualsAndHashCode(callSuper = true)

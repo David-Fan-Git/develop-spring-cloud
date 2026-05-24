@@ -144,9 +144,9 @@ wx: # 参见 https://github.com/Wechat-Group/WxJava/blob/develop/spring-boot-sta
       key-prefix: wa # Redis Key 的前缀
       http-client-type: HttpClient # 采用 HttpClient 请求微信公众号平台
 
---- #################### 芋道相关配置 ####################
+--- #################### David相关配置 ####################
 
-# 芋道配置项，设置当前项目所有自定义的配置
+# David配置项，设置当前项目所有自定义的配置
 develop:
   pay:
     order-notify-url: http://yunai.natapp1.cc/admin-api/pay/notify/order # 支付渠道的【支付】回调地址
@@ -189,7 +189,7 @@ justauth:
     timeout: 24h # 超时时长，目前只对 Redis 缓存生效，默认 3 分钟
 
 
---- #################### iot相关配置 TODO 芋艿：再瞅瞅 ####################
+--- #################### iot相关配置 TODO David：再瞅瞅 ####################
 iot:
   emq:
     # 账号

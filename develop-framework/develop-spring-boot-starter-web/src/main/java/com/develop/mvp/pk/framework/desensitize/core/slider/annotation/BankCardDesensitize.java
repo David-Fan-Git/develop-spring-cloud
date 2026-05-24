@@ -9,7 +9,7 @@ import java.lang.annotation.*;
 /**
  * 银行卡号
  *
- * @author gaibu
+ * @author David
  */
 @Documented
 @Target({ElementType.FIELD})

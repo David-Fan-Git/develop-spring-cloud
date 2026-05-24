@@ -1,373 +1,565 @@
-# DDD Skill: AggregateRoot_MallPromotion_Skill
+---
+name: aggregateroot-mall-promotion-skill
+description: Use when refactoring or validating Mall Promotion DDD code, promotion API contracts, banner/seckill/coupon/discount/reward/combination/bargain/point flows, stock updates, jobs, MQ consumers, and product/trade integrations.
+type: ddd-aggregate-skill
+module: mall-promotion
+status: production-ready
+last_verified: 2026-05-24
+---
 
-## 1. 技能名称
-`AggregateRoot_MallPromotion_Skill` — 商城营销域(Promotion)聚合根的领域建模与重构技能
+# AggregateRoot Mall Promotion Skill
 
-## 2. 适用场景
-商城营销子域：Banner、秒杀活动(SeckillActivity)、优惠券模板(CouponTemplate)、优惠券(Coupon)、限时折扣(DiscountActivity)、满减送(RewardActivity)、拼团(CombinationActivity)、砍价(BargainActivity)、积分商城(PointActivity)。
+## 1. Overview
 
-## 3. DDD 构造块
+本 skill 用于把 Mall Promotion 从当前“少量 DDD + 大量 legacy service/dal”的混合状态，按当前可编译外部行为逐步迁移到 `domain/application/infrastructure/convert` 分层；任何重构都必须先保留现有 Controller、API、错误码、事务、库存、Job、MQ 和跨模块集成语义。
 
-### 3.1 聚合根
-- **Banner** — 首页Banner聚合根，含位置(position)管理、启用/禁用、点击次数统计
-- **SeckillActivity** — 秒杀活动聚合根（旗舰级），含时段配置(configIds)、活动商品管理、库存管理、单次限购
-- **CouponTemplate** — 优惠券模板聚合根，含领取方式(takeType)、有效期类型、商品范围、发放/使用计数
-- **Coupon** — 优惠券实例聚合根，含状态(UNUSED/USED/EXPIRE)流转、有效期、使用链路
-- **DiscountActivity** — 限时折扣活动聚合根，含多商品折扣配置、时间范围、启用/禁用
-- **RewardActivity** — 满减送活动聚合根，含多级规则(rules)、商品范围(ALL/SPU/CATEGORY)、时间范围
-- **CombinationActivity** — 拼团活动聚合根，含商品配置、开团/参团人数限制、时间范围
-- **BargainActivity** — 砍价活动聚合根，含砍价配置(最低价/帮砍人数)、库存管理
-- **PointActivity** — 积分商城活动聚合根，含积分商品配置、单次限购、库存管理
+## 2. When to Use
 
-### 3.2 值对象
-- `BannerId`, `BannerPosition` — Banner标识与位置值对象
-- `SeckillActivityId`, `SeckillProduct` — 秒杀活动标识与商品值对象（含skuId/stock/price）
-- `CouponTemplateId`, `CouponId` — 优惠券模板与实例标识
-- `DiscountProduct` — 折扣商品值对象（含spuId/skuId/discountType/discountPercent等）
-- `RewardRule` — 满减送规则值对象（含conditionType/conditionValue/discountType/discountValue）
-- `CombinationProduct` — 拼团商品值对象（含skuId/price/stock）
-- `PointProduct` — 积分商品值对象（含spuId/skuId/point/stock/count限购）
-- `ProductScope` — 商品范围值对象（scope类型 + scopeValues列表）
-- 不可变类，构造方法自校验
+使用本 skill：
 
-### 3.3 仓储接口
-- `BannerRepository` — findById/save/delete/findByPosition/updateBrowseCount
-- `SeckillActivityRepository` — findById/save/delete/page/findBySpuIdAndStatus/findByConfigId/updateStockDecr(乐观锁)
-- `CouponTemplateRepository` — findById/save/delete/page/findByTakeType/updateTakeCount(乐观锁)
-- `CouponRepository` — findById/save/delete/findByUserIdAndTemplateId/updateByIdAndStatus/批量查询
-- `DiscountActivityRepository` — findById/save/delete/page/findActiveBySkuIds
-- `RewardActivityRepository` — findById/save/delete/page/findMatchBySpuIdAndTime
-- `CombinationActivityRepository` — findById/save/delete/page/findBySpuIdAndStatus
-- `BargainActivityRepository` — findById/save/delete/page/findBySpuIdAndStatus/updateStock(乐观锁)
-- `PointActivityRepository` — findById/save/delete/page/updateStockDecr(乐观锁)
-- 所有Repository定义在domain层，无infrastructure imports
+- 重构或验证 `develop-module-mall/develop-module-promotion-*` 的 Banner、秒杀、优惠券、限时折扣、满减送、拼团、砍价、积分商城链路。
+- 拆分 promotion API 的 stable contract 与 remote Feign client。
+- 从 `service/dal` 迁移营销活动、库存扣减、优惠券状态机、拼团记录、砍价记录等核心规则。
+- 修改 promotion Job、MQ、WebSocket、Product/Trade/Member/System API 集成。
+- 判断当前 DDD 代码是否能替代 legacy service 行为。
 
-### 3.4 领域事件
-- `SeckillActivityStatusChangedEvent` — 秒杀活动状态变更(启用/关闭)
-- `SeckillActivityStockChangedEvent` — 秒杀活动库存变更
-- `CouponTemplateStatusChangedEvent` — 优惠券模板状态变更
-- `CouponUsedEvent` — 优惠券使用事件
-- `CouponExpiredEvent` — 优惠券过期事件
-- `DiscountActivityStatusChangedEvent` — 限时折扣状态变更
-- `RewardActivityStatusChangedEvent` — 满减送状态变更
-- `CombinationActivityStatusChangedEvent` — 拼团活动状态变更
-- `BargainActivityStatusChangedEvent` — 砍价活动状态变更
-- `PointActivityStatusChangedEvent` — 积分商城活动状态变更
+不要使用本 skill：
 
-### 3.5 工厂
-- `BannerFactory` — 创建Banner聚合根
-- `SeckillActivityFactory` — 创建秒杀活动聚合根，含商品列表初始化、时间校验
-- `CouponTemplateFactory` — 创建优惠券模板聚合根，含商品范围校验
-- `DiscountActivityFactory` — 创建限时折扣聚合根，含商品冲突校验
-- `RewardActivityFactory` — 创建满减送聚合根，含规则初始化、时间范围校验
-- `CombinationActivityFactory` — 创建拼团活动聚合根
-- `BargainActivityFactory` — 创建砍价活动聚合根
-- `PointActivityFactory` — 创建积分商城活动聚合根
+- 只改文章、装修、客服等非营销核心功能，除非变更影响 promotion 公共错误码、RPC 配置或 Job/MQ 装配。
+- 只修改页面文案、SQL 初始化数据、测试夹具或无结构影响的配置。
+- 未读取当前事实源就直接按旧草稿新增聚合、值对象或仓储。
 
-### 3.6 领域服务
-- `SeckillConflictDomainService` — 秒杀活动商品冲突校验（同SPU不可同时参与多个时段冲突的秒杀活动）
-- `PromotionProductScopeDomainService` — 活动商品范围校验服务（SPU/CATEGORY/ALL存在性和有效性）
-- `RewardConflictDomainService` — 满减送活动时间+商品范围冲突判别（时间重叠时的商品范围逐级校验）
+## 3. Baseline Failure Findings
 
-## 4. 职责边界
+当前旧草稿的失败点：
 
-### R01 — Banner必须存在才能操作
-所有Banner的更新/删除/增加点击次数操作前都需校验存在性。
-- Source: `BannerServiceImpl.validateBannerExists()` line 57-61
+- 没有 YAML frontmatter，不能被稳定识别为生产级 skill。
+- 只写概念聚合，缺少 Controller、VO/DTO、DO、Mapper、Convert、Service、Application、Repository、ErrorCode、测试路径。
+- 没有记录当前 API 仍带 `@FeignClient`、`SeckillActivityApi` 前缀复用 `/discount-activity`、`PointActivityApi` tag 误写“秒杀活动”等现状冲突。
+- 没有固定字段模型，容易猜错 `stock/totalStock`、`configIds`、`productScopeValues`、`rules`、`HEAD_ID_GROUP` 等字段语义。
+- 没有事务、Job、MQ、WebSocket 和 Product/Trade 集成契约，容易把 durable 业务流程误改成领域事件或空转发。
+- 没有区分“当前 legacy service 是生产事实源”和“DDD 目标结构”，容易直接用不完整 application service 替代现有行为。
 
-### R02 — 创建秒杀活动必须校验时段冲突
-同一SPU在同一秒杀时段(configIds)不能参与多个秒杀活动。需查询所有ENABLE状态的秒杀活动并比对configIds交集。
-- Source: `SeckillActivityServiceImpl.validateProductConflict()` lines 95-109
+## 4. Reproducibility Contract
 
-### R03 — 秒杀活动已关闭(DISABLE)状态不能更新
-更新活动时校验当前状态是否为DISABLE，如果是则抛出异常`SECKILL_ACTIVITY_UPDATE_FAIL_STATUS_CLOSED`。
-- Source: `SeckillActivityServiceImpl.updateSeckillActivity()` lines 139-141
+1. 每次只处理一个聚合或一个小链路：Banner、Seckill、Coupon、Discount、Reward、Combination、Bargain、Point 中任选其一。
+2. 修改代码前必须读取本 skill、`.claude/ddd-skills/DDD_Skill_Production_Readiness_Standard.md`、`.claude/ddd-skills/Module_Structure_Standard.md` 和当前目标链路事实源。
+3. 当前可编译代码的外部行为优先于本文档和草稿假设；冲突时先修订 skill，再改代码。
+4. Controller 路径、HTTP 方法、权限、请求/响应 VO、API DTO、错误码、错误参数、分页、Excel、Job、MQ、库存 SQL、跨模块 API 不得在 DDD 重构中顺手改变。
+5. 当前 `service/*ServiceImpl` 是多数 promotion 行为的事实源；只有对应 application/domain/infrastructure 已覆盖同等行为和测试后，才允许迁移调用方。
+6. Domain 不得依赖 Spring、MyBatis、Feign、Mapper、DO、Controller VO、WebSocketSenderApi、TradeOrderApi、Product*Api、MemberUserRemoteClient 或 System remote client。
+7. 库存扣减必须保留 Mapper 层 guarded update/affected-row 语义，禁止改成“先查库存再保存”。
+8. 涉及 Java 代码必须执行影响范围 Maven compile/test；只改 skill 文档时至少执行文档 diff/heading 验证。
 
-### R04 — 秒杀活动库存扣减使用乐观锁防超卖
-`updateStockDecr`更新活动库存和商品库存，返回0表示库存不足抛出`SECKILL_ACTIVITY_UPDATE_STOCK_FAIL`。
-- Source: `SeckillActivityServiceImpl.updateSeckillStockDecr()` lines 160-183
+## 5. Current Source Anchors
 
-### R05 — 秒杀活动删除前必须已关闭
-仅DISABLE状态或已过期活动可删除。
-- Source: `SeckillActivityServiceImpl.deleteSeckillActivity()` lines 243-244
+### API module
 
-### R06 — 秒杀活动参与资格校验[重要]
-参与秒杀需校验五要素：①活动存在 ②活动已启用 ③在活动时间范围内 ④在秒杀时段配置时间范围内 ⑤不超过单次限购数量
-- Source: `SeckillActivityServiceImpl.validateJoinSeckill()` lines 295-326
+- API constants/enums：
+  - `develop-module-mall/develop-module-promotion-api/src/main/java/com/develop/mvp/pk/module/promotion/enums/ApiConstants.java`
+  - `develop-module-mall/develop-module-promotion-api/src/main/java/com/develop/mvp/pk/module/promotion/enums/ErrorCodeConstants.java`
+  - `develop-module-mall/develop-module-promotion-api/src/main/java/com/develop/mvp/pk/module/promotion/enums/MessageTemplateConstants.java`
+  - `develop-module-mall/develop-module-promotion-api/src/main/java/com/develop/mvp/pk/module/promotion/enums/WebSocketMessageTypeConstants.java`
+- Trade-facing APIs：
+  - `develop-module-mall/develop-module-promotion-api/src/main/java/com/develop/mvp/pk/module/promotion/api/seckill/SeckillActivityApi.java`
+  - `develop-module-mall/develop-module-promotion-api/src/main/java/com/develop/mvp/pk/module/promotion/api/coupon/CouponApi.java`
+  - `develop-module-mall/develop-module-promotion-api/src/main/java/com/develop/mvp/pk/module/promotion/api/discount/DiscountActivityApi.java`
+  - `develop-module-mall/develop-module-promotion-api/src/main/java/com/develop/mvp/pk/module/promotion/api/reward/RewardActivityApi.java`
+  - `develop-module-mall/develop-module-promotion-api/src/main/java/com/develop/mvp/pk/module/promotion/api/combination/CombinationRecordApi.java`
+  - `develop-module-mall/develop-module-promotion-api/src/main/java/com/develop/mvp/pk/module/promotion/api/bargain/BargainActivityApi.java`
+  - `develop-module-mall/develop-module-promotion-api/src/main/java/com/develop/mvp/pk/module/promotion/api/bargain/BargainRecordApi.java`
+  - `develop-module-mall/develop-module-promotion-api/src/main/java/com/develop/mvp/pk/module/promotion/api/point/PointActivityApi.java`
+- API DTO：
+  - `develop-module-mall/develop-module-promotion-api/src/main/java/com/develop/mvp/pk/module/promotion/api/seckill/dto/SeckillValidateJoinRespDTO.java`
+  - `develop-module-mall/develop-module-promotion-api/src/main/java/com/develop/mvp/pk/module/promotion/api/coupon/dto/CouponRespDTO.java`
+  - `develop-module-mall/develop-module-promotion-api/src/main/java/com/develop/mvp/pk/module/promotion/api/coupon/dto/CouponTemplateRespDTO.java`
+  - `develop-module-mall/develop-module-promotion-api/src/main/java/com/develop/mvp/pk/module/promotion/api/coupon/dto/CouponUseReqDTO.java`
+  - `develop-module-mall/develop-module-promotion-api/src/main/java/com/develop/mvp/pk/module/promotion/api/coupon/dto/CouponValidReqDTO.java`
+  - `develop-module-mall/develop-module-promotion-api/src/main/java/com/develop/mvp/pk/module/promotion/api/discount/dto/DiscountProductRespDTO.java`
+  - `develop-module-mall/develop-module-promotion-api/src/main/java/com/develop/mvp/pk/module/promotion/api/reward/dto/RewardActivityMatchRespDTO.java`
+  - `develop-module-mall/develop-module-promotion-api/src/main/java/com/develop/mvp/pk/module/promotion/api/combination/dto/CombinationRecordCreateReqDTO.java`
+  - `develop-module-mall/develop-module-promotion-api/src/main/java/com/develop/mvp/pk/module/promotion/api/combination/dto/CombinationRecordCreateRespDTO.java`
+  - `develop-module-mall/develop-module-promotion-api/src/main/java/com/develop/mvp/pk/module/promotion/api/combination/dto/CombinationRecordRespDTO.java`
+  - `develop-module-mall/develop-module-promotion-api/src/main/java/com/develop/mvp/pk/module/promotion/api/combination/dto/CombinationValidateJoinRespDTO.java`
+  - `develop-module-mall/develop-module-promotion-api/src/main/java/com/develop/mvp/pk/module/promotion/api/bargain/dto/BargainValidateJoinRespDTO.java`
+  - `develop-module-mall/develop-module-promotion-api/src/main/java/com/develop/mvp/pk/module/promotion/api/point/dto/PointValidateJoinRespDTO.java`
 
-### R07 — 优惠券模板商品范围校验
-SPU范围：通过`ProductSpuApi.validateSpuList()`校验SPU存在性；CATEGORY范围：通过`ProductCategoryApi.validateCategoryList()`校验分类存在性
-- Source: `CouponTemplateServiceImpl.validateProductScope()` lines 107-113
+### Server entry points
 
-### R08 — 优惠券模板总发放数下限保护
-更新模板时，如果领取方式为USER且总发放数非不限，则总发放数不能小于已领取数`takeCount`。
-- Source: `CouponTemplateServiceImpl.updateCouponTemplate()` lines 70-74
+- Admin controllers：
+  - `develop-module-mall/develop-module-promotion-server/src/main/java/com/develop/mvp/pk/module/promotion/controller/admin/banner/BannerController.java`
+  - `develop-module-mall/develop-module-promotion-server/src/main/java/com/develop/mvp/pk/module/promotion/controller/admin/seckill/SeckillActivityController.java`
+  - `develop-module-mall/develop-module-promotion-server/src/main/java/com/develop/mvp/pk/module/promotion/controller/admin/seckill/SeckillConfigController.java`
+  - `develop-module-mall/develop-module-promotion-server/src/main/java/com/develop/mvp/pk/module/promotion/controller/admin/coupon/CouponTemplateController.java`
+  - `develop-module-mall/develop-module-promotion-server/src/main/java/com/develop/mvp/pk/module/promotion/controller/admin/coupon/CouponController.java`
+  - `develop-module-mall/develop-module-promotion-server/src/main/java/com/develop/mvp/pk/module/promotion/controller/admin/discount/DiscountActivityController.java`
+  - `develop-module-mall/develop-module-promotion-server/src/main/java/com/develop/mvp/pk/module/promotion/controller/admin/reward/RewardActivityController.java`
+  - `develop-module-mall/develop-module-promotion-server/src/main/java/com/develop/mvp/pk/module/promotion/controller/admin/combination/CombinationActivityController.java`
+  - `develop-module-mall/develop-module-promotion-server/src/main/java/com/develop/mvp/pk/module/promotion/controller/admin/combination/CombinationRecordController.java`
+  - `develop-module-mall/develop-module-promotion-server/src/main/java/com/develop/mvp/pk/module/promotion/controller/admin/bargain/BargainActivityController.java`
+  - `develop-module-mall/develop-module-promotion-server/src/main/java/com/develop/mvp/pk/module/promotion/controller/admin/bargain/BargainRecordController.java`
+  - `develop-module-mall/develop-module-promotion-server/src/main/java/com/develop/mvp/pk/module/promotion/controller/admin/bargain/BargainHelpController.java`
+  - `develop-module-mall/develop-module-promotion-server/src/main/java/com/develop/mvp/pk/module/promotion/controller/admin/point/PointActivityController.java`
+- API implementations：
+  - `develop-module-mall/develop-module-promotion-server/src/main/java/com/develop/mvp/pk/module/promotion/api/seckill/SeckillActivityApiImpl.java`
+  - `develop-module-mall/develop-module-promotion-server/src/main/java/com/develop/mvp/pk/module/promotion/api/coupon/CouponApiImpl.java`
+  - `develop-module-mall/develop-module-promotion-server/src/main/java/com/develop/mvp/pk/module/promotion/api/discount/DiscountActivityApiImpl.java`
+  - `develop-module-mall/develop-module-promotion-server/src/main/java/com/develop/mvp/pk/module/promotion/api/reward/RewardActivityApiImpl.java`
+  - `develop-module-mall/develop-module-promotion-server/src/main/java/com/develop/mvp/pk/module/promotion/api/combination/CombinationRecordApiImpl.java`
+  - `develop-module-mall/develop-module-promotion-server/src/main/java/com/develop/mvp/pk/module/promotion/api/bargain/BargainActivityApiImpl.java`
+  - `develop-module-mall/develop-module-promotion-server/src/main/java/com/develop/mvp/pk/module/promotion/api/bargain/BargainRecordApiImpl.java`
+  - `develop-module-mall/develop-module-promotion-server/src/main/java/com/develop/mvp/pk/module/promotion/api/point/PointActivityApiImpl.java`
 
-### R09 — 优惠券使用状态严格校验
-使用前校验状态必须为UNUSED且有效期包含当前时间。使用后更新为USED。
-- Source: `CouponServiceImpl.useCoupon()` lines 59-77
+### Current DDD layer
 
-### R10 — 优惠券退还逻辑
-退还后如果已过期则置为EXPIRE状态，否则恢复UNUSED状态。使用CAS方式`updateByIdAndStatus`更新。
-- Source: `CouponServiceImpl.returnUsedCoupon()` lines 80-102
+- Existing domain/application/infrastructure only partially cover Banner、CouponTemplate、SeckillActivity：
+  - `develop-module-mall/develop-module-promotion-server/src/main/java/com/develop/mvp/pk/module/promotion/domain/banner/Banner.java`
+  - `develop-module-mall/develop-module-promotion-server/src/main/java/com/develop/mvp/pk/module/promotion/domain/banner/BannerFactory.java`
+  - `develop-module-mall/develop-module-promotion-server/src/main/java/com/develop/mvp/pk/module/promotion/domain/banner/repository/BannerRepository.java`
+  - `develop-module-mall/develop-module-promotion-server/src/main/java/com/develop/mvp/pk/module/promotion/domain/banner/valueobject/BannerId.java`
+  - `develop-module-mall/develop-module-promotion-server/src/main/java/com/develop/mvp/pk/module/promotion/application/banner/BannerApplicationService.java`
+  - `develop-module-mall/develop-module-promotion-server/src/main/java/com/develop/mvp/pk/module/promotion/infrastructure/banner/BannerRepositoryImpl.java`
+  - `develop-module-mall/develop-module-promotion-server/src/main/java/com/develop/mvp/pk/module/promotion/domain/coupon/CouponTemplate.java`
+  - `develop-module-mall/develop-module-promotion-server/src/main/java/com/develop/mvp/pk/module/promotion/domain/coupon/CouponTemplateFactory.java`
+  - `develop-module-mall/develop-module-promotion-server/src/main/java/com/develop/mvp/pk/module/promotion/domain/coupon/repository/CouponTemplateRepository.java`
+  - `develop-module-mall/develop-module-promotion-server/src/main/java/com/develop/mvp/pk/module/promotion/domain/coupon/valueobject/CouponTemplateId.java`
+  - `develop-module-mall/develop-module-promotion-server/src/main/java/com/develop/mvp/pk/module/promotion/domain/coupon/valueobject/CouponId.java`
+  - `develop-module-mall/develop-module-promotion-server/src/main/java/com/develop/mvp/pk/module/promotion/application/coupon/CouponTemplateApplicationService.java`
+  - `develop-module-mall/develop-module-promotion-server/src/main/java/com/develop/mvp/pk/module/promotion/infrastructure/coupon/CouponTemplateRepositoryImpl.java`
+  - `develop-module-mall/develop-module-promotion-server/src/main/java/com/develop/mvp/pk/module/promotion/domain/seckill/SeckillActivity.java`
+  - `develop-module-mall/develop-module-promotion-server/src/main/java/com/develop/mvp/pk/module/promotion/domain/seckill/SeckillActivityFactory.java`
+  - `develop-module-mall/develop-module-promotion-server/src/main/java/com/develop/mvp/pk/module/promotion/domain/seckill/valueobject/SeckillActivityId.java`
+  - `develop-module-mall/develop-module-promotion-server/src/main/java/com/develop/mvp/pk/module/promotion/domain/seckill/valueobject/SeckillProduct.java`
+  - `develop-module-mall/develop-module-promotion-server/src/main/java/com/develop/mvp/pk/module/promotion/domain/seckill/event/SeckillActivityStatusChangedEvent.java`
+  - `develop-module-mall/develop-module-promotion-server/src/main/java/com/develop/mvp/pk/module/promotion/domain/seckill/repository/SeckillActivityRepository.java`
+  - `develop-module-mall/develop-module-promotion-server/src/main/java/com/develop/mvp/pk/module/promotion/application/seckill/SeckillActivityApplicationService.java`
+  - `develop-module-mall/develop-module-promotion-server/src/main/java/com/develop/mvp/pk/module/promotion/infrastructure/seckill/SeckillActivityRepositoryImpl.java`
+  - `develop-module-mall/develop-module-promotion-server/src/main/java/com/develop/mvp/pk/module/promotion/domain/event/DomainEvent.java`
+  - `develop-module-mall/develop-module-promotion-server/src/main/java/com/develop/mvp/pk/module/promotion/domain/event/DomainEventPublisher.java`
+  - `develop-module-mall/develop-module-promotion-server/src/main/java/com/develop/mvp/pk/module/promotion/infrastructure/event/SpringDomainEventPublisher.java`
 
-### R11 — 优惠券领取防超量（每人限领）
-`removeTakeLimitUser()`过滤已达领取上限的用户，通过查询用户已领取数量与模板`takeLimitCount`比较。
-- Source: `CouponServiceImpl.removeTakeLimitUser()` lines 306-318
+### Legacy service facts
 
-### R12 — 优惠券领取时校验模板有效性
-校验：①领取方式匹配 ②总发放数未超(USER领取) ③固定有效期类型未过期
-- Source: `CouponServiceImpl.validateCouponTemplateCanTake()` lines 272-298
+- `develop-module-mall/develop-module-promotion-server/src/main/java/com/develop/mvp/pk/module/promotion/service/banner/BannerServiceImpl.java`
+- `develop-module-mall/develop-module-promotion-server/src/main/java/com/develop/mvp/pk/module/promotion/service/seckill/SeckillConfigServiceImpl.java`
+- `develop-module-mall/develop-module-promotion-server/src/main/java/com/develop/mvp/pk/module/promotion/service/seckill/SeckillActivityServiceImpl.java`
+- `develop-module-mall/develop-module-promotion-server/src/main/java/com/develop/mvp/pk/module/promotion/service/coupon/CouponTemplateServiceImpl.java`
+- `develop-module-mall/develop-module-promotion-server/src/main/java/com/develop/mvp/pk/module/promotion/service/coupon/CouponServiceImpl.java`
+- `develop-module-mall/develop-module-promotion-server/src/main/java/com/develop/mvp/pk/module/promotion/service/discount/DiscountActivityServiceImpl.java`
+- `develop-module-mall/develop-module-promotion-server/src/main/java/com/develop/mvp/pk/module/promotion/service/reward/RewardActivityServiceImpl.java`
+- `develop-module-mall/develop-module-promotion-server/src/main/java/com/develop/mvp/pk/module/promotion/service/combination/CombinationActivityServiceImpl.java`
+- `develop-module-mall/develop-module-promotion-server/src/main/java/com/develop/mvp/pk/module/promotion/service/combination/CombinationRecordServiceImpl.java`
+- `develop-module-mall/develop-module-promotion-server/src/main/java/com/develop/mvp/pk/module/promotion/service/bargain/BargainActivityServiceImpl.java`
+- `develop-module-mall/develop-module-promotion-server/src/main/java/com/develop/mvp/pk/module/promotion/service/bargain/BargainRecordServiceImpl.java`
+- `develop-module-mall/develop-module-promotion-server/src/main/java/com/develop/mvp/pk/module/promotion/service/bargain/BargainHelpServiceImpl.java`
+- `develop-module-mall/develop-module-promotion-server/src/main/java/com/develop/mvp/pk/module/promotion/service/point/PointActivityServiceImpl.java`
 
-### R13 — 限时折扣活动商品冲突校验
-同一SPU不能同时参与多个ENABLE状态的限时折扣活动。通过查询全部活动的商品列表做SPU交集判断。
-- Source: `DiscountActivityServiceImpl.validateDiscountActivityProductConflicts()` lines 128-149
+### Persistence facts
 
-### R14 — 限时折扣已关闭不能修改/删除
-CLOSE状态的活动不能update(`DISCOUNT_ACTIVITY_UPDATE_FAIL_STATUS_CLOSED`)；ENABLE状态的活动不能delete(`DISCOUNT_ACTIVITY_DELETE_FAIL_STATUS_NOT_CLOSED`)。
-- Source: `DiscountActivityServiceImpl.updateDiscountActivity()` lines 80-81, `deleteDiscountActivity()` line 188
+- DO：
+  - `develop-module-mall/develop-module-promotion-server/src/main/java/com/develop/mvp/pk/module/promotion/dal/dataobject/banner/BannerDO.java`
+  - `develop-module-mall/develop-module-promotion-server/src/main/java/com/develop/mvp/pk/module/promotion/dal/dataobject/seckill/SeckillActivityDO.java`
+  - `develop-module-mall/develop-module-promotion-server/src/main/java/com/develop/mvp/pk/module/promotion/dal/dataobject/seckill/SeckillProductDO.java`
+  - `develop-module-mall/develop-module-promotion-server/src/main/java/com/develop/mvp/pk/module/promotion/dal/dataobject/seckill/SeckillConfigDO.java`
+  - `develop-module-mall/develop-module-promotion-server/src/main/java/com/develop/mvp/pk/module/promotion/dal/dataobject/coupon/CouponTemplateDO.java`
+  - `develop-module-mall/develop-module-promotion-server/src/main/java/com/develop/mvp/pk/module/promotion/dal/dataobject/coupon/CouponDO.java`
+  - `develop-module-mall/develop-module-promotion-server/src/main/java/com/develop/mvp/pk/module/promotion/dal/dataobject/discount/DiscountActivityDO.java`
+  - `develop-module-mall/develop-module-promotion-server/src/main/java/com/develop/mvp/pk/module/promotion/dal/dataobject/discount/DiscountProductDO.java`
+  - `develop-module-mall/develop-module-promotion-server/src/main/java/com/develop/mvp/pk/module/promotion/dal/dataobject/reward/RewardActivityDO.java`
+  - `develop-module-mall/develop-module-promotion-server/src/main/java/com/develop/mvp/pk/module/promotion/dal/dataobject/combination/CombinationActivityDO.java`
+  - `develop-module-mall/develop-module-promotion-server/src/main/java/com/develop/mvp/pk/module/promotion/dal/dataobject/combination/CombinationProductDO.java`
+  - `develop-module-mall/develop-module-promotion-server/src/main/java/com/develop/mvp/pk/module/promotion/dal/dataobject/combination/CombinationRecordDO.java`
+  - `develop-module-mall/develop-module-promotion-server/src/main/java/com/develop/mvp/pk/module/promotion/dal/dataobject/bargain/BargainActivityDO.java`
+  - `develop-module-mall/develop-module-promotion-server/src/main/java/com/develop/mvp/pk/module/promotion/dal/dataobject/bargain/BargainRecordDO.java`
+  - `develop-module-mall/develop-module-promotion-server/src/main/java/com/develop/mvp/pk/module/promotion/dal/dataobject/bargain/BargainHelpDO.java`
+  - `develop-module-mall/develop-module-promotion-server/src/main/java/com/develop/mvp/pk/module/promotion/dal/dataobject/point/PointActivityDO.java`
+  - `develop-module-mall/develop-module-promotion-server/src/main/java/com/develop/mvp/pk/module/promotion/dal/dataobject/point/PointProductDO.java`
+- Mapper：
+  - `develop-module-mall/develop-module-promotion-server/src/main/java/com/develop/mvp/pk/module/promotion/dal/mysql/banner/BannerMapper.java`
+  - `develop-module-mall/develop-module-promotion-server/src/main/java/com/develop/mvp/pk/module/promotion/dal/mysql/seckill/SeckillActivityMapper.java`
+  - `develop-module-mall/develop-module-promotion-server/src/main/java/com/develop/mvp/pk/module/promotion/dal/mysql/seckill/SeckillProductMapper.java`
+  - `develop-module-mall/develop-module-promotion-server/src/main/java/com/develop/mvp/pk/module/promotion/dal/mysql/seckill/SeckillConfigMapper.java`
+  - `develop-module-mall/develop-module-promotion-server/src/main/java/com/develop/mvp/pk/module/promotion/dal/mysql/coupon/CouponTemplateMapper.java`
+  - `develop-module-mall/develop-module-promotion-server/src/main/java/com/develop/mvp/pk/module/promotion/dal/mysql/coupon/CouponMapper.java`
+  - `develop-module-mall/develop-module-promotion-server/src/main/java/com/develop/mvp/pk/module/promotion/dal/mysql/discount/DiscountActivityMapper.java`
+  - `develop-module-mall/develop-module-promotion-server/src/main/java/com/develop/mvp/pk/module/promotion/dal/mysql/discount/DiscountProductMapper.java`
+  - `develop-module-mall/develop-module-promotion-server/src/main/java/com/develop/mvp/pk/module/promotion/dal/mysql/reward/RewardActivityMapper.java`
+  - `develop-module-mall/develop-module-promotion-server/src/main/java/com/develop/mvp/pk/module/promotion/dal/mysql/combination/CombinationActivityMapper.java`
+  - `develop-module-mall/develop-module-promotion-server/src/main/java/com/develop/mvp/pk/module/promotion/dal/mysql/combination/CombinationProductMapper.java`
+  - `develop-module-mall/develop-module-promotion-server/src/main/java/com/develop/mvp/pk/module/promotion/dal/mysql/combination/CombinationRecordMapper.java`
+  - `develop-module-mall/develop-module-promotion-server/src/main/java/com/develop/mvp/pk/module/promotion/dal/mysql/bargain/BargainActivityMapper.java`
+  - `develop-module-mall/develop-module-promotion-server/src/main/java/com/develop/mvp/pk/module/promotion/dal/mysql/bargain/BargainRecordMapper.java`
+  - `develop-module-mall/develop-module-promotion-server/src/main/java/com/develop/mvp/pk/module/promotion/dal/mysql/bargain/BargainHelpMapper.java`
+  - `develop-module-mall/develop-module-promotion-server/src/main/java/com/develop/mvp/pk/module/promotion/dal/mysql/point/PointActivityMapper.java`
+  - `develop-module-mall/develop-module-promotion-server/src/main/java/com/develop/mvp/pk/module/promotion/dal/mysql/point/PointProductMapper.java`
+- Convert：`develop-module-mall/develop-module-promotion-server/src/main/java/com/develop/mvp/pk/module/promotion/convert/` 下的 Banner、Seckill、Coupon、Discount、Reward、Combination、Bargain、Point 转换类；迁移前必须逐个读取目标转换类当前方法。
 
-### R15 — 满减送活动时间+商品范围严格冲突检测[重要]
-同时间段内不能存在商品范围重叠的满减送活动。校验策略：
-- 时间不重叠则不冲突
-- 商品范围为ALL的活动与任何活动冲突
-- CATEGORY范围：分类交集非空即冲突
-- SPU范围：SPU交集非空即冲突
-- CATEGORY vs SPU：SPU的分类在CATEGORY列表中即冲突
-- Source: `RewardActivityServiceImpl.validateRewardActivitySpuConflicts()` lines 117-175
+### Jobs, MQ and RPC
 
-### R16 — 拼团活动SPU唯一性
-同一SPU不能同时参与多个ENABLE状态的拼团活动。
-- Source: `CombinationActivityServiceImpl.validateProductConflict()` lines 82-93
+- `develop-module-mall/develop-module-promotion-server/src/main/java/com/develop/mvp/pk/module/promotion/job/coupon/CouponExpireJob.java` calls `CouponService#expireCoupon()` and has tenant/job semantics.
+- `develop-module-mall/develop-module-promotion-server/src/main/java/com/develop/mvp/pk/module/promotion/job/combination/CombinationRecordExpireJob.java` calls `CombinationRecordService#expireCombinationRecord()` and has tenant/job semantics.
+- `develop-module-mall/develop-module-promotion-server/src/main/java/com/develop/mvp/pk/module/promotion/mq/consumer/coupon/CouponTakeByRegisterConsumer.java` handles registration coupon grants.
+- `develop-module-mall/develop-module-promotion-server/src/main/java/com/develop/mvp/pk/module/promotion/framework/rpc/config/RpcConfiguration.java` scans Product APIs, TradeOrderApi, WebSocketSenderApi, Member/System remote clients.
 
-### R17 — 砍价活动库存乐观锁扣减
-`updateStock`方法通过SQL层原子扣减，返回0表示库存不足。
-- Source: `BargainActivityServiceImpl.updateBargainActivityStock()` lines 84-94
+### Tests
 
-### R18 — 砍价活动参与资格校验
-参与砍价需校验：①活动存在 ②已启用 ③库存>0 ④在活动时间范围内
-- Source: `BargainActivityServiceImpl.validateBargainActivityCanJoin()` lines 161-176
+- `develop-module-mall/develop-module-promotion-server/src/test/java/com/develop/mvp/pk/module/promotion/domain/banner/BannerTest.java`
+- `develop-module-mall/develop-module-promotion-server/src/test/java/com/develop/mvp/pk/module/promotion/domain/coupon/CouponTemplateTest.java`
+- `develop-module-mall/develop-module-promotion-server/src/test/java/com/develop/mvp/pk/module/promotion/domain/seckill/SeckillActivityTest.java`
+- `develop-module-mall/develop-module-promotion-server/src/test/java/com/develop/mvp/pk/module/promotion/application/banner/BannerApplicationServiceTest.java`
+- `develop-module-mall/develop-module-promotion-server/src/test/java/com/develop/mvp/pk/module/promotion/application/coupon/CouponTemplateApplicationServiceTest.java`
+- `develop-module-mall/develop-module-promotion-server/src/test/java/com/develop/mvp/pk/module/promotion/application/seckill/SeckillActivityApplicationServiceTest.java`
+- `develop-module-mall/develop-module-promotion-server/src/test/java/com/develop/mvp/pk/module/promotion/infrastructure/event/SpringDomainEventPublisherTest.java`
+- `develop-module-mall/develop-module-promotion-server/src/test/java/com/develop/mvp/pk/module/promotion/infrastructure/seckill/SeckillActivityRepositoryImplTest.java`
+- `develop-module-mall/develop-module-promotion-server/src/test/resources/application-unit-test.yaml`
+- `develop-module-mall/develop-module-promotion-server/src/test/resources/sql/clean.sql`
+- `develop-module-mall/develop-module-promotion-server/src/test/resources/sql/create_tables.sql`
 
-### R19 — 积分商城活动商品冲突
-同一商品(SPU)不能同时参与多个ENABLE状态的积分商城活动。
-- Source: `PointActivityServiceImpl.validatePointActivityProductConflicts()` lines 243-264
+## 6. Fixed Data Model
 
-### R20 — 积分商城商品单次购买限制
-积分商品的`count`字段作为单次购买限制，`validateJoinPointActivity`中校验购买数量不超过该限制。
-- Source: `PointActivityServiceImpl.validateJoinPointActivity()` line 300
+### Shared activity fields
 
-## 5. 依赖与协作
+| Concept | Current DO fields | Type / nullable / default | Meaning | Mapping rule |
+|---|---|---|---|---|
+| Activity id | `id` | `Long`; nullable before insert, non-null after persistence | DB primary key | Domain value object wraps id; create may receive null until persistence assigns id |
+| Status | `status` | `Integer`; non-null in persisted activities; current default comes from create service/VO | `CommonStatusEnum` / `PromotionActivityStatusEnum` depending chain | Domain exposes intent methods like close/enable; API keeps integer enum |
+| Time window | `startTime/endTime` | `LocalDateTime`; non-null for activities that can join/order | Participation window | Domain validates start before end, application compares now for join |
+| Product identity | `spuId/skuId` | `Long`; non-null for product-bound activities/products | Product module ids | Product APIs validate existence outside domain |
+| Stock | `stock/totalStock` | `Integer`; non-null, defaults from create request/product sum; must never go below 0 | Remaining and total activity/product stock | Infrastructure preserves Mapper guarded updates |
+| Scope | `productScope/productScopeValues` | `Integer` + `List<Long>`; values can be empty/null only when scope is ALL by current semantics | `PromotionProductScopeEnum` and selected ids | Domain value object may wrap scope; converter handles LongList type handler |
+| Config ids | `configIds` | `List<Long>` with `LongListTypeHandler`; non-empty for Seckill activity/product | Seckill time slot ids | Conflict checks compare intersections; do not flatten to comma string |
+| Reward rules | `rules` | `List<RewardActivityDO.Rule>` with `JacksonTypeHandler`; non-empty for Reward | Threshold and benefit JSON | Preserve nested fields and coupon grants explicitly |
+| Group head marker | `CombinationRecordDO.HEAD_ID_GROUP` | constant `Long 0L`; never null | Marks group head record | Do not replace with null or self id |
 
-### 5.1 模块内依赖
-- `SeckillActivity` → `SeckillConfig`: 校验秒杀时段配置的存在性和时间有效性
-- `RewardActivity` → `ProductScope`: 处理商品范围冲突检测逻辑
-- `Coupon` → `CouponTemplate`: 获取模板配置（有效期/商品范围/领取方式）
+### Aggregate-specific model
 
-### 5.2 模块间依赖
-- 所有活动类型 → `product`: 通过`ProductSpuApi`/`ProductSkuApi`校验商品存在性
-- `RewardActivity`/`CouponTemplate` → `product`: 校验分类存在性(`ProductCategoryApi`)
-- `Coupon`/`RewardActivity` → `trade`: 订单创建时匹配适用的优惠和活动
-- `BargainRecord`/`CombinationRecord` → `trade`: 订单创建时关联活动记录
-- `SeckillActivity`/`PointActivity` → `trade`: 订单创建时校验活动库存扣减
+| Aggregate | DO / DTO fields to preserve | Notes |
+|---|---|---|
+| Banner | `BannerDO.id/title/picUrl/status/sort/position/url/memo` and controller VO fields | Existing DDD covers Banner; legacy service remains behavior reference for controller parity |
+| SeckillActivity | `SeckillActivityDO.id/spuId/name/status/remark/startTime/endTime/sort/configIds/totalLimitCount/singleLimitCount/stock/totalStock` | `configIds` uses `LongListTypeHandler`; stock must update activity and product tables |
+| SeckillProduct | `SeckillProductDO.id/activityId/configIds/spuId/skuId/seckillPrice/stock/activityStatus/activityStartTime/activityEndTime` | Product rows duplicate activity time/status for query performance; preserve mapping |
+| SeckillConfig | `SeckillConfigDO` fields define seckill time slots and enabled/disabled state | Validate config existence/status/time before seckill join or conflict decisions |
+| CouponTemplate | `id/name/description/status/totalCount/takeLimitCount/takeType/usePrice/productScope/productScopeValues/validityType/validStartTime/validEndTime/fixedStartTerm/fixedEndTerm/discountType/discountPercent/discountPrice/discountLimitPrice/takeCount/useCount` | `TAKE_LIMIT_COUNT_MAX=-1` and `TOTAL_COUNT_MAX=-1` mean unlimited |
+| Coupon | `id/templateId/name/status/userId/takeType/usePrice/validStartTime/validEndTime/productScope/productScopeValues/discountType/discountPercent/discountPrice/discountLimitPrice/useOrderId/useTime` | Status machine is UNUSED → USED/EXPIRE and USED → UNUSED/EXPIRE for return |
+| DiscountActivity | `DiscountActivityDO` plus `DiscountProductDO` product rows | Same SPU cannot overlap active discount activities |
+| RewardActivity | `id/name/status/startTime/endTime/remark/conditionType/productScope/productScopeValues/rules` | `rules` is Jackson JSON; `Rule.giveCouponTemplateCounts` grants coupons after payment |
+| CombinationActivity | Activity fields plus `CombinationProductDO`, limits, virtual group config | Order/payment callbacks and expiry job define record lifecycle |
+| CombinationRecord | `id/activityId/combinationPrice/spuId/spuName/picUrl/skuId/count/userId/nickname/avatar/headId/status/orderId/userSize/userCount/virtualGroup/expireTime/startTime/endTime` | `HEAD_ID_GROUP=0L` marks group head; status must align with `CombinationRecordStatusEnum` |
+| BargainActivity | Activity product/price/stock/help constraints | Stock update uses `BargainActivityMapper#updateStock` affected rows |
+| BargainRecord | User participation, price progress, order binding and status | Join/order validation is in `BargainRecordServiceImpl` |
+| BargainHelp | Helper user, record id, reduced price | Prevent self-help, repeated help and over-limit help |
+| PointActivity | Activity and `PointProductDO` rows with points/cash price/stock/count | `count` is single-purchase limit; stock update affects product and activity tables |
 
-## 6. 不变式与约束
+## 7. Required Method Signatures and Capabilities
 
-### I01 — 秒杀活动数据一致性
-- 活动总库存(stock) <= 总库存(totalStock)（创建时相等，更新时可能更新totalStock）
-- 活动库存的变化必须同时更新`seckill_activity`和`seckill_product`表
-- 扣减使用乐观锁，保障并发安全
+Keep stable API signatures until a separate API migration plan exists:
 
-### I02 — 优惠券状态机
+- `SeckillActivityApi#updateSeckillStockDecr(Long id, Long skuId, Integer count)`
+- `SeckillActivityApi#updateSeckillStockIncr(Long id, Long skuId, Integer count)`
+- `SeckillActivityApi#validateJoinSeckill(Long activityId, Long skuId, Integer count)`
+- `CouponApi#getCouponListByUserId(Long userId, Integer status)`
+- `CouponApi#useCoupon(CouponUseReqDTO useReqDTO)`
+- `CouponApi#returnUsedCoupon(Long id)`
+- `CouponApi#takeCouponsByAdmin(Map<Long, Integer> giveCoupons, Long userId)`
+- `CouponApi#invalidateCouponsByAdmin(List<Long> giveCouponIds, Long userId)`
+- `DiscountActivityApi#getMatchDiscountProductListBySkuIds(Collection<Long> skuIds)` returns `CommonResult<List<DiscountProductRespDTO>>`
+- `RewardActivityApi#getMatchRewardActivityListBySpuIds(Collection<Long> spuIds)` returns `CommonResult<List<RewardActivityMatchRespDTO>>`
+- `CombinationRecordApi#validateCombinationRecord(Long userId, Long activityId, Long headId, Long skuId, Integer count)` returns `CommonResult<Boolean>`
+- `CombinationRecordApi#createCombinationRecord(CombinationRecordCreateReqDTO reqDTO)` returns `CommonResult<CombinationRecordCreateRespDTO>`
+- `CombinationRecordApi#getCombinationRecordByOrderId(Long userId, Long orderId)` returns `CommonResult<CombinationRecordRespDTO>`
+- `CombinationRecordApi#validateJoinCombination(Long userId, Long activityId, Long headId, Long skuId, Integer count)` returns `CommonResult<CombinationValidateJoinRespDTO>`; `headId` request parameter is optional
+- `BargainActivityApi#updateBargainActivityStock(Long id, Integer count)` returns `CommonResult<Boolean>`
+- `BargainRecordApi#validateJoinBargain(Long userId, Long bargainRecordId, Long skuId)` returns `CommonResult<BargainValidateJoinRespDTO>`
+- `BargainRecordApi#updateBargainRecordOrderId(Long id, Long orderId)` returns `CommonResult<Boolean>`; current request parameter name is misspelled as `@RequestParam("oderId")` and must be treated as existing external behavior until an API migration fixes it
+- `PointActivityApi#validateJoinPointActivity(Long activityId, Long skuId, Integer count)`
+- `PointActivityApi#updatePointStockDecr(Long id, Long skuId, Integer count)`
+- `PointActivityApi#updatePointStockIncr(Long id, Long skuId, Integer count)`
+
+Target DDD capabilities, not mandatory class names:
+
+- Aggregate methods express rules: create/update/close/delete/validateJoin/increaseStock/decreaseStock/use/return/expire/startGroup/joinGroup/helpBargain.
+- Domain repository interfaces live under `domain/{aggregate}/repository` and accept domain ids/value objects where useful.
+- Infrastructure repositories preserve Mapper SQL semantics and handle DO/domain conversion.
+- Application services own transactions, external API calls, tenant/job/MQ orchestration and cross-aggregate coordination.
+
+## 8. Business Rules
+
+### Banner
+
+- PR-BAN-01：update/delete/browse 前必须校验 Banner 存在；错误码 `BANNER_NOT_EXISTS`。
+- PR-BAN-02：Controller 路径和权限保持 `/promotion/banner` 及现有 `promotion:banner:*` 语义。
+
+### Seckill
+
+- PR-SEC-01：创建/更新秒杀活动必须校验商品、SKU、秒杀时段配置存在并保留当前 Product API 与 SeckillConfig 规则。
+- PR-SEC-02：同一 SPU 在启用秒杀活动中不能存在秒杀时段 `configIds` 交集；冲突错误码 `SECKILL_ACTIVITY_SPU_CONFLICTS`。
+- PR-SEC-03：关闭状态活动不能更新；错误码 `SECKILL_ACTIVITY_UPDATE_FAIL_STATUS_CLOSED`。
+- PR-SEC-04：活动未关闭且未结束不能删除；错误码 `SECKILL_ACTIVITY_DELETE_FAIL_STATUS_NOT_CLOSED_OR_END`。
+- PR-SEC-05：库存减少必须先校验活动和商品行，再通过 `SeckillProductMapper#updateStockDecr` 与 `SeckillActivityMapper#updateStockDecr` affected rows 防超卖；失败错误码 `SECKILL_ACTIVITY_UPDATE_STOCK_FAIL`。
+- PR-SEC-06：库存回滚增加必须同时更新 product 和 activity stock，不能只回滚其中一张表。
+- PR-SEC-07：下单前校验必须覆盖活动存在、启用、活动时间、秒杀时段时间、商品存在、单次限购；对应错误码保留 `SECKILL_JOIN_ACTIVITY_*`。
+
+### CouponTemplate and Coupon
+
+- PR-COU-01：模板商品范围必须通过 `ProductSpuApi#validateSpuList` 或 `ProductCategoryApi#validateCategoryList` 校验，不能放进 domain 直接调用远程 API。
+- PR-COU-02：用户领取型模板总发放数不能小于已领取数；错误码 `COUPON_TEMPLATE_TOTAL_COUNT_TOO_SMALL`。
+- PR-COU-03：领取模板必须校验领取方式、库存/剩余数量、固定有效期是否过期；错误码 `COUPON_TEMPLATE_CANNOT_TAKE`、`COUPON_TEMPLATE_NOT_ENOUGH`、`COUPON_TEMPLATE_EXPIRED`。
+- PR-COU-04：每人限领通过已领取数量过滤，不能只依赖前端或请求参数。
+- PR-COU-05：使用优惠券前必须校验存在、状态 UNUSED、有效期包含当前时间；错误码 `COUPON_NOT_EXISTS`、`COUPON_STATUS_NOT_UNUSED`、`COUPON_VALID_TIME_NOT_NOW`。
+- PR-COU-06：优惠券退还时，未过期恢复 UNUSED，已过期置 EXPIRE；必须使用 id+status CAS 语义防重复退还。
+- PR-COU-07：过期 Job 批量处理失败要记录并继续处理其它券，不得因单券异常中断整批。
+- PR-COU-08：注册赠券 MQ consumer 语义必须保留，不能被同步 controller 逻辑替代。
+
+### Discount
+
+- PR-DIS-01：同一 SPU 不能同时参与多个启用的限时折扣活动；错误码 `DISCOUNT_ACTIVITY_SPU_CONFLICTS`。
+- PR-DIS-02：关闭状态不能更新，启用状态不能删除，重复关闭要报对应 `DISCOUNT_ACTIVITY_*` 错误。
+- PR-DIS-03：商品折扣配置必须保持 `DiscountProductRespDTO` 对 Trade 价格计算的字段语义。
+
+### Reward
+
+- PR-REW-01：满减送冲突必须同时考虑时间重叠和商品范围交集。
+- PR-REW-02：`ALL` 与任何范围冲突；`CATEGORY` 与 `CATEGORY` 看分类交集；`SPU` 与 `SPU` 看 SPU 交集；`CATEGORY` 与 `SPU` 通过 Product category 关系判断。
+- PR-REW-03：规则 JSON `RewardActivityDO.Rule` 中 `limit/discountPrice/freeDelivery/point/giveCouponTemplateCounts` 语义不得丢失。
+- PR-REW-04：关闭/更新/删除错误码保持 `REWARD_ACTIVITY_*`。
+
+### Combination
+
+- PR-COM-01：同一 SPU 不能同时参与多个启用拼团活动；错误码 `COMBINATION_ACTIVITY_SPU_CONFLICTS`。
+- PR-COM-02：关闭状态不能更新；未关闭或未结束不能删除。
+- PR-COM-03：创建拼团记录必须校验活动、商品、团长记录、人数、单次/总次数、未支付订单等当前规则。
+- PR-COM-04：`HEAD_ID_GROUP=0L` 是团长标记，不能改成 null 或自引用。
+- PR-COM-05：拼团过期 Job 要区分成功/失败/虚拟成团，必要时调用 `TradeOrderApi` 取消订单并用 `WebSocketSenderApi` 推送结果。
+
+### Bargain
+
+- PR-BAR-01：同一 SPU 不能同时参与多个启用砍价活动；错误码 `BARGAIN_ACTIVITY_SPU_CONFLICTS`。
+- PR-BAR-02：砍价活动参与必须校验存在、启用、库存、活动时间。
+- PR-BAR-03：库存扣减必须使用 `BargainActivityMapper#updateStock` affected rows；失败错误码 `BARGAIN_ACTIVITY_STOCK_NOT_ENOUGH`。
+- PR-BAR-04：砍价记录下单必须校验砍价成功、未绑定订单。
+- PR-BAR-05：助力必须防止非进行中记录、自助力、超限、重复助力和并发冲突。
+
+### Point
+
+- PR-POI-01：同一 SPU 不能同时参与多个启用积分商城活动；错误码 `POINT_ACTIVITY_SPU_CONFLICTS`。
+- PR-POI-02：加入积分活动必须校验启用、商品存在、单次限购、库存；对应 `POINT_ACTIVITY_JOIN_*` 和 `POINT_ACTIVITY_UPDATE_STOCK_FAIL` 错误。
+- PR-POI-03：库存扣减和回滚必须同时更新 `PointProductMapper` 与 `PointActivityMapper`。
+
+## 9. Error Code Contract
+
+| Scenario | ErrorCodeConstants | Throwing layer |
+|---|---|---|
+| Banner missing | `BANNER_NOT_EXISTS` | application/service before update/delete/query detail |
+| Discount missing/conflict/closed/delete/close | `DISCOUNT_ACTIVITY_NOT_EXISTS`, `DISCOUNT_ACTIVITY_SPU_CONFLICTS`, `DISCOUNT_ACTIVITY_UPDATE_FAIL_STATUS_CLOSED`, `DISCOUNT_ACTIVITY_DELETE_FAIL_STATUS_NOT_CLOSED`, `DISCOUNT_ACTIVITY_CLOSE_FAIL_STATUS_CLOSED` | application/service |
+| Coupon template invalid | `COUPON_TEMPLATE_NOT_EXISTS`, `COUPON_TEMPLATE_TOTAL_COUNT_TOO_SMALL`, `COUPON_TEMPLATE_NOT_ENOUGH`, `COUPON_TEMPLATE_USER_ALREADY_TAKE`, `COUPON_TEMPLATE_EXPIRED`, `COUPON_TEMPLATE_CANNOT_TAKE` | application/service |
+| Coupon invalid use/return | `COUPON_NOT_EXISTS`, `COUPON_DELETE_FAIL_USED`, `COUPON_STATUS_NOT_UNUSED`, `COUPON_VALID_TIME_NOT_NOW`, `COUPON_STATUS_NOT_USED` | API/application/service |
+| Reward conflict/lifecycle | `REWARD_ACTIVITY_NOT_EXISTS`, `REWARD_ACTIVITY_SPU_CONFLICTS`, `REWARD_ACTIVITY_UPDATE_FAIL_STATUS_CLOSED`, `REWARD_ACTIVITY_DELETE_FAIL_STATUS_NOT_CLOSED`, `REWARD_ACTIVITY_CLOSE_FAIL_STATUS_CLOSED`, `REWARD_ACTIVITY_SCOPE_EXISTS` | application/service |
+| Point lifecycle/join/stock | `POINT_ACTIVITY_NOT_EXISTS`, `POINT_ACTIVITY_SPU_CONFLICTS`, `POINT_ACTIVITY_UPDATE_FAIL_STATUS_CLOSED`, `POINT_ACTIVITY_DELETE_FAIL_STATUS_NOT_CLOSED_OR_END`, `POINT_ACTIVITY_CLOSE_FAIL_STATUS_CLOSED`, `POINT_ACTIVITY_JOIN_ACTIVITY_STATUS_CLOSED`, `POINT_ACTIVITY_JOIN_ACTIVITY_SINGLE_LIMIT_COUNT_EXCEED`, `POINT_ACTIVITY_JOIN_ACTIVITY_PRODUCT_NOT_EXISTS`, `POINT_ACTIVITY_UPDATE_STOCK_FAIL` | API/application/service |
+| Seckill lifecycle/join/stock/config | `SECKILL_ACTIVITY_NOT_EXISTS`, `SECKILL_ACTIVITY_SPU_CONFLICTS`, `SECKILL_ACTIVITY_UPDATE_FAIL_STATUS_CLOSED`, `SECKILL_ACTIVITY_DELETE_FAIL_STATUS_NOT_CLOSED_OR_END`, `SECKILL_ACTIVITY_CLOSE_FAIL_STATUS_CLOSED`, `SECKILL_ACTIVITY_UPDATE_STOCK_FAIL`, `SECKILL_JOIN_ACTIVITY_TIME_ERROR`, `SECKILL_JOIN_ACTIVITY_STATUS_CLOSED`, `SECKILL_JOIN_ACTIVITY_SINGLE_LIMIT_COUNT_EXCEED`, `SECKILL_JOIN_ACTIVITY_PRODUCT_NOT_EXISTS`, `SECKILL_CONFIG_NOT_EXISTS`, `SECKILL_CONFIG_TIME_CONFLICTS`, `SECKILL_CONFIG_DISABLE` | API/application/service |
+| Combination activity/record | `COMBINATION_ACTIVITY_NOT_EXISTS`, `COMBINATION_ACTIVITY_SPU_CONFLICTS`, `COMBINATION_ACTIVITY_STATUS_DISABLE_NOT_UPDATE`, `COMBINATION_ACTIVITY_DELETE_FAIL_STATUS_NOT_CLOSED_OR_END`, `COMBINATION_ACTIVITY_STATUS_DISABLE`, `COMBINATION_JOIN_ACTIVITY_PRODUCT_NOT_EXISTS`, `COMBINATION_ACTIVITY_UPDATE_STOCK_FAIL`, `COMBINATION_RECORD_*` | API/application/service/job |
+| Bargain activity/record/help | `BARGAIN_ACTIVITY_*`, `BARGAIN_RECORD_*`, `BARGAIN_HELP_*` | API/application/service |
+
+High-risk parameter contract:
+
+| Error code | Parameters |
+|---|---|
+| `DISCOUNT_ACTIVITY_SPU_CONFLICTS` | one display value for conflicting activity/product, preserve current service argument order |
+| `COUPON_TEMPLATE_TOTAL_COUNT_TOO_SMALL` | current `takeCount` as the single `{}` argument |
+| `REWARD_ACTIVITY_SCOPE_EXISTS` | first conflicting activity display value, second textual conflict reason |
+| `SECKILL_ACTIVITY_SPU_CONFLICTS` | no public placeholder argument in current constant text |
+| `SECKILL_ACTIVITY_UPDATE_STOCK_FAIL` | no argument; thrown when product or activity affected rows is 0 |
+| `POINT_ACTIVITY_UPDATE_STOCK_FAIL` | no argument; thrown when product or activity affected rows is 0 |
+| `COMBINATION_RECORD_FAILED_SINGLE_LIMIT_COUNT_EXCEED` | no argument in current constant text |
+| `BARGAIN_ACTIVITY_STOCK_NOT_ENOUGH` | no argument; thrown when stock affected rows is 0 |
+| `BARGAIN_HELP_CREATE_FAIL_CONFLICT` | no argument; preserves retry-oriented message |
+
+Rules:
+
+- 错误码数字、常量名、中文文案和参数顺序不得因 DDD 重构改变。
+- Placeholder `{}` 参数必须按当前 service 抛出顺序传递；不确定时先读取对应 `*ServiceImpl` 抛错语句，不得猜测。
+- Domain 可抛领域异常，但 application/service 边界必须映射为当前 `ServiceException`/`ErrorCodeConstants` 外部语义。
+- API implementation 继续返回 `CommonResult.success(...)`，失败由异常机制处理。
+
+## 10. Transaction Contract
+
+| Use case | Current transaction expectation | Must preserve |
+|---|---|---|
+| Admin create/update/close/delete activity | `@Transactional(rollbackFor = Exception.class)` in legacy services; current partial DDD application uses plain `@Transactional` | 写主表和子表必须同事务 |
+| Seckill stock decr/incr | `@Transactional(rollbackFor = Exception.class)` | product stock 与 activity stock 同事务；任一失败回滚 |
+| Point stock decr/incr | `@Transactional(rollbackFor = Exception.class)` | product stock 与 activity stock 同事务 |
+| Bargain stock update | mapper atomic update; service method participates in caller transaction where applicable | affected rows fail must throw |
+| Coupon use/return/take/admin grant | transactional service methods | status、useOrderId、useTime、template take/use count 保持一致 |
+| Coupon batch take | `REQUIRES_NEW` exists for batch item behavior in current service | 单用户/单券失败边界按当前代码保持 |
+| Coupon expire job | batch loop with per-item error logging | 单个 coupon 异常不阻断整批 |
+| Combination record create/pay/expire | transactional around record, order id/status and notifications | 订单取消和 WebSocket side effect 按当前顺序保留 |
+| MQ register coupon grant | consumer delegates service transaction | 消息消费不得绕过领取限制 |
+
+Migration rule: application service owns transaction boundary; repository implementation should not become the only transaction owner except current temporary DDD code already does so. When moving logic, prefer `@Transactional(rollbackFor = Exception.class)` on application use case.
+
+## 11. Integration Contract
+
+- Product module：`ProductSpuApi`、`ProductSkuApi`、`ProductCategoryApi` are application/infrastructure ports for validation and category lookup; domain must receive validated facts, not call APIs.
+- Trade module：`TradeOrderApi` participates in combination expiry/cancellation and order-linked validation; do not replace with local assumptions.
+- Member module：`MemberUserRemoteClient` is scanned in promotion RPC config and may provide user info for records/messages.
+- System module：`AdminUserRemoteClient`、`SocialClientRemoteClient` are conditionally enabled by `develop.rpc.remote.system.enabled`; preserve conditional configuration.
+- Infra websocket：`WebSocketSenderApi` publishes combination-related user notifications; preserve message type constants and payload semantics.
+- Job：`CouponExpireJob` and `CombinationRecordExpireJob` are tenant-aware scheduled entry points; job classes should only trigger application use cases after migration.
+- MQ：`CouponTakeByRegisterConsumer` must remain idempotent at service boundary through coupon take rules.
+- Tenant/data permission：promotion tables inherit framework behavior; do not remove tenant/job annotations or permission checks from controllers/jobs.
+- OpenAPI/Swagger：current `@Tag`/`@Operation` are external documentation contracts even when text is imperfect.
+
+## 12. Mapping Rules
+
+- Controller VO stays in `controller/.../vo`; domain/application must not accept Controller VO as core method contract after migration.
+- API DTO stays in `promotion-api`; do not move DTO into server domain.
+- DO stays in `dal/dataobject`; domain must not import DO.
+- Mapper stays infrastructure/DAL only; domain/application should access persistence through repository ports or legacy service during transition.
+- Convert layer maps:
+  - Admin VO ↔ application command/query/result.
+  - DO ↔ domain aggregate/value object.
+  - DO/domain/application result ↔ API DTO.
+- JSON/list type-handler fields (`configIds`, `productScopeValues`, `rules`) must be converted explicitly; do not rely on shallow bean copy when field meaning differs.
+- Redundant snapshot fields in Coupon、SeckillProduct、CombinationRecord must remain snapshots; do not recompute them on read from current product/user data unless current service does so.
+
+## 13. Current Conflict Notes
+
+- All promotion stable APIs currently include `@FeignClient(name = ApiConstants.NAME)`. Target structure should split `remote/*RemoteClient`, but this must be done as an API local/remote batch, not hidden inside aggregate migration.
+- `SeckillActivityApi` currently sets `PREFIX = ApiConstants.PREFIX + "/discount-activity"` even though it is a seckill API. Treat this as current external path until an explicit API migration changes it.
+- `PointActivityApi` currently has `@Tag(name = "RPC 服务 - 秒杀活动")`; do not “fix” documentation text during behavior-preserving DDD migration unless API doc migration is explicitly in scope.
+- Current DDD coverage is incomplete: Banner、CouponTemplate、SeckillActivity have partial application/domain/repository code; Discount、Reward、Combination、Bargain、Point、Coupon instance remain primarily legacy service/dal.
+- Some current DDD transactions use plain `@Transactional`; target is `rollbackFor = Exception.class`, but changing rollback semantics should be verified per use case.
+- Existing legacy service line numbers in older drafts may be stale. Always re-read current file before using a specific method anchor.
+- Article/Diy/KeFu share the promotion module and error code file but are not part of this high-risk Mall Promotion skill scope unless touched by RPC/config/shared convert changes.
+
+## 14. Acceptance Criteria
+
+### Architecture AC
+
+- AC-PROM-01：Domain classes import no Spring, MyBatis, Feign, Mapper, DO, Controller VO or remote clients.
+- AC-PROM-02：Application services orchestrate transactions, external APIs, repositories and domain methods; they do not contain raw Mapper SQL decisions.
+- AC-PROM-03：Infrastructure repositories implement persistence and preserve Mapper guarded updates.
+- AC-PROM-04：Controller/API implementation delegates to application/service boundary and preserves route, permission, request/response and `CommonResult` semantics.
+- AC-PROM-05：API local/remote split, if performed, results in stable contract + remote Feign adapter without changing method signatures.
+
+### Behavior AC
+
+- AC-PROM-06：Seckill/Point stock decr/incr update product and activity stock atomically.
+- AC-PROM-07：Bargain stock decrement remains affected-row guarded.
+- AC-PROM-08：Coupon use/return/expire state machine and CAS semantics are preserved.
+- AC-PROM-09：Reward scope conflict algorithm handles ALL/CATEGORY/SPU combinations.
+- AC-PROM-10：Combination expiry preserves virtual group/order cancellation/WebSocket behavior.
+- AC-PROM-11：All lifecycle close/update/delete error codes match `ErrorCodeConstants`.
+- AC-PROM-12：Product/Trade/WebSocket/Member/System integrations remain behind application/infrastructure ports.
+
+### Verification AC
+
+- AC-PROM-13：Target module compiles with `mvn compile -pl develop-module-mall/develop-module-promotion-server -am -DskipTests`.
+- AC-PROM-14：Existing targeted tests pass or failures are documented with exact failing tests and reason.
+- AC-PROM-15：Document-only skill changes pass `git diff --check` and heading verification.
+
+## 15. Verification Commands
+
+Skill-only change:
+
+```bash
+git diff --check -- .claude/ddd-skills/AggregateRoot_MallPromotion_Skill.md
+grep -n "^## " .claude/ddd-skills/AggregateRoot_MallPromotion_Skill.md
 ```
-UNUSED → USED (用户使用)
-UNUSED → EXPIRE (定时器过期)
-USED → UNUSED/EXPIRE (售后退还)
-```
-- 删除优惠券仅允许UNUSED或EXPIRE状态
 
-### I03 — 优惠券模板有效性不变式
-- `takeCount`(已领取) <= `totalCount`(总发放数) 当totalCount非不限时
-- `takeLimitCount`(每人限领) >= 1
-- 固定日期类型模板：`validStartTime < validEndTime`
-- 领取后类型模板：`validDayCount`(领取后几天有效) > 0
+API contract/local-remote change:
 
-### I04 — 活动时间范围不变式
-- 所有活动类型：`startTime < endTime`
-- 活动启用期间才能参与
-- 满减送活动不同活动间在同一时间段不能有商品范围重叠
-
-### I05 — 商品参与活动限制
-同一商品(SPU)在同一时间：
-- 只能参与一个秒杀活动
-- 只能参与一个限时折扣活动
-- 只能参与一个拼团活动
-- 只能参与一个砍价活动
-- 只能参与一个积分商城活动
-- 可同时参与秒杀+满减送(不同营销类型可叠加)
-
-### I06 — Banner位置不变式
-同一位置(position)可展示多个Banner，按sort排序。
-
-## 7. 验收标准
-
-### AC01 — 聚合根纯净性
-聚合根类无MyBatis/Spring注解，不注入Mapper。
-- 验证方法: grep聚合根文件确认无上述注解
-
-### AC02 — 值对象不可变性
-所有值对象为final class或record，字段均为final，无setter。
-- 验证方法: 检查每个值对象文件
-
-### AC03 — 仓储接口在领域层
-Repository定义在`domain/{aggregate}/repository/`，无infrastructure imports。
-- 验证方法: 检查import语句
-
-### AC04 — 仓储实现在基础设施层
-Repository实现在`infrastructure/{aggregate}/`，使用MyBatis Mapper。
-- 验证方法: 确认实现类位置
-
-### AC05 — 库存扣减并发安全
-所有活动类型库存扣减使用乐观锁(updateStockDecr返回影响行数)，非先查后更模式。
-- 验证方法: 代码审查确认SQL层原子扣减
-
-### AC06 — 商品冲突校验完备
-所有营销活动创建/更新时都进行SPU级冲突校验（秒杀/折扣/拼团/砍价/积分），满减送额外校验时间+范围。全局禁止同类型活动商品重叠。
-- 验证方法: 冲突校验逻辑的单元测试覆盖
-
-### AC07 — 优惠券领用闭环
-领用→使用→退还(或过期)全链路状态正确流转，CAS更新防止重复使用。
-- 验证方法: 领用使用退还链路的集成测试
-
-### AC08 — 编译通过
-- 验证方法: `mvn compile -pl develop-module-mall/develop-module-promotion-server`
-
-## 8. 目录结构规划
-
-```
-develop-module-promotion-server/src/main/java/com/develop/mvp/pk/module/promotion/
-├── domain/
-│   ├── banner/
-│   │   ├── Banner.java                      (聚合根)
-│   │   ├── BannerFactory.java
-│   │   ├── valueobject/
-│   │   │   └── BannerId.java
-│   │   ├── repository/
-│   │   │   └── BannerRepository.java
-│   ├── seckill/
-│   │   ├── SeckillActivity.java              (聚合根)
-│   │   ├── SeckillActivityFactory.java
-│   │   ├── valueobject/
-│   │   │   ├── SeckillActivityId.java
-│   │   │   └── SeckillProduct.java            (record)
-│   │   ├── repository/
-│   │   │   └── SeckillActivityRepository.java
-│   │   └── event/
-│   │       └── SeckillActivityStatusChangedEvent.java
-│   ├── coupon/
-│   │   ├── CouponTemplate.java               (聚合根)
-│   │   ├── CouponTemplateFactory.java
-│   │   ├── Coupon.java                       (聚合根)
-│   │   ├── valueobject/
-│   │   │   ├── CouponTemplateId.java
-│   │   │   └── CouponId.java
-│   │   └── repository/
-│   │       ├── CouponTemplateRepository.java
-│   │       └── CouponRepository.java
-│   ├── discount/
-│   │   ├── DiscountActivity.java              (聚合根)
-│   │   ├── DiscountActivityFactory.java
-│   │   ├── valueobject/
-│   │   │   └── DiscountProduct.java
-│   │   ├── repository/
-│   │   │   └── DiscountActivityRepository.java
-│   │   └── event/
-│   │       └── DiscountActivityStatusChangedEvent.java
-│   ├── reward/
-│   │   ├── RewardActivity.java                (聚合根)
-│   │   ├── RewardActivityFactory.java
-│   │   ├── valueobject/
-│   │   │   └── RewardRule.java
-│   │   ├── repository/
-│   │   │   └── RewardActivityRepository.java
-│   │   └── event/
-│   │       └── RewardActivityStatusChangedEvent.java
-│   ├── combination/
-│   │   ├── CombinationActivity.java            (聚合根)
-│   │   ├── CombinationActivityFactory.java
-│   │   ├── valueobject/
-│   │   │   └── CombinationProduct.java
-│   │   ├── repository/
-│   │   │   └── CombinationActivityRepository.java
-│   │   └── event/
-│   │       └── CombinationActivityStatusChangedEvent.java
-│   ├── bargain/
-│   │   ├── BargainActivity.java                (聚合根)
-│   │   ├── BargainActivityFactory.java
-│   │   ├── repository/
-│   │   │   └── BargainActivityRepository.java
-│   │   └── event/
-│   │       └── BargainActivityStatusChangedEvent.java
-│   ├── point/
-│   │   ├── PointActivity.java                  (聚合根)
-│   │   ├── PointActivityFactory.java
-│   │   ├── valueobject/
-│   │   │   └── PointProduct.java
-│   │   ├── repository/
-│   │   │   └── PointActivityRepository.java
-│   │   └── event/
-│   │       └── PointActivityStatusChangedEvent.java
-│   ├── service/
-│   │   ├── SeckillConflictDomainService.java    (领域服务)
-│   │   ├── PromotionProductScopeDomainService.java
-│   │   └── RewardConflictDomainService.java
-│   └── event/
-│       ├── DomainEvent.java                    (抽象接口)
-│       └── DomainEventPublisher.java
-├── application/{aggregate}/
-│   └── PromotionApplicationService.java
-├── infrastructure/{aggregate}/
-│   └── *RepositoryImpl.java
-└── convert/
+```bash
+mvn compile -pl develop-module-mall/develop-module-promotion-api -am -DskipTests
+mvn compile -pl develop-module-mall/develop-module-promotion-server -am -DskipTests
 ```
 
-## 9. 回滚条件
+Single aggregate code change examples:
 
-以下任一情况应回滚当前步骤：
-1. 编译失败
-2. 并发场景下库存扣减出现超卖（单元测试覆盖并发场景）
-3. 优惠券领用或使用出现重复/错误
-4. 营销活动商品冲突检测逻辑遗漏导致同一SPU同时参与多个同类型活动
-5. 原有管理端/用户端接口行为变化
+```bash
+mvn test -pl develop-module-mall/develop-module-promotion-server -Dtest=BannerTest,BannerApplicationServiceTest
+mvn test -pl develop-module-mall/develop-module-promotion-server -Dtest=CouponTemplateTest,CouponTemplateApplicationServiceTest
+mvn test -pl develop-module-mall/develop-module-promotion-server -Dtest=SeckillActivityTest,SeckillActivityApplicationServiceTest,SeckillActivityRepositoryImplTest
+mvn compile -pl develop-module-mall/develop-module-promotion-server -am -DskipTests
+```
 
-## 10. 分步执行计划
+When adding tests for currently legacy chains, prefer focused service/application tests around the original behavior: coupon use/return/expire, seckill stock decr/incr, point stock decr/incr, reward conflict, combination expire, bargain help.
 
-### Step 1: 完善已有聚合根(SeckillActivity/CouponTemplate/Banner)
-- 1.1 `SeckillActivity` 补充：updateProfile()、close()、delete()、validateJoin()方法，完整库存管理
-- 1.2 `CouponTemplate` 补充：updateProfile()、close()、validateTakeable()方法，商品范围校验
-- 1.3 `Banner` 补充：updateProfile()、recordBrowse()方法
+## 16. Quick Reference
 
-### Step 2: 新建聚合根
-- 2.1 创建 `DiscountActivity` 聚合根（含商品冲突校验、状态管理）
-- 2.2 创建 `RewardActivity` 聚合根（含时间+商品范围冲突检测、规则管理）
-- 2.3 创建 `CombinationActivity` 聚合根
-- 2.4 创建 `BargainActivity` 聚合根
-- 2.5 创建 `PointActivity` 聚合根
-- 2.6 创建 `Coupon` 聚合根（优惠券实例，状态机和领用逻辑）
+| 要做什么 | 正确位置 | 禁止位置 |
+|---|---|---|
+| 活动业务不变量 | `domain/{aggregate}` | Controller、Mapper、Convert |
+| 用例事务和跨模块调用 | `application/{aggregate}` | Domain、Controller |
+| Product/Trade/WebSocket 适配 | `infrastructure/{aggregate}` 或 application port implementation | Domain |
+| Mapper guarded stock update | Mapper + infrastructure repository | Domain 先查后存 |
+| API DTO | `develop-module-promotion-api/.../dto` | server domain |
+| Controller VO | `controller/.../vo` | domain/application public core API |
+| DO/Mapper | `dal` and infrastructure implementation | domain |
+| Job entry | `job/*` calls application use case | Job 内复制业务流程 |
+| MQ consumer | `mq/*` calls application/service use case | MQ 内写领域规则 |
+| API Feign adapter after split | `api/.../remote/*RemoteClient` | stable CommonApi interface |
 
-### Step 3: 创建领域服务
-- 3.1 `SeckillConflictDomainService` — 秒杀时段冲突校验
-- 3.2 `RewardConflictDomainService` — 满减送时间+范围冲突校验
-- 3.3 `PromotionProductScopeDomainService` — 商品范围校验（SPU/CATEGORY/ALL）
+## 17. Common Mistakes
 
-### Step 4: 完善仓储接口与实现
-- 4.1 为所有新建聚合根创建Repository接口和实现
-- 4.2 确保所有库存扣减使用乐观锁
+| Mistake | Consequence | Fix |
+|---|---|---|
+| 直接按旧草稿创建所有聚合 | 生成空抽象，行为不等价 | 每次只迁移一个链路，先读 legacy service |
+| “修正” Seckill API prefix | Trade 调用路径回归 | 单独 API migration 计划处理 |
+| 库存先查后改 | 并发超卖 | 保留 Mapper affected-row guarded update |
+| Domain 调 Product API | 领域层依赖远程技术 | application 获取事实后传入 domain |
+| 删除 Job/MQ 入口 | 优惠券过期/注册赠券/拼团过期失效 | Job/MQ 只瘦身，不删除行为 |
+| Bean copy 规则 JSON/list | `rules/configIds/productScopeValues` 映射丢失 | 显式转换并测试 |
+| 用 DDD 部分实现替换完整 legacy service | 丢失错误码、事务或集成 | 先补齐测试和 parity checklist |
 
-### Step 5: 创建应用服务
-- 5.1 抽取业务逻辑到ApplicationService
-- 5.2 ApplicationService只做编排
+## 18. Rationalization Table
 
-### Step 6: 验证
-- 6.1 运行全部单元测试
-- 6.2 编译通过
-- 6.3 商品冲突校验全覆盖
+| Excuse | Reality |
+|---|---|
+| “只是 skill 文档，不需要事实锚点” | 生产级 skill 的核心价值就是让无上下文 AI 不猜路径、不猜规则。 |
+| “API 前缀明显写错，顺手改了” | 当前路径可能已有调用方依赖；没有迁移计划就不能改外部契约。 |
+| “领域事件可以替代 Job/MQ” | Coupon expire、Combination expire、register coupon 都有 durable 入口和失败处理语义。 |
+| “库存逻辑放领域里更 DDD” | 并发安全依赖数据库 affected rows；领域表达意图，基础设施保证原子性。 |
+| “现有 DDD 代码已经有 application service” | 当前只覆盖少数链路，不能代表 legacy service 完整行为。 |
+| “编译过就够了” | 营销模块高风险在库存、状态机、冲突校验和外部回调，必须有行为验证。 |
+
+## 19. Red Flags
+
+出现以下情况立即停止本批重构：
+
+- 计划一次迁移 Promotion 全部营销聚合。
+- 未读 `service/*ServiceImpl` 就修改 application/domain。
+- 修改 Controller 路径、权限、VO 字段、API DTO 或 Feign 路径。
+- Domain import Spring、Mapper、DO、Feign、Product API、Trade API、WebSocket API。
+- 库存扣减没有 affected-row 检查。
+- Coupon 状态更新没有 id+status CAS 语义。
+- 删除或绕过 CouponExpireJob、CombinationRecordExpireJob、CouponTakeByRegisterConsumer。
+- 只验证编译，不验证原业务链路。
+- 用“当前代码看起来有 bug”为理由直接修复外部契约而不写迁移计划。
+
+## 20. Rollback Conditions
+
+必须回滚或停止当前批次：
+
+1. `develop-module-promotion-api` 或 `develop-module-promotion-server` 编译失败。
+2. 任一 Controller/API 调用路径、权限、DTO、错误码、错误参数回归。
+3. Seckill/Point/Bargain 库存出现超卖或只更新一张表。
+4. Coupon use/return/expire 出现重复使用、重复退还、错误过期。
+5. Reward/Discount/Seckill/Combination/Bargain/Point 商品冲突校验遗漏。
+6. Combination expiry 不再取消订单或不再发送必要 WebSocket 通知。
+7. Product/Trade/Member/System/Infra integration 装配失败。
+8. 发现本 skill 与当前代码事实冲突但尚未修订 skill。
+
+## 21. AI Self-Check
+
+完成任何 Mall Promotion 相关修改前逐项确认：
+
+- [ ] 是否只处理一个聚合或一个明确链路？
+- [ ] 是否读取了当前目标 Controller、VO/DTO、DO、Mapper、Convert、Service/Application、ErrorCode 和测试？
+- [ ] 是否保持 API/Controller 外部契约不变？
+- [ ] 是否保留错误码常量、参数和抛出语义？
+- [ ] 是否把跨模块 API 调用放在 application/infrastructure，不在 domain？
+- [ ] 是否保留库存 affected-row 语义？
+- [ ] 是否保留 Coupon 状态机和 CAS？
+- [ ] 是否保留 Job/MQ/WebSocket 入口和失败处理？
+- [ ] 是否新增或复用能证明当前链路行为的测试？
+- [ ] 是否运行了影响范围 Maven compile/test 或明确记录无法执行原因？

@@ -14,7 +14,7 @@ import lombok.*;
  *
  * 默认模型：{@link #status} 为开启，并且 {@link #sort} 排序第一
  *
- * @author fansili
+ * @author David
  * @since 2024/4/24 19:39
  */
 @TableName("ai_model")

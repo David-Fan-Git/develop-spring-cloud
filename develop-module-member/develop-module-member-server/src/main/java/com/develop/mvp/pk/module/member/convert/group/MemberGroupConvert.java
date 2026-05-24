@@ -16,7 +16,7 @@ import java.util.stream.Collectors;
 /**
  * 用户分组 Convert
  *
- * @author owen
+ * @author David
  */
 @Mapper
 public interface MemberGroupConvert {

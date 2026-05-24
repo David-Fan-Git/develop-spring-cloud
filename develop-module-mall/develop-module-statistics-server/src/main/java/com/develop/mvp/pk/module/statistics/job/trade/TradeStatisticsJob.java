@@ -14,7 +14,7 @@ import jakarta.annotation.Resource;
 /**
  * 交易统计 Job
  *
- * @author owen
+ * @author David
  */
 @Component
 public class TradeStatisticsJob {

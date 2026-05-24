@@ -23,7 +23,7 @@ import static com.develop.mvp.pk.module.promotion.enums.ErrorCodeConstants.ARTIC
 /**
  * 文章管理 Service 实现类
  *
- * @author HUIHUI
+ * @author David
  */
 @Service
 @Validated

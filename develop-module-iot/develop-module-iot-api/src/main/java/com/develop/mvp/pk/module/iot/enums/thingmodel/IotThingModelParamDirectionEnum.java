@@ -10,7 +10,7 @@ import java.util.Arrays;
 /**
  * IoT 产品物模型参数是输入参数还是输出参数枚举
  *
- * @author HUIHUI
+ * @author David
  */
 @AllArgsConstructor
 @Getter

@@ -9,7 +9,7 @@ import java.util.List;
 /**
  * CRM 销售漏斗分析 Service
  *
- * @author HUIHUI
+ * @author David
  */
 public interface CrmStatisticsFunnelService {
 

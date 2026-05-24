@@ -18,7 +18,7 @@ import static com.develop.mvp.pk.framework.common.util.collection.CollectionUtil
 /**
  * IoT 场景规则匹配器统一管理器：负责管理所有匹配器（触发器匹配器和条件匹配器），并提供统一的匹配入口
  *
- * @author HUIHUI
+ * @author David
  */
 @Component
 @Slf4j

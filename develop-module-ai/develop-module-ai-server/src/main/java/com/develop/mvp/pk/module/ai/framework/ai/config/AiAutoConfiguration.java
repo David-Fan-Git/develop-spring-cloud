@@ -47,9 +47,9 @@ import java.util.List;
 import java.util.Optional;
 
 /**
- * 芋道 AI 自动配置
+ * David AI 自动配置
  *
- * @author fansili
+ * @author David
  */
 @Configuration
 @EnableConfigurationProperties({ DevelopAiProperties.class,
@@ -218,7 +218,7 @@ public class AiAutoConfiguration {
                         .maxTokens(properties.getMaxTokens())
                         .topP(properties.getTopP())
                         .build())
-                // TODO @芋艿：星火的 function call 有 bug，会报 ToolResponseMessage must have an id 错误！！！
+                // TODO @David：星火的 function call 有 bug，会报 ToolResponseMessage must have an id 错误！！！
                 .toolCallingManager(getToolCallingManager())
                 .build();
         return new XingHuoChatModel(openAiChatModel);

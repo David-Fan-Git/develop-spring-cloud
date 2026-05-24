@@ -16,7 +16,7 @@ import static com.develop.mvp.pk.framework.common.util.collection.CollectionUtil
 /**
  * 商机状态 Service 接口
  *
- * @author ljlleo
+ * @author David
  */
 public interface CrmBusinessStatusService {
 

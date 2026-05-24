@@ -11,7 +11,7 @@ import lombok.Data;
  * 用于表示数据目的配置数据的通用类型，根据具体的 "type" 字段动态映射到对应的子类
  * 提供多态支持，适用于不同类型的数据结构序列化和反序列化场景。
  *
- * @author HUIHUI
+ * @author David
  */
 @Data
 @JsonTypeInfo(use = JsonTypeInfo.Id.NAME, property = "type", visible = true)

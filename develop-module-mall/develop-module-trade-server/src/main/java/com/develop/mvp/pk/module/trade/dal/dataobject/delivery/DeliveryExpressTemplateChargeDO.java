@@ -13,7 +13,7 @@ import java.util.List;
 /**
  * 快递运费模板计费配置 DO
  *
- * @author jason
+ * @author David
  */
 @TableName(value ="trade_delivery_express_template_charge", autoResultMap = true)
 @KeySequence("trade_delivery_express_template_charge_seq") // 用于 Oracle、PostgreSQL、Kingbase、DB2、H2 数据库的主键自增。如果是 MySQL 等数据库，可不写。

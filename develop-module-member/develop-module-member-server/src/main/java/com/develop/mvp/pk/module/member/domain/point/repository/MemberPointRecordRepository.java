@@ -6,12 +6,13 @@ package com.develop.mvp.pk.module.member.domain.point.repository;
 import com.develop.mvp.pk.framework.common.pojo.PageResult;
 import com.develop.mvp.pk.module.member.domain.point.MemberPointRecord;
 
+import java.time.LocalDateTime;
 import java.util.Set;
 
 public interface MemberPointRecordRepository {
     MemberPointRecord save(MemberPointRecord record);
     PageResult<MemberPointRecord> findPage(String nickname, Long userId, Integer bizType, String title,
                                            Integer pageNo, Integer pageSize);
-    PageResult<MemberPointRecord> findPageByUser(Long userId, String createTimeStart, String createTimeEnd,
+    PageResult<MemberPointRecord> findPageByUser(Long userId, LocalDateTime createTimeStart, LocalDateTime createTimeEnd,
                                                   Boolean addStatus, Integer pageNo, Integer pageSize);
 }

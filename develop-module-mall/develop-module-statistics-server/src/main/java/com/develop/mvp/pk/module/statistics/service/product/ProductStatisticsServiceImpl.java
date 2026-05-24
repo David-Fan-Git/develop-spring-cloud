@@ -30,7 +30,7 @@ import java.util.stream.IntStream;
 /**
  * 商品统计 Service 实现类
  *
- * @author owen
+ * @author David
  */
 @Service
 @Validated

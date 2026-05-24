@@ -12,7 +12,7 @@ import java.util.List;
 /**
  * AI 知识库 Mapper
  *
- * @author xiaoxin
+ * @author David
  */
 @Mapper
 public interface AiKnowledgeMapper extends BaseMapperX<AiKnowledgeDO> {

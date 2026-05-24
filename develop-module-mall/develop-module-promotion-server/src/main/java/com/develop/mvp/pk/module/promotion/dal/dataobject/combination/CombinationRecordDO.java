@@ -9,14 +9,14 @@ import lombok.*;
 
 import java.time.LocalDateTime;
 
-// TODO 芋艿：把字段的顺序，和 do 顺序对齐下
+// TODO David：把字段的顺序，和 do 顺序对齐下
 /**
  * 拼团记录 DO
  *
  * 1. 用户参与拼团时，会创建一条记录
  * 2. 团长的拼团记录，和参团人的拼团记录，通过 {@link #headId} 关联
  *
- * @author HUIHUI
+ * @author David
  */
 @TableName("promotion_combination_record")
 @KeySequence("promotion_combination_record_seq") // 用于 Oracle、PostgreSQL、Kingbase、DB2、H2 数据库的主键自增。如果是 MySQL 等数据库，可不写。

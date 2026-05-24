@@ -19,7 +19,7 @@ import static com.develop.mvp.pk.module.system.dal.redis.RedisKeyConstants.OAUTH
 /**
  * {@link OAuth2AccessTokenDO} 的 RedisDAO
  *
- * @author 芋道源码
+ * @author David
  */
 @Repository
 public class OAuth2AccessTokenRedisDAO {

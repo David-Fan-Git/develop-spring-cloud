@@ -23,7 +23,7 @@ import static com.develop.mvp.pk.module.system.enums.ErrorCodeConstants.MAIL_ACC
 /**
  * 邮箱账号 Service 实现类
  *
- * @author wangjingyi
+ * @author David
  * @since 2022-03-21
  */
 @Service

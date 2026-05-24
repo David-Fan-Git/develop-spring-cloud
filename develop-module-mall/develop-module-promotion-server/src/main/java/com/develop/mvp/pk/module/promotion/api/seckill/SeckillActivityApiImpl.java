@@ -13,7 +13,7 @@ import static com.develop.mvp.pk.framework.common.pojo.CommonResult.success;
 /**
  * 秒杀活动接口 Api 接口实现类
  *
- * @author HUIHUI
+ * @author David
  */
 @RestController // 提供 RESTful API 接口，给 Feign 调用
 @Validated

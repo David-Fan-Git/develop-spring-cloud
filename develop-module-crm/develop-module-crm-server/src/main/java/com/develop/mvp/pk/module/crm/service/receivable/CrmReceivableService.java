@@ -17,7 +17,7 @@ import static com.develop.mvp.pk.framework.common.util.collection.CollectionUtil
 /**
  * CRM 回款 Service 接口
  *
- * @author 赤焰
+ * @author David
  */
 public interface CrmReceivableService {
 

@@ -12,7 +12,7 @@ import java.util.List;
 /**
  * MES 销售出库单 Mapper
  *
- * @author 芋道源码
+ * @author David
  */
 @Mapper
 public interface MesWmProductSalesMapper extends BaseMapperX<MesWmProductSalesDO> {

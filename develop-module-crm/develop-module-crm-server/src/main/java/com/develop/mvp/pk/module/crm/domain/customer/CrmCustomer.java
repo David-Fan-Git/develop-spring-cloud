@@ -90,7 +90,7 @@ public final class CrmCustomer {
     }
 
     public static CrmCustomer of(Long id, String name) {
-        return new CrmCustomer(id, name, null, null, null, null, null, null, null, null,
+        return new CrmCustomer(id != null ? CrmCustomerId.of(id) : null, name, null, null, null, null, null, null, null, null,
                 null, null, null, null, null, null, null, null, null, null, null);
     }
 

@@ -9,7 +9,7 @@ import java.util.Arrays;
 /**
  * IoT 产品的设备类型
  *
- * @author ahh
+ * @author David
  */
 @AllArgsConstructor
 @Getter

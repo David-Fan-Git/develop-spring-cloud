@@ -14,6 +14,8 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.LocalDateTime;
+
 import static com.develop.mvp.pk.framework.common.exception.util.ServiceExceptionUtil.exception;
 import static com.develop.mvp.pk.module.member.enums.ErrorCodeConstants.USER_POINT_NOT_ENOUGH;
 
@@ -30,7 +32,7 @@ public class MemberPointRecordApplicationService {
         return repo.findPage(nickname, userId, bizType, title, pageNo, pageSize);
     }
 
-    public PageResult<MemberPointRecord> getPointRecordPage(Long userId, String createTimeStart, String createTimeEnd,
+    public PageResult<MemberPointRecord> getPointRecordPage(Long userId, LocalDateTime createTimeStart, LocalDateTime createTimeEnd,
                                                              Boolean addStatus, Integer pageNo, Integer pageSize) {
         return repo.findPageByUser(userId, createTimeStart, createTimeEnd, addStatus, pageNo, pageSize);
     }

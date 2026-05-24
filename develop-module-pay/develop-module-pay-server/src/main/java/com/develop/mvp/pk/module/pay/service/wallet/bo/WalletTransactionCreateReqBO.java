@@ -10,7 +10,7 @@ import jakarta.validation.constraints.NotNull;
 /**
  * 创建钱包流水 BO
  *
- * @author jason
+ * @author David
  */
 @Data
 public class WalletTransactionCreateReqBO {

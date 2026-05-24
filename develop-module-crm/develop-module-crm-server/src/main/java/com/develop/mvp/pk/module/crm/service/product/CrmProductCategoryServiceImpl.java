@@ -24,7 +24,7 @@ import static com.develop.mvp.pk.module.crm.enums.LogRecordConstants.*;
 /**
  * CRM 产品分类 Service 实现类
  *
- * @author ZanGe丶
+ * @author David
  */
 @Service
 @Validated

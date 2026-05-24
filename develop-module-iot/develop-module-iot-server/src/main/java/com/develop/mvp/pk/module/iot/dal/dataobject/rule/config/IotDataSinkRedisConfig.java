@@ -7,7 +7,7 @@ import lombok.Data;
 /**
  * IoT Redis 配置 {@link IotAbstractDataSinkConfig} 实现类
  *
- * @author HUIHUI
+ * @author David
  */
 @Data
 public class IotDataSinkRedisConfig extends IotAbstractDataSinkConfig {

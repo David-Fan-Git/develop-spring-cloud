@@ -29,7 +29,7 @@ import io.swagger.v3.oas.annotations.media.Schema;
 /**
  * ${subTable.classComment} DO
  *
- * @author ${subTable.author}
+ * @author David
  */
 @TableName("${subTable.tableName.toLowerCase()}")
 @KeySequence("${subTable.tableName.toLowerCase()}_seq") // 用于 Oracle、PostgreSQL、Kingbase、DB2、H2 数据库的主键自增。如果是 MySQL 等数据库，可不写。

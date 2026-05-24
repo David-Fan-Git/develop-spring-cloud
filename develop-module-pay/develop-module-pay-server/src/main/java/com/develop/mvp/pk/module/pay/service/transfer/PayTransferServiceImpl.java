@@ -5,24 +5,26 @@ import cn.hutool.core.util.ObjectUtil;
 import cn.hutool.extra.spring.SpringUtil;
 import com.develop.mvp.pk.framework.common.pojo.PageResult;
 import com.develop.mvp.pk.framework.common.util.json.JsonUtils;
+import com.develop.mvp.pk.module.pay.application.channel.PayChannelApplicationService;
 import com.develop.mvp.pk.framework.common.util.object.BeanUtils;
 import com.develop.mvp.pk.module.pay.framework.pay.core.client.PayClient;
 import com.develop.mvp.pk.module.pay.framework.pay.core.client.dto.transfer.PayTransferRespDTO;
 import com.develop.mvp.pk.module.pay.framework.pay.core.client.dto.transfer.PayTransferUnifiedReqDTO;
 import com.develop.mvp.pk.framework.tenant.core.util.TenantUtils;
+import com.develop.mvp.pk.module.pay.framework.pay.core.client.PayClientConfig;
 import com.develop.mvp.pk.module.pay.api.transfer.dto.PayTransferCreateReqDTO;
 import com.develop.mvp.pk.module.pay.api.transfer.dto.PayTransferCreateRespDTO;
 import com.develop.mvp.pk.module.pay.controller.admin.transfer.vo.PayTransferPageReqVO;
 import com.develop.mvp.pk.module.pay.dal.dataobject.app.PayAppDO;
 import com.develop.mvp.pk.module.pay.dal.dataobject.channel.PayChannelDO;
 import com.develop.mvp.pk.module.pay.dal.dataobject.transfer.PayTransferDO;
+import com.develop.mvp.pk.module.pay.domain.channel.PayChannel;
 import com.develop.mvp.pk.module.pay.dal.mysql.transfer.PayTransferMapper;
 import com.develop.mvp.pk.module.pay.dal.redis.no.PayNoRedisDAO;
 import com.develop.mvp.pk.module.pay.enums.notify.PayNotifyTypeEnum;
 import com.develop.mvp.pk.module.pay.enums.transfer.PayTransferStatusEnum;
 import com.develop.mvp.pk.module.pay.framework.pay.config.PayProperties;
 import com.develop.mvp.pk.module.pay.service.app.PayAppService;
-import com.develop.mvp.pk.module.pay.service.channel.PayChannelService;
 import com.develop.mvp.pk.module.pay.service.notify.PayNotifyService;
 import jakarta.annotation.Resource;
 import lombok.extern.slf4j.Slf4j;
@@ -39,7 +41,7 @@ import static com.develop.mvp.pk.module.pay.enums.ErrorCodeConstants.*;
 /**
  * 转账 Service 实现类
  *
- * @author jason
+ * @author David
  */
 @Service
 @Slf4j
@@ -55,7 +57,7 @@ public class PayTransferServiceImpl implements PayTransferService {
     @Resource
     private PayAppService appService;
     @Resource
-    private PayChannelService channelService;
+    private PayChannelApplicationService channelApplicationService;
     @Resource
     private PayNotifyService notifyService;
     @Resource
@@ -66,8 +68,8 @@ public class PayTransferServiceImpl implements PayTransferService {
         // 1.1 校验 App
         PayAppDO payApp = appService.validPayApp(reqDTO.getAppKey());
         // 1.2 校验支付渠道是否有效
-        PayChannelDO channel = channelService.validPayChannel(payApp.getId(), reqDTO.getChannelCode());
-        PayClient<?> client = channelService.getPayClient(channel.getId());
+        PayChannelDO channel = toChannelDO(channelApplicationService.valid(payApp.getId(), reqDTO.getChannelCode()));
+        PayClient<?> client = channelApplicationService.getPayClient(channel.getId());
         if (client == null) {
             log.error("[createTransfer][渠道编号({}) 找不到对应的支付客户端]", channel.getId());
             throw exception(CHANNEL_NOT_FOUND);
@@ -281,7 +283,7 @@ public class PayTransferServiceImpl implements PayTransferService {
     private boolean syncTransfer(PayTransferDO transfer) {
         try {
             // 1. 查询转账订单信息
-            PayClient<?> payClient = channelService.getPayClient(transfer.getChannelId());
+            PayClient<?> payClient = channelApplicationService.getPayClient(transfer.getChannelId());
             if (payClient == null) {
                 log.error("[syncTransfer][渠道编号({}) 找不到对应的支付客户端]", transfer.getChannelId());
                 return false;
@@ -299,7 +301,7 @@ public class PayTransferServiceImpl implements PayTransferService {
 
     public void notifyTransfer(Long channelId, PayTransferRespDTO notify) {
         // 校验渠道是否有效
-        PayChannelDO channel = channelService.validPayChannel(channelId);
+        PayChannelDO channel = toChannelDO(channelApplicationService.valid(channelId));
         // 通知转账结果给对应的业务
         TenantUtils.execute(channel.getTenantId(), () -> getSelf().notifyTransfer(channel, notify));
     }
@@ -309,6 +311,14 @@ public class PayTransferServiceImpl implements PayTransferService {
      *
      * @return 自己
      */
+    private PayChannelDO toChannelDO(PayChannel channel) {
+        PayChannelDO channelDO = new PayChannelDO().setId(channel.id()).setCode(channel.code()).setStatus(channel.status())
+                .setFeeRate(channel.feeRate()).setRemark(channel.remark()).setAppId(channel.appId())
+                .setConfig((PayClientConfig) channel.config());
+        channelDO.setTenantId(channel.tenantId());
+        return channelDO;
+    }
+
     private PayTransferServiceImpl getSelf() {
         return SpringUtil.getBean(getClass());
     }

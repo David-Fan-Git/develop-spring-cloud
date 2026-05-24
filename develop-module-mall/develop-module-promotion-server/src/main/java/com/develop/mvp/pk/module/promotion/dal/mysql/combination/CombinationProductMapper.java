@@ -13,7 +13,7 @@ import java.util.List;
 /**
  * 拼团商品 Mapper
  *
- * @author HUIHUI
+ * @author David
  */
 @Mapper
 public interface CombinationProductMapper extends BaseMapperX<CombinationProductDO> {

@@ -14,7 +14,7 @@ import static java.lang.annotation.ElementType.METHOD;
 /**
  * CRM 数据操作权限校验 AOP 注解
  *
- * @author HUIHUI
+ * @author David
  */
 @Target({METHOD, ANNOTATION_TYPE})
 @Retention(RetentionPolicy.RUNTIME)

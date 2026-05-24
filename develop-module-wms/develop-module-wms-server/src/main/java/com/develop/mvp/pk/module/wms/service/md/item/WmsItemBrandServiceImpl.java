@@ -25,7 +25,7 @@ import static com.develop.mvp.pk.module.wms.enums.ErrorCodeConstants.ITEM_BRAND_
 /**
  * WMS 商品品牌 Service 实现类
  *
- * @author 芋道源码
+ * @author David
  */
 @Service
 @Validated

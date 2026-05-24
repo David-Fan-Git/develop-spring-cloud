@@ -14,7 +14,7 @@ import java.time.LocalDateTime;
  * @see com.develop.mvp.pk.module.iot.dal.redis.RedisKeyConstants#DEVICE_PROPERTY
  * @see DevicePropertyRedisDAO
  *
- * @author haohao
+ * @author David
  */
 @Data
 @Builder

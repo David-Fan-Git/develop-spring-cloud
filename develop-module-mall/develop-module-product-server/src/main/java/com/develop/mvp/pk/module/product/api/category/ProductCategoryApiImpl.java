@@ -13,7 +13,7 @@ import static com.develop.mvp.pk.framework.common.pojo.CommonResult.success;
 /**
  * 商品分类 API 接口实现类
  *
- * @author owen
+ * @author David
  */
 @RestController // 提供 RESTful API 接口，给 Feign 调用
 @Validated

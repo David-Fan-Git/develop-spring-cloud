@@ -9,7 +9,7 @@ import java.util.Arrays;
 /**
  * BPM HTTP 请求参数设置类型。用于 Simple 设计器任务监听器和触发器配置。
  *
- * @author Lesan
+ * @author David
  */
 @Getter
 @AllArgsConstructor

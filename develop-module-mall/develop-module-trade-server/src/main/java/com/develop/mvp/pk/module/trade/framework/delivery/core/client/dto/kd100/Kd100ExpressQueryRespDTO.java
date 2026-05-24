@@ -17,7 +17,7 @@ import static com.develop.mvp.pk.framework.common.util.date.DateUtils.TIME_ZONE_
  *
  * 参见  <a href="https://api.kuaidi100.com/document/5f0ffb5ebc8da837cbd8aefc">快递 100 文档</a>
  *
- * @author jason
+ * @author David
  */
 @Data
 public class Kd100ExpressQueryRespDTO {

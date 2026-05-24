@@ -28,7 +28,7 @@ import static com.develop.mvp.pk.framework.common.exception.enums.GlobalErrorCod
 /**
  * 拦截声明了 {@link ApiSignature} 注解的方法，实现签名
  *
- * @author Zhougang
+ * @author David
  */
 @Aspect
 @Slf4j

@@ -11,7 +11,7 @@ import org.springframework.stereotype.Component;
 /**
  * 用户注册时，发送优惠劵的消费者，基 {@link MemberUserCreateMessage} 消息
  *
- * @author owen
+ * @author David
  */
 @Component
 @Slf4j

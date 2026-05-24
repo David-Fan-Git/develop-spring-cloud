@@ -14,7 +14,7 @@ import org.springframework.stereotype.Component;
  * 支持普通 TCP 和 SSL TCP 连接，支持 JSON 和 BINARY 数据格式
  * 使用连接池管理 TCP 连接，提高性能和资源利用率
  *
- * @author HUIHUI
+ * @author David
  */
 @Component
 @Slf4j

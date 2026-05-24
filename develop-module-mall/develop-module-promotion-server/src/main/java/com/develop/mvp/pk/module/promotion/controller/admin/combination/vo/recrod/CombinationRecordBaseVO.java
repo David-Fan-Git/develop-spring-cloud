@@ -13,7 +13,7 @@ import static com.develop.mvp.pk.framework.common.util.date.DateUtils.FORMAT_YEA
  * 拼团记录 Base VO，提供给添加、修改、详细的子 VO 使用
  * 如果子 VO 存在差异的字段，请不要添加到这里，影响 Swagger 文档生成
  *
- * @author HUIHUI
+ * @author David
  */
 @Data
 public class CombinationRecordBaseVO {
@@ -33,7 +33,7 @@ public class CombinationRecordBaseVO {
     @NotNull(message = "用户编号不能为空")
     private Long userId;
 
-    @Schema(description = "用户昵称", example = "老芋艿")
+    @Schema(description = "用户昵称", example = "老David")
     private String nickname;
 
     @Schema(description = "用户头像", requiredMode = Schema.RequiredMode.REQUIRED, example = "https://www.iocoder.cn/xxx.jpg")

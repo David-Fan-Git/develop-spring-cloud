@@ -19,7 +19,7 @@ import static com.develop.mvp.pk.module.member.enums.ErrorCodeConstants.USER_MOB
 /**
  * 会员用户的 API 实现类
  *
- * @author 芋道源码
+ * @author David
  */
 @RestController // 提供 RESTful API 接口，给 Feign 调用
 @Validated

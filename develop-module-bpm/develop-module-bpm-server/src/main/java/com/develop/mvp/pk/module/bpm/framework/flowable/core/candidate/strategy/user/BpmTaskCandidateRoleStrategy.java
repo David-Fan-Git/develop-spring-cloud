@@ -13,7 +13,7 @@ import java.util.Set;
 /**
  * 角色 {@link BpmTaskCandidateStrategy} 实现类
  *
- * @author kyle
+ * @author David
  */
 @Component
 public class BpmTaskCandidateRoleStrategy implements BpmTaskCandidateStrategy {

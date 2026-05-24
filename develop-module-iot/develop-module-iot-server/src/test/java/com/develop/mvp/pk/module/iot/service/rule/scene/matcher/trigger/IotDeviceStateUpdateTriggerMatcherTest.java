@@ -17,7 +17,7 @@ import static org.junit.jupiter.api.Assertions.*;
 /**
  * {@link IotDeviceStateUpdateTriggerMatcher} 的单元测试
  *
- * @author HUIHUI
+ * @author David
  */
 public class IotDeviceStateUpdateTriggerMatcherTest extends IotBaseConditionMatcherTest {
 

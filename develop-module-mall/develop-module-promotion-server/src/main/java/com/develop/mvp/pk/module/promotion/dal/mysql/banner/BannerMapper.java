@@ -13,7 +13,7 @@ import java.util.List;
 /**
  * Banner Mapper
  *
- * @author xia
+ * @author David
  */
 @Mapper
 public interface BannerMapper extends BaseMapperX<BannerDO> {

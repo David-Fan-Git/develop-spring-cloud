@@ -20,7 +20,7 @@ import java.util.List;
  * <p>
  * 提供时间条件匹配的通用方法，供 {@link IotCurrentTimeConditionMatcher} 和 {@link IotTimerConditionEvaluator} 共同使用。
  *
- * @author HUIHUI
+ * @author David
  */
 @Slf4j
 @UtilityClass

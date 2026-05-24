@@ -6,7 +6,7 @@ import lombok.Getter;
 /**
  * 快递客户端枚举
  *
- * @author jason
+ * @author David
  */
 @Getter
 @AllArgsConstructor

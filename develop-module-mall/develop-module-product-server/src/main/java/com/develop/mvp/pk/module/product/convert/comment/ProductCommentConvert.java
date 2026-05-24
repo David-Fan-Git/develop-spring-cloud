@@ -16,7 +16,7 @@ import java.math.RoundingMode;
 /**
  * 商品评价 Convert
  *
- * @author wangzhs
+ * @author David
  */
 @Mapper
 public interface ProductCommentConvert {

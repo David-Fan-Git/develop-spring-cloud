@@ -5,7 +5,7 @@ import com.develop.mvp.pk.framework.desensitize.core.slider.annotation.SliderDes
 /**
  * {@link SliderDesensitize} 的脱敏处理器
  *
- * @author gaibu
+ * @author David
  */
 public class DefaultDesensitizationHandler extends AbstractSliderDesensitizationHandler<SliderDesensitize> {
 

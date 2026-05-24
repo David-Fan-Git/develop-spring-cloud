@@ -11,7 +11,7 @@ import java.util.List;
 /**
  * 商品属性值 Service 接口
  *
- * @author LuoWenFeng
+ * @author David
  */
 public interface ProductPropertyValueService {
 

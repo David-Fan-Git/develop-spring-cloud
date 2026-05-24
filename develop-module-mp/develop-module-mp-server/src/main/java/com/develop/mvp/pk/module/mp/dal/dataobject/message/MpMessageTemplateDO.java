@@ -10,7 +10,7 @@ import lombok.*;
 /**
  * 公众号模版消息 DO
  *
- * @author dengsl
+ * @author David
  */
 @TableName("mp_message_template")
 @KeySequence("mp_message_template_seq") // 用于 Oracle、PostgreSQL、Kingbase、DB2、H2 数据库的主键自增。如果是 MySQL 等数据库，可不写。

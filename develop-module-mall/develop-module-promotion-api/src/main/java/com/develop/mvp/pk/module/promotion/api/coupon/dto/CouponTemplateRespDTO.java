@@ -6,7 +6,7 @@ import lombok.Data;
 /**
  * 优惠券模版 Response DTO
  *
- * @author HUIHUI
+ * @author David
  */
 @Data
 public class CouponTemplateRespDTO {

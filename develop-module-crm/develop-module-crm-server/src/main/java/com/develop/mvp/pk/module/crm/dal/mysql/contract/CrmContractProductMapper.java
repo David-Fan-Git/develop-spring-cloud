@@ -11,7 +11,7 @@ import java.util.List;
 /**
  * 合同产品 Mapper
  *
- * @author HUIHUI
+ * @author David
  */
 @Mapper
 public interface CrmContractProductMapper extends BaseMapperX<CrmContractProductDO> {

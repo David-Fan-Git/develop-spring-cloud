@@ -4,6 +4,7 @@ import cn.hutool.core.collection.CollUtil;
 import com.develop.mvp.pk.framework.common.pojo.PageResult;
 import com.develop.mvp.pk.framework.common.util.collection.CollectionUtils;
 import com.develop.mvp.pk.framework.datapermission.core.util.DataPermissionUtils;
+import com.develop.mvp.pk.framework.tenant.core.context.TenantContextHolder;
 import com.develop.mvp.pk.module.system.domain.user.User;
 import com.develop.mvp.pk.module.system.domain.user.UserFactory;
 import com.develop.mvp.pk.module.system.domain.user.event.DomainEvent;
@@ -56,12 +57,18 @@ public class UserApplicationService {
         if (email != null) assertEmailUnique(Email.of(email), null);
         if (mobile != null) assertMobileUnique(Mobile.of(mobile), null);
 
+        Long resolvedTenantId = tenantId != null ? tenantId : TenantContextHolder.getRequiredTenantId();
         EncodedPassword encoded = passwordEncoder.encode(RawPassword.of(rawPassword));
-        User user = UserFactory.create(id, username, encoded, tenantId, deptId,
-                email, mobile, nickname, avatar, sex, remark, postIds);
-        userRepository.save(user);
+        User user = id == null
+                ? userRepository.create(username, encoded, resolvedTenantId, deptId,
+                        email, mobile, nickname, avatar, sex, remark, postIds)
+                : UserFactory.create(id, username, encoded, resolvedTenantId, deptId,
+                        email, mobile, nickname, avatar, sex, remark, postIds);
+        if (id != null) {
+            userRepository.save(user);
+        }
         publishEvents(user);
-        return id;
+        return user.id().value();
     }
 
     @Transactional

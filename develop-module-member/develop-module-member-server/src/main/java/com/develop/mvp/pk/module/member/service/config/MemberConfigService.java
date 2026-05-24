@@ -8,7 +8,7 @@ import jakarta.validation.Valid;
 /**
  * 会员配置 Service 接口
  *
- * @author QingX
+ * @author David
  */
 public interface MemberConfigService {
 

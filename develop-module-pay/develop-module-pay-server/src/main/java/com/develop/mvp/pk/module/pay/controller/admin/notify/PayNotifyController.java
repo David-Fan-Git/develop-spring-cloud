@@ -12,11 +12,11 @@ import com.develop.mvp.pk.framework.tenant.core.aop.TenantIgnore;
 import com.develop.mvp.pk.module.pay.controller.admin.notify.vo.PayNotifyTaskDetailRespVO;
 import com.develop.mvp.pk.module.pay.controller.admin.notify.vo.PayNotifyTaskPageReqVO;
 import com.develop.mvp.pk.module.pay.controller.admin.notify.vo.PayNotifyTaskRespVO;
-import com.develop.mvp.pk.module.pay.dal.dataobject.app.PayAppDO;
+import com.develop.mvp.pk.module.pay.application.app.PayAppApplicationService;
+import com.develop.mvp.pk.module.pay.domain.app.PayApp;
 import com.develop.mvp.pk.module.pay.dal.dataobject.notify.PayNotifyLogDO;
 import com.develop.mvp.pk.module.pay.dal.dataobject.notify.PayNotifyTaskDO;
-import com.develop.mvp.pk.module.pay.service.app.PayAppService;
-import com.develop.mvp.pk.module.pay.service.channel.PayChannelService;
+import com.develop.mvp.pk.module.pay.application.channel.PayChannelApplicationService;
 import com.develop.mvp.pk.module.pay.service.notify.PayNotifyService;
 import com.develop.mvp.pk.module.pay.service.order.PayOrderService;
 import com.develop.mvp.pk.module.pay.service.refund.PayRefundService;
@@ -56,9 +56,9 @@ public class PayNotifyController {
     @Resource
     private PayNotifyService notifyService;
     @Resource
-    private PayAppService appService;
+    private PayAppApplicationService appApplicationService;
     @Resource
-    private PayChannelService channelService;
+    private PayChannelApplicationService channelApplicationService;
 
     @PostMapping(value = "/order/{channelId}")
     @Operation(summary = "支付渠道的统一【支付】回调")
@@ -70,7 +70,7 @@ public class PayNotifyController {
                               @RequestHeader Map<String, String> headers) {
         log.info("[notifyOrder][channelId({}) 回调数据({}/{})]", channelId, params, body);
         // 1. 校验支付渠道是否存在
-        PayClient payClient = channelService.getPayClient(channelId);
+        PayClient payClient = channelApplicationService.getPayClient(channelId);
         if (payClient == null) {
             log.error("[notifyOrder][渠道编号({}) 找不到对应的支付客户端]", channelId);
             throw exception(CHANNEL_NOT_FOUND);
@@ -92,7 +92,7 @@ public class PayNotifyController {
                                @RequestHeader Map<String, String> headers) {
         log.info("[notifyRefund][channelId({}) 回调数据({}/{})]", channelId, params, body);
         // 1. 校验支付渠道是否存在
-        PayClient payClient = channelService.getPayClient(channelId);
+        PayClient payClient = channelApplicationService.getPayClient(channelId);
         if (payClient == null) {
             log.error("[notifyRefund][渠道编号({}) 找不到对应的支付客户端]", channelId);
             throw exception(CHANNEL_NOT_FOUND);
@@ -114,7 +114,7 @@ public class PayNotifyController {
                                  @RequestHeader Map<String, String> headers) {
         log.info("[notifyTransfer][channelId({}) 回调数据({}/{})]", channelId, params, body);
         // 1. 校验支付渠道是否存在
-        PayClient payClient = channelService.getPayClient(channelId);
+        PayClient payClient = channelApplicationService.getPayClient(channelId);
         if (payClient == null) {
             log.error("[notifyTransfer][渠道编号({}) 找不到对应的支付客户端]", channelId);
             throw exception(CHANNEL_NOT_FOUND);

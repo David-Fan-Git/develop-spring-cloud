@@ -12,7 +12,7 @@ import static com.develop.mvp.pk.module.trade.enums.ErrorCodeConstants.EXPRESS_C
 /**
  * 未实现的快递客户端，用来提醒用户需要接入快递服务商，
  *
- * @author jason
+ * @author David
  */
 public class NoProvideExpressClient implements ExpressClient {
 

@@ -21,6 +21,18 @@ public class AppMemberPointRecordRespVO {
     @Schema(description = "积分", requiredMode = Schema.RequiredMode.REQUIRED, example = "100")
     private Integer point;
 
+    @Schema(description = "用户编号", requiredMode = Schema.RequiredMode.REQUIRED, example = "1024")
+    private Long userId;
+
+    @Schema(description = "业务编号", example = "1024")
+    private String bizId;
+
+    @Schema(description = "业务类型", example = "1")
+    private Integer bizType;
+
+    @Schema(description = "变更后的积分", example = "200")
+    private Integer totalPoint;
+
     @Schema(description = "发生时间", requiredMode = Schema.RequiredMode.REQUIRED)
     private LocalDateTime createTime;
 

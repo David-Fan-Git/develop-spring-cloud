@@ -18,7 +18,7 @@ import java.util.List;
 /**
  * 商机 Mapper
  *
- * @author ljlleo
+ * @author David
  */
 @Mapper
 public interface CrmBusinessMapper extends BaseMapperX<CrmBusinessDO> {

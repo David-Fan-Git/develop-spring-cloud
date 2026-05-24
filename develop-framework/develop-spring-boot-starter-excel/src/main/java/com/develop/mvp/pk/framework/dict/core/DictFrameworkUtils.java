@@ -18,7 +18,7 @@ import static com.develop.mvp.pk.framework.common.util.collection.CollectionUtil
 /**
  * 字典工具类
  *
- * @author 芋道源码
+ * @author David
  */
 @Slf4j
 public class DictFrameworkUtils {

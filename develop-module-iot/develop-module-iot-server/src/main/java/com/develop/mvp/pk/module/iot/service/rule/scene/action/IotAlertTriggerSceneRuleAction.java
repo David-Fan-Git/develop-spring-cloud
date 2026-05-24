@@ -33,7 +33,7 @@ import java.util.Map;
 /**
  * IoT 告警触发的 {@link IotSceneRuleAction} 实现类
  *
- * @author 芋道源码
+ * @author David
  */
 @Component
 @Slf4j

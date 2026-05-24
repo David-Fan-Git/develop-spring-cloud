@@ -3,7 +3,7 @@ package com.develop.mvp.pk.module.product.enums;
 /**
  * product 字典类型的枚举类
  *
- * @author HUIHUI
+ * @author David
  */
 public interface DictTypeConstants {
 

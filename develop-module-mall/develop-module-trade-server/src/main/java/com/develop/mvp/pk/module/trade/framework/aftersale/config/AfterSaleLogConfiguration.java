@@ -8,7 +8,7 @@ import org.springframework.context.annotation.Configuration;
 /**
  * trade 模块的 afterSaleLog 组件的 Configuration
  *
- * @author 陈賝
+ * @author David
  * @since 2023/6/18 11:09
  */
 @Configuration(proxyBeanMethods = false)

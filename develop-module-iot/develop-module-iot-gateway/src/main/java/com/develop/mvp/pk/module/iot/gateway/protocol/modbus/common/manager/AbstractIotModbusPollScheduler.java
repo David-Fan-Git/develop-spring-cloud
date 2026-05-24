@@ -21,7 +21,7 @@ import static com.develop.mvp.pk.framework.common.util.collection.CollectionUtil
  * 子类只需实现 {@link #pollPoint(Long, Long)} 定义具体的轮询动作。
  * <p>
  *
- * @author 芋道源码
+ * @author David
  */
 @Slf4j
 public abstract class AbstractIotModbusPollScheduler {

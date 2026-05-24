@@ -5,7 +5,7 @@ import com.develop.mvp.pk.module.trade.service.message.bo.TradeOrderMessageWhenD
 /**
  * Trade 消息 service 接口
  *
- * @author HUIHUI
+ * @author David
  */
 public interface TradeMessageService {
 

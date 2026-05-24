@@ -14,7 +14,7 @@ import static com.develop.mvp.pk.framework.common.util.collection.CollectionUtil
 /**
  * 设备的最后上报时间的 Redis DAO
  *
- * @author 芋道源码
+ * @author David
  */
 @Repository
 public class DeviceReportTimeRedisDAO {

@@ -19,7 +19,7 @@ import static com.develop.mvp.pk.framework.common.util.collection.CollectionUtil
 /**
  * AI 知识库段落 Service 接口
  *
- * @author xiaoxin
+ * @author David
  */
 public interface AiKnowledgeSegmentService {
 

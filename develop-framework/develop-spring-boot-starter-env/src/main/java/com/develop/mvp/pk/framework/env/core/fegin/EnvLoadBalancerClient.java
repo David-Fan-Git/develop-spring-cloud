@@ -26,7 +26,7 @@ import java.util.List;
  * 多环境的 {@link org.springframework.cloud.client.loadbalancer.LoadBalancerClient} 实现类
  * 在从服务实例列表选择时，优先选择 tag 匹配的服务实例
  *
- * @author 芋道源码
+ * @author David
  */
 @RequiredArgsConstructor
 @Slf4j
@@ -76,9 +76,9 @@ public class EnvLoadBalancerClient implements ReactorServiceInstanceLoadBalancer
             chooseInstances = instances;
         }
 
-        // TODO 芋艿：https://juejin.cn/post/7056770721858469896 相同网段
+        // TODO David：https://juejin.cn/post/7056770721858469896 相同网段
 
-        // 随机 + 权重获取实例列表 TODO 芋艿：目前直接使用 Nacos 提供的方法，如果替换注册中心，需要重新失败该方法
+        // 随机 + 权重获取实例列表 TODO David：目前直接使用 Nacos 提供的方法，如果替换注册中心，需要重新失败该方法
         return new DefaultResponse(NacosBalancer.getHostByRandomWeight3(chooseInstances));
     }
 

@@ -13,7 +13,7 @@ import java.io.File;
 /**
  * {@link XunFeiPptApi} 集成测试
  *
- * @author xiaoxin
+ * @author David
  */
 public class XunFeiPptApiTests {
 

@@ -12,7 +12,7 @@ import java.util.List;
 /**
  * AI 聊天对话 Service 接口
  *
- * @author fansili
+ * @author David
  */
 public interface AiChatConversationService {
 

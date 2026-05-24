@@ -21,7 +21,7 @@ import java.util.Optional;
 /**
  * 会员统计 Convert
  *
- * @author owen
+ * @author David
  */
 @Mapper
 public interface MemberStatisticsConvert {

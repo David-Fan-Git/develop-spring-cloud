@@ -12,7 +12,7 @@ import java.util.List;
 /**
  * 客户限制配置 Mapper
  *
- * @author Wanwan
+ * @author David
  */
 @Mapper
 public interface CrmCustomerLimitConfigMapper extends BaseMapperX<CrmCustomerLimitConfigDO> {

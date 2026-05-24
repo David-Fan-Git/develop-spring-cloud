@@ -29,7 +29,7 @@ import static com.develop.mvp.pk.module.iot.enums.ErrorCodeConstants.OTA_FIRMWAR
 /**
  * OTA 固件管理 Service 实现类
  *
- * @author Shelly Chan
+ * @author David
  */
 @Service
 @Validated

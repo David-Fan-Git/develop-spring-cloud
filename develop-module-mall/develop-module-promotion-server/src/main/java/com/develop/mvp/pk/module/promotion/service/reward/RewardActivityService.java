@@ -21,7 +21,7 @@ import static com.develop.mvp.pk.framework.common.util.collection.CollectionUtil
 /**
  * 满减送活动 Service 接口
  *
- * @author 芋道源码
+ * @author David
  */
 public interface RewardActivityService {
 

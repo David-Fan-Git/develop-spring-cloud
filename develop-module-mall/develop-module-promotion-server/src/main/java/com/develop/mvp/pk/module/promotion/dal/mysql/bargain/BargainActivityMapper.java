@@ -15,7 +15,7 @@ import java.util.List;
 /**
  * 砍价活动 Mapper
  *
- * @author HUIHUI
+ * @author David
  */
 @Mapper
 public interface BargainActivityMapper extends BaseMapperX<BargainActivityDO> {

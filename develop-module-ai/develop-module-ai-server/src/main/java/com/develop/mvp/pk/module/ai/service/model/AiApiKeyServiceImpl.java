@@ -20,7 +20,7 @@ import static com.develop.mvp.pk.module.ai.enums.ErrorCodeConstants.API_KEY_NOT_
 /**
  * AI API 密钥 Service 实现类
  *
- * @author 芋道源码
+ * @author David
  */
 @Service
 @Validated

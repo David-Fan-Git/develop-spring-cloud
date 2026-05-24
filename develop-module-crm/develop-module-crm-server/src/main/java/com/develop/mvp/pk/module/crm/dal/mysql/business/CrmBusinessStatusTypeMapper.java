@@ -10,7 +10,7 @@ import org.apache.ibatis.annotations.Mapper;
 /**
  * 商机状态组 Mapper
  *
- * @author ljlleo
+ * @author David
  */
 @Mapper
 public interface CrmBusinessStatusTypeMapper extends BaseMapperX<CrmBusinessStatusTypeDO> {

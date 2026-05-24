@@ -97,7 +97,7 @@
             <artifactId>develop-spring-boot-starter-mq</artifactId>
         </dependency>
 
-        <!-- 服务保障相关 TODO 芋艿：暂时去掉 -->
+        <!-- 服务保障相关 TODO David：暂时去掉 -->
 <!--        <dependency>-->
 <!--            <groupId>com.develop.mvp</groupId>-->
 <!--            <artifactId>develop-spring-boot-starter-protection</artifactId>-->

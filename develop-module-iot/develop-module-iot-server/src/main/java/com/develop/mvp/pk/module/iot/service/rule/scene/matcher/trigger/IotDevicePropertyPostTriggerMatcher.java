@@ -11,7 +11,7 @@ import org.springframework.stereotype.Component;
 /**
  * 设备属性上报触发器匹配器：处理设备属性数据上报的触发器匹配逻辑
  *
- * @author HUIHUI
+ * @author David
  */
 @Component
 public class IotDevicePropertyPostTriggerMatcher implements IotSceneRuleTriggerMatcher {

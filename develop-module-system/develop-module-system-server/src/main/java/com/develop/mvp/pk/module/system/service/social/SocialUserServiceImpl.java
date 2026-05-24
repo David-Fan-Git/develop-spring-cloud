@@ -31,7 +31,7 @@ import static com.develop.mvp.pk.module.system.enums.ErrorCodeConstants.SOCIAL_U
 /**
  * 社交用户 Service 实现类
  *
- * @author 芋道源码
+ * @author David
  */
 @Service
 @Validated

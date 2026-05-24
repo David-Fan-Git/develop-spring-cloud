@@ -10,7 +10,7 @@ import org.apache.ibatis.annotations.Mapper;
 /**
  * 装修模板 Mapper
  *
- * @author owen
+ * @author David
  */
 @Mapper
 public interface DiyTemplateMapper extends BaseMapperX<DiyTemplateDO> {

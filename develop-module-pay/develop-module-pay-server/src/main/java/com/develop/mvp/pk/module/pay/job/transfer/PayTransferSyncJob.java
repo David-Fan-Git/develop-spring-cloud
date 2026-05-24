@@ -13,7 +13,7 @@ import org.springframework.stereotype.Component;
  *
  * 由于转账订单的转账结果，有些渠道是异步通知进行同步的，考虑到异步通知可能会失败（小概率），所以需要定时进行同步。
  *
- * @author jason
+ * @author David
  */
 @Component
 @Slf4j

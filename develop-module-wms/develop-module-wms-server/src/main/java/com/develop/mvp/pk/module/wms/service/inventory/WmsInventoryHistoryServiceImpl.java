@@ -15,7 +15,7 @@ import java.util.List;
 /**
  * WMS 库存流水 Service 实现类
  *
- * @author 芋道源码
+ * @author David
  */
 @Service
 @Validated

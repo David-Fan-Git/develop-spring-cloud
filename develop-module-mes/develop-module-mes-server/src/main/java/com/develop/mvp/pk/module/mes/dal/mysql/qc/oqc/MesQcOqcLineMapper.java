@@ -12,7 +12,7 @@ import java.util.List;
 /**
  * MES 出货检验单行 Mapper
  *
- * @author 芋道源码
+ * @author David
  */
 @Mapper
 public interface MesQcOqcLineMapper extends BaseMapperX<MesQcOqcLineDO> {

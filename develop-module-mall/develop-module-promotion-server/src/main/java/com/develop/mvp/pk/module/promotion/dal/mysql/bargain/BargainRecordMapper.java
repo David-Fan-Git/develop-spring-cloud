@@ -24,7 +24,7 @@ import java.util.Map;
 /**
  * 砍价记录 Mapper
  *
- * @author HUIHUI
+ * @author David
  */
 @Mapper
 public interface BargainRecordMapper extends BaseMapperX<BargainRecordDO> {

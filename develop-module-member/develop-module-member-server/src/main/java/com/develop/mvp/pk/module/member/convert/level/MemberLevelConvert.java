@@ -17,7 +17,7 @@ import java.util.stream.Collectors;
 /**
  * 会员等级 Convert
  *
- * @author owen
+ * @author David
  */
 @Mapper
 public interface MemberLevelConvert {
@@ -65,7 +65,7 @@ public interface MemberLevelConvert {
             MemberLevelSimpleRespVO vo = new MemberLevelSimpleRespVO();
             vo.setId(l.id());
             vo.setName(l.name());
-            vo.setLevel(l.level());
+            vo.setIcon(l.icon());
             return vo;
         }).collect(Collectors.toList());
     }
@@ -74,7 +74,6 @@ public interface MemberLevelConvert {
         if (list == null) return null;
         return list.stream().map(l -> {
             AppMemberLevelRespVO vo = new AppMemberLevelRespVO();
-            vo.setId(l.id());
             vo.setName(l.name());
             vo.setLevel(l.level());
             vo.setExperience(l.experience());

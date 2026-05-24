@@ -3,7 +3,7 @@ package com.develop.mvp.pk.module.wms.enums;
 /**
  * WMS 字典类型常量
  *
- * @author 芋道源码
+ * @author David
  */
 public interface DictTypeConstants {
 

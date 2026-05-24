@@ -12,7 +12,7 @@ import java.util.List;
 /**
  * 会员等级记录 Convert
  *
- * @author owen
+ * @author David
  */
 @Mapper
 public interface MemberLevelRecordConvert {

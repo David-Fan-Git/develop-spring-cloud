@@ -1,556 +1,741 @@
-# DDD Skill: AggregateRoot_Infra_Skill
+---
+name: aggregateroot-infra-skill
+description: Use when refactoring or validating Infra DDD code, infra API contracts, config/file/codegen/data-source/log/websocket flows, file client integration, code generation behavior, and local/remote API splitting.
+type: ddd-aggregate-skill
+module: infra
+status: production-ready
+last_verified: 2026-05-24
+---
 
-## 1. 技能名称
+# AggregateRoot Infra Skill
 
-`AggregateRoot_Infra_Skill` — 基础设施(Infra)模块的 DDD 领域建模与重构技能
+## 0. Overview
 
-## 2. 适用场景
+Infra 是平台基础设施上下文，承载参数配置、数据源配置、文件存储、代码生成、API 访问日志、API 错误日志和 WebSocket 发送契约。任何 DDD 或 API local/remote 重构必须保持 Controller/API/DTO/错误码/租户/缓存/FileClient/代码生成/日志兜底行为不变。
 
-Infra 基础设施管理模块的完整生命周期，覆盖以下 7 个聚合根的 CRUD + 领域逻辑：
+## 1. When to Use / Not Use
 
-| 聚合根 | 领域包 | 模块 | 核心职责 |
-|--------|--------|------|----------|
-| Config | `domain/config/` | 系统参数配置 | 参数配置的键值存储、类型管理、可见性控制 |
-| DataSourceConfig | `domain/db/` | 数据源配置 | 动态数据源的连接信息管理、连通性校验 |
-| FileConfig | `domain/file/` | 文件存储配置 | 文件存储客户端（本地/OSS/S3等）配置管理、Master 管理 |
-| File | `domain/file/` | 文件记录 | 文件上传/下载/删除记录、路径生成、预签名 URL |
-| CodegenTable (+Column) | `domain/codegen/` | 代码生成表定义 | 代码生成器的表/列定义、主子表管理、同步数据库结构 |
-| ApiAccessLog | `domain/logger/` | API 访问日志 | 访问日志记录、超期清理 |
-| ApiErrorLog | `domain/logger/` | API 错误日志 | 错误日志记录、处理状态流转（INIT->DONE/IGNORE）、超期清理 |
+Use when:
 
-## 3. DDD 构造块
+- 重构或验证 `develop-module-infra` 的 DDD 分层、聚合、应用服务、仓储或转换层。
+- 拆分 `ConfigApi`、`FileApi`、`WebSocketSenderApi` 为稳定契约 + local/remote 适配器。
+- 迁移 `config`、`db`、`file`、`codegen`、`logger` 旧 `service/dal` 逻辑到 `domain/application/infrastructure/convert`。
+- 修改文件上传、文件配置、FileClient 缓存、代码生成、数据库表结构同步、API 日志清理或错误日志处理逻辑。
+- 处理 Infra 与租户、动态数据源、文件存储、WebSocket、代码生成模板和日志记录的集成边界。
 
-### 3.1 聚合根清单（Aggregate Roots）
+Do not use when:
 
-#### Config — 系统参数配置
+- 只修改普通配置值、SQL 初始化数据、README 文案或 demo 示例页面。
+- 只调整 `develop-framework` 的通用 starter，且不改变 Infra 模块外部契约。
+- 只运行构建、启动或排查环境问题，不修改 Infra 代码或 skill。
+- 修改 `job` 相关独立调度能力时；该错误码段存在于 Infra，但本 skill 不覆盖 XXL-Job 模块重构。
+- 修改 demo 示例聚合时；demo 代码是样例，不作为 Infra 核心生产聚合迁移目标。
 
-```
-com.develop.mvp.pk.module.infra.domain.config.Config
-```
+## 2. Baseline Failure Findings
 
-**聚合边界**：
-- Config（根实体）
-- 不包含：无子实体，纯键值对聚合
+升级前草稿暴露的问题：
 
-**领域包**: `domain/config/`
+1. 没有 YAML frontmatter，不能被稳定发现和判定 production-ready。
+2. 只列聚合和值对象，缺少 Controller、API、VO/DTO、DO、Mapper、Service、Repository、ErrorCode、测试路径事实锚点。
+3. 把 Infra 七个聚合混在一起描述，但没有说明哪些仍由 legacy service 承载生产行为。
+4. 未记录稳定 API 目前仍带 `@FeignClient`，与 local/remote 契约标准冲突。
+5. 未记录 Config DDD create 流使用 `ConfigFactory.create(null, ...)` 的 ID-null 风险。
+6. 未记录 FileConfig DDD `testFileConfig` 当前只返回 `test ok`，与 legacy 实际上传测试文件行为不等价。
+7. 未记录 Codegen DDD application service 远未覆盖 legacy `CodegenServiceImpl` 的导入、同步、生成、主子表和模板引擎行为。
+8. 未记录 `FileConfigServiceImpl` 的 FileClient Guava cache、`CACHE_MASTER_ID = 0L` 和缓存失效行为。
+9. 未记录 API access/error log 在无租户上下文时必须 `TenantUtils.executeIgnore(...)`，错误日志创建异常不能影响主流程。
+10. 未给出错误码契约、事务边界、测试命令、红旗和回滚条件，容易让 AI 直接按文档猜代码。
 
-#### DataSourceConfig — 数据源配置
+## 3. Reproducibility Contract
 
-```
-com.develop.mvp.pk.module.infra.domain.db.DataSourceConfig
-```
+执行本 skill 必须遵守：
 
-**聚合边界**：
-- DataSourceConfig（根实体）
-- 不包含：动态数据源框架配置（在 infrastructure 层管理）
+1. 先读本文件，再读 `.claude/ddd-skills/DDD_Skill_Production_Readiness_Standard.md` 和 `.claude/ddd-skills/Module_Structure_Standard.md`。
+2. 修改 Java 前必须读取本 skill 中列出的事实源；不要凭包名、旧草稿或相似模块猜字段、错误码、事务、缓存和集成行为。
+3. 当前可编译代码的外部行为优先：Controller 路径、HTTP 方法、VO/DTO 字段、`CommonResult` 包装、权限、租户、错误码、分页、Excel、FileClient、WebSocket、代码生成输出和日志兜底不得被 DDD 设计覆盖。
+4. 如果 skill 与当前代码冲突，先停止实现，读取当前事实源，修订 skill，再改代码。
+5. 每批只处理一个小上下文：API 契约拆分、Config、FileConfig/File、DataSourceConfig、Codegen、Logger 或 WebSocket，不一次性改全 Infra。
+6. `service/dal` 是迁移源，不是最终目标；但在迁移完成前，legacy service 仍是生产行为事实源。
+7. 没有业务代码改动时不要求 Maven；修改 Java 后至少编译 `develop-module-infra-api` 和 `develop-module-infra-server`。
 
-**领域包**: `domain/db/`
+## 4. Current Source Anchors
 
-#### FileConfig — 文件存储配置
+### 4.1 API module contracts
 
-```
-com.develop.mvp.pk.module.infra.domain.file.FileConfig
-```
+- `develop-module-infra/develop-module-infra-api/src/main/java/com/develop/mvp/pk/module/infra/api/config/ConfigApi.java`
+- `develop-module-infra/develop-module-infra-api/src/main/java/com/develop/mvp/pk/module/infra/api/file/FileApi.java`
+- `develop-module-infra/develop-module-infra-api/src/main/java/com/develop/mvp/pk/module/infra/api/file/dto/FileCreateReqDTO.java`
+- `develop-module-infra/develop-module-infra-api/src/main/java/com/develop/mvp/pk/module/infra/api/websocket/WebSocketSenderApi.java`
+- `develop-module-infra/develop-module-infra-api/src/main/java/com/develop/mvp/pk/module/infra/api/websocket/dto/WebSocketSendReqDTO.java`
+- `develop-module-infra/develop-module-infra-api/src/main/java/com/develop/mvp/pk/module/infra/enums/ApiConstants.java`
+- `develop-module-infra/develop-module-infra-api/src/main/java/com/develop/mvp/pk/module/infra/enums/ErrorCodeConstants.java`
+- `develop-module-infra/develop-module-infra-api/src/main/java/com/develop/mvp/pk/module/infra/enums/config/ConfigTypeEnum.java`
+- `develop-module-infra/develop-module-infra-api/src/main/java/com/develop/mvp/pk/module/infra/enums/codegen/*.java`
+- `develop-module-infra/develop-module-infra-api/src/main/java/com/develop/mvp/pk/module/infra/enums/logger/ApiErrorLogProcessStatusEnum.java`
 
-**聚合边界**：
-- FileConfig（根实体）
-- 不包含：FileClient 实现（在 framework 层管理）
+Current API conflict: `ConfigApi`、`FileApi`、`WebSocketSenderApi` 仍直接带 `@FeignClient(name = ApiConstants.NAME)`。API local/remote 重构时必须把 Feign 身份移动到 `remote/*RemoteClient`，稳定契约本身保持方法签名和 DTO 不变。
 
-**领域包**: `domain/file/`
+### 4.2 Server API implementations
 
-#### File — 文件记录
+- `develop-module-infra/develop-module-infra-server/src/main/java/com/develop/mvp/pk/module/infra/api/config/ConfigApiImpl.java`
+- `develop-module-infra/develop-module-infra-server/src/main/java/com/develop/mvp/pk/module/infra/api/file/FileApiImpl.java`
+- `develop-module-infra/develop-module-infra-server/src/main/java/com/develop/mvp/pk/module/infra/api/logger/ApiAccessLogApiImpl.java`
+- `develop-module-infra/develop-module-infra-server/src/main/java/com/develop/mvp/pk/module/infra/api/logger/ApiErrorLogApiImpl.java`
+- `develop-module-infra/develop-module-infra-server/src/main/java/com/develop/mvp/pk/module/infra/api/websocket/WebSocketSenderApiImpl.java`
 
-```
-com.develop.mvp.pk.module.infra.domain.file.File
-```
+### 4.3 Controllers and VOs
 
-**聚合边界**：
-- File（根实体）
-- 不包含：FileConfig（通过 configId 引用）
+- `develop-module-infra/develop-module-infra-server/src/main/java/com/develop/mvp/pk/module/infra/controller/admin/config/ConfigController.java`
+- `develop-module-infra/develop-module-infra-server/src/main/java/com/develop/mvp/pk/module/infra/controller/admin/config/vo/*.java`
+- `develop-module-infra/develop-module-infra-server/src/main/java/com/develop/mvp/pk/module/infra/controller/admin/db/DataSourceConfigController.java`
+- `develop-module-infra/develop-module-infra-server/src/main/java/com/develop/mvp/pk/module/infra/controller/admin/db/vo/*.java`
+- `develop-module-infra/develop-module-infra-server/src/main/java/com/develop/mvp/pk/module/infra/controller/admin/file/FileConfigController.java`
+- `develop-module-infra/develop-module-infra-server/src/main/java/com/develop/mvp/pk/module/infra/controller/admin/file/FileController.java`
+- `develop-module-infra/develop-module-infra-server/src/main/java/com/develop/mvp/pk/module/infra/controller/admin/file/vo/**/*.java`
+- `develop-module-infra/develop-module-infra-server/src/main/java/com/develop/mvp/pk/module/infra/controller/app/file/AppFileController.java`
+- `develop-module-infra/develop-module-infra-server/src/main/java/com/develop/mvp/pk/module/infra/controller/app/file/vo/*.java`
+- `develop-module-infra/develop-module-infra-server/src/main/java/com/develop/mvp/pk/module/infra/controller/admin/codegen/CodegenController.java`
+- `develop-module-infra/develop-module-infra-server/src/main/java/com/develop/mvp/pk/module/infra/controller/admin/codegen/vo/**/*.java`
+- `develop-module-infra/develop-module-infra-server/src/main/java/com/develop/mvp/pk/module/infra/controller/admin/logger/ApiAccessLogController.java`
+- `develop-module-infra/develop-module-infra-server/src/main/java/com/develop/mvp/pk/module/infra/controller/admin/logger/ApiErrorLogController.java`
+- `develop-module-infra/develop-module-infra-server/src/main/java/com/develop/mvp/pk/module/infra/controller/admin/logger/vo/*.java`
+- `develop-module-infra/develop-module-infra-server/src/main/java/com/develop/mvp/pk/module/infra/controller/admin/redis/RedisController.java`
 
-**领域包**: `domain/file/`
+### 4.4 Legacy production behavior sources
 
-#### CodegenTable + CodegenColumn — 代码生成
+- `develop-module-infra/develop-module-infra-server/src/main/java/com/develop/mvp/pk/module/infra/service/config/ConfigServiceImpl.java`
+- `develop-module-infra/develop-module-infra-server/src/main/java/com/develop/mvp/pk/module/infra/service/db/DataSourceConfigServiceImpl.java`
+- `develop-module-infra/develop-module-infra-server/src/main/java/com/develop/mvp/pk/module/infra/service/db/DatabaseTableServiceImpl.java`
+- `develop-module-infra/develop-module-infra-server/src/main/java/com/develop/mvp/pk/module/infra/service/file/FileConfigServiceImpl.java`
+- `develop-module-infra/develop-module-infra-server/src/main/java/com/develop/mvp/pk/module/infra/service/file/FileServiceImpl.java`
+- `develop-module-infra/develop-module-infra-server/src/main/java/com/develop/mvp/pk/module/infra/service/codegen/CodegenServiceImpl.java`
+- `develop-module-infra/develop-module-infra-server/src/main/java/com/develop/mvp/pk/module/infra/service/codegen/inner/CodegenBuilder.java`
+- `develop-module-infra/develop-module-infra-server/src/main/java/com/develop/mvp/pk/module/infra/service/codegen/inner/CodegenEngine.java`
+- `develop-module-infra/develop-module-infra-server/src/main/java/com/develop/mvp/pk/module/infra/service/logger/ApiAccessLogServiceImpl.java`
+- `develop-module-infra/develop-module-infra-server/src/main/java/com/develop/mvp/pk/module/infra/service/logger/ApiErrorLogServiceImpl.java`
 
-```
-com.develop.mvp.pk.module.infra.domain.codegen.CodegenTable
-com.develop.mvp.pk.module.infra.domain.codegen.CodegenColumn
-```
+### 4.5 Current DDD layer
 
-**聚合边界**：
-- CodegenTable（根实体）
-- CodegenColumn（聚合内部实体，生命周期随 CodegenTable）
-- 不包含：DataSourceConfig（通过 dataSourceConfigId 引用）
+- `develop-module-infra/develop-module-infra-server/src/main/java/com/develop/mvp/pk/module/infra/domain/event/DomainEvent.java`
+- `develop-module-infra/develop-module-infra-server/src/main/java/com/develop/mvp/pk/module/infra/domain/event/DomainEventPublisher.java`
+- `develop-module-infra/develop-module-infra-server/src/main/java/com/develop/mvp/pk/module/infra/infrastructure/SpringDomainEventPublisher.java`
+- `develop-module-infra/develop-module-infra-server/src/main/java/com/develop/mvp/pk/module/infra/domain/config/**/*.java`
+- `develop-module-infra/develop-module-infra-server/src/main/java/com/develop/mvp/pk/module/infra/application/config/ConfigApplicationService.java`
+- `develop-module-infra/develop-module-infra-server/src/main/java/com/develop/mvp/pk/module/infra/infrastructure/config/*.java`
+- `develop-module-infra/develop-module-infra-server/src/main/java/com/develop/mvp/pk/module/infra/domain/db/**/*.java`
+- `develop-module-infra/develop-module-infra-server/src/main/java/com/develop/mvp/pk/module/infra/application/db/DataSourceConfigApplicationService.java`
+- `develop-module-infra/develop-module-infra-server/src/main/java/com/develop/mvp/pk/module/infra/infrastructure/db/*.java`
+- `develop-module-infra/develop-module-infra-server/src/main/java/com/develop/mvp/pk/module/infra/domain/file/**/*.java`
+- `develop-module-infra/develop-module-infra-server/src/main/java/com/develop/mvp/pk/module/infra/application/file/*.java`
+- `develop-module-infra/develop-module-infra-server/src/main/java/com/develop/mvp/pk/module/infra/infrastructure/file/*.java`
+- `develop-module-infra/develop-module-infra-server/src/main/java/com/develop/mvp/pk/module/infra/domain/codegen/**/*.java`
+- `develop-module-infra/develop-module-infra-server/src/main/java/com/develop/mvp/pk/module/infra/application/codegen/CodegenApplicationService.java`
+- `develop-module-infra/develop-module-infra-server/src/main/java/com/develop/mvp/pk/module/infra/infrastructure/codegen/*.java`
+- `develop-module-infra/develop-module-infra-server/src/main/java/com/develop/mvp/pk/module/infra/domain/logger/**/*.java`
+- `develop-module-infra/develop-module-infra-server/src/main/java/com/develop/mvp/pk/module/infra/application/logger/*.java`
+- `develop-module-infra/develop-module-infra-server/src/main/java/com/develop/mvp/pk/module/infra/infrastructure/logger/*.java`
 
-**领域包**: `domain/codegen/`
+### 4.6 DAL and conversion
 
-#### ApiAccessLog — API 访问日志
+- `develop-module-infra/develop-module-infra-server/src/main/java/com/develop/mvp/pk/module/infra/dal/dataobject/config/ConfigDO.java`
+- `develop-module-infra/develop-module-infra-server/src/main/java/com/develop/mvp/pk/module/infra/dal/dataobject/db/DataSourceConfigDO.java`
+- `develop-module-infra/develop-module-infra-server/src/main/java/com/develop/mvp/pk/module/infra/dal/dataobject/file/FileConfigDO.java`
+- `develop-module-infra/develop-module-infra-server/src/main/java/com/develop/mvp/pk/module/infra/dal/dataobject/file/FileDO.java`
+- `develop-module-infra/develop-module-infra-server/src/main/java/com/develop/mvp/pk/module/infra/dal/dataobject/file/FileContentDO.java`
+- `develop-module-infra/develop-module-infra-server/src/main/java/com/develop/mvp/pk/module/infra/dal/dataobject/codegen/CodegenTableDO.java`
+- `develop-module-infra/develop-module-infra-server/src/main/java/com/develop/mvp/pk/module/infra/dal/dataobject/codegen/CodegenColumnDO.java`
+- `develop-module-infra/develop-module-infra-server/src/main/java/com/develop/mvp/pk/module/infra/dal/dataobject/logger/ApiAccessLogDO.java`
+- `develop-module-infra/develop-module-infra-server/src/main/java/com/develop/mvp/pk/module/infra/dal/dataobject/logger/ApiErrorLogDO.java`
+- `develop-module-infra/develop-module-infra-server/src/main/java/com/develop/mvp/pk/module/infra/dal/mysql/config/ConfigMapper.java`
+- `develop-module-infra/develop-module-infra-server/src/main/java/com/develop/mvp/pk/module/infra/dal/mysql/db/DataSourceConfigMapper.java`
+- `develop-module-infra/develop-module-infra-server/src/main/java/com/develop/mvp/pk/module/infra/dal/mysql/file/FileConfigMapper.java`
+- `develop-module-infra/develop-module-infra-server/src/main/java/com/develop/mvp/pk/module/infra/dal/mysql/file/FileMapper.java`
+- `develop-module-infra/develop-module-infra-server/src/main/java/com/develop/mvp/pk/module/infra/dal/mysql/file/FileContentMapper.java`
+- `develop-module-infra/develop-module-infra-server/src/main/java/com/develop/mvp/pk/module/infra/dal/mysql/codegen/CodegenTableMapper.java`
+- `develop-module-infra/develop-module-infra-server/src/main/java/com/develop/mvp/pk/module/infra/dal/mysql/codegen/CodegenColumnMapper.java`
+- `develop-module-infra/develop-module-infra-server/src/main/java/com/develop/mvp/pk/module/infra/dal/mysql/logger/ApiAccessLogMapper.java`
+- `develop-module-infra/develop-module-infra-server/src/main/java/com/develop/mvp/pk/module/infra/dal/mysql/logger/ApiErrorLogMapper.java`
+- `develop-module-infra/develop-module-infra-server/src/main/java/com/develop/mvp/pk/module/infra/convert/config/ConfigConvert.java`
+- `develop-module-infra/develop-module-infra-server/src/main/java/com/develop/mvp/pk/module/infra/convert/file/FileConfigConvert.java`
+- `develop-module-infra/develop-module-infra-server/src/main/java/com/develop/mvp/pk/module/infra/convert/codegen/CodegenConvert.java`
 
-```
-com.develop.mvp.pk.module.infra.domain.logger.ApiAccessLog
-```
+### 4.7 Framework, jobs, integrations
 
-**聚合边界**：
-- ApiAccessLog（根实体，只追加，不修改）
+- `develop-module-infra/develop-module-infra-server/src/main/java/com/develop/mvp/pk/module/infra/framework/file/config/DevelopFileAutoConfiguration.java`
+- `develop-module-infra/develop-module-infra-server/src/main/java/com/develop/mvp/pk/module/infra/framework/file/core/client/FileClient.java`
+- `develop-module-infra/develop-module-infra-server/src/main/java/com/develop/mvp/pk/module/infra/framework/file/core/client/FileClientFactory.java`
+- `develop-module-infra/develop-module-infra-server/src/main/java/com/develop/mvp/pk/module/infra/framework/file/core/client/FileClientFactoryImpl.java`
+- `develop-module-infra/develop-module-infra-server/src/main/java/com/develop/mvp/pk/module/infra/framework/file/core/client/db/DBFileClient.java`
+- `develop-module-infra/develop-module-infra-server/src/main/java/com/develop/mvp/pk/module/infra/framework/file/core/client/local/LocalFileClient.java`
+- `develop-module-infra/develop-module-infra-server/src/main/java/com/develop/mvp/pk/module/infra/framework/file/core/client/s3/S3FileClient.java`
+- `develop-module-infra/develop-module-infra-server/src/main/java/com/develop/mvp/pk/module/infra/framework/file/core/client/ftp/FtpFileClient.java`
+- `develop-module-infra/develop-module-infra-server/src/main/java/com/develop/mvp/pk/module/infra/framework/file/core/client/sftp/SftpFileClient.java`
+- `develop-module-infra/develop-module-infra-server/src/main/java/com/develop/mvp/pk/module/infra/framework/file/core/enums/FileStorageEnum.java`
+- `develop-module-infra/develop-module-infra-server/src/main/java/com/develop/mvp/pk/module/infra/framework/file/core/utils/FileTypeUtils.java`
+- `develop-module-infra/develop-module-infra-server/src/main/java/com/develop/mvp/pk/module/infra/framework/codegen/config/CodegenConfiguration.java`
+- `develop-module-infra/develop-module-infra-server/src/main/java/com/develop/mvp/pk/module/infra/framework/codegen/config/CodegenProperties.java`
+- `develop-module-infra/develop-module-infra-server/src/main/java/com/develop/mvp/pk/module/infra/framework/rpc/config/RpcConfiguration.java`
+- `develop-module-infra/develop-module-infra-server/src/main/java/com/develop/mvp/pk/module/infra/job/logger/AccessLogCleanJob.java`
+- `develop-module-infra/develop-module-infra-server/src/main/java/com/develop/mvp/pk/module/infra/job/logger/ErrorLogCleanJob.java`
 
-**领域包**: `domain/logger/`
+### 4.8 Tests
 
-#### ApiErrorLog — API 错误日志
+- `develop-module-infra/develop-module-infra-server/src/test/java/com/develop/mvp/pk/module/infra/service/config/ConfigServiceImplTest.java`
+- `develop-module-infra/develop-module-infra-server/src/test/java/com/develop/mvp/pk/module/infra/service/db/DataSourceConfigServiceImplTest.java`
+- `develop-module-infra/develop-module-infra-server/src/test/java/com/develop/mvp/pk/module/infra/service/db/DatabaseTableServiceImplTest.java`
+- `develop-module-infra/develop-module-infra-server/src/test/java/com/develop/mvp/pk/module/infra/service/file/FileConfigServiceImplTest.java`
+- `develop-module-infra/develop-module-infra-server/src/test/java/com/develop/mvp/pk/module/infra/service/file/FileServiceImplTest.java`
+- `develop-module-infra/develop-module-infra-server/src/test/java/com/develop/mvp/pk/module/infra/service/codegen/CodegenServiceImplTest.java`
+- `develop-module-infra/develop-module-infra-server/src/test/java/com/develop/mvp/pk/module/infra/service/codegen/inner/*.java`
+- `develop-module-infra/develop-module-infra-server/src/test/java/com/develop/mvp/pk/module/infra/service/logger/ApiAccessLogServiceImplTest.java`
+- `develop-module-infra/develop-module-infra-server/src/test/java/com/develop/mvp/pk/module/infra/service/logger/ApiErrorLogServiceImplTest.java`
+- `develop-module-infra/develop-module-infra-server/src/test/java/com/develop/mvp/pk/module/infra/application/db/DataSourceConfigApplicationServiceTest.java`
+- `develop-module-infra/develop-module-infra-server/src/test/java/com/develop/mvp/pk/module/infra/application/file/FileConfigApplicationServiceTest.java`
+- `develop-module-infra/develop-module-infra-server/src/test/java/com/develop/mvp/pk/module/infra/domain/db/DataSourceConfigTest.java`
+- `develop-module-infra/develop-module-infra-server/src/test/java/com/develop/mvp/pk/module/infra/domain/file/FileConfigTest.java`
+- `develop-module-infra/develop-module-infra-server/src/test/java/com/develop/mvp/pk/module/infra/domain/file/FileTest.java`
+- `develop-module-infra/develop-module-infra-server/src/test/java/com/develop/mvp/pk/module/infra/framework/file/core/**/*.java`
+- `develop-module-infra/develop-module-infra-server/src/test/resources/application-unit-test.yaml`
+- `develop-module-infra/develop-module-infra-server/src/test/resources/sql/create_tables.sql`
+- `develop-module-infra/develop-module-infra-server/src/test/resources/sql/clean.sql`
 
-```
-com.develop.mvp.pk.module.infra.domain.logger.ApiErrorLog
-```
+## 5. Fixed Data Model
 
-**聚合边界**：
-- ApiErrorLog（根实体，创建后仅 processStatus 可流转）
+### 5.1 ConfigDO → Config
 
-**领域包**: `domain/logger/`
+`ConfigDO` (`infra_config`, `@TenantIgnore`) fields:
 
-### 3.2 值对象（Value Objects）
+| Field | Type | Meaning | Notes |
+|---|---|---|---|
+| `id` | `Long` | 配置 ID | DB generated |
+| `category` | `String` | 参数分类 | must map |
+| `name` | `String` | 参数名称 | must map |
+| `configKey` | `String` | 参数键名 | not Java `key`; unique |
+| `value` | `String` | 参数值 | must map |
+| `type` | `Integer` | `ConfigTypeEnum` | SYSTEM/CUSTOM |
+| `visible` | `Boolean` | 是否可见 | invisible cannot be exposed through `getConfigValueByKey` |
+| `remark` | `String` | 备注 | must map |
 
-| 聚合 | 值对象 | 类名 | 封装字段 | 不可变 | 自校验 |
-|------|--------|------|---------|--------|--------|
-| Config | 配置ID | `ConfigId` | `Long value` | ✅ | 非空 |
-| Config | 配置键 | `ConfigKey` | `String value` | ✅ | 非空、非空白 |
-| Config | 配置类型 | `ConfigType` | `Integer code` | ✅ | SYSTEM/CUSTOM |
-| Config | 可见性 | `ConfigVisible` | `Boolean visible` | ✅ | VISIBLE/INVISIBLE |
-| DataSourceConfig | 数据源ID | `DataSourceConfigId` | `Long value` | ✅ | 非空 |
-| DataSourceConfig | 数据源名称 | `DataSourceConfigName` | `String value` | ✅ | 非空 |
-| DataSourceConfig | 数据源URL | `DataSourceConfigUrl` | `String value` | ✅ | JDBC URL 格式 |
-| FileConfig | 文件配置ID | `FileConfigId` | `Long value` | ✅ | 非空 |
-| FileConfig | 文件配置名称 | `FileConfigName` | `String value` | ✅ | 非空 |
-| File | 文件ID | `FileId` | `Long value` | ✅ | 非空 |
-| File | 文件配置引用 | `FileConfigRef` | `Long configId` | ✅ | 非空 |
-| Codegen | 表ID | `CodegenTableId` | `Long value` | ✅ | 非空 |
+### 5.2 DataSourceConfigDO → DataSourceConfig
 
-### 3.3 仓储接口（Repository Interfaces）
+`DataSourceConfigDO` (`infra_data_source_config`, `@TenantIgnore`) fields:
 
-所有仓储接口定义在领域层，不依赖任何基础设施（MyBatis/Spring）：
+| Field | Type | Meaning | Notes |
+|---|---|---|---|
+| `ID_MASTER` | `Long = 0L` | runtime master datasource pseudo-id | built from `DynamicDataSourceProperties`, not DB row |
+| `id` | `Long` | 数据源配置 ID | DB generated except master pseudo-id |
+| `name` | `String` | 连接名 | master uses dynamic datasource primary name |
+| `url` | `String` | JDBC URL | connection validation required |
+| `username` | `String` | 用户名 | required for validation |
+| `password` | `String` | 密码 | encrypted by `EncryptTypeHandler` |
+
+### 5.3 FileConfigDO → FileConfig
+
+`FileConfigDO` (`infra_file_config`, `@TenantIgnore`) fields:
+
+| Field | Type | Meaning | Notes |
+|---|---|---|---|
+| `id` | `Long` | 文件配置 ID | DB generated |
+| `name` | `String` | 配置名 | must map |
+| `storage` | `Integer` | `FileStorageEnum` | selects concrete `FileClientConfig` class |
+| `remark` | `String` | 备注 | must map |
+| `master` | `Boolean` | 是否主配置 | only one global master; master cannot be deleted |
+| `config` | `FileClientConfig` | 存储客户端配置 | JSON type handler supports legacy class names |
+
+### 5.4 FileDO → File
+
+`FileDO` (`infra_file`, `@TenantIgnore`) fields:
+
+| Field | Type | Meaning | Notes |
+|---|---|---|---|
+| `id` | `Long` | 文件 ID | DB generated |
+| `configId` | `Long` | 文件配置 ID | controls which client reads/deletes file |
+| `name` | `String` | 原文件名 | empty name fallback uses sha256 |
+| `path` | `String` | 存储路径 | generated path must remain unique |
+| `url` | `String` | 访问地址 | query string stripped before persistence |
+| `type` | `String` | MIME type | infer from content/name if empty |
+| `size` | `Long` | 文件大小 | content length |
+
+### 5.5 CodegenTableDO and CodegenColumnDO
+
+`CodegenTableDO` (`infra_codegen_table`, `@TenantIgnore`) key fields:
+
+| Field | Type | Meaning |
+|---|---|---|
+| `id` | `Long` | 表定义 ID |
+| `dataSourceConfigId` | `Long` | 数据源 ID |
+| `scene` | `Integer` | `CodegenSceneEnum` |
+| `tableName` / `tableComment` / `remark` | `String` | DB 表信息 |
+| `moduleName` / `businessName` / `className` / `classComment` / `author` | `String` | Java 类和业务生成信息 |
+| `templateType` | `Integer` | `CodegenTemplateTypeEnum` |
+| `frontType` | `Integer` | `CodegenFrontTypeEnum` |
+| `parentMenuId` | `Long` | 菜单生成父 ID |
+| `masterTableId` / `subJoinColumnId` / `subJoinMany` | `Long` / `Long` / `Boolean` | 主子表关系 |
+| `treeParentColumnId` / `treeNameColumnId` | `Long` | 树表关系 |
+
+`CodegenColumnDO` (`infra_codegen_column`, `@TenantIgnore`) key fields:
+
+| Field | Type | Meaning |
+|---|---|---|
+| `id` | `Long` | 字段定义 ID |
+| `tableId` | `Long` | 所属表定义 ID |
+| `columnName` / `dataType` / `columnComment` | `String` | DB 字段信息 |
+| `nullable` / `primaryKey` | `Boolean` | DB 约束 |
+| `ordinalPosition` | `Integer` | 字段顺序 |
+| `javaType` / `javaField` | `String` | Java 字段信息 |
+| `dictType` / `example` | `String` | 生成辅助信息 |
+| `createOperation` / `updateOperation` / `listOperation` / `listOperationResult` | `Boolean` | CRUD 生成开关 |
+| `listOperationCondition` | `String` | `CodegenColumnListConditionEnum` |
+| `htmlType` | `String` | `CodegenColumnHtmlTypeEnum` |
+
+### 5.6 Logger DOs
+
+`ApiAccessLogDO` (`infra_api_access_log`) max constants:
+
+- `REQUEST_PARAMS_MAX_LENGTH = 8000`
+- `RESULT_MSG_MAX_LENGTH = 512`
+
+Fields include `traceId`、`userId`、`userType`、`applicationName`、request fields、response fields、operation fields、`beginTime`、`endTime`、`duration`、`resultCode`、`resultMsg`.
+
+`ApiErrorLogDO` (`infra_api_error_log`) max constants:
+
+- `REQUEST_PARAMS_MAX_LENGTH = 8000`
+
+Fields include user/request fields, exception fields, `processStatus`、`processTime`、`processUserId`.
+
+## 6. Required Method Signatures and Capabilities
+
+Required capabilities before replacing legacy entry paths. Signatures describe behavior parity; they do not mean Controller `ReqVO` types belong in final DDD application layer.
+
+### 6.1 API contracts
+
+Current stable contracts must keep method names, paths and return types until an API migration plan says otherwise:
 
 ```java
-// domain/config/repository/ConfigRepository.java
-public interface ConfigRepository {
-    Config save(Config config);
-    void delete(ConfigId id);
-    void deleteByIds(Collection<ConfigId> ids);
-    Config findById(ConfigId id);
-    Optional<Config> findByKey(ConfigKey key);
-    boolean existsByKey(ConfigKey key);
-    PageResult<Config> findPage(ConfigPageQuery query);
-    List<Config> findByIds(Collection<ConfigId> ids);
-    List<Config> findAll();
-}
-
-// domain/db/repository/DataSourceConfigRepository.java
-public interface DataSourceConfigRepository {
-    DataSourceConfig save(DataSourceConfig config);
-    void delete(DataSourceConfigId id);
-    DataSourceConfig findById(DataSourceConfigId id);
-    List<DataSourceConfig> findAll();
-}
-
-// domain/file/repository/FileConfigRepository.java
-public interface FileConfigRepository {
-    FileConfig save(FileConfig config);
-    void delete(FileConfigId id);
-    FileConfig findById(FileConfigId id);
-    FileConfig findMaster();
-    List<FileConfig> findAll();
-    PageResult<FileConfig> findPage(FileConfigPageQuery query);
-    long count();
-}
-
-// domain/file/repository/FileRepository.java
-public interface FileRepository {
-    File save(File file);
-    void delete(FileId id);
-    void deleteByIds(Collection<FileId> ids);
-    File findById(FileId id);
-    List<File> findByIds(Collection<FileId> ids);
-    PageResult<File> findPage(FilePageQuery query);
-}
-
-// domain/codegen/repository/CodegenRepository.java
-public interface CodegenRepository {
-    CodegenTable save(CodegenTable table);
-    void delete(CodegenTableId id);
-    CodegenTable findById(CodegenTableId id);
-    List<CodegenTable> findByDataSourceConfigId(Long dataSourceConfigId);
-    List<CodegenTable> findAll();
-    PageResult<CodegenTable> findPage(CodegenTablePageQuery query);
-    boolean existsByTableNameAndDataSource(String tableName, Long dataSourceConfigId);
-    // Column 子实体通过 CodegenTable 聚合根管理
-    List<CodegenColumn> findColumnsByTableId(CodegenTableId tableId);
-    void saveColumns(List<CodegenColumn> columns);
-    void deleteColumnsByTableId(CodegenTableId tableId);
-    void deleteColumnIds(Set<Long> columnIds);
-}
-
-// domain/logger/repository/ApiAccessLogRepository.java
-public interface ApiAccessLogRepository {
-    void save(ApiAccessLog log);
-    ApiAccessLog findById(Long id);
-    PageResult<ApiAccessLog> findPage(ApiAccessLogPageQuery query);
-    int deleteByCreateTimeLt(LocalDateTime expireDate, Integer limit);
-}
-
-// domain/logger/repository/ApiErrorLogRepository.java
-public interface ApiErrorLogRepository {
-    void save(ApiErrorLog log);
-    ApiErrorLog findById(Long id);
-    PageResult<ApiErrorLog> findPage(ApiErrorLogPageQuery query);
-    void updateProcessStatus(Long id, Integer processStatus, Long processUserId, LocalDateTime processTime);
-    int deleteByCreateTimeLt(LocalDateTime expireDate, Integer limit);
-}
+CommonResult<String> ConfigApi.getConfigValueByKey(String key);
+CommonResult<String> FileApi.createFile(FileCreateReqDTO createReqDTO);
+CommonResult<String> FileApi.presignGetUrl(String url, Integer expirationSeconds);
+CommonResult<Boolean> WebSocketSenderApi.send(WebSocketSendReqDTO message);
 ```
 
-### 3.4 领域事件（Domain Events）
+Default helper methods on `FileApi` and `WebSocketSenderApi` are part of caller ergonomics and must continue to work after local/remote split.
 
-| 聚合 | 事件 | 触发时机 | 携带数据 | 消费者 |
-|------|------|---------|---------|--------|
-| Config | `ConfigCreatedEvent` | 创建配置后 | configId, configKey | 操作日志 |
-| Config | `ConfigUpdatedEvent` | 更新配置后 | configId, configKey | 操作日志、缓存刷新 |
-| Config | `ConfigDeletedEvent` | 删除配置后 | configId, configKey | 操作日志、缓存刷新 |
-| DataSourceConfig | `DataSourceConfigCreatedEvent` | 创建数据源后 | dataSourceConfigId | 操作日志、数据源注册 |
-| DataSourceConfig | `DataSourceConfigDeletedEvent` | 删除数据源后 | dataSourceConfigId | 操作日志、数据源注销 |
-| FileConfig | `FileConfigCreatedEvent` | 创建文件配置后 | fileConfigId | 操作日志 |
-| FileConfig | `FileConfigDeletedEvent` | 删除文件配置后 | fileConfigId | 操作日志、客户端清理 |
-| FileConfig | `FileConfigMasterChangedEvent` | Master 配置变更后 | fileConfigId | 操作日志、master 缓存刷新 |
-| File | `FileUploadedEvent` | 文件上传成功后 | fileId, fileName, url | 操作日志 |
-| File | `FileDeletedEvent` | 文件删除后 | fileId, path, configId | 操作日志 |
-| Codegen | `CodegenCreatedEvent` | 代码生成表创建后 | tableId, tableName | 操作日志 |
-| Codegen | `CodegenDeletedEvent` | 代码生成表删除后 | tableId, tableName | 操作日志 |
+### 6.2 Config capabilities
 
-### 3.5 工厂（Factories）
-
-每个聚合根对应一个工厂类，职责：
-- `create()`: 创建新聚合（不含 ID 的场景）
-- `reconstitute()`: 从持久化数据重建聚合
-
-```
-infrastructure/{aggregate}/
-  {Aggregate}Factory.java    # 工厂，create() + reconstitute()
+```java
+Long createConfig(String key, String value, String name, String category, Integer type, Boolean visible, String remark);
+void updateConfig(Long id, String key, String value, String name, String category, Integer type, Boolean visible, String remark);
+void deleteConfig(Long id);
+void deleteConfigList(List<Long> ids);
+Config getConfig(Long id);
+Config getConfigByKey(String key);
+String getConfigValueByKey(String key);
+PageResult<Config> getConfigPage(String name, String configKey, Integer type, LocalDateTime[] createTime, Integer pageNo, Integer pageSize);
 ```
 
-## 4. 职责边界
+### 6.3 DataSourceConfig capabilities
 
-### 4.1 各聚合根必须负责的规则
-
-#### Config 聚合根规则
-
-| 规则编号 | 规则描述 | 对应原代码位置 |
-|---------|---------|-------------|
-| R-C01 | 系统内置配置（type=SYSTEM）不可删除 | `ConfigServiceImpl.java:61-63` — 校验 `config.getType()` 是否为 `SYSTEM`，是则抛 `CONFIG_CAN_NOT_DELETE_SYSTEM_TYPE` |
-| R-C02 | 参数配置键（key）在全局不可重复 | `ConfigServiceImpl.java:110-121` — `validateConfigKeyUnique()` 通过 `selectByKey()` 校验唯一性 |
-| R-C03 | 不可见配置（visible=false）不允许返回给前端 | `ConfigServiceImpl` 调用层可见，通过 `ConfigVisible` 值对象控制 |
-| R-C04 | 创建时默认 type=CUSTOM | `ConfigServiceImpl.java:39` — `config.setType(ConfigTypeEnum.CUSTOM.getType())` |
-
-#### DataSourceConfig 聚合根规则
-
-| 规则编号 | 规则描述 | 对应原代码位置 |
-|---------|---------|-------------|
-| R-D01 | Master（ID=0）数据源为系统内置，从动态数据源配置构建 | `DataSourceConfigServiceImpl.java:80-82` — `Objects.equals(id, DataSourceConfigDO.ID_MASTER)` 时调用 `buildMasterDataSourceConfig()` |
-| R-D02 | 创建/更新时必须校验连接是否可达 | `DataSourceConfigServiceImpl.java:95-99` — `validateConnectionOK()` 使用 `JdbcUtils.isConnectionOK()` |
-| R-D03 | 列表查询时，Master 数据源始终排第一 | `DataSourceConfigServiceImpl.java:91` — `result.add(0, buildMasterDataSourceConfig())` |
-
-#### FileConfig 聚合根规则
-
-| 规则编号 | 规则描述 | 对应原代码位置 |
-|---------|---------|-------------|
-| R-FC01 | 全局只能有一个 Master 文件配置 | `FileConfigServiceImpl.java:103-108` — `updateFileConfigMaster()` 先将所有配置设为 `master=false`，再设指定配置为 `master=true` |
-| R-FC02 | Master 文件配置不可删除 | `FileConfigServiceImpl.java:129-131` — `if (Boolean.TRUE.equals(config.getMaster()))` 抛 `FILE_CONFIG_DELETE_FAIL_MASTER` |
-| R-FC03 | 创建时默认非 Master | `FileConfigServiceImpl.java:81-82` — `.setMaster(false)` |
-| R-FC04 | 更新文件配置后需清空 `FileClient` 缓存 | `FileConfigServiceImpl.java:97` — `clearCache()` 使 `clientCache` 失效 |
-| R-FC05 | 文件存储配置变更时需校验配置参数有效性（JSON 反序列化 + Validation） | `FileConfigServiceImpl.java:114-123` — `parseClientConfig()` 完成 `JsonUtils.parseObject2()` + `ValidationUtils.validate()` |
-
-#### File 聚合根规则
-
-| 规则编号 | 规则描述 | 对应原代码位置 |
-|---------|---------|-------------|
-| R-F01 | 文件上传始终使用 Master 文件客户端 | `FileServiceImpl.java:92-93` — `fileConfigService.getMasterFileClient()` |
-| R-F02 | 文件路径生成需保证唯一性（日期前缀 + 可选时间戳后缀） | `FileServiceImpl.java:104-138` — `generateUploadPath()` 包含日期前缀和时间戳后缀 |
-| R-F03 | type 为空时需从内容推导 MIME 类型 | `FileServiceImpl.java:74-75` — `FileTypeUtils.getMineType(content, name)` |
-| R-F04 | name 为空时使用 SHA256 作为文件名 | `FileServiceImpl.java:78-79` — `DigestUtil.sha256Hex(content)` |
-| R-F05 | name 无后缀时补充 MIME 类型对应后缀 | `FileServiceImpl.java:81-87` — `FileTypeUtils.getExtension(type)` |
-| R-F06 | 删除文件时需同时从对象存储删除底层文件 | `FileServiceImpl.java:179-181` — `client.delete(file.getPath())` |
-
-#### CodegenTable 聚合根规则
-
-| 规则编号 | 规则描述 | 对应原代码位置 |
-|---------|---------|-------------|
-| R-G01 | 同一数据源下不允许重复导入表 | `CodegenServiceImpl.java:88-91` — `selectByTableNameAndDataSourceConfigId()` 校验已存在则 `throw CODEGEN_TABLE_EXISTS` |
-| R-G02 | 导入时必须校验表注释、字段、字段注释非空 | `CodegenServiceImpl.java:112-127` — `validateTableInfo()` |
-| R-G03 | 更新主子表时，主表/子表/关联字段必须存在 | `CodegenServiceImpl.java:137-145` — 模板类型为 SUB 时校验 `masterTableId` 和 `subJoinColumnId` |
-| R-G04 | 主子表代码生成时，子表必须存在且关联字段有效 | `CodegenServiceImpl.java:275-291` — 主表模板类型校验 `subTables` 非空及关联字段 |
-| R-G05 | 代码生成时，除子表外必须有字段 | `CodegenServiceImpl.java:268-269` — `CollUtil.isEmpty(columns)` 抛 `CODEGEN_COLUMN_NOT_EXISTS` |
-| R-G06 | 从数据库同步时，无变化则跳过 | `CodegenServiceImpl.java:204-206` — 无新增/删除字段时抛 `CODEGEN_SYNC_NONE_CHANGE` |
-| R-G07 | 同步时对比 JDBC 类型、可空性、主键、注释、排序号确定变更字段 | `CodegenServiceImpl.java:180-196` — `primaryKeyPredicate` 逐字段比较 |
-| R-G08 | 删除表定义时，同步删除其所有列定义 | `CodegenServiceImpl.java:228` — `codegenColumnMapper.deleteListByTableId(tableId)` |
-| R-G09 | 创建时默认 scene=ADMIN、frontType 使用全局配置 | `CodegenServiceImpl.java:96-97` — |
-| R-G10 | 无主键表使用第一个字段作为主键 | `CodegenServiceImpl.java:104-105` — `columns.get(0).setPrimaryKey(true)` |
-
-#### ApiErrorLog 聚合根规则
-
-| 规则编号 | 规则描述 | 对应原代码位置 |
-|---------|---------|-------------|
-| R-E01 | 创建时默认 processStatus=INIT | `ApiErrorLogServiceImpl.java:40-41` — `.setProcessStatus(ApiErrorLogProcessStatusEnum.INIT.getStatus())` |
-| R-E02 | 处理时只能从 INIT 状态流转到 DONE/IGNORE | `ApiErrorLogServiceImpl.java:72-73` — 非 INIT 状态抛 `API_ERROR_LOG_PROCESSED` |
-| R-E03 | 兜底处理：日志记录异常时仅打印日志，不抛异常 | `ApiErrorLogServiceImpl.java:50-53` — catch Exception，`log.error()` |
-| R-E04 | 周期性清理超过指定天数的日志 | `ApiErrorLogServiceImpl.java:82-95` — `cleanErrorLog()` 循环删除 |
-| R-E05 | 请求参数字段超过最大长度时截断 | `ApiErrorLogServiceImpl.java:42` — `StrUtils.maxLength()` |
-
-#### ApiAccessLog 聚合根规则
-
-| 规则编号 | 规则描述 | 对应原代码位置 |
-|---------|---------|-------------|
-| R-A01 | 请求参数和结果消息超过最大长度时截断 | `ApiAccessLogServiceImpl.java:38-39` — `StrUtils.maxLength()` |
-| R-A02 | 周期性清理超过指定天数的日志 | `ApiAccessLogServiceImpl.java:60-73` — `cleanAccessLog()` 循环删除 |
-| R-A03 | 无租户上下文时忽略租户插入 | `ApiAccessLogServiceImpl.java:43-45` — `TenantUtils.executeIgnore()` |
-
-### 4.2 严禁外泄的职责
-
-| 禁止行为 | 原因 | 应由谁处理 |
-|---------|------|----------|
-| 直接调用 Mapper/操作 DO | 破坏持久化无关性 | RepositoryImpl |
-| 直接操作 FileClient（文件存储客户端） | 基础设施框架关注点 | ApplicationService 委托 FileClientFactory |
-| 处理 JSON 序列化/反序列化 | 基础设施关注点 | ApplicationService/Convert |
-| 管理 DataSource 注册/注销 | 动态数据源框架关注点 | Infrastructure 层 |
-| 处理代码生成模板引擎 | 基础设施关注点 | CodegenEngine（infrastructure） |
-| 处理缓存失效逻辑 | 基础设施关注点 | ApplicationService |
-| 租户上下文处理 | 横切关注点 | 拦截器/ApplicationService |
-| Excel 导入导出 | 表示层关注点 | Controller/Convert |
-
-## 5. 依赖与协作
-
-### 5.1 领域层依赖（向内）
-
-每个聚合根仅依赖：
-- 自身值对象
-- 仓储接口（Repository）
-- 领域事件接口（DomainEventPublisher）
-
-### 5.2 跨聚合协作（仅通过 ID 引用）
-
-| 源聚合 | 目标聚合 | 引用方式 | 协作场景 |
-|-------|---------|---------|---------|
-| File | FileConfig | `configId: Long` | 上传时通过 configId 获取 FileClient |
-| CodegenTable | DataSourceConfig | `dataSourceConfigId: Long` | 生成代码时获取数据库方言 |
-
-### 5.3 基础设施依赖（向外，通过接口倒置）
-
-```
-领域层定义接口                         基础设施层实现
-─────────────                         ──────────────
-ConfigRepository          ←──         ConfigRepositoryImpl (委托 ConfigMapper)
-DataSourceConfigRepository ←──        DataSourceConfigRepositoryImpl (委托 DataSourceConfigMapper)
-FileConfigRepository      ←──         FileConfigRepositoryImpl (委托 FileConfigMapper)
-FileRepository            ←──         FileRepositoryImpl (委托 FileMapper)
-CodegenRepository         ←──         CodegenRepositoryImpl (委托 CodegenTableMapper + CodegenColumnMapper)
-ApiAccessLogRepository    ←──         ApiAccessLogRepositoryImpl (委托 ApiAccessLogMapper)
-ApiErrorLogRepository     ←──         ApiErrorLogRepositoryImpl (委托 ApiErrorLogMapper)
-DomainEventPublisher      ←──         SpringDomainEventPublisher (委托 Spring ApplicationEventPublisher)
+```java
+Long createDataSourceConfig(String name, String url, String username, String password);
+void updateDataSourceConfig(Long id, String name, String url, String username, String password);
+void deleteDataSourceConfig(Long id);
+void deleteDataSourceConfigList(List<Long> ids);
+DataSourceConfig getDataSourceConfig(Long id);
+List<DataSourceConfig> getDataSourceConfigList();
 ```
 
-## 6. 不变式与约束（Invariants）
+`id == DataSourceConfigDO.ID_MASTER` / `DataSourceConfig.ID_MASTER` must return runtime master datasource from `DynamicDataSourceProperties`, not DB.
 
-| 编号 | 不变式 | 聚合 | 类型 | 验证点 |
-|------|--------|------|------|--------|
-| I01 | Config 的 key 在全局不可重复 | Config | 跨聚合唯一性 | 创建/修改时 |
-| I02 | SYSTEM 类型的 Config 永久存在，不可删除 | Config | 聚合内部 | 删除时 |
-| I03 | Config 的 type 只能是 SYSTEM(1) 或 CUSTOM(2) | Config | 值对象 | 创建/修改时 |
-| I04 | 全局有且仅有一个 Master FileConfig | FileConfig | 跨聚合唯一性 | 设置 Master 时 |
-| I05 | Master FileConfig 不可删除 | FileConfig | 聚合内部 | 删除时 |
-| I06 | File 删除时，底层存储文件必须同时删除 | File | 聚合外部 | 删除时 |
-| I07 | 同一数据源下 CodegenTable 的表名不可重复 | Codegen | 跨聚合唯一性 | 导入时 |
-| I08 | 主子表模板中，子表必须通过 subJoinColumnId 关联主表 | Codegen | 聚合间约束 | 更新/生成时 |
-| I09 | 代码生成时，CodegenTable 必须有至少一个 CodegenColumn | Codegen | 聚合内部 | 生成时 |
-| I10 | ApiErrorLog 的 processStatus 只能从 INIT 流转到 DONE/IGNORE，不可逆行 | ApiErrorLog | 聚合内部 | 处理时 |
-| I11 | ApiAccessLog/ApiErrorLog 的记录操作异常不可影响主业务流程 | 日志 | 应用层约束 | 创建时 |
-| I12 | DataSourceConfig 创建/更新时必须可连接 | DataSourceConfig | 聚合内部 | 创建/修改时 |
-| I13 | Master 数据源（ID=0）由基础设施管理，不可通过 DB 操作 | DataSourceConfig | 基础设施约束 | 查询/列表时 |
-| I14 | 从 DB 同步 Codegen 字段时，已有字段的 ID 不可变更 | Codegen | 聚合内部 | 同步时 |
-| I15 | 文件路径生成必须保证唯一性，避免覆盖 | File | 聚合内部 | 上传时 |
+### 6.4 FileConfig and File capabilities
 
-## 7. 验收标准
+```java
+Long createFileConfig(String name, Integer storage, Boolean master, Map<String, Object> clientConfig, String remark);
+void updateFileConfig(Long id, String name, Integer storage, Map<String, Object> clientConfig, String remark);
+void updateFileConfigMaster(Long id);
+void deleteFileConfig(Long id);
+void deleteFileConfigList(List<Long> ids);
+FileConfig getFileConfig(Long id);
+PageResult<FileConfig> getFileConfigPage(String name, Integer storage, LocalDateTime[] createTime, Integer pageNo, Integer pageSize);
+String testFileConfig(Long id) throws Exception;
 
-| 编号 | 验收标准 | 验证方法 |
-|------|---------|---------|
-| AC01 | Config、DataSourceConfig、FileConfig、File、CodegenTable、CodegenColumn、ApiAccessLog、ApiErrorLog 均无 MyBatis 注解（`@TableName`、`@TableId`等） | 代码审查 |
-| AC02 | 所有聚合根无 Spring 注解（`@Component`、`@Service` 等） | 代码审查 |
-| AC03 | 所有值对象是 final class，字段是 final，无 setter | 代码审查 |
-| AC04 | 所有仓储接口在 `domain/{aggregate}/repository/` 包中，不 import MyBatis 类 | 代码审查 |
-| AC05 | 所有 RepositoryImpl 在 `infrastructure/{aggregate}/` 包中，import MyBatis 类并负责 DO 与领域模型映射 | 代码审查 |
-| AC06 | ApplicationService 在 `application/{aggregate}/` 包中，使用 `@Transactional` 管理事务 | 代码审查 |
-| AC07 | 领域事件由 ApplicationService 的 `save()` 后统一发布 | 代码审查 |
-| AC08 | ConfigServiceImpl/FileConfigServiceImpl 等旧 Service 仅保留编排逻辑，所有业务规则迁移到对应聚合根或值对象 | 代码审查 |
-| AC09 | FileClient 的获取委托给 FileConfigRepository，不直接在 File 聚合中操作 | 代码审查 |
-| AC10 | CodegenServiceImpl 的 `validateTableInfo()` 等校验逻辑迁移到 CodegenTable 聚合根 | 代码审查 |
-| AC11 | ApiErrorLog 的 `processStatus` 状态流转封装为 `markProcessed()/markIgnored()` 业务方法 | 代码审查 |
-| AC12 | 日志记录的兜底异常处理（catch Exception 仅打印日志）在 ApplicationService 层完成 | 代码审查 |
-| AC13 | Config 的可见性控制由 `ConfigVisible` 值对象的 `isVisible()` 方法负责 | 代码审查 |
-| AC14 | ConfigKey 值对象内封装 key 的格式校验（非空、非空白） | 代码审查 |
-| AC15 | 编译通过，原有 Controller 行为无回归 | 运行测试 |
-| AC16 | ConfigController、FileController 等控制器的接口返回与重构前一致 | 集成测试 |
-
-## 8. 目录结构规划（重构后）
-
-```
-develop-module-infra/develop-module-infra-server/src/main/java/com/develop/mvp/pk/module/infra/
-├── domain/                                              # 领域层
-│   ├── config/
-│   │   ├── Config.java                                  # 聚合根
-│   │   ├── valueobject/
-│   │   │   ├── ConfigId.java
-│   │   │   ├── ConfigKey.java
-│   │   │   ├── ConfigType.java
-│   │   │   └── ConfigVisible.java
-│   │   ├── event/
-│   │   │   ├── ConfigCreatedEvent.java
-│   │   │   ├── ConfigUpdatedEvent.java
-│   │   │   └── ConfigDeletedEvent.java
-│   │   └── repository/
-│   │       ├── ConfigRepository.java
-│   │       └── ConfigPageQuery.java
-│   ├── db/
-│   │   ├── DataSourceConfig.java                        # 聚合根
-│   │   ├── valueobject/
-│   │   │   ├── DataSourceConfigId.java
-│   │   │   ├── DataSourceConfigName.java
-│   │   │   └── DataSourceConfigUrl.java
-│   │   ├── event/
-│   │   │   ├── DataSourceConfigCreatedEvent.java
-│   │   │   └── DataSourceConfigDeletedEvent.java
-│   │   └── repository/
-│   │       └── DataSourceConfigRepository.java
-│   ├── file/
-│   │   ├── FileConfig.java                              # 聚合根
-│   │   ├── File.java                                    # 聚合根
-│   │   ├── valueobject/
-│   │   │   ├── FileConfigId.java
-│   │   │   ├── FileConfigName.java
-│   │   │   └── FileId.java
-│   │   ├── event/
-│   │   │   ├── FileConfigCreatedEvent.java
-│   │   │   ├── FileConfigDeletedEvent.java
-│   │   │   ├── FileConfigMasterChangedEvent.java
-│   │   │   ├── FileUploadedEvent.java
-│   │   │   └── FileDeletedEvent.java
-│   │   └── repository/
-│   │       ├── FileConfigRepository.java
-│   │       ├── FileConfigPageQuery.java
-│   │       ├── FileRepository.java
-│   │       └── FilePageQuery.java
-│   ├── codegen/
-│   │   ├── CodegenTable.java                            # 聚合根
-│   │   ├── CodegenColumn.java                           # 聚合内部实体
-│   │   ├── event/
-│   │   │   ├── CodegenCreatedEvent.java
-│   │   │   └── CodegenDeletedEvent.java
-│   │   └── repository/
-│   │       ├── CodegenRepository.java
-│   │       └── CodegenTablePageQuery.java
-│   └── logger/
-│       ├── ApiAccessLog.java                            # 聚合根
-│       ├── ApiErrorLog.java                             # 聚合根
-│       └── repository/
-│           ├── ApiAccessLogRepository.java
-│           ├── ApiAccessLogPageQuery.java
-│           ├── ApiErrorLogRepository.java
-│           └── ApiErrorLogPageQuery.java
-├── application/                                         # 应用层
-│   ├── config/
-│   │   └── ConfigApplicationService.java
-│   ├── db/
-│   │   └── DataSourceConfigApplicationService.java
-│   ├── file/
-│   │   ├── FileConfigApplicationService.java
-│   │   └── FileApplicationService.java
-│   ├── codegen/
-│   │   └── CodegenApplicationService.java
-│   └── logger/
-│       ├── ApiAccessLogApplicationService.java
-│       └── ApiErrorLogApplicationService.java
-├── infrastructure/                                      # 基础设施层
-│   ├── config/
-│   │   └── ConfigRepositoryImpl.java
-│   ├── db/
-│   │   └── DataSourceConfigRepositoryImpl.java
-│   ├── file/
-│   │   ├── FileConfigRepositoryImpl.java
-│   │   └── FileRepositoryImpl.java
-│   ├── codegen/
-│   │   └── CodegenRepositoryImpl.java
-│   └── logger/
-│       ├── ApiAccessLogRepositoryImpl.java
-│       └── ApiErrorLogRepositoryImpl.java
-├── controller/                                          # 接口层（保留）
-│   ├── admin/config/
-│   ├── admin/db/
-│   ├── admin/file/
-│   ├── admin/codegen/
-│   └── admin/logger/
-├── dal/                                                 # 数据访问层（保留，重构为 RepositoryImpl 的底层委托）
-│   ├── dataobject/
-│   └── mysql/
-└── convert/                                             # 转换层（保留）
+String createFile(byte[] content, String name, String directory, String type) throws Exception;
+String presignGetUrl(String url, Integer expirationSeconds) throws Exception;
+String presignPutUrl(String path, Integer expirationSeconds) throws Exception;
+void deleteFile(Long id) throws Exception;
+void deleteFileList(List<Long> ids) throws Exception;
+byte[] getFileContent(Long configId, String path) throws Exception;
+PageResult<File> getFilePage(...);
 ```
 
-## 9. 回滚条件
+### 6.5 Codegen capabilities
 
-如果以下任一情况发生，应回滚当前修改并重新分析：
+Legacy `CodegenServiceImpl` behavior must be preserved before Controller replacement:
 
-1. 编译失败（修改后的 `ConfigApplicationService` 等无法被 Controller 注入）
-2. 聚合根内部注入了 Mapper/DO 等基础设施依赖
-3. 值对象存在 setter 或可变字段
-4. 业务规则从聚合根泄漏回旧的 Service 层
-5. 跨聚合操作（如 File 删除时也需操作 FileConfig）未通过领域事件或仓储协作解耦
-6. ConfigController.getConfigByKey() 等查询接口返回格式改变（影响前端）
-7. 文件上传/下载行为出现回归（文件内容、路径、预签名 URL 等）
-8. 代码生成功能无法正常生成代码
-9. ApiErrorLog/ApiAccessLog 的记录丢失或兜底处理失效
-10. 旧模块单元测试回归失败
+```java
+List<Long> createCodegenList(Long dataSourceConfigId, List<String> tableNames);
+void updateCodegen(CodegenUpdateReqVO updateReqVO);
+void syncCodegenFromDB(Long tableId);
+void deleteCodegen(Long id);
+void deleteCodegenList(List<Long> ids);
+Map<String, String> generationCodes(Long tableId);
+PageResult<CodegenTableDO> getCodegenTablePage(CodegenPageReqVO pageReqVO);
+List<DatabaseTableRespVO> getDatabaseTableList(Long dataSourceConfigId, String name, String comment);
+```
 
-## 10. 分步执行计划
+### 6.6 Logger capabilities
 
-按聚合根复杂度排序，从独立简单聚合开始，降低风险：
+```java
+void createApiAccessLog(ApiAccessLogCreateReqDTO createDTO);
+PageResult<ApiAccessLog> getApiAccessLogPage(ApiAccessLogPageQuery query);
+Integer cleanAccessLog(Integer exceedDay, Integer deleteLimit);
 
-### 阶段 1：ApiAccessLog + ApiErrorLog（最简单，纯记录型）
-- 值对象创建（ApiAccessLogId、ApiErrorLogId 等）
-- 聚合根创建（封装 processStatus 流转、createTime 等）
-- 仓储接口 + RepositoryImpl
-- 保留现有清理逻辑（cleanAccessLog/cleanErrorLog）在 ApplicationService 中
+void createApiErrorLog(ApiErrorLogCreateReqDTO createDTO);
+void processApiErrorLog(Long id, Integer processStatus, Long processUserId);
+PageResult<ApiErrorLog> getApiErrorLogPage(ApiErrorLogPageQuery query);
+Integer cleanErrorLog(Integer exceedDay, Integer deleteLimit);
+```
 
-### 阶段 2：Config（独立型）
-- ConfigId、ConfigKey、ConfigType、ConfigVisible 值对象
-- Config 聚合根（updateProfile、isSystemType、markDeleted、pullEvents）
-- ConfigRepository 接口 + ConfigRepositoryImpl
-- ConfigApplicationService 编排
+Error log creation must catch/log failures in production logging path so API error logging never breaks the caller.
 
-### 阶段 3：DataSourceConfig（独立型）
-- DataSourceConfigId、DataSourceConfigName、DataSourceConfigUrl 值对象
-- DataSourceConfig 聚合根
-- DataSourceConfigRepository
-- 注意：Master 数据源（ID=0）不存储到 DB，由 ApplicationService 处理
+## 7. Business Rules
 
-### 阶段 4：FileConfig + File（相依型）
-- FileConfigId、FileConfigName、FileId 值对象
-- FileConfig 聚合根（master 管理）
-- File 聚合根（path 生成封装）
-- FileConfigRepository、FileRepository
-- FileApplicationService 编排上传/删除（涉及跨 File-FileConfig 协作）
+### 7.1 Config
 
-### 阶段 5：CodegenTable + CodegenColumn（复杂主子表型）
-- CodegenTableId 值对象
-- CodegenTable 聚合根 + CodegenColumn 子实体
-- CodegenRepository（管理 table + column 生命周期）
-- CodegenApplicationService（编排同步、生成等复杂逻辑）
+| Rule | Layer | Required behavior |
+|---|---|---|
+| INF-CFG-01 | application/domain | create/update validates global key uniqueness, excluding current id on update |
+| INF-CFG-02 | application/domain | create defaults type to `CUSTOM` where legacy create path does so |
+| INF-CFG-03 | application/domain | SYSTEM config cannot be deleted individually or in batch |
+| INF-CFG-04 | application/API | `getConfigValueByKey` returns `null` when missing |
+| INF-CFG-05 | application/API | `getConfigValueByKey` throws `CONFIG_GET_VALUE_ERROR_IF_VISIBLE` for invisible config |
+| INF-CFG-06 | API | stable contract path remains `/infra/config/get-value-by-key` until API migration plan changes it |
 
-### 阶段 6：适配 Controller，精简旧 Service
-- Controller 注入 ApplicationService 替代旧 Service
-- 移除从旧 Service 迁移到聚合根的重复逻辑
-- 更新 Convert 层（DO 与领域模型互转）
+### 7.2 DataSourceConfig
 
-### 阶段 7：编译验证 + 集成测试
-- 全量编译
-- 运行原有单元测试
-- 手动测试关键业务路径（上传、代码生成、日志处理）
+| Rule | Layer | Required behavior |
+|---|---|---|
+| INF-DB-01 | application | create/update validates JDBC connectivity through `JdbcUtils.isConnectionOK` |
+| INF-DB-02 | application | `id == 0L` returns master datasource from `DynamicDataSourceProperties` |
+| INF-DB-03 | application | datasource list prepends master datasource before DB records |
+| INF-DB-04 | infrastructure | password remains encrypted/decrypted through `EncryptTypeHandler` at DO layer |
+
+### 7.3 FileConfig and File
+
+| Rule | Layer | Required behavior |
+|---|---|---|
+| INF-FC-01 | application/infrastructure | file client cache uses master pseudo-key `0L` in legacy path |
+| INF-FC-02 | application | create file config defaults master to false unless caller explicitly supports master behavior with equivalent semantics |
+| INF-FC-03 | application | update config invalidates the specific client cache and master cache if needed |
+| INF-FC-04 | application | setting master clears all current masters, then sets target master in one transaction |
+| INF-FC-05 | application | deleting master config throws `FILE_CONFIG_DELETE_FAIL_MASTER` |
+| INF-FC-06 | application | `testFileConfig` must upload `file/erweima.jpg` using target `FileClient` and return uploaded URL; returning only `test ok` is not production-equivalent |
+| INF-F-01 | application | file upload uses master file client |
+| INF-F-02 | domain/application | empty MIME type is inferred from content/name |
+| INF-F-03 | domain/application | empty name uses SHA256 of content |
+| INF-F-04 | domain/application | name without extension appends extension from MIME type when available |
+| INF-F-05 | domain/application | generated path keeps date prefix behavior and uniqueness behavior |
+| INF-F-06 | application/infrastructure | persisted URL removes query string |
+| INF-F-07 | application/infrastructure | delete removes object storage content before deleting DB metadata |
+| INF-F-08 | API | `FileApi.createFile` returns file URL/path exactly as before; caller default methods keep working |
+
+### 7.4 Codegen
+
+| Rule | Layer | Required behavior |
+|---|---|---|
+| INF-CG-01 | application | importing table validates table exists and columns exist |
+| INF-CG-02 | application/domain | table name must be unique per datasource |
+| INF-CG-03 | application/domain | table comment and column comments are required |
+| INF-CG-04 | application | create defaults scene to `ADMIN` and front type from `CodegenProperties` |
+| INF-CG-05 | application/domain | if DB table has no primary key, first column is marked primary key |
+| INF-CG-06 | application/domain | sub-table template requires existing master table and join column |
+| INF-CG-07 | application | sync compares DB metadata and throws `CODEGEN_SYNC_NONE_CHANGE` if nothing changed |
+| INF-CG-08 | application/infrastructure | sync preserves existing column IDs where matching fields remain |
+| INF-CG-09 | application | delete removes table definition and all column definitions in one transaction |
+| INF-CG-10 | application | generation validates columns exist, resolves DB type, loads sub tables, validates sub join columns, then delegates to `CodegenEngine` |
+| INF-CG-11 | application | `DatabaseTableServiceImpl` must continue excluding views and configured system/workflow/job tables where current code does so |
+
+### 7.5 Logger
+
+| Rule | Layer | Required behavior |
+|---|---|---|
+| INF-LOG-01 | application | access log truncates `requestParams` to 8000 and `resultMsg` to 512 |
+| INF-LOG-02 | application | error log truncates `requestParams` to 8000 |
+| INF-LOG-03 | application | log insert with no tenant context uses `TenantUtils.executeIgnore(...)` |
+| INF-LOG-04 | application | error log create defaults `processStatus` to `INIT` |
+| INF-LOG-05 | domain/application | error log can be processed only from INIT to DONE/IGNORE |
+| INF-LOG-06 | application | access/error clean jobs delete in batches until deleted count is below limit |
+| INF-LOG-07 | application | API error log creation failure logs and swallows exception in production logging path |
+
+### 7.6 WebSocket
+
+| Rule | Layer | Required behavior |
+|---|---|---|
+| INF-WS-01 | API/application | if `sessionId` present, send by session |
+| INF-WS-02 | API/application | else if `userType` and `userId` present, send to user |
+| INF-WS-03 | API/application | else if only `userType` present, broadcast to user type |
+| INF-WS-04 | API/application | current implementation returns `CommonResult.success(true)` even when no route matched |
+| INF-WS-05 | API | object helper methods serialize content with `JsonUtils.toJsonString` |
+
+## 8. Error Code Contract
+
+| Scenario | ErrorCodeConstants | Parameters | Throw layer |
+|---|---|---|---|
+| Config not found | `CONFIG_NOT_EXISTS` | none | application/service |
+| Config key duplicate | `CONFIG_KEY_DUPLICATE` | none | application/service |
+| Delete system config | `CONFIG_CAN_NOT_DELETE_SYSTEM_TYPE` | none | application/service |
+| Read invisible config value | `CONFIG_GET_VALUE_ERROR_IF_VISIBLE` | none | API/application |
+| File config not found | `FILE_CONFIG_NOT_EXISTS` | none | application/service |
+| Delete master file config | `FILE_CONFIG_DELETE_FAIL_MASTER` | none | application/service |
+| File not found | `FILE_NOT_EXISTS` | none | application/service |
+| Empty file content | `FILE_IS_EMPTY` | none | boundary/application when enforced |
+| Datasource config not found | `DATA_SOURCE_CONFIG_NOT_EXISTS` | none | application/service |
+| Datasource connection invalid | `DATA_SOURCE_CONFIG_NOT_OK` | none | application/service |
+| Codegen table duplicate | `CODEGEN_TABLE_EXISTS` | none | application/service |
+| Imported table missing | `CODEGEN_IMPORT_TABLE_NULL` | none | application/service |
+| Imported columns missing | `CODEGEN_IMPORT_COLUMNS_NULL` | none | application/service |
+| Codegen table not found | `CODEGEN_TABLE_NOT_EXISTS` | none | application/service |
+| Codegen column missing | `CODEGEN_COLUMN_NOT_EXISTS` | none | application/service |
+| Sync columns missing | `CODEGEN_SYNC_COLUMNS_NULL` | none | application/service |
+| Sync no changes | `CODEGEN_SYNC_NONE_CHANGE` | none | application/service |
+| DB table comment missing | `CODEGEN_TABLE_INFO_TABLE_COMMENT_IS_NULL` | none | application/service |
+| DB column comment missing | `CODEGEN_TABLE_INFO_COLUMN_COMMENT_IS_NULL` | column name | application/service |
+| Master table missing | `CODEGEN_MASTER_TABLE_NOT_EXISTS` | master table id | application/service |
+| Sub join column missing | `CODEGEN_SUB_COLUMN_NOT_EXISTS` | column id | application/service |
+| Master generation without sub table | `CODEGEN_MASTER_GENERATION_FAIL_NO_SUB_TABLE` | none | application/service |
+| API error log not found | `API_ERROR_LOG_NOT_FOUND` | none | application/service |
+| API error log already processed | `API_ERROR_LOG_PROCESSED` | none | application/service |
+
+Current duplicate-code note: `CODEGEN_TABLE_EXISTS` and `CODEGEN_IMPORT_COLUMNS_NULL` both use numeric code `1_001_004_002`; preserve this external behavior unless a separate error-code migration is approved.
+
+## 9. Transaction Contract
+
+| Use case | Required transaction |
+|---|---|
+| Config create/update/delete/deleteList | `@Transactional(rollbackFor = Exception.class)` or equivalent rollback behavior |
+| DataSourceConfig create/update/delete/deleteList | transactional; connection validation occurs before persistence |
+| FileConfig update master | transactional; clear all masters and set target as one unit |
+| FileConfig create/update/delete/deleteList | transactional when moving to DDD; cache invalidation must still happen after mutation |
+| File upload | transactional around DB metadata; external file upload side effect must not be hidden or retried blindly |
+| File delete/deleteList | delete object storage plus metadata; avoid committing DB delete if storage deletion fails unless current behavior is explicitly changed |
+| Codegen import/update/sync/delete/generation | transactional with rollback for `Exception` as current `CodegenServiceImpl` does |
+| ApiAccessLog clean | transactional batch deletion |
+| ApiErrorLog process/clean | transactional |
+| ApiAccessLog/ErrorLog create | logging path must not break caller; tenant ignore and swallow behavior for error log must be preserved |
+| WebSocket send | no DB transaction; route and delegate to `WebSocketMessageSender` |
+
+## 10. Integration Contract
+
+- **API local/remote:** stable `ConfigApi`、`FileApi`、`WebSocketSenderApi` must keep method signatures; Feign identity moves to `remote/*RemoteClient` only when doing API contract split.
+- **FileClient:** `FileConfigServiceImpl` currently owns Guava `LoadingCache<Long, FileClient>` with async reload and `CACHE_MASTER_ID = 0L`. A DDD migration must preserve cache semantics or move them to an infrastructure adapter with identical behavior.
+- **File config parsing:** `FileStorageEnum.getByStorage(storage).getConfigClass()` + JSON map conversion + `ValidationUtils.validate(validator, clientConfig)` must remain.
+- **FileConfigDO type handler:** `FileClientConfigTypeHandler` supports legacy `@class` names for `DBFileClientConfig`、`FtpFileClientConfig`、`LocalFileClientConfig`、`SftpFileClientConfig`、`S3FileClientConfig`; do not remove compatibility accidentally.
+- **Dynamic datasource:** master datasource is runtime config from `DynamicDataSourceProperties`, not a normal DB row.
+- **JDBC validation:** data source create/update must keep `JdbcUtils.isConnectionOK` behavior.
+- **Codegen:** `DatabaseTableService`、`CodegenBuilder`、`CodegenEngine`、`CodegenProperties` and MyBatis-Plus Generator are production behavior sources.
+- **Tenant:** Config/DataSource/File/Codegen DOs use `@TenantIgnore`; access/error logs require special no-tenant insertion handling.
+- **Jobs:** `AccessLogCleanJob` and `ErrorLogCleanJob` must continue invoking application/service clean use cases rather than duplicating cleanup logic.
+- **WebSocket:** `WebSocketSenderApiImpl` delegates to framework `WebSocketMessageSender`; do not move WebSocket send decisions into domain.
+- **Domain events:** current DDD services publish via `DomainEventPublisher` implemented by `SpringDomainEventPublisher`. Domain must not import Spring publisher.
+
+## 11. Mapping Rules
+
+- `controller/vo` objects may be used by Controller and legacy service during migration, but final domain repositories must not import Controller VOs.
+- `dal/dataobject/*DO` and Mapper stay in infrastructure/DAL; domain must not import MyBatis annotations, Mapper, DO, Controller VO, Feign, Spring, or framework clients.
+- `FileConfig` domain currently imports `FileClientConfig`, which is a framework infrastructure type. This is current technical debt; future migration should introduce a value object or adapter boundary rather than deepening the dependency.
+- `ApiAccessLogApplicationService` currently imports `ApiAccessLogDO.REQUEST_PARAMS_MAX_LENGTH`; final target should move max length constants into domain/value object or an application constant, not import DO from application.
+- `ConfigDO.configKey` maps to domain/key concept; do not map it to Java field name `key` without handling DB column limitations.
+- `FileDO.url` persisted value must be query-stripped; `FileDO.path` is storage key, not public URL.
+- `CodegenTable` must own `CodegenColumn` lifecycle conceptually; persistence may still use separate Mapper/DO.
+- API DTOs (`FileCreateReqDTO`, `WebSocketSendReqDTO`) stay in API module; do not replace them with Controller VOs.
+
+## 12. Current Conflict Notes
+
+1. `ConfigApi`、`FileApi`、`WebSocketSenderApi` still include `@FeignClient`; this violates the target local/remote split but is current code. API split must preserve stable signatures and move annotations only to remote adapters.
+2. `ConfigApplicationService#createConfig` calls `ConfigFactory.create(null, ...)`; if `ConfigId` disallows null or returns null ID after save, create-return-ID behavior can break.
+3. `FileConfigApplicationService#testFileConfig` reads `file/erweima.jpg` but returns `"test ok"`; legacy `FileConfigServiceImpl#testFileConfig` uploads the sample file through the selected `FileClient` and returns URL.
+4. `CodegenApplicationService#createCodegenList` accepts providers but does not use `tableName` correctly and does not reproduce legacy DB introspection/build/validation behavior. Do not replace `CodegenServiceImpl` entry paths with it until parity exists.
+5. `CodegenApplicationService#syncCodegenFromDB` deletes all columns and saves supplied columns, while legacy sync computes new/changed/deleted columns and throws `CODEGEN_SYNC_NONE_CHANGE` if nothing changed.
+6. `DataSourceConfigApplicationService` imports dynamic datasource and `JdbcUtils` directly in application layer. This is acceptable migration debt but final target should isolate technical checks behind an infrastructure port if needed.
+7. `FileApplicationService` takes `FileClient` as parameter; domain must not know FileClient, and final application boundary should keep file storage as an infrastructure port.
+8. `ApiAccessLogApplicationService` imports Mapper/DO in current code according to grep results; this violates target application dependency direction and must be fixed before treating it as final DDD.
+9. `FileConfig` domain imports `FileClientConfig`, a framework type. This is current conflict with pure-domain rule.
+10. Demo controllers/DO/Mapper are present under Infra but are not core production aggregate targets for this skill.
+
+## 13. Acceptance Criteria
+
+### Architecture AC
+
+- Infra API module exposes stable contracts plus local/remote adapters when API split is performed.
+- Stable API contracts do not carry Feign identity after split; Feign annotations live only in `remote/*RemoteClient`.
+- Domain classes do not import Spring, MyBatis, Feign, Controller VO, Mapper, DO, `FileClient`, `JdbcUtils`, `DynamicDataSourceProperties`, or other infrastructure implementation types.
+- Application services own use-case orchestration and transaction boundaries but not core domain invariants.
+- Infrastructure implements repositories, FileClient adapters, dynamic datasource adapters, codegen engine adapters and cache/client integration.
+- Controller/Job/API impls call application or compatibility service entry points and do not directly operate Mapper/DO.
+
+### Behavior AC
+
+- Config key uniqueness, SYSTEM delete protection and invisible config read protection match legacy behavior.
+- DataSourceConfig master pseudo-id `0L`, list ordering and connection validation match legacy behavior.
+- FileConfig master switching, master delete protection, config parsing, FileClient cache invalidation and `testFileConfig` upload behavior match legacy behavior.
+- File upload name/type/path/url normalization, presign behavior, storage delete and metadata persistence match legacy behavior.
+- Codegen import/update/sync/delete/generation behavior matches `CodegenServiceImpl`, including error codes and template/sub-table validation.
+- Access/error logs keep truncation limits, tenant ignore insertion, batch cleanup and error-log creation swallow behavior.
+- WebSocket send routing and helper methods match current `WebSocketSenderApi` and `WebSocketSenderApiImpl` behavior.
+
+### Verification AC
+
+- API-only split compiles `develop-module-infra-api` and `develop-module-infra-server`.
+- Each migrated subdomain has targeted tests for its production behavior and current conflict notes.
+- Existing legacy service tests continue passing until the corresponding entry path is intentionally replaced.
+- If Maven cannot run due to environment, the blocker is recorded with exact command and failure.
+
+Required regression names when implementing code changes:
+
+- `configCreate_generatesNonNullIdAndRejectsDuplicateKey`
+- `configGetValueByKey_invisible_throwsConfigGetValueErrorIfVisible`
+- `dataSourceGetMaster_returnsRuntimePrimaryAndListPrependsMaster`
+- `fileConfigUpdateMaster_clearsPreviousMasterInvalidatesMasterCache`
+- `fileConfigTest_uploadsSampleFileAndReturnsUrl`
+- `fileCreate_emptyNameAndType_normalizesNameTypePathAndStripsUrlQuery`
+- `fileDelete_deletesStorageBeforeMetadata`
+- `codegenCreate_rejectsDuplicateTableAndMissingComments`
+- `codegenSync_noChange_throwsCodegenSyncNoneChange`
+- `codegenGeneration_masterWithoutSubTable_throwsCodegenMasterGenerationFailNoSubTable`
+- `apiAccessLog_noTenant_insertsWithTenantIgnoreAndTruncatesFields`
+- `apiErrorLog_createFailure_doesNotBreakCaller`
+- `websocketSend_routesBySessionThenUserThenUserType`
+
+## 14. Verification Commands
+
+For this skill document only:
+
+```bash
+git diff --check -- .claude/ddd-skills/AggregateRoot_Infra_Skill.md
+grep -n "^## " .claude/ddd-skills/AggregateRoot_Infra_Skill.md
+```
+
+For API local/remote split:
+
+```bash
+mvn compile -pl develop-module-infra/develop-module-infra-api -am -DskipTests
+mvn compile -pl develop-module-infra/develop-module-infra-server -am -DskipTests
+```
+
+For focused service/application behavior:
+
+```bash
+mvn test -pl develop-module-infra/develop-module-infra-server -Dtest=ConfigServiceImplTest
+mvn test -pl develop-module-infra/develop-module-infra-server -Dtest=DataSourceConfigServiceImplTest
+mvn test -pl develop-module-infra/develop-module-infra-server -Dtest=FileConfigServiceImplTest
+mvn test -pl develop-module-infra/develop-module-infra-server -Dtest=FileServiceImplTest
+mvn test -pl develop-module-infra/develop-module-infra-server -Dtest=CodegenServiceImplTest
+mvn test -pl develop-module-infra/develop-module-infra-server -Dtest=ApiAccessLogServiceImplTest
+mvn test -pl develop-module-infra/develop-module-infra-server -Dtest=ApiErrorLogServiceImplTest
+```
+
+For current DDD units:
+
+```bash
+mvn test -pl develop-module-infra/develop-module-infra-server -Dtest=DataSourceConfigApplicationServiceTest
+mvn test -pl develop-module-infra/develop-module-infra-server -Dtest=FileConfigApplicationServiceTest
+mvn test -pl develop-module-infra/develop-module-infra-server -Dtest=DataSourceConfigTest
+mvn test -pl develop-module-infra/develop-module-infra-server -Dtest=FileConfigTest
+mvn test -pl develop-module-infra/develop-module-infra-server -Dtest=FileTest
+```
+
+For file client framework changes:
+
+```bash
+mvn test -pl develop-module-infra/develop-module-infra-server -Dtest=LocalFileClientTest
+mvn test -pl develop-module-infra/develop-module-infra-server -Dtest=FtpFileClientTest
+mvn test -pl develop-module-infra/develop-module-infra-server -Dtest=SftpFileClientTest
+mvn test -pl develop-module-infra/develop-module-infra-server -Dtest=S3FileClientTest
+```
+
+## 15. Quick Reference
+
+| Task | Correct place | Forbidden place |
+|---|---|---|
+| Stable infra API contract | `develop-module-infra-api/src/main/java/.../api/{business}/XxxApi.java` or future `XxxCommonApi.java` | server-only service interface |
+| Remote Feign identity | API `remote/*RemoteClient` after split | stable contract itself |
+| Local implementation | server API impl or API `local` adapter | copying a second different contract |
+| Config invariant | `domain/config` + `application/config` | Controller/Mapper |
+| FileClient cache | infrastructure adapter or compatibility service | domain aggregate |
+| File storage upload/delete | application orchestrating infrastructure port | domain aggregate directly using FileClient |
+| Codegen engine/template | infrastructure/service adapter | domain aggregate |
+| Dynamic datasource runtime config | infrastructure/application adapter | domain aggregate |
+| Tenant ignore log insert | application/infrastructure logging path | Controller |
+| Object mapping | `convert/` or infrastructure mapper helpers | scattered in Controller/domain |
+| Cleanup jobs | `job/` calls application/service clean use case | Job duplicating delete loops |
+| WebSocket send routing | API impl/application facade | domain aggregate |
+
+## 16. Common Mistakes
+
+| Mistake | Consequence | Fix |
+|---|---|---|
+| Removing `@FeignClient` from stable API without adding remote adapter | remote callers break | create `remote/*RemoteClient` extending stable contract first |
+| Treating current DDD application services as behavior-complete | codegen/file test behavior regresses | compare against legacy service tests before replacing entry paths |
+| Moving FileClient into domain | domain depends on infrastructure | define application/infrastructure port and keep domain on file metadata/invariants |
+| Returning `test ok` for file config test | UI/API no longer verifies real storage config | upload `file/erweima.jpg` through target FileClient and return URL |
+| Ignoring FileClient cache invalidation | stale file storage config after update/master switch/delete | preserve invalidation for id and master key `0L` |
+| Rewriting Codegen sync as delete-all/reinsert | loses column IDs and no-change behavior | preserve diff algorithm and `CODEGEN_SYNC_NONE_CHANGE` |
+| Dropping `TenantUtils.executeIgnore` for logs | logging fails without tenant context | keep tenant-aware insert fallback |
+| Letting logging exception escape | business API fails because log write failed | catch/log/swallow in production error log create path |
+| Moving Controller VO into domain repository | cross-layer dependency remains | introduce domain query objects and map in application/convert |
+| Deleting duplicate numeric error code as cleanup | external error handling may change | keep unless separate migration approved |
+
+## 17. Rationalization Table
+
+| Excuse | Reality |
+|---|---|
+| “Infra 已经有 DDD 目录，可以直接替换旧 service。” | Codegen、FileConfig、Logger 仍有 legacy-only behavior; first prove parity. |
+| “FileClientConfig 是配置对象，放 domain 没事。” | It is a framework/infrastructure type; domain dependency direction is wrong. |
+| “代码生成只是工具，不需要严格测试。” | Codegen emits source code and validates DB metadata; regressions are high blast radius. |
+| “日志失败不重要，可以抛异常。” | 当前契约是日志记录不能影响主业务。 |
+| “无租户时插入日志失败也没关系。” | 当前代码显式用 `TenantUtils.executeIgnore` 保护无租户日志。 |
+| “local/remote split 只是移动注解。” | 还要保持默认方法、DTO、`CommonResult`、server impl 和消费者注入稳定。 |
+| “批量重构整个 Infra 更快。” | Infra 同时含文件、代码生成、数据源、日志、WebSocket；必须分批。 |
+
+## 18. Red Flags
+
+Stop immediately if:
+
+- Stable API method names, paths, request/response DTOs or `CommonResult` wrappers change without migration plan.
+- Domain imports Spring, MyBatis, Feign, Controller VO, Mapper, DO, FileClient, dynamic datasource properties or codegen engine classes.
+- FileConfig master switching no longer invalidates cache or no longer uses master key `0L` equivalent.
+- `testFileConfig` no longer performs real upload through target client.
+- Codegen entry path no longer calls DB introspection, builder and engine behavior equivalent to legacy service.
+- `syncCodegenFromDB` loses no-change detection or column ID preservation.
+- Logger create path can fail caller because tenant context is absent or DB insert throws.
+- Error code constants, parameter order or duplicate numeric code behavior are “cleaned up” casually.
+- Controller, job or API impl directly manipulates Mapper/DO in new code.
+- A migration touches Config, File, Codegen and Logger in one batch.
+
+## 19. Rollback Conditions
+
+Rollback or stop the batch if:
+
+1. `mvn compile -pl develop-module-infra/develop-module-infra-api -am -DskipTests` or server compile fails from the change.
+2. Any Controller/API contract path, HTTP method, DTO field, error code or `CommonResult` behavior changes unintentionally.
+3. Existing `ConfigServiceImplTest`、`FileConfigServiceImplTest`、`FileServiceImplTest`、`CodegenServiceImplTest`、logger tests regress.
+4. File upload/delete leaves DB metadata inconsistent with object storage behavior.
+5. Code generation output changes without an explicit expected-output test update.
+6. Datasource master `0L` behavior or list ordering changes.
+7. Access/error log insertion fails in no-tenant contexts.
+8. WebSocket send no longer routes by session/user/userType with current precedence.
+9. Migration requires deleting user’s uncommitted changes, resetting branches, or broad moving unrelated modules.
+
+## 20. AI Self-Check
+
+Before claiming Infra skill or code work is complete:
+
+- [ ] Did I read current source anchors instead of relying on old draft text?
+- [ ] Did I preserve stable API method signatures, paths, DTOs and `CommonResult`?
+- [ ] Did I record or handle current `@FeignClient` conflict for local/remote split?
+- [ ] Did I compare target DDD behavior against legacy service behavior before replacing entry paths?
+- [ ] Did I preserve FileClient cache/master/test upload behavior?
+- [ ] Did I preserve Codegen DB introspection, validation, sync diff and engine generation behavior?
+- [ ] Did I preserve logger truncation, tenant ignore and no-fail logging behavior?
+- [ ] Did I keep domain free of infrastructure imports, or document current conflict before fixing it?
+- [ ] Did I run the verification commands appropriate to document-only or Java-code changes?
+- [ ] Did I avoid widening scope beyond the selected Infra subdomain?

@@ -13,7 +13,7 @@ import static com.develop.mvp.pk.framework.common.util.date.DateUtils.FORMAT_YEA
 @Data
 public class IotDataRulePageReqVO extends PageParam {
 
-    @Schema(description = "数据流转规则名称", example = "芋艿")
+    @Schema(description = "数据流转规则名称", example = "David")
     private String name;
 
     @Schema(description = "数据流转规则状态", example = "1")

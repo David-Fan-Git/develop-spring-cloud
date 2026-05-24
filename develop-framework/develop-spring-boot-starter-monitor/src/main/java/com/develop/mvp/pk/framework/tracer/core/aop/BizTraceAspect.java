@@ -21,7 +21,7 @@ import static java.util.Arrays.asList;
 /**
  * {@link BizTrace} 切面，记录业务链路
  *
- * @author mashu
+ * @author David
  */
 @Aspect
 @AllArgsConstructor

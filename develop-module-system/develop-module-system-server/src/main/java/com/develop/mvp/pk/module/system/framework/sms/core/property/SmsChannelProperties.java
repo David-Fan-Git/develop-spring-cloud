@@ -9,7 +9,7 @@ import org.springframework.validation.annotation.Validated;
 /**
  * 短信渠道配置类
  *
- * @author zzf
+ * @author David
  * @since 2021/1/25 17:01
  */
 @Data

@@ -25,7 +25,7 @@ import java.util.List;
 /**
  * 分销用户 Mapper
  *
- * @author owen
+ * @author David
  */
 @Mapper
 public interface BrokerageUserMapper extends BaseMapperX<BrokerageUserDO> {

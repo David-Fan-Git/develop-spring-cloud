@@ -10,7 +10,7 @@ import java.util.List;
 /**
  * MES 工艺路线产品 Mapper
  *
- * @author 芋道源码
+ * @author David
  */
 @Mapper
 public interface MesProRouteProductMapper extends BaseMapperX<MesProRouteProductDO> {

@@ -33,7 +33,7 @@ import static com.develop.mvp.pk.module.iot.gateway.enums.ErrorCodeConstants.DEV
 /**
  * WebSocket 上行消息处理器
  *
- * @author 芋道源码
+ * @author David
  */
 @Slf4j
 public class IotWebSocketUpstreamHandler implements Handler<ServerWebSocket> {

@@ -9,7 +9,7 @@ import com.develop.mvp.pk.framework.websocket.core.session.WebSocketSessionManag
  *
  * 注意：仅仅适合单机场景！！！
  *
- * @author 芋道源码
+ * @author David
  */
 public class LocalWebSocketMessageSender extends AbstractWebSocketMessageSender {
 

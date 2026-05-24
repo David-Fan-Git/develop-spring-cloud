@@ -6,9 +6,9 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 David develop-cloud (Smart Cloud) — a Spring Cloud Alibaba microservices rapid-development platform. This is the **complete version** with all business modules. Derived from RuoYi-Vue-Pro.
 
-**Tech stack:** Java 17, Spring Boot 3.5.x, Spring Cloud 2025.0.1, Spring Cloud Alibaba 2025.0.0.0, Maven, MyBatis Plus, Redis/Redisson, Lombok + MapStruct.
+**Tech stack:** Java 17, Spring Boot 3.5.x (root `pom.xml` currently sets 3.5.9 for compiler/plugin use; `develop-dependencies/pom.xml` manages application dependencies at 3.5.14), Spring Cloud 2025.0.1, Spring Cloud Alibaba 2025.0.0.0, Maven, MyBatis Plus, Redis/Redisson, Lombok + MapStruct.
 
-Dependency versions are centralized in `develop-dependencies/pom.xml`; the root `pom.xml` controls the Maven reactor and compiler/plugin configuration. There is no Maven wrapper in this checkout, so use a local `mvn` with Java 17.
+Dependency versions are centralized in `develop-dependencies/pom.xml`; the root `pom.xml` controls the Maven reactor and compiler/plugin configuration. Prefer POM files over README badges/version prose when versions differ. There is no Maven wrapper in this checkout, so use a local `mvn` with Java 17.
 
 ## Build & Run
 
@@ -50,6 +50,8 @@ The project uses `maven-surefire-plugin` 3.x with JUnit 5. Module tests use `src
 
 The `develop-ui/` directory contains frontend checkouts, but no frontend `package.json` files were present during this initialization; do not assume a package manager or frontend command without checking the specific frontend project first.
 
+No Cursor/Copilot instruction files were found during this initialization (`.cursorrules`, `.cursor/rules/*`, `.github/copilot-instructions.md`).
+
 ## Module Architecture
 
 ```
@@ -78,7 +80,7 @@ Java package base: `com.develop.mvp.pk`
 
 ## DDD Architecture (current, in-progress)
 
-The project has been undergoing a DDD refactoring. The new layer layout under `com.develop.mvp.pk.module.{name}/`:
+The project is undergoing a repository-wide DDD refactoring. The required end state is that all old three-layer business code is migrated to DDD domain architecture; `service` and `dal` are migration sources, not acceptable final homes for core business logic. The new layer layout under `com.develop.mvp.pk.module.{name}/`:
 
 ```
 domain/{aggregate}/        # Aggregate root, value objects, repository interface, domain events, factory, domain services
@@ -93,7 +95,7 @@ infrastructure/{aggregate}/ # Repository implementations (MyBatis), external ada
 convert/                   # Object mapping (domain ↔ DO ↔ DTO), uses MapStruct
 ```
 
-**DDD skills** for existing aggregates live in `.claude/ddd-skills/`. Before modifying a domain aggregate or DDD skill, read `.claude/ddd-skills/DDD_Skill_Production_Readiness_Standard.md`; skills that do not meet that standard are drafts and must not be used for production refactoring without upgrading first. Before modifying a domain aggregate, read its skill document first. When creating a new aggregate, use this process before writing code:
+**DDD skills** for existing aggregates live in `.claude/ddd-skills/`. Before modifying a domain aggregate or DDD skill, read both `.claude/ddd-skills/DDD_Skill_Production_Readiness_Standard.md` and `.claude/ddd-skills/Module_Structure_Standard.md`; skills that do not meet the production-readiness standard are drafts and must not be used for production refactoring without upgrading first. During DDD refactoring, do not ask the user clarifying questions or ask them to choose the execution path; use the existing skills and standards to decide independently, then report results after the full DDD migration work is complete. Before modifying a domain aggregate, read its skill document first. When creating a new aggregate, use this process before writing code:
 1. Identify the domain intent, business responsibility, data boundary, and external dependencies.
 2. Create `.claude/ddd-skills/AggregateRoot_<Name>_Skill.md` with skill name, applicable scenarios, DDD building blocks, responsibility boundaries, dependencies/collaboration, invariants/constraints, rollback conditions, and acceptance criteria.
 3. Verify the skill against current code behavior, boundaries, dependencies, and invariants; revise the skill if anything does not match.

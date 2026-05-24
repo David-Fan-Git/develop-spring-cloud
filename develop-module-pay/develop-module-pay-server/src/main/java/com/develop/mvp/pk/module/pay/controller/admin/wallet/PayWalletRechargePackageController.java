@@ -6,9 +6,9 @@ import com.develop.mvp.pk.module.pay.controller.admin.wallet.vo.rechargepackage.
 import com.develop.mvp.pk.module.pay.controller.admin.wallet.vo.rechargepackage.WalletRechargePackagePageReqVO;
 import com.develop.mvp.pk.module.pay.controller.admin.wallet.vo.rechargepackage.WalletRechargePackageRespVO;
 import com.develop.mvp.pk.module.pay.controller.admin.wallet.vo.rechargepackage.WalletRechargePackageUpdateReqVO;
+import com.develop.mvp.pk.module.pay.application.wallet.PayWalletRechargePackageApplicationService;
 import com.develop.mvp.pk.module.pay.convert.wallet.PayWalletRechargePackageConvert;
-import com.develop.mvp.pk.module.pay.dal.dataobject.wallet.PayWalletRechargePackageDO;
-import com.develop.mvp.pk.module.pay.service.wallet.PayWalletRechargePackageService;
+import com.develop.mvp.pk.module.pay.domain.wallet.PayWalletRechargePackage;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -29,20 +29,22 @@ import static com.develop.mvp.pk.framework.common.pojo.CommonResult.success;
 public class PayWalletRechargePackageController {
 
     @Resource
-    private PayWalletRechargePackageService walletRechargePackageService;
+    private PayWalletRechargePackageApplicationService rechargePackageApplicationService;
 
     @PostMapping("/create")
     @Operation(summary = "创建钱包充值套餐")
     @PreAuthorize("@ss.hasPermission('pay:wallet-recharge-package:create')")
     public CommonResult<Long> createWalletRechargePackage(@Valid @RequestBody WalletRechargePackageCreateReqVO createReqVO) {
-        return success(walletRechargePackageService.createWalletRechargePackage(createReqVO));
+        return success(rechargePackageApplicationService.create(createReqVO.getName(), createReqVO.getPayPrice(),
+                createReqVO.getBonusPrice(), Integer.valueOf(createReqVO.getStatus())));
     }
 
     @PutMapping("/update")
     @Operation(summary = "更新钱包充值套餐")
     @PreAuthorize("@ss.hasPermission('pay:wallet-recharge-package:update')")
     public CommonResult<Boolean> updateWalletRechargePackage(@Valid @RequestBody WalletRechargePackageUpdateReqVO updateReqVO) {
-        walletRechargePackageService.updateWalletRechargePackage(updateReqVO);
+        rechargePackageApplicationService.update(updateReqVO.getId(), updateReqVO.getName(), updateReqVO.getPayPrice(),
+                updateReqVO.getBonusPrice(), Integer.valueOf(updateReqVO.getStatus()));
         return success(true);
     }
 
@@ -51,7 +53,7 @@ public class PayWalletRechargePackageController {
     @Parameter(name = "id", description = "编号", required = true)
     @PreAuthorize("@ss.hasPermission('pay:wallet-recharge-package:delete')")
     public CommonResult<Boolean> deleteWalletRechargePackage(@RequestParam("id") Long id) {
-        walletRechargePackageService.deleteWalletRechargePackage(id);
+        rechargePackageApplicationService.delete(id);
         return success(true);
     }
 
@@ -60,7 +62,7 @@ public class PayWalletRechargePackageController {
     @Parameter(name = "id", description = "编号", required = true, example = "1024")
     @PreAuthorize("@ss.hasPermission('pay:wallet-recharge-package:query')")
     public CommonResult<WalletRechargePackageRespVO> getWalletRechargePackage(@RequestParam("id") Long id) {
-        PayWalletRechargePackageDO walletRechargePackage = walletRechargePackageService.getWalletRechargePackage(id);
+        PayWalletRechargePackage walletRechargePackage = rechargePackageApplicationService.get(id);
         return success(PayWalletRechargePackageConvert.INSTANCE.convert(walletRechargePackage));
     }
 
@@ -68,8 +70,9 @@ public class PayWalletRechargePackageController {
     @Operation(summary = "获得钱包充值套餐分页")
     @PreAuthorize("@ss.hasPermission('pay:wallet-recharge-package:query')")
     public CommonResult<PageResult<WalletRechargePackageRespVO>> getWalletRechargePackagePage(@Valid WalletRechargePackagePageReqVO pageVO) {
-        PageResult<PayWalletRechargePackageDO> pageResult = walletRechargePackageService.getWalletRechargePackagePage(pageVO);
-        return success(PayWalletRechargePackageConvert.INSTANCE.convertPage(pageResult));
+        PageResult<PayWalletRechargePackage> pageResult = rechargePackageApplicationService.getPage(pageVO.getName(),
+                pageVO.getStatus(), pageVO.getCreateTime(), pageVO.getPageNo(), pageVO.getPageSize());
+        return success(PayWalletRechargePackageConvert.INSTANCE.convertDomainPage(pageResult));
     }
 
 }

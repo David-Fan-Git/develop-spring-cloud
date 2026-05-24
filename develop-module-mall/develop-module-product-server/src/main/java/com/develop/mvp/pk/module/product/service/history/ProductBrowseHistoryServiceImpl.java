@@ -15,7 +15,7 @@ import java.util.Collection;
 /**
  * 商品浏览记录 Service 实现类
  *
- * @author owen
+ * @author David
  */
 @Service
 @Validated

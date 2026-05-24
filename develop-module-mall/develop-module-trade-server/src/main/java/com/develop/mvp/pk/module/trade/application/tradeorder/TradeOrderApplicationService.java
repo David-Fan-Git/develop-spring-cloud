@@ -116,7 +116,7 @@ public class TradeOrderApplicationService {
 
     private TradeOrder findExistingOrder(TradeOrderId id) {
         TradeOrder order = tradeOrderRepository.findById(id);
-        if (order == null) throw exception(ORDER_NOT_EXISTS);
+        if (order == null) throw exception(ORDER_NOT_FOUND);
         return order;
     }
 

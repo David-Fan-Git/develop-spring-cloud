@@ -28,7 +28,7 @@ import static com.develop.mvp.pk.module.crm.enums.LogRecordConstants.*;
 /**
  * 客户限制配置 Service 实现类
  *
- * @author Wanwan
+ * @author David
  */
 @Service
 @Validated

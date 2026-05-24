@@ -9,7 +9,7 @@ import java.util.Arrays;
 /**
  * AI 写作类型的枚举
  *
- * @author xiaoxin
+ * @author David
  */
 @AllArgsConstructor
 @Getter

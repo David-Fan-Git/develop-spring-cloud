@@ -38,7 +38,7 @@ import static com.develop.mvp.pk.framework.common.util.collection.CollectionUtil
 /**
  * Flowable 相关的工具方法
  *
- * @author 芋道源码
+ * @author David
  */
 public class FlowableUtils {
 

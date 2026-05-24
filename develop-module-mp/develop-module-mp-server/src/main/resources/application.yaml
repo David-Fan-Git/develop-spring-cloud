@@ -103,7 +103,7 @@ wx:
       http-client-type: HttpClient # 采用 HttpClient 请求微信公众号平台
     app-id: null # 避免 weixin-java-mp starter 报错
 
---- #################### 芋道相关配置 ####################
+--- #################### David相关配置 ####################
 
 develop:
   info:

@@ -10,7 +10,7 @@ import java.util.Arrays;
 /**
  * 佣金提现类型枚举
  *
- * @author owen
+ * @author David
  */
 @AllArgsConstructor
 @Getter

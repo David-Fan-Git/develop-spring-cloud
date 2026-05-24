@@ -1,8 +1,8 @@
 package com.develop.mvp.pk.module.pay.controller.app.channel;
 
 import com.develop.mvp.pk.framework.common.pojo.CommonResult;
-import com.develop.mvp.pk.module.pay.dal.dataobject.channel.PayChannelDO;
-import com.develop.mvp.pk.module.pay.service.channel.PayChannelService;
+import com.develop.mvp.pk.module.pay.application.channel.PayChannelApplicationService;
+import com.develop.mvp.pk.module.pay.domain.channel.PayChannel;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -26,14 +26,14 @@ import static com.develop.mvp.pk.framework.common.util.collection.CollectionUtil
 public class AppPayChannelController {
 
     @Resource
-    private PayChannelService channelService;
+    private PayChannelApplicationService channelApplicationService;
 
     @GetMapping("/get-enable-code-list")
     @Operation(summary = "获得指定应用的开启的支付渠道编码列表")
     @Parameter(name = "appId", description = "应用编号", required = true, example = "1")
     public CommonResult<Set<String>> getEnableChannelCodeList(@RequestParam("appId") Long appId) {
-        List<PayChannelDO> channels = channelService.getEnableChannelList(appId);
-        return success(convertSet(channels, PayChannelDO::getCode));
+        List<PayChannel> channels = channelApplicationService.getEnabledList(appId);
+        return success(convertSet(channels, PayChannel::getCode));
     }
 
 }

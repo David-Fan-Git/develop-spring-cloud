@@ -30,7 +30,7 @@ import static com.develop.mvp.pk.module.promotion.enums.ErrorCodeConstants.*;
 /**
  * 砍价活动 Service 实现类
  *
- * @author HUIHUI
+ * @author David
  */
 @Service
 @Validated

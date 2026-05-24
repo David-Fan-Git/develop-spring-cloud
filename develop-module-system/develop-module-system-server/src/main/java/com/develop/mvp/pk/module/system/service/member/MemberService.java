@@ -3,7 +3,7 @@ package com.develop.mvp.pk.module.system.service.member;
 /**
  * Member Service 接口
  *
- * @author 芋道源码
+ * @author David
  */
 public interface MemberService {
 

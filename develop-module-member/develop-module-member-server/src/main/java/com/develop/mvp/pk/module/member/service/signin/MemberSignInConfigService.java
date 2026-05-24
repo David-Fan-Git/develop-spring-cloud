@@ -10,7 +10,7 @@ import java.util.List;
 /**
  * 签到规则 Service 接口
  *
- * @author QingX
+ * @author David
  */
 public interface MemberSignInConfigService {
 

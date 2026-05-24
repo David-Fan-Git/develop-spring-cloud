@@ -9,7 +9,7 @@ import java.util.Arrays;
 /**
  * IoT Redis 数据结构类型枚举
  *
- * @author HUIHUI
+ * @author David
  */
 @RequiredArgsConstructor
 @Getter

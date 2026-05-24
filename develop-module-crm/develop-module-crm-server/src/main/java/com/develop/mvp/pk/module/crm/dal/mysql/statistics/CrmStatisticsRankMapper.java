@@ -9,7 +9,7 @@ import java.util.List;
 /**
  * CRM 排行榜统计 Mapper
  *
- * @author anhaohao
+ * @author David
  */
 @Mapper
 public interface CrmStatisticsRankMapper {

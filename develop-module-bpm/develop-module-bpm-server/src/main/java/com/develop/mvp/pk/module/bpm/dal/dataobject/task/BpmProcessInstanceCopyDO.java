@@ -14,7 +14,7 @@ import lombok.NoArgsConstructor;
 /**
  * 流程抄送 DO
  *
- * @author kyle
+ * @author David
  * @since 2024-01-22
  */
 @TableName(value = "bpm_process_instance_copy", autoResultMap = true)

@@ -10,11 +10,9 @@ import com.develop.mvp.pk.module.pay.application.app.PayAppApplicationService;
 import com.develop.mvp.pk.module.pay.application.refund.PayRefundApplicationService;
 import com.develop.mvp.pk.module.pay.controller.admin.refund.vo.*;
 import com.develop.mvp.pk.module.pay.convert.refund.PayRefundConvert;
-import com.develop.mvp.pk.module.pay.dal.dataobject.app.PayAppDO;
 import com.develop.mvp.pk.module.pay.dal.dataobject.refund.PayRefundDO;
 import com.develop.mvp.pk.module.pay.domain.app.PayApp;
 import com.develop.mvp.pk.module.pay.domain.refund.PayRefund;
-import com.develop.mvp.pk.module.pay.service.app.PayAppService;
 import com.develop.mvp.pk.module.pay.service.refund.PayRefundService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
@@ -49,8 +47,6 @@ public class PayRefundController {
     private PayAppApplicationService appApplicationService;
     @Resource
     private PayRefundService refundService;
-    @Resource
-    private PayAppService appService;
 
     @GetMapping("/get")
     @Operation(summary = "获得退款订单")
@@ -103,8 +99,9 @@ public class PayRefundController {
         List<PayRefundDO> list = refundService.getRefundList(exportReqVO);
 
         // 拼接返回
-        Map<Long, PayAppDO> appMap = appService.getAppMap(convertList(list, PayRefundDO::getAppId));
-        List<PayRefundExcelVO> excelList = PayRefundConvert.INSTANCE.convertList(list, appMap);
+        Map<Long, String> appNameMap = appApplicationService.getList(convertList(list, PayRefundDO::getAppId)).stream()
+                .collect(java.util.stream.Collectors.toMap(PayApp::getId, PayApp::getName));
+        List<PayRefundExcelVO> excelList = PayRefundConvert.INSTANCE.convertList(list, appNameMap);
         // 导出 Excel
         ExcelUtils.write(response, "退款订单.xls", "数据", PayRefundExcelVO.class, excelList);
     }

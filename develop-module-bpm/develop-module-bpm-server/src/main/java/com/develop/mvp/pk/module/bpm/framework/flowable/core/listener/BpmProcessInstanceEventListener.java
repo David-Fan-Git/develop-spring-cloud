@@ -17,7 +17,7 @@ import java.util.Set;
 /**
  * 监听 {@link ProcessInstance} 的状态变更，更新其对应的 status 状态
  *
- * @author jason
+ * @author David
  */
 @Component
 public class BpmProcessInstanceEventListener extends AbstractFlowableEngineEventListener {

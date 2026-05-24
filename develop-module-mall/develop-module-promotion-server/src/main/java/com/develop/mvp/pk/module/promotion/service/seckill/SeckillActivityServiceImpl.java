@@ -43,7 +43,7 @@ import static java.util.Collections.singletonList;
 /**
  * 秒杀活动 Service 实现类
  *
- * @author halfninety
+ * @author David
  */
 @Service
 @Validated

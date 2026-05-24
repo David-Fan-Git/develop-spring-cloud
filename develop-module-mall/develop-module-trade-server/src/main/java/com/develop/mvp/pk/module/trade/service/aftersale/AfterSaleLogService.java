@@ -9,7 +9,7 @@ import java.util.List;
 /**
  * 交易售后日志 Service 接口
  *
- * @author 陈賝
+ * @author David
  * @since 2023/6/12 14:18
  */
 public interface AfterSaleLogService {
@@ -18,7 +18,7 @@ public interface AfterSaleLogService {
      * 创建售后日志
      *
      * @param createReqBO 日志记录
-     * @author 陈賝
+     * @author David
      * @since 2023/6/12 14:18
      */
     void createAfterSaleLog(AfterSaleLogCreateReqBO createReqBO);

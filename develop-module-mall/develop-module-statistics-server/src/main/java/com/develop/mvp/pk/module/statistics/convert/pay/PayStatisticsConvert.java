@@ -7,7 +7,7 @@ import org.mapstruct.factory.Mappers;
 /**
  * 支付统计 Convert
  *
- * @author owen
+ * @author David
  */
 @Mapper
 public interface PayStatisticsConvert {

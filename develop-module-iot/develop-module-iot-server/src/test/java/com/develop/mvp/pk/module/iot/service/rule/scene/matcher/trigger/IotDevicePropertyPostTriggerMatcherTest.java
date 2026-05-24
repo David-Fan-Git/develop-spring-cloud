@@ -22,7 +22,7 @@ import static org.junit.jupiter.api.Assertions.*;
 /**
  * {@link IotDevicePropertyPostTriggerMatcher} 的单元测试
  *
- * @author HUIHUI
+ * @author David
  */
 public class IotDevicePropertyPostTriggerMatcherTest extends IotBaseConditionMatcherTest {
 

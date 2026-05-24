@@ -8,6 +8,7 @@ import com.develop.mvp.pk.module.pay.controller.admin.wallet.vo.rechargepackage.
 import com.develop.mvp.pk.module.pay.controller.admin.wallet.vo.rechargepackage.WalletRechargePackageRespVO;
 import com.develop.mvp.pk.module.pay.controller.admin.wallet.vo.rechargepackage.WalletRechargePackageUpdateReqVO;
 import com.develop.mvp.pk.module.pay.dal.dataobject.wallet.PayWalletRechargePackageDO;
+import com.develop.mvp.pk.module.pay.domain.wallet.PayWalletRechargePackage;
 import org.mapstruct.Mapper;
 import org.mapstruct.factory.Mappers;
 
@@ -22,8 +23,12 @@ public interface PayWalletRechargePackageConvert {
 
     WalletRechargePackageRespVO convert(PayWalletRechargePackageDO bean);
 
+    WalletRechargePackageRespVO convert(PayWalletRechargePackage bean);
+
     List<WalletRechargePackageRespVO> convertList(List<PayWalletRechargePackageDO> list);
 
     PageResult<WalletRechargePackageRespVO> convertPage(PageResult<PayWalletRechargePackageDO> page);
+
+    PageResult<WalletRechargePackageRespVO> convertDomainPage(PageResult<PayWalletRechargePackage> page);
 
 }

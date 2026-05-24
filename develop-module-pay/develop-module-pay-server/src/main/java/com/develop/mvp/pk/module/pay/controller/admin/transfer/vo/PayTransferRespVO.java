@@ -29,7 +29,7 @@ public class PayTransferRespVO {
     private Long appId;
 
     @ExcelProperty("应用名称")
-    @Schema(description = "应用名称", requiredMode = Schema.RequiredMode.REQUIRED, example = "芋艿")
+    @Schema(description = "应用名称", requiredMode = Schema.RequiredMode.REQUIRED, example = "David")
     private String appName;
 
     @Schema(description = "转账渠道编号", requiredMode = Schema.RequiredMode.REQUIRED, example = "24833")

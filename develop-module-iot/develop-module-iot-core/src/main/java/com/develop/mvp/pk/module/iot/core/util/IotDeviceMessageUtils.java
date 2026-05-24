@@ -17,7 +17,7 @@ import java.util.Set;
 /**
  * IoT 设备【消息】的工具类
  *
- * @author 芋道源码
+ * @author David
  */
 public class IotDeviceMessageUtils {
 

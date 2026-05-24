@@ -9,7 +9,7 @@ import java.util.List;
 /**
  * 会员信息的统计 Service 接口
  *
- * @author owen
+ * @author David
  */
 public interface MemberStatisticsService {
 

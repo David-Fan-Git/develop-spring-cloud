@@ -9,7 +9,7 @@ import java.util.Arrays;
 /**
  * WMS 往来企业类型枚举
  *
- * @author 芋道源码
+ * @author David
  */
 @Getter
 @AllArgsConstructor

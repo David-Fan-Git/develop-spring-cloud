@@ -5,7 +5,7 @@ import lombok.Data;
 /**
  * 钱包统计 Response DTO
  *
- * @author owen
+ * @author David
  */
 @Data
 public class WalletSummaryRespBO {

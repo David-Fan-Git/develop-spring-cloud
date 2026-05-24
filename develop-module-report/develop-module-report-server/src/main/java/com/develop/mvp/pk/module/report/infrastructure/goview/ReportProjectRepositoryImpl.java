@@ -53,8 +53,9 @@ public class ReportProjectRepositoryImpl implements ReportProjectRepository {
 
     @Override
     public PageResult<ReportProject> findPage(ReportProjectPageQuery query) {
-        var pageParam = new com.develop.mvp.pk.framework.common.pojo.PageParam(query.pageNo(), query.pageSize());
-        PageResult<GoViewProjectDO> doPage = goViewProjectMapper.selectPage(pageParam, null);
+        var pageParam = new com.develop.mvp.pk.framework.common.pojo.PageParam()
+                .setPageNo(query.pageNo()).setPageSize(query.pageSize());
+        PageResult<GoViewProjectDO> doPage = goViewProjectMapper.selectPage(pageParam, (Long) null);
         List<ReportProject> projects = doPage.getList().stream()
                 .map(this::toDomain).collect(Collectors.toList());
         return new PageResult<>(projects, doPage.getTotal());

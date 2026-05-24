@@ -7,7 +7,7 @@ import jakarta.validation.Valid;
 /**
  * MES 物料批次属性配置 Service 接口
  *
- * @author 芋道源码
+ * @author David
  */
 public interface MesMdItemBatchConfigService {
 

@@ -17,7 +17,7 @@ import java.util.List;
 /**
  * AI 知识库分片 Mapper
  *
- * @author xiaoxin
+ * @author David
  */
 @Mapper
 public interface AiKnowledgeSegmentMapper extends BaseMapperX<AiKnowledgeSegmentDO> {

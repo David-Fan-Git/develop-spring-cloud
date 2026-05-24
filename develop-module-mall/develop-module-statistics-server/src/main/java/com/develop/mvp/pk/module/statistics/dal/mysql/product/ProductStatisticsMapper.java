@@ -20,7 +20,7 @@ import static com.develop.mvp.pk.framework.mybatis.core.util.MyBatisUtils.toUnde
 /**
  * 商品统计 Mapper
  *
- * @author owen
+ * @author David
  */
 @Mapper
 public interface ProductStatisticsMapper extends BaseMapperX<ProductStatisticsDO> {

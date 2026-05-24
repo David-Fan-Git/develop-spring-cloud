@@ -38,7 +38,7 @@ import static com.develop.mvp.pk.module.iot.enums.ErrorCodeConstants.*;
 /**
  * IoT 产品物模型 Service 实现类
  *
- * @author 芋道源码
+ * @author David
  */
 @Service
 @Validated

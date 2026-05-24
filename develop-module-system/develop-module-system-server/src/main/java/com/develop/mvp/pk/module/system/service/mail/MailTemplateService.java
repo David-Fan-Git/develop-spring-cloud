@@ -12,7 +12,7 @@ import java.util.Map;
 /**
  * 邮件模版 Service 接口
  *
- * @author wangjingyi
+ * @author David
  * @since 2022-03-21
  */
 public interface MailTemplateService {

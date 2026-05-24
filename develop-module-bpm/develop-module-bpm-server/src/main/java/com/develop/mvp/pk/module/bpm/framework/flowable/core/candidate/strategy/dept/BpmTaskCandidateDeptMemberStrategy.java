@@ -17,7 +17,7 @@ import static com.develop.mvp.pk.framework.common.util.collection.CollectionUtil
 /**
  * 部门的成员 {@link BpmTaskCandidateStrategy} 实现类
  *
- * @author kyle
+ * @author David
  */
 @Component
 public class BpmTaskCandidateDeptMemberStrategy implements BpmTaskCandidateStrategy {

@@ -12,7 +12,7 @@ import java.util.List;
 /**
  * IoT 物模型中的事件
  *
- * @author HUIHUI
+ * @author David
  */
 @Data
 public class ThingModelEvent {

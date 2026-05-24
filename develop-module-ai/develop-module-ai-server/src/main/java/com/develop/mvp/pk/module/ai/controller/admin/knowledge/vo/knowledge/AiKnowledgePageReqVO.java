@@ -15,7 +15,7 @@ import static com.develop.mvp.pk.framework.common.util.date.DateUtils.FORMAT_YEA
 @Data
 public class AiKnowledgePageReqVO extends PageParam {
 
-    @Schema(description = "知识库名称", example = "芋艿")
+    @Schema(description = "知识库名称", example = "David")
     private String name;
 
     @Schema(description = "是否启用", example = "1")

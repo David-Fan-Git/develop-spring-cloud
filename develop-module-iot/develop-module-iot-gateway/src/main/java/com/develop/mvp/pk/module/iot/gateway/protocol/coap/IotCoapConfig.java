@@ -7,7 +7,7 @@ import lombok.Data;
 /**
  * IoT CoAP 协议配置
  *
- * @author 芋道源码
+ * @author David
  */
 @Data
 public class IotCoapConfig {

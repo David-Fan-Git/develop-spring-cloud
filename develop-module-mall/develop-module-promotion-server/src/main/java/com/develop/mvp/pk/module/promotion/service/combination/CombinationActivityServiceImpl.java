@@ -39,7 +39,7 @@ import static java.util.Collections.singletonList;
 /**
  * 拼团活动 Service 实现类
  *
- * @author HUIHUI
+ * @author David
  */
 @Service
 @Validated

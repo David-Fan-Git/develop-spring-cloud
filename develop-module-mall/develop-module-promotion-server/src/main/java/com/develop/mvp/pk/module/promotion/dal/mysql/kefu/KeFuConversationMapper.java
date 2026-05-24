@@ -11,7 +11,7 @@ import java.util.List;
 /**
  * 客服会话 Mapper
  *
- * @author HUIHUI
+ * @author David
  */
 @Mapper
 public interface KeFuConversationMapper extends BaseMapperX<KeFuConversationDO> {

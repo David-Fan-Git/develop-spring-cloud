@@ -12,7 +12,7 @@ import static com.develop.mvp.pk.framework.common.util.date.DateUtils.FORMAT_YEA
 /**
  * 交易状况统计 Excel VO
  *
- * @author owen
+ * @author David
  */
 @Data
 public class TradeTrendSummaryExcelVO {

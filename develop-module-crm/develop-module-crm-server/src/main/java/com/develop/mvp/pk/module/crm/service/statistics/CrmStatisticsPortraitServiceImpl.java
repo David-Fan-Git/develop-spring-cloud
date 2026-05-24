@@ -25,7 +25,7 @@ import static com.develop.mvp.pk.framework.common.util.collection.CollectionUtil
 /**
  * CRM 客户画像 Service 实现类
  *
- * @author HUIHUI
+ * @author David
  */
 @Service
 public class CrmStatisticsPortraitServiceImpl implements CrmStatisticsPortraitService {

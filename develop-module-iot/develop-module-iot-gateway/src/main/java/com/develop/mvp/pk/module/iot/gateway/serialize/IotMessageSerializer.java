@@ -8,7 +8,7 @@ import com.develop.mvp.pk.module.iot.core.mq.message.IotDeviceMessage;
  *
  * 用于序列化和反序列化设备消息
  *
- * @author 芋道源码
+ * @author David
  */
 public interface IotMessageSerializer {
 

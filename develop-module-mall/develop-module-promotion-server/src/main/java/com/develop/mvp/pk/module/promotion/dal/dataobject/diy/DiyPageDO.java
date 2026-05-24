@@ -13,7 +13,7 @@ import java.util.List;
 /**
  * 装修页面 DO
  *
- * @author owen
+ * @author David
  */
 @TableName(value = "promotion_diy_page", autoResultMap = true)
 @KeySequence("promotion_diy_page_seq") // 用于 Oracle、PostgreSQL、Kingbase、DB2、H2 数据库的主键自增。如果是 MySQL 等数据库，可不写。

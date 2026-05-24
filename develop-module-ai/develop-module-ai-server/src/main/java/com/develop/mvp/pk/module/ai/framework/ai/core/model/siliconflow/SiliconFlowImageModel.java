@@ -42,7 +42,7 @@ import java.util.List;
  *
  * 参考 {@link OpenAiImageModel} 实现
  *
- * @author zzt
+ * @author David
  */
 public class SiliconFlowImageModel implements ImageModel {
 

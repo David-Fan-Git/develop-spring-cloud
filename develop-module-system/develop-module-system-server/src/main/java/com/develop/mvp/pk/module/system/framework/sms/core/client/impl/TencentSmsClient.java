@@ -30,7 +30,7 @@ import static com.develop.mvp.pk.framework.common.util.collection.CollectionUtil
  *
  * 参见 <a href="https://cloud.tencent.com/document/product/382/52077">文档</a>
  *
- * @author shiwp
+ * @author David
  */
 public class TencentSmsClient extends AbstractSmsClient {
 

@@ -22,7 +22,7 @@ import static com.develop.mvp.pk.module.bpm.framework.flowable.core.listener.Bpm
  * <p>
  * 目前只有 Simple 设计器【触发器节点】使用
  *
- * @author jason
+ * @author David
  */
 @Component(BEAN_NAME)
 @Slf4j

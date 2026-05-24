@@ -1,824 +1,570 @@
-# DDD Skill: AggregateRoot_Bpm_Skill
+---
+name: aggregateroot-bpm-skill
+description: Use when refactoring or validating BPM DDD code, Flowable model/process/task/OA leave/copy/form/user-group/listener/expression/category flows, BPM API contracts, process-instance events, candidate strategies, and approval task behavior.
+type: ddd-aggregate-skill
+module: bpm
+status: production-ready
+last_verified: 2026-05-24
+---
 
-## 1. 技能名称
+# AggregateRoot BPM Skill
 
-`AggregateRoot_Bpm_Skill` — 工作流(BPM)模块聚合根的领域建模与重构技能
+## 0. Overview
 
-## 2. 适用场景
+BPM 是工作流核心上下文，既包含已部分 DDD 化的分类、表单、用户组、表达式、监听器、OA 请假和抄送，也包含仍由 legacy service 承载的 Flowable 模型、流程定义、流程实例和任务审批。任何重构必须保持 Flowable 行为、API/事件契约、审批状态机、候选人策略、消息、权限、错误码和现有 Controller 外部行为不变。
 
-BPM 工作流管理模块，涵盖以下 **7 个已实施 DDD 的聚合** 和 **4 个 Flowable 集成型聚合（待 DDD 重构）**：
+## 1. When to Use / Not Use
 
-### 2.1 已实施 DDD 的聚合（7 个）
+Use when:
 
-| 聚合 | 包路径 | 说明 |
-|------|--------|------|
-| **BpmCategory** | `domain/definition/` | 流程分类，含名称/编码唯一性、删除校验、批量排序 |
-| **BpmForm** | `domain/form/` | 动态表单配置，含表单字段定义、vModel 重复校验 |
-| **BpmUserGroup** | `domain/usergroup/` | 用户组，含成员管理、启用/禁用、分组校验 |
-| **BpmProcessExpression** | `domain/expression/` | 流程表达式，Spring EL 表达式管理 |
-| **BpmProcessListener** | `domain/listener/` | 流程监听器，含 CLASS 类型接口校验、EXPRESSION 格式校验 |
-| **BpmOALeave** | `domain/leave/` | OA 请假申请，与 BPM 流程引擎集成，状态联动 |
-| **BpmProcessInstanceCopy** | `domain/copy/` | 流程抄送记录，关联任务/流程实例/流程定义 |
+- 重构或验证 `develop-module-bpm/develop-module-bpm-*`。
+- 拆分 `BpmProcessInstanceApi` local/remote 契约。
+- 迁移 `definition/model/process/task/oa/copy/form/usergroup/listener/expression/category` 到 DDD 分层。
+- 修改 Flowable `RepositoryService`、`RuntimeService`、`TaskService`、`HistoryService`、`ManagementService`、BPMN 模型解析、任务候选人策略、流程事件监听或审批按钮行为。
 
-### 2.2 待 DDD 重构的 Flowable 集成型聚合（4 个）
+Do not use when:
 
-| 聚合 | 说明 | 关键外部依赖 |
-|------|------|-------------|
-| **BpmModel** | 流程模型，直接操作 Flowable `RepositoryService` | Flowable API |
-| **BpmProcessDefinition** | 流程定义，管理 `Deployment` 生命周期 | Flowable API + `AdminUserApi` |
-| **BpmProcessInstance** | 流程实例，运行时 + 历史实例管理 | Flowable API + `AdminUserApi` + `DeptApi` |
-| **BpmTask** | 流程任务，审批/退回/加签/转办/委派/撤回 | Flowable API + `AdminUserApi` + `DeptApi` |
+- 只修改 Flowable XML 设计器静态资源或非 BPM 业务模块。
+- 只调整 UI 文案、SQL 数据或普通配置。
+- 准备一次性重构全部 BPM；必须按 `definition`、`model`、`process-instance`、`task`、`oa-leave`、`copy`、`candidate` 等小批次执行。
 
-## 3. DDD 构造块
+## 2. Baseline Failure Findings
 
-### 3.1 聚合根（7 个已实施）
+未升级前的草稿风险：
 
-#### BpmCategory — 流程分类聚合根
+1. 只有聚合和值对象列表，缺少生产级事实源路径、错误码、事务、Flowable API 和测试命令。
+2. 将“已 DDD”与“可替换 legacy”混为一谈。当前 DDD application 多数只是迁移脚手架，Flowable 核心仍在 legacy service。
+3. 未记录 `create(null, ...)` 与 ID 值对象非空约束的冲突，实际迁移可能直接 NPE。
+4. 未记录 infrastructure repository 依赖 Controller PageReqVO 和 legacy service 的边界债。
+5. 未记录 OA 请假 `updateStatus` 通过占位字段重建聚合再全量保存的字段污染风险。
+6. 未记录 Flowable 任务审批、退回、撤回、加签、转办、委派、候选人策略和 BPMN 模型解析的高风险规则。
+7. 未记录 `BpmProcessInstanceStatusEvent`、Flowable event listener、candidate strategy 单测路径和错误码重复码现状。
+8. 未明确 Controller/API/VO/DTO/权限/错误码不得随 DDD 重构改变。
 
-```
-com.develop.mvp.pk.module.bpm.domain.definition.BpmCategory
-```
+## 3. Reproducibility Contract
 
-**聚合边界**：
-- BpmCategory（根实体）
-- 不包含：BpmModel（仅通过 category code 引用）、BpmProcessDefinition（仅通过 category 字段引用）
+执行本 skill 前必须：
 
-**状态流转**：
-```
-ENABLED <--> DISABLED (通过 enable()/disable())
-删除 → markDeleted() 发布 CategoryDeletedEvent
-```
+1. 先读取本文件和 `.claude/ddd-skills/DDD_Skill_Production_Readiness_Standard.md`、`.claude/ddd-skills/Module_Structure_Standard.md`。
+2. 当前可编译代码的外部行为优先。发现 skill 与代码冲突时，先修 skill，不先改代码。
+3. 每批只处理一个小上下文：`category/form/usergroup/expression/listener/oa-leave/copy/model/process-definition/process-instance/task/candidate`。
+4. Flowable API 调用必须留在 application/service/infrastructure adapter，不进入 domain entity。
+5. Controller 路径、HTTP 方法、VO/DTO 字段、权限注解、错误码、事件契约、消息语义和 Flowable 流程行为不得在聚合重构中擅改。
+6. legacy `service` 是 Flowable 核心行为事实源；只有当 DDD application 覆盖完整规则、事务、错误码和测试后，才可切换入口。
 
-**值对象**：
+## 4. Current Source Anchors
 
-| 值对象 | 类名 | 封装字段 | 不可变 | 自校验 |
-|--------|------|---------|--------|--------|
-| 分类ID | `CategoryId` | `Long value` | ✅ | 非空 |
-| 分类名称 | `CategoryName` | `String value` | ✅ | 非空、非空白 |
-| 分类编码 | `CategoryCode` | `String value` | ✅ | 非空、非空白 |
-| 分类状态 | `CategoryStatus` | `Integer code` | ✅ | 只能是 ENABLE/DISABLE |
+### API module and events
 
-**仓储接口**：
-```
-com.develop.mvp.pk.module.bpm.domain.definition.repository.BpmCategoryRepository
-```
+- `develop-module-bpm/develop-module-bpm-api/src/main/java/com/develop/mvp/pk/module/bpm/api/task/BpmProcessInstanceApi.java`
+- `develop-module-bpm/develop-module-bpm-api/src/main/java/com/develop/mvp/pk/module/bpm/api/task/dto/BpmProcessInstanceCreateReqDTO.java`
+- `develop-module-bpm/develop-module-bpm-api/src/main/java/com/develop/mvp/pk/module/bpm/api/event/BpmProcessInstanceStatusEvent.java`
+- `develop-module-bpm/develop-module-bpm-api/src/main/java/com/develop/mvp/pk/module/bpm/api/event/BpmProcessInstanceStatusEventListener.java`
+- `develop-module-bpm/develop-module-bpm-api/src/main/java/com/develop/mvp/pk/module/bpm/enums/ApiConstants.java`
+- `develop-module-bpm/develop-module-bpm-api/src/main/java/com/develop/mvp/pk/module/bpm/enums/ErrorCodeConstants.java`
+- `develop-module-bpm/develop-module-bpm-api/src/main/java/com/develop/mvp/pk/module/bpm/enums/definition/*.java`
+- `develop-module-bpm/develop-module-bpm-api/src/main/java/com/develop/mvp/pk/module/bpm/enums/task/*.java`
+
+### API implementations and event listeners
+
+- `develop-module-bpm/develop-module-bpm-server/src/main/java/com/develop/mvp/pk/module/bpm/api/task/BpmProcessInstanceApiImpl.java`
+- `develop-module-bpm/develop-module-bpm-server/src/main/java/com/develop/mvp/pk/module/bpm/api/event/CrmContractStatusListener.java`
+- `develop-module-bpm/develop-module-bpm-server/src/main/java/com/develop/mvp/pk/module/bpm/api/event/CrmReceivableStatusListener.java`
+
+### Controllers and VO contracts
+
+- `develop-module-bpm/develop-module-bpm-server/src/main/java/com/develop/mvp/pk/module/bpm/controller/admin/definition/BpmCategoryController.java`
+- `develop-module-bpm/develop-module-bpm-server/src/main/java/com/develop/mvp/pk/module/bpm/controller/admin/definition/BpmFormController.java`
+- `develop-module-bpm/develop-module-bpm-server/src/main/java/com/develop/mvp/pk/module/bpm/controller/admin/definition/BpmUserGroupController.java`
+- `develop-module-bpm/develop-module-bpm-server/src/main/java/com/develop/mvp/pk/module/bpm/controller/admin/definition/BpmProcessExpressionController.java`
+- `develop-module-bpm/develop-module-bpm-server/src/main/java/com/develop/mvp/pk/module/bpm/controller/admin/definition/BpmProcessListenerController.java`
+- `develop-module-bpm/develop-module-bpm-server/src/main/java/com/develop/mvp/pk/module/bpm/controller/admin/definition/BpmModelController.java`
+- `develop-module-bpm/develop-module-bpm-server/src/main/java/com/develop/mvp/pk/module/bpm/controller/admin/definition/BpmProcessDefinitionController.java`
+- `develop-module-bpm/develop-module-bpm-server/src/main/java/com/develop/mvp/pk/module/bpm/controller/admin/task/BpmProcessInstanceController.java`
+- `develop-module-bpm/develop-module-bpm-server/src/main/java/com/develop/mvp/pk/module/bpm/controller/admin/task/BpmTaskController.java`
+- `develop-module-bpm/develop-module-bpm-server/src/main/java/com/develop/mvp/pk/module/bpm/controller/admin/task/BpmProcessInstanceCopyController.java`
+- `develop-module-bpm/develop-module-bpm-server/src/main/java/com/develop/mvp/pk/module/bpm/controller/admin/oa/BpmOALeaveController.java`
+- `develop-module-bpm/develop-module-bpm-server/src/main/java/com/develop/mvp/pk/module/bpm/controller/admin/**/vo/**/*.java`
+
+### Legacy production behavior source
+
+- `develop-module-bpm/develop-module-bpm-server/src/main/java/com/develop/mvp/pk/module/bpm/service/definition/BpmCategoryServiceImpl.java`
+- `develop-module-bpm/develop-module-bpm-server/src/main/java/com/develop/mvp/pk/module/bpm/service/definition/BpmFormServiceImpl.java`
+- `develop-module-bpm/develop-module-bpm-server/src/main/java/com/develop/mvp/pk/module/bpm/service/definition/BpmUserGroupServiceImpl.java`
+- `develop-module-bpm/develop-module-bpm-server/src/main/java/com/develop/mvp/pk/module/bpm/service/definition/BpmProcessExpressionServiceImpl.java`
+- `develop-module-bpm/develop-module-bpm-server/src/main/java/com/develop/mvp/pk/module/bpm/service/definition/BpmProcessListenerServiceImpl.java`
+- `develop-module-bpm/develop-module-bpm-server/src/main/java/com/develop/mvp/pk/module/bpm/service/definition/BpmModelServiceImpl.java`
+- `develop-module-bpm/develop-module-bpm-server/src/main/java/com/develop/mvp/pk/module/bpm/service/definition/BpmProcessDefinitionServiceImpl.java`
+- `develop-module-bpm/develop-module-bpm-server/src/main/java/com/develop/mvp/pk/module/bpm/service/task/BpmProcessInstanceServiceImpl.java`
+- `develop-module-bpm/develop-module-bpm-server/src/main/java/com/develop/mvp/pk/module/bpm/service/task/BpmTaskServiceImpl.java`
+- `develop-module-bpm/develop-module-bpm-server/src/main/java/com/develop/mvp/pk/module/bpm/service/task/BpmProcessInstanceCopyServiceImpl.java`
+- `develop-module-bpm/develop-module-bpm-server/src/main/java/com/develop/mvp/pk/module/bpm/service/oa/BpmOALeaveServiceImpl.java`
+- `develop-module-bpm/develop-module-bpm-server/src/main/java/com/develop/mvp/pk/module/bpm/service/oa/listener/BpmOALeaveStatusListener.java`
+- `develop-module-bpm/develop-module-bpm-server/src/main/java/com/develop/mvp/pk/module/bpm/service/message/BpmMessageServiceImpl.java`
+
+### Flowable framework and listeners
+
+- `develop-module-bpm/develop-module-bpm-server/src/main/java/com/develop/mvp/pk/module/bpm/framework/flowable/config/BpmFlowableConfiguration.java`
+- `develop-module-bpm/develop-module-bpm-server/src/main/java/com/develop/mvp/pk/module/bpm/framework/flowable/core/listener/BpmTaskEventListener.java`
+- `develop-module-bpm/develop-module-bpm-server/src/main/java/com/develop/mvp/pk/module/bpm/framework/flowable/core/listener/BpmProcessInstanceEventListener.java`
+- `develop-module-bpm/develop-module-bpm-server/src/main/java/com/develop/mvp/pk/module/bpm/framework/flowable/core/enums/BpmnVariableConstants.java`
+- `develop-module-bpm/develop-module-bpm-server/src/main/java/com/develop/mvp/pk/module/bpm/framework/flowable/core/util/*.java`
+- `develop-module-bpm/develop-module-bpm-server/src/main/java/com/develop/mvp/pk/module/bpm/framework/flowable/core/candidate/**/*.java`
+- `develop-module-bpm/develop-module-bpm-server/src/main/java/com/develop/mvp/pk/module/bpm/service/task/listener/BpmCallActivityListener.java`
+- `develop-module-bpm/develop-module-bpm-server/src/main/java/com/develop/mvp/pk/module/bpm/service/task/listener/BpmUserTaskListener.java`
+- `develop-module-bpm/develop-module-bpm-server/src/main/java/com/develop/mvp/pk/module/bpm/service/task/trigger/BpmTrigger.java`
+
+### Current DDD migration source
+
+- `develop-module-bpm/develop-module-bpm-server/src/main/java/com/develop/mvp/pk/module/bpm/domain/definition/*.java`
+- `develop-module-bpm/develop-module-bpm-server/src/main/java/com/develop/mvp/pk/module/bpm/domain/form/*.java`
+- `develop-module-bpm/develop-module-bpm-server/src/main/java/com/develop/mvp/pk/module/bpm/domain/usergroup/*.java`
+- `develop-module-bpm/develop-module-bpm-server/src/main/java/com/develop/mvp/pk/module/bpm/domain/expression/*.java`
+- `develop-module-bpm/develop-module-bpm-server/src/main/java/com/develop/mvp/pk/module/bpm/domain/listener/*.java`
+- `develop-module-bpm/develop-module-bpm-server/src/main/java/com/develop/mvp/pk/module/bpm/domain/leave/*.java`
+- `develop-module-bpm/develop-module-bpm-server/src/main/java/com/develop/mvp/pk/module/bpm/domain/copy/*.java`
+- `develop-module-bpm/develop-module-bpm-server/src/main/java/com/develop/mvp/pk/module/bpm/application/definition/BpmCategoryApplicationService.java`
+- `develop-module-bpm/develop-module-bpm-server/src/main/java/com/develop/mvp/pk/module/bpm/application/form/BpmFormApplicationService.java`
+- `develop-module-bpm/develop-module-bpm-server/src/main/java/com/develop/mvp/pk/module/bpm/application/usergroup/BpmUserGroupApplicationService.java`
+- `develop-module-bpm/develop-module-bpm-server/src/main/java/com/develop/mvp/pk/module/bpm/application/expression/BpmProcessExpressionApplicationService.java`
+- `develop-module-bpm/develop-module-bpm-server/src/main/java/com/develop/mvp/pk/module/bpm/application/listener/BpmProcessListenerApplicationService.java`
+- `develop-module-bpm/develop-module-bpm-server/src/main/java/com/develop/mvp/pk/module/bpm/application/leave/BpmOALeaveApplicationService.java`
+- `develop-module-bpm/develop-module-bpm-server/src/main/java/com/develop/mvp/pk/module/bpm/application/copy/BpmProcessInstanceCopyApplicationService.java`
+- `develop-module-bpm/develop-module-bpm-server/src/main/java/com/develop/mvp/pk/module/bpm/infrastructure/**/*.java`
+
+### Data, mappers, converts, tests
+
+- `develop-module-bpm/develop-module-bpm-server/src/main/java/com/develop/mvp/pk/module/bpm/dal/dataobject/definition/*.java`
+- `develop-module-bpm/develop-module-bpm-server/src/main/java/com/develop/mvp/pk/module/bpm/dal/dataobject/oa/BpmOALeaveDO.java`
+- `develop-module-bpm/develop-module-bpm-server/src/main/java/com/develop/mvp/pk/module/bpm/dal/dataobject/task/BpmProcessInstanceCopyDO.java`
+- `develop-module-bpm/develop-module-bpm-server/src/main/java/com/develop/mvp/pk/module/bpm/dal/mysql/**/*.java`
+- `develop-module-bpm/develop-module-bpm-server/src/main/java/com/develop/mvp/pk/module/bpm/convert/definition/*.java`
+- `develop-module-bpm/develop-module-bpm-server/src/main/java/com/develop/mvp/pk/module/bpm/convert/task/*.java`
+- `develop-module-bpm/develop-module-bpm-server/src/main/java/com/develop/mvp/pk/module/bpm/convert/message/BpmMessageConvert.java`
+- `develop-module-bpm/develop-module-bpm-server/src/test/java/com/develop/mvp/pk/module/bpm/framework/flowable/core/candidate/**/*.java`
+- `develop-module-bpm/develop-module-bpm-server/src/test/java/com/develop/mvp/pk/module/bpm/service/category/BpmCategoryServiceImplTest.java`
+- `develop-module-bpm/develop-module-bpm-server/src/test/java/com/develop/mvp/pk/module/bpm/service/definition/BpmFormServiceTest.java`
+- `develop-module-bpm/develop-module-bpm-server/src/test/java/com/develop/mvp/pk/module/bpm/service/definition/BpmUserGroupServiceTest.java`
+- `develop-module-bpm/develop-module-bpm-server/src/test/resources/application-unit-test.yaml`
+
+## 5. Fixed Data Model
+
+### Stable API and event DTOs
+
+| Source | Field | Type | Meaning / Rules |
+|---|---|---|---|
+| `BpmProcessInstanceCreateReqDTO` | `processDefinitionKey` | `String` | 发起流程定义 key，内部 API 必填语义保持 |
+| `BpmProcessInstanceCreateReqDTO` | `variables` | `Map<String, Object>` | 发起变量，必须透传给 Flowable |
+| `BpmProcessInstanceCreateReqDTO` | `startUserSelectAssignees` | map-like | 发起人自选审批人，必须覆盖预测节点且用户存在 |
+| `BpmProcessInstanceStatusEvent` | `id` | `String` | 流程实例 ID |
+| `BpmProcessInstanceStatusEvent` | `processDefinitionKey` | `String` | 流程定义 key，业务监听器按 key 过滤 |
+| `BpmProcessInstanceStatusEvent` | `businessKey` | `String` | 业务主键，如 OA 请假 id |
+| `BpmProcessInstanceStatusEvent` | `status` | `Integer` | BPM 流程实例状态 |
+
+### Definition aggregates
+
+| Source | Field | Type | Meaning / Rules |
+|---|---|---|---|
+| `BpmCategoryDO` | `id` | `Long` | 分类主键；当前 DDD create(null) 与 `CategoryId` 非空冲突 |
+| `BpmCategoryDO` | `name/code/description/status/sort` | `String/Integer` | 名称、编码唯一；删除前校验模型使用数 |
+| `BpmFormDO` | `id/name/status/conf/fields/remark` | mixed | 动态表单配置；`fields` JSON 数组；必须校验 vModel 重复 |
+| `BpmUserGroupDO` | `id/name/description/status/userIds` | mixed | 用户组；状态禁用时任务候选人校验失败 |
+| `BpmProcessExpressionDO` | `id/name/status/expression` | mixed | 流程表达式；Spring EL 表达式管理 |
+| `BpmProcessListenerDO` | `id/name/type/event/valueType/value/status` | mixed | 监听器；CLASS 类型校验类存在且实现接口，EXPRESSION 校验 `${}` 格式 |
+
+### OA leave and copy
+
+| Source | Field | Type | Meaning / Rules |
+|---|---|---|---|
+| `BpmOALeaveDO` | `id` | `Long` | 请假单主键；创建后用于 BPM businessKey |
+| `BpmOALeaveDO` | `userId/type/reason/startTime/endTime/day` | mixed | 请假申请业务字段，更新状态时不得被占位值污染 |
+| `BpmOALeaveDO` | `status` | `Integer` | 复用 BPM 流程状态，随流程实例事件联动 |
+| `BpmOALeaveDO` | `processInstanceId` | `String` | Flowable 流程实例 ID；创建流程后回写 |
+| `BpmProcessInstanceCopyDO` | `id/userId/processInstanceId/processDefinitionId/taskId/taskName/startUserId` | mixed | 抄送记录；与任务、流程实例、流程定义关联 |
+
+### Flowable runtime concepts
+
+| Concept | Source | Preservation rule |
+|---|---|---|
+| Model | `BpmModelServiceImpl`, Flowable `RepositoryService` | 模型 key/name/form/manager/deploy 校验保持 |
+| ProcessDefinition | `BpmProcessDefinitionServiceImpl`, Flowable deployment | 定义部署、挂起、权限、分类、用户视图保持 |
+| ProcessInstance | `BpmProcessInstanceServiceImpl`, `RuntimeService`, `HistoryService` | 发起、取消、状态事件、变量、业务 key 保持 |
+| Task | `BpmTaskServiceImpl`, `TaskService`, `HistoryService`, `ManagementService` | 审批、拒绝、退回、委派、转办、加签、减签、撤回、评论、按钮权限保持 |
+| Candidate strategy | `framework/flowable/core/candidate` | 部门/角色/岗位/用户/用户组/发起人/表达式/自选审批人策略保持 |
+
+## 6. Required Method Signatures and Capabilities
+
+Signatures here describe behavior parity with existing entry points; they do not mean Controller VO or Flowable classes belong in final domain entities.
+
+### Stable API contract
+
+Current contract must remain stable until a separate API migration plan exists:
 
 ```java
-public interface BpmCategoryRepository {
-    void save(BpmCategory c);
-    void delete(CategoryId id);
-    BpmCategory findById(CategoryId id);
-    Optional<BpmCategory> findByCode(CategoryCode code);
-    Optional<BpmCategory> findByName(CategoryName name);
-    List<BpmCategory> findAll();
-    List<BpmCategory> findByStatus(CategoryStatus status);
-    PageResult<BpmCategory> findPage(String name, String code, Integer status, Integer pageNo, Integer pageSize);
-    long getModelCountByCategory(String code);
-}
+CommonResult<String> createProcessInstance(Long userId, BpmProcessInstanceCreateReqDTO reqDTO);
 ```
 
-**工厂**：`BpmCategoryFactory` — `create(id, name, code, sort)` / `reconstitute(id, name, code, sort, status)`
+`BpmProcessInstanceApi` currently carries `@FeignClient`; local/remote split must produce a stable API/CommonApi plus `remote/*RemoteClient` without changing method semantics.
 
-**领域事件**：
-| 事件 | 触发时机 |
-|------|---------|
-| `CategoryDeletedEvent` | 调用 `markDeleted()` 时 |
+### Definition capabilities
 
-**应用服务**：`BpmCategoryApplicationService`
-- `create(name, code, status, sort)` — 创建前校验名称+编码唯一性
-- `update(id, name, code, status, sort)` — 更新前校验存在+名称/编码唯一性
-- `delete(id)` — 删除前校验未被模型使用
-- `updateSortBatch(ids)` — 批量更新排序值
-- `get(id)` / `getByStatus(status)` / `getAll()` / `getPage(name, code, status, pageNo, pageSize)` — 查询
-
----
-
-#### BpmForm — 动态表单聚合根
-
-```
-com.develop.mvp.pk.module.bpm.domain.form.BpmForm
-```
-
-**值对象**：
-
-| 值对象 | 类名 | 封装字段 |
-|--------|------|---------|
-| 表单ID | `FormId` | `Long value` |
-| 表单名称 | `FormName` | `String value` |
-| 表单状态 | `FormStatus` | `Integer code` |
-
-**仓储接口**：`BpmFormRepository`
 ```java
-void save(BpmForm form);
-void delete(FormId id);
-BpmForm findById(FormId id);
-List<BpmForm> findAll();
-List<BpmForm> findByIds(Collection<FormId> ids);
-PageResult<BpmForm> findPage(String name, Integer pageNo, Integer pageSize);
+Long createCategory(...);
+void updateCategory(...);
+void deleteCategory(Long id);
+void updateCategorySortBatch(List<Long> ids);
+Long createForm(...);
+void updateForm(...);
+void deleteForm(Long id);
+void validateFormFields(...);
+Long createUserGroup(...);
+void updateUserGroup(...);
+void deleteUserGroup(Long id);
+void validateUserGroups(Collection<Long> ids);
+Long createProcessExpression(...);
+void updateProcessExpression(...);
+void deleteProcessExpression(Long id);
+Long createProcessListener(...);
+void updateProcessListener(...);
+void deleteProcessListener(Long id);
+void validateListenerValue(Integer type, Integer valueType, String value);
 ```
 
-**工厂**：`BpmFormFactory`
+### Flowable model/definition capabilities
 
-**领域事件**：`FormDeletedEvent`
-
-**应用服务**：`BpmFormApplicationService`
-
----
-
-#### BpmUserGroup — 用户组聚合根
-
-```
-com.develop.mvp.pk.module.bpm.domain.usergroup.BpmUserGroup
-```
-
-**值对象**：
-
-| 值对象 | 类名 | 封装字段 |
-|--------|------|---------|
-| 用户组ID | `UserGroupId` | `Long value` |
-| 用户组名称 | `UserGroupName` | `String value` |
-| 用户组状态 | `UserGroupStatus` | `Integer code` |
-
-**仓储接口**：`BpmUserGroupRepository`
 ```java
-void save(BpmUserGroup group);
-void delete(UserGroupId id);
-BpmUserGroup findById(UserGroupId id);
-List<BpmUserGroup> findByIds(Collection<UserGroupId> ids);
-List<BpmUserGroup> findByStatus(UserGroupStatus status);
-List<BpmUserGroup> findAll();
-PageResult<BpmUserGroup> findPage(String name, Integer status, Integer pageNo, Integer pageSize);
+String createModel(...);
+void updateModel(...);
+void updateModelState(String id, Integer state);
+void updateModelBpmn(String id, String bpmnXml);
+void updateModelSortBatch(List<String> ids);
+String deployModel(String id);
+void deleteModel(String id);
+void validateBpmnModel(...);
+void updateProcessDefinitionState(String id, Integer state);
+List<?> getProcessDefinitionList(...);
 ```
 
-**工厂**：`BpmUserGroupFactory`
+### Process instance and task capabilities
 
-**领域事件**：`UserGroupDeletedEvent`
-
-**应用服务**：`BpmUserGroupApplicationService`
-- `validateGroups(ids)` — 校验用户组存在且已启用（R08-R09），供任务分配策略使用
-
----
-
-#### BpmProcessExpression — 流程表达式聚合根
-
-```
-com.develop.mvp.pk.module.bpm.domain.expression.BpmProcessExpression
-```
-
-**值对象**：
-
-| 值对象 | 类名 | 封装字段 |
-|--------|------|---------|
-| 表达式ID | `ExpressionId` | `Long value` |
-| 表达式名称 | `ExpressionName` | `String value` |
-| 表达式状态 | `ExpressionStatus` | `Integer code` |
-
-**仓储接口**：`BpmProcessExpressionRepository`
-
-**工厂**：`BpmProcessExpressionFactory`
-
-**领域事件**：`ExpressionDeletedEvent`
-
-**应用服务**：`BpmProcessExpressionApplicationService`
-
----
-
-#### BpmProcessListener — 流程监听器聚合根
-
-```
-com.develop.mvp.pk.module.bpm.domain.listener.BpmProcessListener
-```
-
-**值对象**：
-
-| 值对象 | 类名 | 封装字段 |
-|--------|------|---------|
-| 监听器ID | `ListenerId` | `Long value` |
-| 监听器名称 | `ListenerName` | `String value` |
-| 监听器状态 | `ListenerStatus` | `Integer code` |
-
-**仓储接口**：`BpmProcessListenerRepository`
-
-**工厂**：`BpmProcessListenerFactory`
-
-**领域事件**：`ListenerDeletedEvent`
-
-**应用服务**：`BpmProcessListenerApplicationService`
-- `validateListenerValue(type, valueType, value)` — 校验 CLASS 类型必须实现对应接口（R11），EXPRESSION 类型必须为 `${}` 格式（R12）
-
----
-
-#### BpmOALeave — OA 请假单聚合根
-
-```
-com.develop.mvp.pk.module.bpm.domain.leave.BpmOALeave
-```
-
-**聚合边界**：
-- BpmOALeave（根实体）
-- 不包含：BpmProcessInstance（通过 processInstanceId 引用，BPM 流程引擎管理）
-
-**状态流转**：
-```
-RUNNING --> APPROVE / REJECT / CANCEL (通过 updateStatus())
-```
-
-**值对象**：
-
-| 值对象 | 类名 | 封装字段 |
-|--------|------|---------|
-| 请假单ID | `LeaveId` | `Long value` |
-| 请假单状态 | `LeaveStatus` | `Integer code` |
-
-**仓储接口**：`BpmOALeaveRepository`
 ```java
-void save(BpmOALeave leave);
-BpmOALeave findById(LeaveId id);
-PageResult<BpmOALeave> findPage(Long userId, Integer status, Integer type, String reason,
-                                Integer pageNo, Integer pageSize);
+String createProcessInstance(Long userId, BpmProcessInstanceCreateReqDTO reqDTO);
+void cancelProcessInstance(Long userId, String id, String reason);
+void cancelProcessInstanceByAdmin(...);
+void updateProcessInstanceExtStatus(...);
+void approveTask(Long userId, BpmTaskApproveReqVO reqVO);
+void rejectTask(Long userId, BpmTaskRejectReqVO reqVO);
+void returnTask(Long userId, BpmTaskReturnReqVO reqVO);
+void delegateTask(Long userId, BpmTaskDelegateReqVO reqVO);
+void transferTask(Long userId, BpmTaskTransferReqVO reqVO);
+void createSignTask(Long userId, BpmTaskSignCreateReqVO reqVO);
+void deleteSignTask(Long userId, BpmTaskSignDeleteReqVO reqVO);
+void withdrawTask(Long userId, BpmTaskWithdrawReqVO reqVO);
+void createCopy(...);
 ```
 
-**工厂**：`BpmOALeaveFactory`
+### OA leave capabilities
 
-**领域事件**：`LeaveStatusUpdatedEvent`
-
-**应用服务**：`BpmOALeaveApplicationService`
-- 使用固定 process key `"oa_leave"` 发起 BPM 流程
-
----
-
-#### BpmProcessInstanceCopy — 流程抄送聚合根
-
-```
-com.develop.mvp.pk.module.bpm.domain.copy.BpmProcessInstanceCopy
-```
-
-**值对象**：
-
-| 值对象 | 类名 | 封装字段 |
-|--------|------|---------|
-| 抄送ID | `CopyId` | `Long value` |
-| 抄送用户ID | `CopyUserId` | `Long value` |
-
-**仓储接口**：`BpmProcessInstanceCopyRepository`
 ```java
-void save(BpmProcessInstanceCopy copy);
-void saveBatch(List<BpmProcessInstanceCopy> copies);
-void deleteByProcessInstanceId(String processInstanceId);
-PageResult<BpmProcessInstanceCopy> findPage(Long userId, String processInstanceName,
-                                             Integer pageNo, Integer pageSize);
+Long createLeave(Long userId, BpmOALeaveCreateReqVO reqVO);
+void updateLeaveStatus(Long id, Integer status);
+PageResult<BpmOALeaveDO> getLeavePage(...);
 ```
 
-**工厂**：`BpmProcessInstanceCopyFactory`
+## 7. Business Rules
 
-**领域事件**：`CopyCreatedEvent`
+### Definition and model rules
 
-**应用服务**：`BpmProcessInstanceCopyApplicationService`
-- 需要依赖 `BpmTaskService`、`BpmProcessInstanceService`、`BpmProcessDefinitionService`
+| ID | Rule | Current source | Must preserve |
+|---|---|---|---|
+| BPM-DEF-01 | 分类名称和编码唯一，删除前校验没有模型使用该分类 | `BpmCategoryServiceImpl`, `BpmCategoryApplicationService` | `CATEGORY_*` 错误码保持 |
+| BPM-DEF-02 | 表单字段 vModel 不得重复 | `BpmFormServiceImpl` | `FORM_FIELD_REPEAT` 参数保持 |
+| BPM-DEF-03 | 用户组存在且启用才可作为候选人 | `BpmUserGroupServiceImpl`, candidate strategies | 禁用抛 `USER_GROUP_IS_DISABLE` |
+| BPM-DEF-04 | 监听器 CLASS 类型必须类存在且实现对应接口，EXPRESSION 必须是合法 `${}` | `BpmProcessListenerServiceImpl/ApplicationService` | `PROCESS_LISTENER_*` 错误码保持 |
+| BPM-MODEL-01 | 模型 key 格式合法且唯一 | `BpmModelServiceImpl` | `MODEL_KEY_VALID`, `MODEL_KEY_EXISTS` 保持 |
+| BPM-MODEL-02 | 部署前 BPMN 必须有 StartEvent、UserTask 名称、表单配置、任务候选人配置 | `BpmModelServiceImpl#deployModel/validateBpmnModel` | 部署失败错误码保持 |
+| BPM-MODEL-03 | 首个用户任务不能使用“审批人自选”策略 | `BpmModelServiceImpl` | `MODEL_DEPLOY_FAIL_FIRST_USER_TASK_CANDIDATE_STRATEGY_ERROR` 保持 |
+| BPM-MODEL-04 | 当前 `updateModelSortBatch` 可能漏更新 index=0，这是现有代码风险，不得在无测试时顺手修复 | `BpmModelServiceImpl` | 需单独测试/计划 |
 
----
+### Process instance rules
 
-### 3.2 聚合根（4 个未实施 DDD，仍为旧三层架构）
+| ID | Rule | Current source | Must preserve |
+|---|---|---|---|
+| BPM-PI-01 | 发起流程前校验流程定义存在、未挂起、用户有发起权限 | `BpmProcessInstanceServiceImpl` | `PROCESS_DEFINITION_*`, `PROCESS_INSTANCE_START_USER_CAN_START` 保持 |
+| BPM-PI-02 | 发起人自选审批人必须覆盖预测节点且用户存在 | `BpmProcessInstanceServiceImpl` | `PROCESS_INSTANCE_START_USER_SELECT_ASSIGNEES_*` 保持 |
+| BPM-PI-03 | 流程变量必须合并业务变量、发起人、候选人、表单变量，不能丢历史变量 | `BpmnVariableConstants`, process/task service | 变量 key 保持 |
+| BPM-PI-04 | 取消流程必须校验流程运行中、发起人本人或管理员权限、流程允许取消 | `BpmProcessInstanceServiceImpl` | `PROCESS_INSTANCE_CANCEL_*` 保持 |
+| BPM-PI-05 | 流程状态变化必须发布 `BpmProcessInstanceStatusEvent`，业务监听器按 processDefinitionKey/businessKey 联动 | `BpmProcessInstanceEventPublisher`, API event listeners | 事件字段保持 |
 
-以下聚合根直接操作 Flowable API，暂未进行 DDD 重构：
+### Task rules
 
-#### BpmModel — 流程模型
+| ID | Rule | Current source | Must preserve |
+|---|---|---|---|
+| BPM-TASK-01 | 审批/拒绝/退回/转办/委派等操作必须校验当前用户是任务处理人且任务未挂起 | `BpmTaskServiceImpl` | `TASK_OPERATE_FAIL_ASSIGN_NOT_SELF`, `TASK_IS_PENDING` 保持 |
+| BPM-TASK-02 | 审批签名必填，审批意见必填 | `BpmTaskServiceImpl` | `TASK_SIGNATURE_NOT_EXISTS`, `TASK_REASON_REQUIRE` 保持 |
+| BPM-TASK-03 | 审批时必须保留/合并历史变量，处理发起人自选下一个节点审批人 | `BpmTaskServiceImpl` | 避免变量丢失 |
+| BPM-TASK-04 | 退回只能退到串行可达且历史已走过节点，不能退到并行网关或非同一路线 | `BpmTaskServiceImpl` + `BpmnModelUtils` | `TASK_RETURN_FAIL_SOURCE_TARGET_ERROR` 保持 |
+| BPM-TASK-05 | 委派/转办目标用户必须存在且不能与当前审批人相同 | `BpmTaskServiceImpl` | `TASK_DELEGATE_*`, `TASK_TRANSFER_*` 保持 |
+| BPM-TASK-06 | 加签用户必须存在且不能重复；减签任务必须来自加签父任务 | `BpmTaskServiceImpl`, `ManagementService` | `TASK_SIGN_*` 保持 |
+| BPM-TASK-07 | 撤回要求流程仍运行、已办任务存在、下一节点未办且满足撤回条件 | `BpmTaskServiceImpl` | `TASK_WITHDRAW_*` 保持 |
+| BPM-TASK-08 | 任务 created/assigned/completed/cancelled/timer Flowable 事件必须触发消息、候选人、状态扩展逻辑 | `BpmTaskEventListener` | listener 行为保持 |
 
-**位置**：`service/definition/BpmModelService` / `BpmModelServiceImpl`
-**核心依赖**：`RepositoryService`（Flowable）、`BpmProcessDefinitionService`、`BpmFormService`、`BpmTaskCandidateInvoker`
-**核心操作**：CRUD、部署、激活/挂起、清理全部流程数据、BPMN/SimpleModel 转换
+### OA leave and copy rules
 
-#### BpmProcessDefinition — 流程定义
+| ID | Rule | Current source | Must preserve |
+|---|---|---|---|
+| BPM-OA-01 | OA 请假先落库，再通过内部 BPM API 发起流程，最后回写 `processInstanceId` | `BpmOALeaveServiceImpl` | 顺序和 process key `oa_leave` 保持 |
+| BPM-OA-02 | 流程实例状态事件按 process key 过滤后更新请假状态 | `BpmOALeaveStatusListener` | 事件联动保持 |
+| BPM-OA-03 | 当前 DDD `updateStatus` 有占位字段污染风险，不能直接替换 legacy | `BpmOALeaveApplicationService`, repository | 需专用 updateStatus 仓储方法 |
+| BPM-COPY-01 | 抄送记录关联任务、流程实例、流程定义和发起人 | `BpmProcessInstanceCopyServiceImpl/ApplicationService` | 分页和用户维度查询保持 |
 
-**位置**：`service/definition/BpmProcessDefinitionService` / `BpmProcessDefinitionServiceImpl`
-**核心依赖**：`RepositoryService`（Flowable）、`AdminUserApi`
-**核心操作**：查询（活跃/挂起）、部署、状态变更、用户发起权限校验
+## 8. Error Code Contract
 
-#### BpmProcessInstance — 流程实例
+Use `develop-module-bpm/develop-module-bpm-api/src/main/java/com/develop/mvp/pk/module/bpm/enums/ErrorCodeConstants.java` as source of truth.
 
-**位置**：`service/task/BpmProcessInstanceService` / `BpmProcessInstanceServiceImpl`
-**核心依赖**：`RuntimeService`、`HistoryService`（Flowable）、`AdminUserApi`、`DeptApi`、`BpmTaskCandidateInvoker`
-**核心操作**：发起、取消（发起人/管理员）、审批详情、BPMN 模型视图、事件处理（完成/创建）
+| Scenario | ErrorCodeConstants | Preservation rule |
+|---|---|---|
+| 请假单不存在 | `OA_LEAVE_NOT_EXISTS` | OA 查询/状态更新保持 |
+| 模型 key 重复/非法 | `MODEL_KEY_EXISTS`, `MODEL_KEY_VALID` | 参数和格式校验保持 |
+| 模型不存在 | `MODEL_NOT_EXISTS` | Flowable model 查询/更新/部署保持 |
+| 部署表单未配置 | `MODEL_DEPLOY_FAIL_FORM_NOT_CONFIG` | 保持部署前置校验 |
+| 用户任务候选人未配置 | `MODEL_DEPLOY_FAIL_TASK_CANDIDATE_NOT_CONFIG` | 参数为任务名 |
+| BPMN 无开始事件 | `MODEL_DEPLOY_FAIL_BPMN_START_EVENT_NOT_EXISTS` | 保持 |
+| 用户任务名称缺失 | `MODEL_DEPLOY_FAIL_BPMN_USER_TASK_NAME_NOT_EXISTS` | 参数为任务 id/标识 |
+| 非管理员操作模型 | `MODEL_UPDATE_FAIL_NOT_MANAGER` | 保持管理员校验 |
+| 首节点审批人自选错误 | `MODEL_DEPLOY_FAIL_FIRST_USER_TASK_CANDIDATE_STRATEGY_ERROR` | 保持 |
+| 流程定义 key/name 不匹配 | `PROCESS_DEFINITION_KEY_NOT_MATCH`, `PROCESS_DEFINITION_NAME_NOT_MATCH` | BPMN 与模型校验保持 |
+| 流程定义不存在/挂起 | `PROCESS_DEFINITION_NOT_EXISTS`, `PROCESS_DEFINITION_IS_SUSPENDED` | 发起流程前校验保持 |
+| 流程实例不存在 | `PROCESS_INSTANCE_NOT_EXISTS` | 查询/取消/任务联动保持 |
+| 取消流程不存在/非本人/不允许 | `PROCESS_INSTANCE_CANCEL_FAIL_NOT_EXISTS`, `PROCESS_INSTANCE_CANCEL_FAIL_NOT_SELF`, `PROCESS_INSTANCE_CANCEL_FAIL_NOT_ALLOW` | 注意 `PROCESS_INSTANCE_CANCEL_FAIL_NOT_ALLOW` 与 `PROCESS_INSTANCE_START_USER_CAN_START` 当前码值重复，保留现状除非单独迁移 |
+| 发起权限不足 | `PROCESS_INSTANCE_START_USER_CAN_START` | 当前码值 `1_009_004_005` 保持 |
+| 发起人自选审批人缺失/不存在 | `PROCESS_INSTANCE_START_USER_SELECT_ASSIGNEES_NOT_CONFIG`, `PROCESS_INSTANCE_START_USER_SELECT_ASSIGNEES_NOT_EXISTS` | 保持 task name/user 参数 |
+| HTTP 调用失败 | `PROCESS_INSTANCE_HTTP_CALL_ERROR` | HTTP task/trigger 保持 |
+| 下个任务自选审批人缺失 | `PROCESS_INSTANCE_APPROVE_USER_SELECT_ASSIGNEES_NOT_CONFIG` | 审批时保持 |
+| 任务非本人/不存在/挂起 | `TASK_OPERATE_FAIL_ASSIGN_NOT_SELF`, `TASK_NOT_EXISTS`, `TASK_IS_PENDING` | 所有任务操作保持 |
+| 退回目标错误 | `TASK_TARGET_NODE_NOT_EXISTS`, `TASK_RETURN_FAIL_SOURCE_TARGET_ERROR` | 退回逻辑保持 |
+| 委派/转办/加减签错误 | `TASK_DELEGATE_*`, `TASK_TRANSFER_*`, `TASK_SIGN_*` | 保持用户存在/重复/父任务校验 |
+| 签名/意见缺失 | `TASK_SIGNATURE_NOT_EXISTS`, `TASK_REASON_REQUIRE` | 审批/拒绝保持 |
+| 撤回失败 | `TASK_WITHDRAW_*` | 保持运行中、已办、下一任务条件 |
+| 表单不存在/字段重复 | `FORM_NOT_EXISTS`, `FORM_FIELD_REPEAT` | 保持 vModel 校验 |
+| 用户组不存在/禁用 | `USER_GROUP_NOT_EXISTS`, `USER_GROUP_IS_DISABLE` | 候选人策略保持 |
+| 分类不存在/重复/被模型使用 | `CATEGORY_*` | 保持 |
+| 监听器不存在/类错误/表达式错误 | `PROCESS_LISTENER_*` | 保持 class/expression 校验 |
+| 表达式不存在 | `PROCESS_EXPRESSION_NOT_EXISTS` | 保持 |
 
-#### BpmTask — 流程任务
+## 9. Transaction Contract
 
-**位置**：`service/task/BpmTaskService` / `BpmTaskServiceImpl`
-**核心依赖**：`TaskService`、`HistoryService`、`RuntimeService`、`ManagementService`（Flowable）、`AdminUserApi`、`DeptApi`
-**核心操作**：审批通过/拒绝、退回、委派、转办、加签/减签、抄送、撤回、超时处理
+| Use case | Current transaction | Flowable/external scope | Preservation rule |
+|---|---|---|---|
+| Category/Form/UserGroup/Expression/Listener create/update/delete | legacy/application methods often transactional or mapper writes | Mapper + event publisher | 保持唯一性、删除校验、事件发布 |
+| Model deploy/update/delete/sort | `@Transactional` in legacy service paths | Flowable `RepositoryService`, BPMN validation | 不能半部署半失败 |
+| Process definition state update | legacy service | Flowable repository/deployment | 保持挂起/激活语义 |
+| Process instance create/cancel | `@Transactional` | `RuntimeService`, process variables, event publisher, user/dept APIs | 保持 Flowable 与扩展数据一致 |
+| Task approve/reject/return/delegate/transfer/sign/withdraw | `@Transactional` | `TaskService`, `RuntimeService`, `HistoryService`, `ManagementService`, comments, variables, messages | 保持变量、评论、任务状态和消息一致 |
+| OA leave create | `@Transactional` in legacy service | insert leave -> internal BPM API -> update processInstanceId | 顺序不可改 |
+| OA leave status update | event listener calls service | process status event -> leave status | 避免 DDD 占位字段全量覆盖 |
+| Copy create | service/application | task/process/definition lookup + mapper insert | 保持用户维度和任务维度关系 |
 
----
+## 10. Flowable and Integration Contract
 
-### 3.3 值对象汇总
+### Flowable APIs
 
-| 聚合 | 值对象 | 不可变 | 自校验 |
-|------|--------|--------|--------|
-| BpmCategory | `CategoryId`, `CategoryName`, `CategoryCode`, `CategoryStatus` | ✅ | ✅ |
-| BpmForm | `FormId`, `FormName`, `FormStatus` | ✅ | ✅ |
-| BpmUserGroup | `UserGroupId`, `UserGroupName`, `UserGroupStatus` | ✅ | ✅ |
-| BpmProcessExpression | `ExpressionId`, `ExpressionName`, `ExpressionStatus` | ✅ | ✅ |
-| BpmProcessListener | `ListenerId`, `ListenerName`, `ListenerStatus` | ✅ | ✅ |
-| BpmOALeave | `LeaveId`, `LeaveStatus` | ✅ | ✅ |
-| BpmProcessInstanceCopy | `CopyId`, `CopyUserId` | ✅ | ✅ |
+- `RepositoryService` owns model, BPMN model, deployment and process definition operations.
+- `RuntimeService` owns process instance start/cancel/state change and runtime variables.
+- `TaskService` owns active task query, complete, delegate, transfer, comments and task variables.
+- `HistoryService` owns historical task/process/activity data and approval trace.
+- `ManagementService` is used for native SQL or parent task lookup in sign/delete-sign flows.
+- `BpmnModel` and `BpmnModelUtils` are required for validation, returnable node calculation, candidate prediction, button permissions and task node metadata.
 
-所有值对象为 `final class`，字段为 `final`，构造方法自校验，`equals/hashCode` 基于 value 字段。
+Flowable classes must not be imported by domain aggregate classes.
 
-### 3.4 领域事件汇总
+### Events and listeners
 
-| 聚合 | 事件 | 触发时机 | 携带数据 |
-|------|------|---------|---------|
-| BpmCategory | `CategoryDeletedEvent` | 分类标记删除 | id |
-| BpmForm | `FormDeletedEvent` | 表单标记删除 | id |
-| BpmUserGroup | `UserGroupDeletedEvent` | 用户组标记删除 | id |
-| BpmProcessExpression | `ExpressionDeletedEvent` | 表达式标记删除 | id |
-| BpmProcessListener | `ListenerDeletedEvent` | 监听器标记删除 | id |
-| BpmOALeave | `LeaveStatusUpdatedEvent` | 请假单状态更新 | id, newStatus |
-| BpmProcessInstanceCopy | `CopyCreatedEvent` | 抄送创建 | id, userId, processInstanceId |
+- `BpmFlowableConfiguration` wires Flowable event listeners.
+- `BpmTaskEventListener` must preserve created/assigned/completed/cancelled/timer task behavior.
+- `BpmProcessInstanceEventListener` must preserve process created/completed/cancelled behavior.
+- `BpmProcessInstanceEventPublisher` publishes `BpmProcessInstanceStatusEvent` for business modules.
+- `BpmProcessInstanceStatusEventListener` filters events and delegates to business `onEvent`.
+- `BpmOALeaveStatusListener` currently uses legacy `BpmOALeaveService` and `BpmOALeaveServiceImpl.PROCESS_KEY`; migration must keep process key filtering.
 
-### 3.5 仓储实现（基础设施层）
+### External APIs and security
 
-所有 7 个已实施 DDD 的聚合均有 `RepositoryImpl` 位于 `infrastructure/` 下：
+- User/dept/post/role APIs are used by candidate strategies and approval display.
+- Security user context and admin permissions in controllers must remain intact.
+- Message service sends process approval/reject/task-created/task-timeout notifications.
+- BPM API consumers such as CRM status listeners depend on `BpmProcessInstanceStatusEvent` field semantics.
 
-```
-infrastructure/definition/BpmCategoryRepositoryImpl.java
-infrastructure/form/BpmFormRepositoryImpl.java
-infrastructure/usergroup/BpmUserGroupRepositoryImpl.java
-infrastructure/expression/BpmProcessExpressionRepositoryImpl.java
-infrastructure/listener/BpmProcessListenerRepositoryImpl.java
-infrastructure/leave/BpmOALeaveRepositoryImpl.java
-infrastructure/copy/BpmProcessInstanceCopyRepositoryImpl.java
-```
+## 11. Mapping Rules
 
-负责：聚合根 ↔ MyBatis DO 的映射转换，委托给对应的 Mapper 实现持久化。
+1. Controller VO stays at controller boundary; domain and repository interfaces must not import `controller.admin.*.vo`.
+2. API DTO and event DTO stay in `bpm-api`; stable fields must not change during DDD refactor.
+3. Flowable objects (`Task`, `ProcessInstance`, `HistoricTaskInstance`, `BpmnModel`) stay in application/service/infrastructure/convert, not domain entities.
+4. DO stays persistence model; domain cannot import `dal.dataobject` or Mapper.
+5. Convert classes may map Flowable/DO/VO/DTO/domain, but must not contain domain decisions that belong in domain/application services.
+6. Current infrastructure debt that must be fixed before claiming target architecture:
+   - `BpmCategoryRepositoryImpl` uses `BpmCategoryPageReqVO` and `BpmModelService`.
+   - `BpmFormRepositoryImpl` uses `BpmFormPageReqVO`.
+   - `BpmUserGroupRepositoryImpl` uses `BpmUserGroupPageReqVO`.
+   - `BpmProcessExpressionRepositoryImpl` uses `BpmProcessExpressionPageReqVO`.
+   - `BpmProcessListenerRepositoryImpl` uses `BpmProcessListenerPageReqVO`.
+   - `BpmOALeaveRepositoryImpl` uses `BpmOALeavePageReqVO`.
+   - `BpmProcessInstanceCopyRepositoryImpl` uses `BpmProcessInstanceCopyPageReqVO`.
+7. Insert-and-return flows must define ID strategy. Current `Factory.create(null, ...)` conflicts with non-null ID value objects.
+8. Partial updates must not use placeholder domain objects plus full `save`; use dedicated repository update methods.
 
-### 3.6 应用服务
+## 12. Current Conflict Notes
 
-所有 7 个已实施 DDD 的聚合均有 `ApplicationService` 位于 `application/` 下：
+1. `BpmProcessInstanceApi` still has `@FeignClient` on the stable interface. API local/remote split is pending.
+2. Seven DDD aggregates exist, but many `create(null, ...)` calls conflict with ID value objects that require non-null IDs.
+3. DDD applications use `ApplicationEventPublisher` directly; there is no BPM `DomainEventPublisher` abstraction like other modules.
+4. Infrastructure repositories depend on Controller PageReqVO; `BpmCategoryRepositoryImpl` also depends on legacy `BpmModelService`.
+5. Flowable core (`BpmModelServiceImpl`, `BpmProcessDefinitionServiceImpl`, `BpmProcessInstanceServiceImpl`, `BpmTaskServiceImpl`) remains legacy and is the production behavior source.
+6. `BpmProcessInstanceCopyApplicationService` directly depends on legacy `BpmTaskService`, `BpmProcessInstanceService`, `BpmProcessDefinitionService`.
+7. `BpmOALeaveApplicationService#updateStatus` can overwrite fields with placeholders; do not use it to replace legacy listener until fixed.
+8. `ErrorCodeConstants` has duplicate numeric code `1_009_004_005` for `PROCESS_INSTANCE_START_USER_CAN_START` and `PROCESS_INSTANCE_CANCEL_FAIL_NOT_ALLOW`; preserve current external behavior unless separately migrated.
+9. `BpmModelServiceImpl#updateModelSortBatch` may skip index 0; do not silently fix without regression test and approval.
 
-```
-application/definition/BpmCategoryApplicationService.java
-application/form/BpmFormApplicationService.java
-application/usergroup/BpmUserGroupApplicationService.java
-application/expression/BpmProcessExpressionApplicationService.java
-application/listener/BpmProcessListenerApplicationService.java
-application/leave/BpmOALeaveApplicationService.java
-application/copy/BpmProcessInstanceCopyApplicationService.java
-```
+## 13. Acceptance Criteria
 
-编排职责：校验→调用工厂→仓储持久化→发布领域事件
+### Architecture AC
 
-## 4. 职责边界
+- Domain classes have no Spring/MyBatis/Mapper/DO/Controller VO/Flowable/remote API imports.
+- Repository interfaces live in `domain/{aggregate}/repository`.
+- Repository implementations live in `infrastructure/{aggregate}` and no longer construct Controller PageReqVO in target code.
+- Application services own transactions, Flowable adapters, external API ports, events and messages.
+- Controller/API implementations delegate to application/compatibility service without direct Mapper/Flowable orchestration.
 
-### 4.1 已实施 DDD 聚合的业务规则
+### Behavior AC
 
-#### BpmCategory 聚合根必须负责的规则
+- Model create/update/deploy/delete/sort behavior matches legacy service.
+- Process definition query/state behavior matches legacy service.
+- Process instance create/cancel/status event behavior matches legacy service.
+- Task approve/reject/return/delegate/transfer/sign/delete-sign/withdraw behavior matches legacy service.
+- OA leave create/status listener behavior matches legacy service.
+- Copy records preserve task/process/definition/user relationships.
+- Candidate strategies and BPMN model utilities keep existing user/dept/role/post/user-group/expression behavior.
+- Error codes and trigger conditions match `ErrorCodeConstants`.
 
-| 编号 | 规则描述 | 对应原代码位置 |
-|------|---------|-------------|
-| R01 | 分类名称全局唯一 | `BpmCategoryServiceImpl.java` L62-69 — `validateCategoryNameUnique()` |
-| R02 | 分类编码全局唯一 | `BpmCategoryServiceImpl.java` L71-78 — `validateCategoryCodeUnique()` |
-| R03 | 分类删除前校验是否被流程模型引用 | `BpmCategoryServiceImpl.java` L85-88 — `deleteCategory()` 调用 `modelService.getModelCountByCategory()` |
-| R04 | 批量排序时所有分类 ID 必须存在，排序值从 0 开始递增 | `BpmCategoryServiceImpl.java` L126-138 — `updateCategorySortBatch()` |
+### Compile/Test AC
 
-#### BpmForm 聚合根必须负责的规则
+- BPM API module compiles.
+- BPM server compiles.
+- Existing candidate and legacy service tests pass.
+- Any migrated use case has regression tests for success, illegal state, error code, Flowable call boundary, event publication and mapping behavior.
 
-| 编号 | 规则描述 | 对应原代码位置 |
-|------|---------|-------------|
-| R05 | 表单字段 vModel 值不可重复（当前为 Vue3 兼容暂时跳过校验） | `BpmFormServiceImpl.java` L96-112 — `validateFields()`，`if(true) return;` 兼容 Vue3 表单设计器 |
-| R06 | 表单更新/删除前必须校验存在性 | `BpmFormServiceImpl.java` L48, L57 — `validateFormExists()` |
+## 14. Verification Commands
 
-#### BpmUserGroup 聚合根必须负责的规则
+For this skill document only:
 
-| 编号 | 规则描述 | 对应原代码位置 |
-|------|---------|-------------|
-| R07 | 用户组更新/删除前校验存在性 | `BpmUserGroupServiceImpl.java` L46, L55 — `validateUserGroupExists()` |
-| R08 | 校验用户组集合：每个 ID 必须存在且已启用 | `BpmUserGroupServiceImpl.java` L88-105 — `validUserGroups()` |
-| R09 | 用户组状态为 DISABLE 时不允许用于任务分配 | `BpmUserGroupServiceImpl.java` L101-103 — `USER_GROUP_IS_DISABLE` |
-
-#### BpmProcessListener 聚合根必须负责的规则
-
-| 编号 | 规则描述 | 对应原代码位置 |
-|------|---------|-------------|
-| R10 | CLASS 类型的监听器值必须是可实例化的类名 | `BpmProcessListenerServiceImpl.java` L56 — `Class.forName(value)` |
-| R11 | EXECUTION 类型的 CLASS 监听器必须实现 `JavaDelegate` 接口 | `BpmProcessListenerServiceImpl.java` L58-61 |
-| R12 | TASK 类型的 CLASS 监听器必须实现 `TaskListener` 接口 | `BpmProcessListenerServiceImpl.java` L62-65 |
-| R13 | EXPRESSION 类型的监听器值必须为 `${}` 包围的表达式 | `BpmProcessListenerServiceImpl.java` L73-75 |
-
-#### BpmOALeave 聚合根必须负责的规则
-
-| 编号 | 规则描述 | 对应原代码位置 |
-|------|---------|-------------|
-| R14 | 请假天数 = endTime - startTime，按天计算 | `BpmOALeaveServiceImpl.java` L49 — `LocalDateTimeUtil.between()` |
-| R15 | OA 请假使用固定流程 Key `"oa_leave"` | `BpmOALeaveServiceImpl.java` L37 — `PROCESS_KEY` 常量 |
-| R16 | 创建请假单时自动发起 BPM 流程实例 | `BpmOALeaveServiceImpl.java` L54-61 — 通过 `processInstanceApi.createProcessInstance()` |
-| R17 | 请假单状态由流程实例生命周期监听器更新 | `BpmOALeaveServiceImpl.java` L68-71 — `updateLeaveStatus()` + `BpmOALeaveStatusListener` |
-| R18 | 状态更新前校验请假单存在 | `BpmOALeaveServiceImpl.java` L69 — `validateLeaveExists()` |
-
-#### BpmProcessInstanceCopy 聚合根必须负责的规则
-
-| 编号 | 规则描述 | 对应原代码位置 |
-|------|---------|-------------|
-| R19 | 从任务发起抄送时校验任务存在 | `BpmProcessInstanceCopyServiceImpl.java` L51-54 |
-| R20 | 抄送发起时校验流程实例存在 | `BpmProcessInstanceCopyServiceImpl.java` L64-67 |
-| R21 | 抄送发起时校验流程定义存在 | `BpmProcessInstanceCopyServiceImpl.java` L68-73 |
-| R22 | 抄送记录携带完整的流程上下文：实例名、定义ID、分类、活动ID、活动名、任务ID | `BpmProcessInstanceCopyServiceImpl.java` L76-81 |
-| R23 | 多个抄送对象批量插入 | `BpmProcessInstanceCopyServiceImpl.java` L82 — `insertBatch()` |
-
-### 4.2 待 DDD 重构聚合的业务规则
-
-#### BpmModel 相关规则
-
-| 编号 | 规则描述 | 对应原代码位置 |
-|------|---------|-------------|
-| R24 | 流程标识（key）必须为 XML NCName 格式 | `BpmModelServiceImpl.java` L102-104 — `ValidationUtils.isXmlNCName()` |
-| R25 | 流程标识（key）全局唯一 | `BpmModelServiceImpl.java` L106-109 — `getModelByKey()` |
-| R26 | 流程模型更新/部署/删除需要管理员权限 | `BpmModelServiceImpl.java` L204-211 — `validateModelManager()` |
-| R27 | 部署前校验 BPMN 图：必须有 StartEvent，UserTask 必须有 name，首节点不能为"审批人自选" | `BpmModelServiceImpl.java` L242-268 — `validateBpmnXml()` |
-| R28 | 部署前校验表单已配置 | `BpmModelServiceImpl.java` L357-378 — `validateFormConfig()` |
-| R29 | 部署前校验任务分配规则已配置 | `BpmModelServiceImpl.java` L225 — `taskCandidateInvoker.validateBpmnConfig()` |
-| R30 | 模型删除后自动挂起关联的流程定义 | `BpmModelServiceImpl.java` L279 — `updateProcessDefinitionSuspended()` |
-| R31 | 清理模型时删除所有运行中和历史流程实例及抄送 | `BpmModelServiceImpl.java` L283-308 — `cleanModel()` |
-| R32 | Simple Model JSON ↔ BpmnModel 双向转换 | `BpmModelServiceImpl.java` L149-158 — `SimpleModelUtils.buildBpmnModel()` |
-
-#### BpmProcessDefinition 相关规则
-
-| 编号 | 规则描述 | 对应原代码位置 |
-|------|---------|-------------|
-| R33 | 部署时 ProcessDefinition 的 key 必须与 Model 的 key 一致 | `BpmProcessDefinitionServiceImpl.java` L152-154 |
-| R34 | 部署时 ProcessDefinition 的 name 必须与 Model 的 name 一致 | `BpmProcessDefinitionServiceImpl.java` L155-157 |
-| R35 | 用户发起权限校验：在 startUserIds 中，或在 startDeptIds 所在部门中，或两者皆空（所有人可发起） | `BpmProcessDefinitionServiceImpl.java` L92-112 — `canUserStartProcessDefinition()` |
-| R36 | 流程定义状态切换：激活/挂起 | `BpmProcessDefinitionServiceImpl.java` L171-194 |
-| R37 | 多次部署后只有最新部署的流程定义为活跃状态 | `BpmModelServiceImpl.java` L234 — `updateProcessDefinitionSuspended()` |
-
-#### BpmProcessInstance 相关规则
-
-| 编号 | 规则描述 | 对应原代码位置 |
-|------|---------|-------------|
-| R38 | 发起流程时校验流程定义存在且未挂起 | `BpmProcessInstanceServiceImpl.java` L784-789 |
-| R39 | 发起流程时校验用户有发起权限 | `BpmProcessInstanceServiceImpl.java` L796-798 |
-| R40 | 发起流程时校验发起人自选审批人已配置且用户存在 | `BpmProcessInstanceServiceImpl.java` L834-862 — `validateStartUserSelectAssignees()` |
-| R41 | 发起流程时过滤系统级变量，防止被用户占用 | `BpmProcessInstanceServiceImpl.java` L806 — `filterProcessInstanceFormVariable()` |
-| R42 | 流程名称可根据模板自动生成（含发起人昵称、时间、定义名） | `BpmProcessInstanceServiceImpl.java` L864-881 — `generateProcessInstanceName()` |
-| R43 | 发起人取消流程：只能取消自己的 | `BpmProcessInstanceServiceImpl.java` L886-894 |
-| R44 | 发起人取消流程：校验 `allowCancelRunningProcess` 配置 | `BpmProcessInstanceServiceImpl.java` L896-902 |
-| R45 | 子流程不允许独立取消 | `BpmProcessInstanceServiceImpl.java` L904-906 |
-| R46 | 取消流程时级联取消所有子流程 | `BpmProcessInstanceServiceImpl.java` L928-942 — `updateProcessInstanceCancel()` |
-| R47 | 流程完成时若状态仍为 `RUNNING` 则自动变为 `APPROVE` | `BpmProcessInstanceServiceImpl.java` L975-979 |
-| R48 | 子流程拒绝时级联拒绝父流程并结束 | `BpmProcessInstanceServiceImpl.java` L983-1001 |
-| R49 | 流程审批通过/拒绝后发送短信通知发起人 | `BpmProcessInstanceServiceImpl.java` L1005-1011 |
-| R50 | 流程完成时发送状态事件 | `BpmProcessInstanceServiceImpl.java` L1014-1015 |
-| R51 | 流程审批通过后触发后置 HTTP 通知 | `BpmProcessInstanceServiceImpl.java` L1018-1028 |
-| R52 | 流程创建后触发前置 HTTP 通知 | `BpmProcessInstanceServiceImpl.java` L1052-1063 |
-
-#### BpmTask 相关规则
-
-| 编号 | 规则描述 | 对应原代码位置 |
-|------|---------|-------------|
-| R53 | 审批任务前校验任务存在且分配给当前用户 | `BpmTaskServiceImpl.java` L556 — `validateTask()` |
-| R54 | 需要签名时校验签名图片必传 | `BpmTaskServiceImpl.java` L563-567 |
-| R55 | 需要审批意见时校验意见必传 | `BpmTaskServiceImpl.java` L569-572 |
-| R56 | 被委派的任务（DelegationState.PENDING）调用 resolveTask 而非 complete | `BpmTaskServiceImpl.java` L574-578 |
-| R57 | 有后加签的任务审批时进入 APPROVING 中间状态，激活子任务 | `BpmTaskServiceImpl.java` L581-583, L710-721 |
-| R58 | 审批通过时合并历史流程变量和前端变量（前端覆盖） | `BpmTaskServiceImpl.java` L600-606 |
-| R59 | 审批通过时校验并设置下一个节点的审批人（发起人自选/审批人自选策略） | `BpmTaskServiceImpl.java` L609, L641-699 |
-| R60 | 审批拒绝时更新任务状态+根父任务状态（加签场景） | `BpmTaskServiceImpl.java` L808-822 |
-| R61 | 拒绝处理策略：驳回到指定节点 或 标记不通过并结束流程 | `BpmTaskServiceImpl.java` L824-839 |
-| R62 | 退回时校验目标节点可串行到达 | `BpmTaskServiceImpl.java` L891-905 — `validateTargetTaskCanReturn()` |
-| R63 | 退回时使用 Flowable `changeActivityStateBuilder` 执行 | `BpmTaskServiceImpl.java` L953-961 |
-| R64 | 委派时设置 owner 为原审批人，assignee 为被委派人 | `BpmTaskServiceImpl.java` L1014-1018 |
-| R65 | 转办时直接设置 assignee 为新审批人 | `BpmTaskServiceImpl.java` L1050 |
-| R66 | 加签时校验前后加签不能同时存在 | `BpmTaskServiceImpl.java` L1142-1161 — `validateTaskCanCreateSign()` |
-| R67 | 加签时校验被加签人与现有审批人不重复 | `BpmTaskServiceImpl.java` L1151-1159 |
-| R68 | 减签时级联删除所有子任务 | `BpmTaskServiceImpl.java` L1213-1242 — `deleteSignTask()` |
-| R69 | 撤回时校验流程允许撤回配置 | `BpmTaskServiceImpl.java` L1267-1269 — `allowWithdrawTask` |
-| R70 | 撤回时校验下一个节点未被审批过 | `BpmTaskServiceImpl.java` L1270-1289 |
-| R71 | 审批人为空时根据配置自动通过/自动拒绝 | `BpmTaskServiceImpl.java` L1383-1394 |
-| R72 | 自动去重策略：APPROVE_ALL（同人任意节点）或 APPROVE_SEQUENT（同人相邻节点） | `BpmTaskServiceImpl.java` L1468-1497 |
-| R73 | 发起人节点自动通过审批 | `BpmTaskServiceImpl.java` L1514-1521 |
-| R74 | 审批人与发起人相同时策略：自动跳过 或 转交部门负责人，退回时跳过此策略 | `BpmTaskServiceImpl.java` L1523-1558 |
-| R75 | 任务超时处理策略：自动提醒/自动同意/自动拒绝 | `BpmTaskServiceImpl.java` L1594-1629 |
-| R76 | 任务分配时发送待办通知 | `BpmTaskServiceImpl.java` L1561-1564 |
-
-#### BpmMessage 相关规则
-
-| 编号 | 规则描述 | 对应原代码位置 |
-|------|---------|-------------|
-| R77 | 流程审批通过 → 短信通知发起人 | `BpmMessageServiceImpl.java` L36-42 |
-| R78 | 流程审批拒绝 → 短信通知发起人（含原因） | `BpmMessageServiceImpl.java` L45-52 |
-| R79 | 任务分配 → 短信通知审批人 | `BpmMessageServiceImpl.java` L55-63 |
-| R80 | 任务超时 → 短信提醒 | `BpmMessageServiceImpl.java` L66-73 |
-
-### 4.3 严禁外泄的职责
-
-| 禁止行为 | 原因 | 应由谁处理 |
-|---------|------|----------|
-| 直接操作 Flowable `RepositoryService`/`RuntimeService`/`TaskService`/`HistoryService` | 破坏持久化无关性 | Repository 实现或 Flowable 适配器 |
-| 在聚合根内调用 System API（`AdminUserApi`/`DeptApi`） | 跨模块依赖 | ApplicationService 编排 |
-| 直接操作 MyBatis Mapper | 破坏持久化无关性 | RepositoryImpl |
-| 直接处理 DTO/VO 转换 | 表示层关注点 | Convert 层 / Controller |
-| 在聚合根内使用 Spring 注解 | 领域层应纯 Java | N/A |
-| 在聚合根外直接修改状态字段 | 破坏封装性 | 聚合根方法 |
-| 直接操作 `processInstanceVariables`（流程变量） | BpmProcessInstance 聚合的职责 | BpmProcessInstance 聚合 或 ApplicationService |
-
-## 5. 依赖与协作
-
-### 5.1 领域层依赖（7 个已实施 DDD 的聚合）
-
-每个 DDD 聚合根仅依赖：
-- 自身值对象
-- 自身仓储接口
-- `java.util` 标准库
-- 框架公共类（`PageResult` — 无基础设施依赖）
-
-### 5.2 跨聚合协作
-
-| 源聚合 | 目标聚合 | 协作方式 | 场景 |
-|--------|---------|---------|------|
-| BpmCategoryService | BpmModelService | 通过 category code 计数 | 分类删除时校验被模型使用（R03） |
-| BpmOALeave | BpmProcessInstance | 通过 `processInstanceApi` 创建流程实例 | 创建请假单时发起 BPM 流程（R16） |
-| BpmOALeave | BpmProcessInstanceStatusEvent | 通过事件监听更新状态 | 流程完成时更新请假单状态（R17） |
-| BpmProcessInstanceCopy | BpmTask / BpmProcessInstance | 通过 Service 校验存在性 | 抄送创建时校验任务和流程实例（R19-R21） |
-| BpmUserGroup | BpmTaskCandidateInvoker | 通过 ID 引用校验 | 任务分配策略中的用户组校验（R08-R09） |
-| BpmProcessExpression | BpmTaskCandidateInvoker | 通过 ID 引用 | 流程条件表达式的使用 |
-| BpmForm | BpmModel | 通过 `formId` 引用 | 模型部署时校验表单配置（R28） |
-
-### 5.3 基础设施依赖（通过接口倒置）
-
-```
-领域层定义接口                             基础设施层实现
-─────────────                             ──────────────
-BpmCategoryRepository              ←──    BpmCategoryRepositoryImpl (委托 BpmCategoryMapper)
-BpmFormRepository                  ←──    BpmFormRepositoryImpl (委托 BpmFormMapper)
-BpmUserGroupRepository             ←──    BpmUserGroupRepositoryImpl (委托 BpmUserGroupMapper)
-BpmProcessExpressionRepository     ←──    BpmProcessExpressionRepositoryImpl (委托 BpmProcessExpressionMapper)
-BpmProcessListenerRepository       ←──    BpmProcessListenerRepositoryImpl (委托 BpmProcessListenerMapper)
-BpmOALeaveRepository               ←──    BpmOALeaveRepositoryImpl (委托 BpmOALeaveMapper)
-BpmProcessInstanceCopyRepository   ←──    BpmProcessInstanceCopyRepositoryImpl (委托 BpmProcessInstanceCopyMapper)
+```bash
+git diff --check -- .claude/ddd-skills/AggregateRoot_Bpm_Skill.md
+grep -n "^## " .claude/ddd-skills/AggregateRoot_Bpm_Skill.md
 ```
 
-### 5.4 外部系统依赖（仅 ApplicationService 层）
+For API/compile work:
 
-| 外部 API | 使用场景 |
-|---------|---------|
-| `AdminUserApi` | 校验用户存在、获取用户部门、发起人信息 |
-| `DeptApi` | 获取部门负责人 |
-| `SmsSendApi` | 发送流程通知短信 |
-| `BpmProcessInstanceApi` | OA 请假发起 BPM 流程 |
-
-## 6. 不变式与约束（Invariants）
-
-| 编号 | 不变式 | 类型 | 验证点 |
-|------|--------|------|--------|
-| I01 | BpmCategory 的 `name` 和 `code` 各自全局唯一 | 跨聚合唯一性 | create/update 时 |
-| I02 | BpmCategory 被模型引用时不可删除 | 跨聚合引用完整性 | delete 时 |
-| I03 | BpmForm 字段 (`fields`) 的 `vModel` 值不可重复 | 聚合内部 | create/update 时（目前兼容跳过了 Vue3 校验） |
-| I04 | BpmUserGroup 用于任务分配时必须为 ENABLED 状态 | 跨聚合状态约束 | `validateGroups()` 时 |
-| I05 | BpmProcessListener (CLASS) 的 `value` 类必须实现 `JavaDelegate` 或 `TaskListener` | 聚合内部 | create/update 时 |
-| I06 | BpmProcessListener (EXPRESSION) 的 value 必须为 `${}` 格式 | 聚合内部 | create/update 时 |
-| I07 | BpmOALeave 的 `day` 必须为 `endTime - startTime` 计算所得 | 聚合内部 | create 时 |
-| I08 | BpmOALeave 的状态仅由 `updateStatus()` 方法变更 | 聚合内部 | 全生命周期 |
-| I09 | BpmProcessInstanceCopy 创建时必须关联有效的 task + processInstance + processDefinition | 跨聚合引用完整性 | create 时 |
-| I10 | 流程模型 key 一旦创建不可变更 | 跨聚合约束 | create/update 时 |
-| I11 | 部署时 ProcessDefinition 的 key/name 必须与 Model 一致 | 跨聚合一致性 | deploy 时 |
-| I12 | 发起人取消流程时只能取消自己的 | 安全约束 | cancel 时 |
-| I13 | 子流程不能独立取消，必须由父流程级联 | 聚合关系约束 | cancel 时 |
-| I14 | 审批任务时当前用户必须是 assignee | 安全约束 | approve/reject 前 |
-| I15 | 退回目标节点必须串行可达 | 流程拓扑约束 | return 时 |
-| I16 | 加签类型（前/后）在同一条任务链上不可混用 | 流程语义约束 | createSign 时 |
-| I17 | 多人场景下或签票通过后其余任务自动取消 | 流程语义约束 | 审批通过时 |
-| I18 | 撤回时下一个节点必须尚未被审批 | 流程语义约束 | withdraw 时 |
-| I19 | 发起人自选审批人必须在流程发起时就全部指定 | 流程语义约束 | createProcessInstance 时 |
-| I20 | 多个表单权限场景下变量合并以前端为准 | 数据一致性约束 | approveTask 时 |
-
-## 7. 验收标准
-
-| 编号 | 验收标准 | 验证方法 |
-|------|---------|---------|
-| AC01 | 7 个已实施 DDD 的聚合根均无 MyBatis/Spring/Flowable 注解 | 代码审查 |
-| AC02 | 所有值对象为 final class，字段为 final，无 setter，构造方法自校验 | 代码审查 |
-| AC03 | 所有 7 个仓储接口定义在 domain 层，不 import infrastructure 类 | 代码审查 |
-| AC04 | 所有 7 个 RepositoryImpl 在 infrastructure 层，负责 DO↔Domain 映射 | 代码审查 |
-| AC05 | 所有 7 个 ApplicationService 使用 Repository 接口 + Factory，不直接操作 Mapper/Flowable | 代码审查 |
-| AC06 | BpmCategoryApplicationService.create() 校验 name/code 唯一性 | 代码审查 + 集成测试 |
-| AC07 | BpmCategoryApplicationService.delete() 校验不被模型引用 | 代码审查 + 集成测试 |
-| AC08 | BpmUserGroupApplicationService.validateGroups() 校验存在 + 启用 | 代码审查 |
-| AC09 | BpmProcessListenerApplicationService.validateListenerValue() 校验 CLASS 实现接口 | 代码审查 + 单元测试 |
-| AC10 | BpmOALeave 创建时自动发起 BPM 流程实例 | 集成测试 |
-| AC11 | 领域事件在 ApplicationService 中被正确发布 | 集成测试 |
-| AC12 | Controller 注入 ApplicationService（7 个已 DDD 聚合）而非旧 Service | 代码审查 |
-| AC13 | 编译通过 | `mvn compile -pl develop-module-bpm/develop-module-bpm-server -am` |
-| AC14 | 旧 BpmProcessInstanceCopyService/BpmUserGroupService 等对 DDD 聚合的调用应改为 ApplicationService | 代码审查 |
-| AC15 | BpmOALeaveStatusListener 使用 ApplicationService 替代旧 Service | 代码审查 |
-| AC16 | 4 个 Flowable 聚合（Model/ProcessDefinition/ProcessInstance/Task）的 DDD 重构计划已就绪 | 计划审查 |
-
-## 8. 目录结构规划
-
-### 8.1 当前目录结构（已实施 7 个 DDD 聚合）
-
-```
-develop-module-bpm/develop-module-bpm-server/src/main/java/com/develop/mvp/pk/module/bpm/
-├── domain/
-│   ├── definition/                    # BpmCategory 聚合
-│   │   ├── BpmCategory.java
-│   │   ├── BpmCategoryFactory.java
-│   │   ├── valueobject/
-│   │   │   ├── CategoryId.java
-│   │   │   ├── CategoryName.java
-│   │   │   ├── CategoryCode.java
-│   │   │   └── CategoryStatus.java
-│   │   ├── event/
-│   │   │   ├── CategoryDomainEvent.java
-│   │   │   └── CategoryDeletedEvent.java
-│   │   └── repository/
-│   │       └── BpmCategoryRepository.java
-│   ├── form/                          # BpmForm 聚合
-│   │   ├── BpmForm.java
-│   │   ├── BpmFormFactory.java
-│   │   ├── valueobject/ (FormId, FormName, FormStatus)
-│   │   ├── event/ (FormDomainEvent, FormDeletedEvent)
-│   │   └── repository/ (BpmFormRepository)
-│   ├── usergroup/                     # BpmUserGroup 聚合
-│   │   ├── BpmUserGroup.java
-│   │   ├── BpmUserGroupFactory.java
-│   │   ├── valueobject/ (UserGroupId, UserGroupName, UserGroupStatus)
-│   │   ├── event/ (UserGroupDomainEvent, UserGroupDeletedEvent)
-│   │   └── repository/ (BpmUserGroupRepository)
-│   ├── expression/                    # BpmProcessExpression 聚合
-│   │   ├── BpmProcessExpression.java
-│   │   ├── BpmProcessExpressionFactory.java
-│   │   ├── valueobject/ (ExpressionId, ExpressionName, ExpressionStatus)
-│   │   ├── event/ (ExpressionDomainEvent, ExpressionDeletedEvent)
-│   │   └── repository/ (BpmProcessExpressionRepository)
-│   ├── listener/                      # BpmProcessListener 聚合
-│   │   ├── BpmProcessListener.java
-│   │   ├── BpmProcessListenerFactory.java
-│   │   ├── valueobject/ (ListenerId, ListenerName, ListenerStatus)
-│   │   ├── event/ (ListenerDomainEvent, ListenerDeletedEvent)
-│   │   └── repository/ (BpmProcessListenerRepository)
-│   ├── leave/                         # BpmOALeave 聚合
-│   │   ├── BpmOALeave.java
-│   │   ├── BpmOALeaveFactory.java
-│   │   ├── valueobject/ (LeaveId, LeaveStatus)
-│   │   ├── event/ (LeaveDomainEvent, LeaveStatusUpdatedEvent)
-│   │   └── repository/ (BpmOALeaveRepository)
-│   └── copy/                          # BpmProcessInstanceCopy 聚合
-│       ├── BpmProcessInstanceCopy.java
-│       ├── BpmProcessInstanceCopyFactory.java
-│       ├── valueobject/ (CopyId, CopyUserId)
-│       ├── event/ (CopyDomainEvent, CopyCreatedEvent)
-│       └── repository/ (BpmProcessInstanceCopyRepository)
-├── application/
-│   ├── definition/BpmCategoryApplicationService.java
-│   ├── form/BpmFormApplicationService.java
-│   ├── usergroup/BpmUserGroupApplicationService.java
-│   ├── expression/BpmProcessExpressionApplicationService.java
-│   ├── listener/BpmProcessListenerApplicationService.java
-│   ├── leave/BpmOALeaveApplicationService.java
-│   └── copy/BpmProcessInstanceCopyApplicationService.java
-├── infrastructure/
-│   ├── definition/BpmCategoryRepositoryImpl.java
-│   ├── form/BpmFormRepositoryImpl.java
-│   ├── usergroup/BpmUserGroupRepositoryImpl.java
-│   ├── expression/BpmProcessExpressionRepositoryImpl.java
-│   ├── listener/BpmProcessListenerRepositoryImpl.java
-│   ├── leave/BpmOALeaveRepositoryImpl.java
-│   └── copy/BpmProcessInstanceCopyRepositoryImpl.java
-├── service/                           # ← 旧三层架构（仍被 Controller 使用 + 4 个 Flowable 聚合）
-│   ├── definition/
-│   │   ├── BpmCategoryService[Impl].java       # 旧 Service，应被 ApplicationService 替代
-│   │   ├── BpmFormService[Impl].java            # 旧 Service，应被 ApplicationService 替代
-│   │   ├── BpmUserGroupService[Impl].java       # 旧 Service，应被 ApplicationService 替代
-│   │   ├── BpmProcessExpressionService[Impl].java
-│   │   ├── BpmProcessListenerService[Impl].java
-│   │   ├── BpmModelService[Impl].java            # Flowable 聚合，待 DDD
-│   │   └── BpmProcessDefinitionService[Impl].java # Flowable 聚合，待 DDD
-│   ├── task/
-│   │   ├── BpmProcessInstanceService[Impl].java  # Flowable 聚合，待 DDD
-│   │   ├── BpmProcessInstanceCopyService[Impl].java
-│   │   ├── BpmTaskService[Impl].java             # Flowable 聚合，待 DDD
-│   │   ├── listener/ (BpmUserTaskListener, BpmCallActivityListener)
-│   │   └── trigger/ (BpmTrigger, BpmFormDeleteTrigger, BpmFormUpdateTrigger, BpmHttpCallbackTrigger, BpmSyncHttpRequestTrigger)
-│   ├── oa/
-│   │   ├── BpmOALeaveService[Impl].java
-│   │   └── listener/BpmOALeaveStatusListener.java
-│   └── message/
-│       ├── BpmMessageService[Impl].java
-│       └── dto/ (4 个消息 DTO)
-└── controller/                        # ← Controller 层，应注入 ApplicationService
-    ├── admin/definition/vo/...
-    ├── admin/task/vo/...
-    ├── admin/oa/vo/...
-    └── ...
+```bash
+mvn compile -pl develop-module-bpm/develop-module-bpm-api -am -DskipTests
+mvn compile -pl develop-module-bpm/develop-module-bpm-server -am -DskipTests
 ```
 
-### 8.2 未来 DDD 重构规划目录（4 个 Flowable 聚合）
+For current tests:
 
-```
-domain/
-├── model/             # BpmModel 聚合（待创建）
-│   ├── BpmModel.java
-│   ├── valueobject/ (ModelId, ModelKey, ModelMetaInfo...)
-│   ├── event/ (ModelDeployedEvent, ModelDeletedEvent...)
-│   └── repository/ (BpmModelRepository)
-├── processdefinition/ # BpmProcessDefinition 聚合（待创建）
-│   ├── BpmProcessDefinition.java
-│   ├── ...
-├── processinstance/   # BpmProcessInstance 聚合（待创建）
-│   ├── BpmProcessInstance.java
-│   └── ...
-└── task/              # BpmTask 聚合（待创建）
-    ├── BpmTask.java
-    ├── valueobject/ (TaskAssignee, TaskStatus, TaskSignType...)
-    ├── event/ (TaskApprovedEvent, TaskRejectedEvent, TaskReturnedEvent...)
-    ├── service/ (TaskAssignmentService, TaskTimeoutService...)
-    └── repository/ (BpmTaskRepository)
-application/
-├── model/BpmModelApplicationService.java
-├── processdefinition/BpmProcessDefinitionApplicationService.java
-├── processinstance/BpmProcessInstanceApplicationService.java
-└── task/BpmTaskApplicationService.java
-infrastructure/
-├── model/BpmModelRepositoryImpl.java        # 封装 Flowable RepositoryService
-├── processdefinition/BpmProcessDefinitionRepositoryImpl.java
-├── processinstance/BpmProcessInstanceRepositoryImpl.java  # 封装 Flowable RuntimeService/HistoryService
-└── task/BpmTaskRepositoryImpl.java          # 封装 Flowable TaskService
-framework/flowable/   # Flowable 适配层（保持现有不动）
-├── core/candidate/    # 候选人计算
-├── core/enums/        # Flowable 常量枚举
-├── core/util/         # BpmnModelUtils, FlowableUtils, SimpleModelUtils
-└── core/event/        # 事件发布
+```bash
+mvn test -pl develop-module-bpm/develop-module-bpm-server -Dtest=BpmCategoryServiceImplTest
+mvn test -pl develop-module-bpm/develop-module-bpm-server -Dtest=BpmFormServiceTest
+mvn test -pl develop-module-bpm/develop-module-bpm-server -Dtest=BpmUserGroupServiceTest
+mvn test -pl develop-module-bpm/develop-module-bpm-server -Dtest=BpmTaskCandidateInvokerTest
+mvn test -pl develop-module-bpm/develop-module-bpm-server -Dtest=BpmTaskCandidate*Test
 ```
 
-## 9. 回滚条件
+Required regression names when implementing migration:
 
-1. 编译失败（`mvn compile -pl develop-module-bpm/develop-module-bpm-server -am`）
-2. 已 DDD 的聚合根内部注入基础设施依赖（MyBatis Mapper、Flowable API、Spring Bean）
-3. 值对象存在 setter 或非 final 字段
-4. 仓储接口 import 基础设施类
-5. ApplicationService 绕过 Factory 直接 new 聚合根
-6. 删除旧 Service 时 Controller 编译报错
-7. 领域事件未被正确发布或消费
-8. 唯一性校验（名称/编码）被移除
-9. 状态校验（启用/禁用）被绕过
-10. Flowable 集成型聚合的 DDD 重构导致流程引擎行为改变
+- `createCategory_generatesNonNullIdAndRejectsDuplicateCode`
+- `repositoryFindPage_doesNotDependOnControllerPageReqVO`
+- `oaLeaveUpdateStatus_updatesOnlyStatusAndDoesNotOverwriteBusinessFields`
+- `createProcessInstance_startUserSelectAssigneesMissing_throwsConfiguredError`
+- `deployModel_withoutStartEvent_throwsModelDeployFailBpmnStartEventNotExists`
+- `approveTask_missingSignature_throwsTaskSignatureNotExists`
+- `returnTask_parallelOrUnreachableTarget_throwsTaskReturnFailSourceTargetError`
+- `withdrawTask_nextTaskCompleted_throwsTaskWithdrawFailNextTaskNotAllow`
+- `processInstanceStatusEvent_preservesBusinessKeyAndDefinitionKey`
 
-## 10. 分步执行计划
+## 15. Quick Reference
 
-### 第一阶段：完善已 DDD 聚合的剩余工作
+| Task | Correct location | Forbidden location |
+|---|---|---|
+| HTTP params/auth/response | `controller` | domain/repository |
+| Stable cross-module contract | `bpm-api` | server service/domain |
+| Feign client identity | `api/.../remote` after split | stable API/CommonApi |
+| Flowable calls | application/service/infrastructure adapter | domain entity |
+| Task approval rules | application/domain service with Flowable adapter | controller |
+| Candidate strategy | `framework/flowable/core/candidate` or application port | entity constructor |
+| Process status business events | API event + publisher/listener | Controller side effects |
+| Mapper/DO persistence | infrastructure/dal | domain/application API contract |
+| Page query VO | controller boundary only | repository implementation |
+| Partial status update | dedicated repository update method | placeholder domain + full save |
 
-**目标**：确保 7 个已实施 DDD 的聚合完全替代旧 Service，Controller 切到 ApplicationService。
+## 16. Common Mistakes
 
-**步骤 1.1** — 审查 Controller 使用情况：
-- 检查 `controller/` 下所有 BPM Controller 注入的 Service，将旧 Service 引用改为 ApplicationService
-- 涉及分类(BpmCategory)、表单(BpmForm)、用户组(BpmUserGroup)、表达式(BpmProcessExpression)、监听器(BpmProcessListener)、请假(BpmOALeave)、抄送(BpmProcessInstanceCopy)
+| Mistake | Consequence | Fix |
+|---|---|---|
+| Treat current DDD app as production replacement | Loses Flowable behavior and may NPE on null ID | Close gaps first, then switch entry point |
+| Move Flowable `TaskService` into domain | Domain becomes technical and untestable | Use application ports/adapters |
+| Keep Controller PageReqVO in repository | Cross-layer dependency remains | Introduce application query object |
+| Use `save` for status-only updates | Overwrites fields with placeholders | Add dedicated update method |
+| “Fix” duplicate error code while refactoring | Breaks external assumptions | Separate migration only |
+| Skip BPMN model validation tests | Deploy accepts invalid models | Preserve validation and tests |
+| Ignore history variables on approve | Subsequent nodes lose context | Merge variables as legacy does |
+| Rewrite task return/withdraw by simple status checks | Allows illegal jumps or invalid withdraw | Preserve BpmnModel/history logic |
 
-**步骤 1.2** — 更新旧 Service 调用者：
-- 检查 `BpmOALeaveStatusListener` 是否使用 ApplicationService 替代旧 `BpmOALeaveService`
-- 检查 `BpmProcessInstanceCopyService` 等旧 Service 中调用了其他旧 Service 的地方
-- 检查触发器（`BpmTrigger` 实现类）是否使用了旧 Service
+## 17. Rationalization Table
 
-**步骤 1.3** — 编译验证：
-- `mvn compile -pl develop-module-bpm/develop-module-bpm-server -am`
+| Excuse | Reality |
+|---|---|
+| “BPM already has DDD folders, so it is production-ready.” | Current DDD has null-ID conflicts, repository VO leaks and incomplete Flowable coverage. |
+| “Flowable is infrastructure; domain can call it directly for convenience.” | Flowable is a technical engine and must stay outside domain entities. |
+| “Approval is just completing a task.” | Approval includes signatures, opinions, variables, next-node candidates, comments, messages and listeners. |
+| “Repository PageReqVO reuse is harmless.” | It locks infrastructure to controller contracts and blocks clean DDD layering. |
+| “OA status update only changes status.” | Current DDD implementation may overwrite business fields; it needs dedicated update. |
+| “Duplicate error code is a bug, fix it now.” | It is an external contract change; fix only in a separate migration. |
 
-### 第二阶段：补充缺失的校验与测试
+## 18. Red Flags
 
-**步骤 2.1** — 审查 BpmForm 的 `validateFields` 方法：
-- 确定 Vue3 兼容期是否结束，是否需要恢复重复 vModel 校验
+Stop the batch if any of these occur:
 
-**步骤 2.2** — 补充单元测试：
-- BpmCategory 名称/编码唯一性校验
-- BpmProcessListener CLASS 类型接口实现校验
-- BpmOALeave 天数计算逻辑
-- 所有值对象的非法入参拒绝
+- A change modifies Controller path, HTTP method, VO/DTO field, `BpmProcessInstanceApi` semantics, permission, or event payload without a migration plan.
+- Domain imports Spring, MyBatis, Mapper, DO, Controller VO, Flowable API, or remote API.
+- Flowable task/process behavior is replaced by simple status fields without preserving `TaskService`/`RuntimeService`/`HistoryService`/`BpmnModel` logic.
+- `BpmProcessInstanceStatusEvent` field semantics or listener filtering changes.
+- Candidate strategy tests are skipped after candidate or task changes.
+- `create(null, ...)` remains in a path that constructs non-null ID value objects.
+- Repository still constructs Controller PageReqVO after claiming DDD target architecture.
+- Partial update uses placeholder aggregate plus full save.
 
-**步骤 2.3** — 补充集成测试：
-- BpmCategory 删除时被引用的拒绝场景
-- BpmOALeave 创建 + BPM 流程发起集成
-- BpmProcessInstanceCopy 创建时依赖校验
+## 19. Rollback Conditions
 
-### 第三阶段：重构 4 个 Flowable 聚合（长线）
+Rollback or stop and repair if:
 
-**步骤 3.1** — BpmProcessTask（审批任务）聚合 DDD 重构：
-- 创建 `domain/task/` 聚合包，封装任务审批、退回、转办、加签等行为
-- `BpmTaskRepository` 封装 Flowable `TaskService` 的查询和写入
-- 将所有 `BpmTaskServiceImpl` 中的业务规则迁移到聚合根方法
+1. `develop-module-bpm-api` or `develop-module-bpm-server` fails to compile after the batch.
+2. Existing BPM candidate or service tests fail unexpectedly.
+3. Flowable model deployment validation changes.
+4. Process instance event publication or business listener behavior changes.
+5. Task approve/reject/return/delegate/transfer/sign/withdraw behavior changes without explicit migration.
+6. API/Controller contracts, error codes, permissions, or event fields change unexpectedly.
+7. OA leave or copy data is overwritten or loses process/task links.
 
-**步骤 3.2** — BpmProcessInstance（流程实例）聚合 DDD 重构：
-- 创建 `domain/processinstance/` 聚合包
-- 将状态变更、取消、子流程级联等行为封装到聚合根
-- `BpmProcessInstanceRepository` 封装 Flowable `RuntimeService`/`HistoryService`
+## 20. AI Self-Check
 
-**步骤 3.3** — BpmModel 和 BpmProcessDefinition 聚合 DDD 重构：
-- 将 BPMN 校验、SimpleModel 转换、部署等逻辑迁移到领域层
-- `BpmModelRepository` 封装 Flowable `RepositoryService`
+Before claiming a BPM refactor is complete, verify:
 
-**步骤 3.4** — BpmMessage（消息通知）聚合 DDD 重构：
-- 消息发送逻辑可抽象为领域事件消费者
-- ApplicationService 发布事件 → 消息监听器发送短信
-
-### 第四阶段：旧 Service 清理
-
-**步骤 4.1** — 逐个删除已替代的旧 Service：
-- 确认 Controller 和所有调用者已迁移
-- 删除旧 Service 接口和实现类（BpmCategoryService、BpmFormService、BpmUserGroupService、BpmProcessExpressionService、BpmProcessListenerService、BpmOALeaveService、BpmProcessInstanceCopyService）
-
-**步骤 4.2** — 清理 `service/` 下相关包结构，保持只有 Flowable 集成型聚合的服务
+- [ ] I read current source anchors for the touched use case.
+- [ ] I preserved Controller/API/event external contracts.
+- [ ] I preserved exact `ErrorCodeConstants` trigger conditions for changed flows.
+- [ ] I did not move Flowable APIs into domain.
+- [ ] I preserved transaction boundaries, process variables, comments, messages and listeners.
+- [ ] I preserved candidate strategies and BPMN model utilities.
+- [ ] I fixed or explicitly documented null-ID and repository PageReqVO debt touched in this batch.
+- [ ] I avoided placeholder aggregate full-save for partial updates.
+- [ ] I ran the relevant Maven compile/test commands fresh.
+- [ ] If current code conflicts with this skill, I updated the skill before changing code.

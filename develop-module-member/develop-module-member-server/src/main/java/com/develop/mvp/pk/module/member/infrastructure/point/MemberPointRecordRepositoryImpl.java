@@ -17,6 +17,7 @@ import org.springframework.stereotype.Repository;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.CollectionUtils;
 
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
@@ -55,10 +56,10 @@ public class MemberPointRecordRepositoryImpl implements MemberPointRecordReposit
     }
 
     @Override
-    public PageResult<MemberPointRecord> findPageByUser(Long userId, String createTimeStart, String createTimeEnd,
+    public PageResult<MemberPointRecord> findPageByUser(Long userId, LocalDateTime createTimeStart, LocalDateTime createTimeEnd,
                                                          Boolean addStatus, Integer pageNo, Integer pageSize) {
         var reqVO = new AppMemberPointRecordPageReqVO()
-                .setCreateTime(new String[]{createTimeStart, createTimeEnd})
+                .setCreateTime(new LocalDateTime[]{createTimeStart, createTimeEnd})
                 .setAddStatus(addStatus);
         PageResult<MemberPointRecordDO> result = mapper.selectPage(userId, reqVO);
         return new PageResult<>(result.getList().stream().map(this::fromDO).collect(Collectors.toList()), result.getTotal());

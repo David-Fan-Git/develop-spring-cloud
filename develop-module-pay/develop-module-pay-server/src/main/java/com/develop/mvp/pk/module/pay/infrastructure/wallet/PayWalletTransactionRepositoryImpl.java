@@ -4,6 +4,7 @@ import com.develop.mvp.pk.framework.common.pojo.PageParam;
 import com.develop.mvp.pk.framework.common.pojo.PageResult;
 import com.develop.mvp.pk.module.pay.dal.dataobject.wallet.PayWalletTransactionDO;
 import com.develop.mvp.pk.module.pay.dal.mysql.wallet.PayWalletTransactionMapper;
+import com.develop.mvp.pk.module.pay.dal.redis.no.PayNoRedisDAO;
 import com.develop.mvp.pk.module.pay.domain.wallet.PayWalletTransaction;
 import com.develop.mvp.pk.module.pay.domain.wallet.repository.PayWalletTransactionRepository;
 import jakarta.annotation.Resource;
@@ -13,18 +14,22 @@ import java.util.Optional;
 import java.util.stream.Collectors;
 @Repository
 public class PayWalletTransactionRepositoryImpl implements PayWalletTransactionRepository {
+    private static final String WALLET_NO_PREFIX = "W";
+
     @Resource private PayWalletTransactionMapper mapper;
+    @Resource private PayNoRedisDAO noRedisDAO;
     static PayWalletTransaction toDomain(PayWalletTransactionDO doObj) {
         if (doObj == null) return null;
         return new PayWalletTransaction(doObj.getId())
                 .no(doObj.getNo()).walletId(doObj.getWalletId())
                 .bizType(doObj.getBizType()).bizId(doObj.getBizId())
-                .title(doObj.getTitle()).price(doObj.getPrice()).balance(doObj.getBalance());
+                .title(doObj.getTitle()).price(doObj.getPrice()).balance(doObj.getBalance())
+                .creator(doObj.getCreator()).createTime(doObj.getCreateTime());
     }
     @Override public PayWalletTransaction save(PayWalletTransaction transaction) {
         PayWalletTransactionDO doObj = new PayWalletTransactionDO();
         doObj.setId(transaction.id());
-        doObj.setNo(transaction.no()); doObj.setWalletId(transaction.walletId());
+        doObj.setNo(transaction.no() == null ? noRedisDAO.generate(WALLET_NO_PREFIX) : transaction.no()); doObj.setWalletId(transaction.walletId());
         doObj.setBizType(transaction.bizType()); doObj.setBizId(transaction.bizId());
         doObj.setTitle(transaction.title()); doObj.setPrice(transaction.price());
         doObj.setBalance(transaction.balance());

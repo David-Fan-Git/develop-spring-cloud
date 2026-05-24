@@ -37,7 +37,7 @@ import static org.mockito.Mockito.*;
 /**
  * {@link MesQcIndicatorResultServiceImpl} 的单元测试
  *
- * @author 芋道源码
+ * @author David
  */
 @Import(MesQcIndicatorResultServiceImpl.class)
 public class MesQcIndicatorResultServiceImplTest extends BaseDbUnitTest {

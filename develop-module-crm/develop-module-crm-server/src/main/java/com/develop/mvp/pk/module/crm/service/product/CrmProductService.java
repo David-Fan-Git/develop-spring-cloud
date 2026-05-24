@@ -15,7 +15,7 @@ import static com.develop.mvp.pk.framework.common.util.collection.CollectionUtil
 /**
  * CRM 产品 Service 接口
  *
- * @author ZanGe丶
+ * @author David
  */
 public interface CrmProductService {
 

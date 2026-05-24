@@ -13,7 +13,7 @@ import lombok.NoArgsConstructor;
  *
  * 目前使用 TDengine 存储
  *
- * @author alwayssuper
+ * @author David
  */
 @Data
 @Builder

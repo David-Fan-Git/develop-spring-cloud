@@ -14,7 +14,7 @@ import java.util.List;
 /**
  * 会员配置 Service 实现类
  *
- * @author QingX
+ * @author David
  */
 @Service
 @Validated

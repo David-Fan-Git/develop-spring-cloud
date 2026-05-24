@@ -6,7 +6,7 @@ import lombok.Getter;
 /**
  * 操作日志的操作类型
  *
- * @author ruoyi
+ * @author David
  */
 @Getter
 @AllArgsConstructor

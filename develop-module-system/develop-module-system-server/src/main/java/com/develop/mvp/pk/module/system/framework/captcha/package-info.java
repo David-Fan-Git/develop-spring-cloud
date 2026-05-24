@@ -3,6 +3,6 @@
  *
  * 基于 aj-captcha 实现滑块验证码，文档：https://ajcaptcha.beliefteam.cn/captcha-doc/
  *
- * @author 星语
+ * @author David
  */
 package com.develop.mvp.pk.module.system.framework.captcha;

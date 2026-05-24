@@ -12,7 +12,7 @@ import java.util.List;
 /**
  * 文章分类 Service 接口
  *
- * @author HUIHUI
+ * @author David
  */
 public interface ArticleCategoryService {
 

@@ -17,7 +17,7 @@ import static org.junit.jupiter.api.Assertions.*;
 /**
  * {@link MesCalPlanShiftServiceImpl} 的单元测试
  *
- * @author 芋道源码
+ * @author David
  */
 @Import(MesCalPlanShiftServiceImpl.class)
 public class MesCalPlanShiftServiceImplTest extends BaseDbUnitTest {

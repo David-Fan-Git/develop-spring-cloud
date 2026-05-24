@@ -12,7 +12,7 @@ import java.time.LocalDateTime;
 /**
  * 砍价记录 DO TODO
  *
- * @author HUIHUI
+ * @author David
  */
 @TableName("promotion_bargain_record")
 @KeySequence("promotion_bargain_record_seq") // 用于 Oracle、PostgreSQL、Kingbase、DB2、H2 数据库的主键自增。如果是 MySQL 等数据库，可不写。

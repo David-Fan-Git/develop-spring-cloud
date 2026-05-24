@@ -39,7 +39,7 @@ import static com.develop.mvp.pk.framework.common.util.collection.CollectionUtil
 /**
  * OAuth2.0 Token Service 实现类
  *
- * @author 芋道源码
+ * @author David
  */
 @Service
 public class OAuth2TokenServiceImpl implements OAuth2TokenService {

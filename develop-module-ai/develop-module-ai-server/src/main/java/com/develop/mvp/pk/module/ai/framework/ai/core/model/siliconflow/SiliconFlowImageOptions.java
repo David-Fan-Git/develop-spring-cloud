@@ -10,7 +10,7 @@ import org.springframework.ai.image.ImageOptions;
 /**
  * 硅基流动 {@link ImageOptions}
  *
- * @author zzt
+ * @author David
  */
 @Data
 @Builder

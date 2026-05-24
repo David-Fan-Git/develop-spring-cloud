@@ -43,13 +43,13 @@ import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 
-// TODO @芋艿：等官方发布 1.4.1！！！
+// TODO @David：等官方发布 1.4.1！！！
 /**
  * <p>
  * AuthRequest工厂类
  * </p>
  *
- * @author yangkai.shen
+ * @author David
  * @date Created in 2019-07-22 14:21
  */
 @Slf4j

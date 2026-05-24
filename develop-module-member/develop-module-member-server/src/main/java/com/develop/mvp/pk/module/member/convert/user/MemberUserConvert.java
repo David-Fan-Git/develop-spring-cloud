@@ -49,10 +49,26 @@ public interface MemberUserConvert {
     MemberUserRespVO convert03(MemberUserDO bean);
 
     // ── Domain ↔ VO 映射 ──
-    @Mapping(source = "nickname.value", target = "nickname")
-    @Mapping(source = "mobile.value", target = "mobile")
-    @Mapping(source = "status.code", target = "status")
-    MemberUserRespVO convert(MemberUser user);
+    default MemberUserRespVO convert(MemberUser user) {
+        if (user == null) {
+            return null;
+        }
+        MemberUserRespVO respVO = new MemberUserRespVO();
+        respVO.setId(user.id());
+        respVO.setNickname(user.nickname() != null ? user.nickname().value() : null);
+        respVO.setMobile(user.mobile() != null ? user.mobile().value() : null);
+        respVO.setStatus(user.status() != null && user.status().code() != null ? user.status().code().byteValue() : null);
+        respVO.setAvatar(user.avatar());
+        respVO.setRegisterIp(user.registerIp());
+        respVO.setLoginIp(user.loginIp());
+        respVO.setLoginDate(user.loginDate());
+        respVO.setPoint(user.point());
+        respVO.setExperience(user.experience());
+        respVO.setTagIds(user.tagIds());
+        respVO.setLevelId(user.levelId());
+        respVO.setGroupId(user.groupId());
+        return respVO;
+    }
 
     default PageResult<MemberUserRespVO> convertPageFromDomain(PageResult<MemberUser> pageResult,
                                                                 List<MemberTagDO> tags,

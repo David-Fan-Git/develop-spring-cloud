@@ -3,7 +3,9 @@ package com.develop.mvp.pk.module.pay.service.refund;
 import cn.hutool.core.collection.CollUtil;
 import cn.hutool.extra.spring.SpringUtil;
 import com.develop.mvp.pk.framework.common.pojo.PageResult;
+import com.develop.mvp.pk.module.pay.application.channel.PayChannelApplicationService;
 import com.develop.mvp.pk.module.pay.framework.pay.core.client.PayClient;
+import com.develop.mvp.pk.module.pay.framework.pay.core.client.PayClientConfig;
 import com.develop.mvp.pk.module.pay.framework.pay.core.client.dto.refund.PayRefundRespDTO;
 import com.develop.mvp.pk.module.pay.framework.pay.core.client.dto.refund.PayRefundUnifiedReqDTO;
 import com.develop.mvp.pk.framework.tenant.core.util.TenantUtils;
@@ -14,6 +16,7 @@ import com.develop.mvp.pk.module.pay.convert.refund.PayRefundConvert;
 import com.develop.mvp.pk.module.pay.dal.dataobject.app.PayAppDO;
 import com.develop.mvp.pk.module.pay.dal.dataobject.channel.PayChannelDO;
 import com.develop.mvp.pk.module.pay.dal.dataobject.order.PayOrderDO;
+import com.develop.mvp.pk.module.pay.domain.channel.PayChannel;
 import com.develop.mvp.pk.module.pay.dal.dataobject.refund.PayRefundDO;
 import com.develop.mvp.pk.module.pay.dal.mysql.refund.PayRefundMapper;
 import com.develop.mvp.pk.module.pay.dal.redis.no.PayNoRedisDAO;
@@ -22,7 +25,6 @@ import com.develop.mvp.pk.module.pay.enums.order.PayOrderStatusEnum;
 import com.develop.mvp.pk.module.pay.enums.refund.PayRefundStatusEnum;
 import com.develop.mvp.pk.module.pay.framework.pay.config.PayProperties;
 import com.develop.mvp.pk.module.pay.service.app.PayAppService;
-import com.develop.mvp.pk.module.pay.service.channel.PayChannelService;
 import com.develop.mvp.pk.module.pay.service.notify.PayNotifyService;
 import com.develop.mvp.pk.module.pay.service.order.PayOrderService;
 import jakarta.annotation.Resource;
@@ -40,7 +42,7 @@ import static com.develop.mvp.pk.module.pay.enums.ErrorCodeConstants.*;
 /**
  * 退款订单 Service 实现类
  *
- * @author jason
+ * @author David
  */
 @Service
 @Slf4j
@@ -60,7 +62,7 @@ public class PayRefundServiceImpl implements PayRefundService {
     @Resource
     private PayAppService appService;
     @Resource
-    private PayChannelService channelService;
+    private PayChannelApplicationService channelApplicationService;
     @Resource
     private PayNotifyService notifyService;
 
@@ -96,8 +98,8 @@ public class PayRefundServiceImpl implements PayRefundService {
         // 1.2 校验支付订单
         PayOrderDO order = validatePayOrderCanRefund(reqDTO, app.getId());
         // 1.3 校验支付渠道是否有效
-        PayChannelDO channel = channelService.validPayChannel(order.getChannelId());
-        PayClient<?> client = channelService.getPayClient(channel.getId());
+        PayChannelDO channel = toChannelDO(channelApplicationService.valid(order.getChannelId()));
+        PayClient<?> client = channelApplicationService.getPayClient(channel.getId());
         if (client == null) {
             log.error("[refund][渠道编号({}) 找不到对应的支付客户端]", channel.getId());
             throw exception(CHANNEL_NOT_FOUND);
@@ -187,7 +189,7 @@ public class PayRefundServiceImpl implements PayRefundService {
     @Override
     public void notifyRefund(Long channelId, PayRefundRespDTO notify) {
         // 校验支付渠道是否有效
-        PayChannelDO channel = channelService.validPayChannel(channelId);
+        PayChannelDO channel = toChannelDO(channelApplicationService.valid(channelId));
         // 更新退款订单
         TenantUtils.execute(channel.getTenantId(), () -> getSelf().notifyRefund(channel, notify));
     }
@@ -301,7 +303,7 @@ public class PayRefundServiceImpl implements PayRefundService {
     private boolean syncRefund(PayRefundDO refund) {
         try {
             // 1.1 查询退款订单信息
-            PayClient<?> payClient = channelService.getPayClient(refund.getChannelId());
+            PayClient<?> payClient = channelApplicationService.getPayClient(refund.getChannelId());
             if (payClient == null) {
                 log.error("[syncRefund][渠道编号({}) 找不到对应的支付客户端]", refund.getChannelId());
                 return false;
@@ -324,6 +326,14 @@ public class PayRefundServiceImpl implements PayRefundService {
      *
      * @return 自己
      */
+    private PayChannelDO toChannelDO(PayChannel channel) {
+        PayChannelDO channelDO = new PayChannelDO().setId(channel.id()).setCode(channel.code()).setStatus(channel.status())
+                .setFeeRate(channel.feeRate()).setRemark(channel.remark()).setAppId(channel.appId())
+                .setConfig((PayClientConfig) channel.config());
+        channelDO.setTenantId(channel.tenantId());
+        return channelDO;
+    }
+
     private PayRefundServiceImpl getSelf() {
         return SpringUtil.getBean(getClass());
     }

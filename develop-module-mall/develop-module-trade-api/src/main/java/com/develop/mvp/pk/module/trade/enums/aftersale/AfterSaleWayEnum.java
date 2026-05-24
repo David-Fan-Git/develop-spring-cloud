@@ -9,7 +9,7 @@ import java.util.Arrays;
 /**
  * 交易售后 - 方式
  *
- * @author Sin
+ * @author David
  */
 @RequiredArgsConstructor
 @Getter

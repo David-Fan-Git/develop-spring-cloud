@@ -7,7 +7,7 @@ import java.time.LocalDateTime;
 /**
  * 分销统计 Service 接口
  *
- * @author owen
+ * @author David
  */
 public interface BrokerageStatisticsService {
 

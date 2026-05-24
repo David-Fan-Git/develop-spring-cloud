@@ -24,14 +24,14 @@ import static org.mockito.Mockito.mockStatic;
 /**
  * {@link HuaweiSmsClient} 的单元测试
  *
- * @author scholar
+ * @author David
  */
 public class HuaweiSmsClientTest extends BaseMockitoUnitTest {
 
     private final SmsChannelProperties properties = new SmsChannelProperties()
             .setApiKey(randomString() + " " + randomString()) // 随机一个 apiKey，避免构建报错
             .setApiSecret(randomString()) // 随机一个 apiSecret，避免构建报错
-            .setSignature("芋道源码");
+            .setSignature("David");
 
     @InjectMocks
     private HuaweiSmsClient smsClient = new HuaweiSmsClient(properties);

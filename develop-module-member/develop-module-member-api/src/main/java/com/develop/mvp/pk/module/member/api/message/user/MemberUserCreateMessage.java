@@ -7,7 +7,7 @@ import jakarta.validation.constraints.NotNull;
 /**
  * 会员用户创建消息
  *
- * @author owen
+ * @author David
  */
 @Data
 public class MemberUserCreateMessage {

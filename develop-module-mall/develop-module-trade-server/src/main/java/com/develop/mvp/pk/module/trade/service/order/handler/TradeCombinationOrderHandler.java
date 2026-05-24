@@ -25,7 +25,7 @@ import static com.develop.mvp.pk.module.trade.enums.ErrorCodeConstants.ORDER_DEL
 /**
  * 拼团订单的 {@link TradeOrderHandler} 实现类
  *
- * @author HUIHUI
+ * @author David
  */
 @Component
 public class TradeCombinationOrderHandler implements TradeOrderHandler {

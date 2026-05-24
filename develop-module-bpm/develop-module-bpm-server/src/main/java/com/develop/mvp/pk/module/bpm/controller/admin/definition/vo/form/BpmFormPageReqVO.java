@@ -8,7 +8,7 @@ import lombok.Data;
 @Data
 public class BpmFormPageReqVO extends PageParam {
 
-    @Schema(description = "表单名称", example = "芋道")
+    @Schema(description = "表单名称", example = "David")
     private String name;
 
 }

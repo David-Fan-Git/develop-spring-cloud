@@ -19,7 +19,7 @@ import static com.develop.mvp.pk.module.bpm.framework.flowable.core.listener.Bpm
  * <p>
  * 目前只有仿钉钉/飞书模式的【抄送节点】使用
  *
- * @author jason
+ * @author David
  */
 @Component(BEAN_NAME)
 public class BpmCopyTaskDelegate implements JavaDelegate {

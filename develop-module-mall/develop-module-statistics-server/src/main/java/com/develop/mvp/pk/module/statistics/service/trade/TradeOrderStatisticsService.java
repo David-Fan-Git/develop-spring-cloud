@@ -11,7 +11,7 @@ import java.util.List;
 /**
  * 交易订单的统计 Service 接口
  *
- * @author owen
+ * @author David
  */
 public interface TradeOrderStatisticsService {
 

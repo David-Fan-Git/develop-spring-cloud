@@ -6,7 +6,7 @@ import com.develop.mvp.pk.framework.common.exception.ErrorCode;
  * Trade 错误码枚举类
  * trade 系统，使用 1-011-000-000 段
  *
- * @author LeeYan9
+ * @author David
  * @since 2022-08-26
  */
 public interface ErrorCodeConstants {

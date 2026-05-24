@@ -5,7 +5,7 @@ import lombok.Data;
 /**
  * IoT TCP 配置 {@link IotAbstractDataSinkConfig} 实现类
  *
- * @author HUIHUI
+ * @author David
  */
 @Data
 public class IotDataSinkTcpConfig extends IotAbstractDataSinkConfig {

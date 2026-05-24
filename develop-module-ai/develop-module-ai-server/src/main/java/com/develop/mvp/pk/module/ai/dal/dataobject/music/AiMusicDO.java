@@ -16,7 +16,7 @@ import java.util.List;
 /**
  * AI 音乐 DO
  *
- * @author xiaoxin
+ * @author David
  */
 @TableName(value = "ai_music", autoResultMap = true)
 @KeySequence("ai_music_seq") // 用于 Oracle、PostgreSQL、Kingbase、DB2、H2 数据库的主键自增。如果是 MySQL 等数据库，可不写。
@@ -84,7 +84,7 @@ public class AiMusicDO extends BaseDO {
      * 枚举 {@link AiPlatformEnum}
      */
     private String platform;
-    // TODO @芋艿：modelId？
+    // TODO @David：modelId？
     /**
      * 模型
      */

@@ -34,7 +34,7 @@ import static com.develop.mvp.pk.module.ai.enums.ErrorCodeConstants.CHAT_CONVERS
 /**
  * AI 聊天对话 Service 实现类
  *
- * @author fansili
+ * @author David
  */
 @Service
 @Validated

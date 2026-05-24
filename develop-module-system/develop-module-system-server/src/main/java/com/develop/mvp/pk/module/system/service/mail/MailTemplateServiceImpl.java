@@ -32,7 +32,7 @@ import static com.develop.mvp.pk.module.system.enums.ErrorCodeConstants.MAIL_TEM
 /**
  * 邮箱模版 Service 实现类
  *
- * @author wangjingyi
+ * @author David
  * @since 2022-03-21
  */
 @Service

@@ -26,7 +26,7 @@ import static org.mockito.Mockito.*;
 /**
  * {@link MesWmArrivalNoticeServiceImpl} 的单元测试
  *
- * @author 芋道源码
+ * @author David
  */
 @Import(MesWmArrivalNoticeServiceImpl.class)
 public class MesWmArrivalNoticeServiceImplTest extends BaseDbUnitTest {

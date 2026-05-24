@@ -10,8 +10,8 @@ import org.apache.ibatis.annotations.Mapper;
 /**
  * 请假申请 Mapper
  *
- * @author jason
- * @author 芋道源码
+ * @author David
+ * @author David
  */
 @Mapper
 public interface BpmOALeaveMapper extends BaseMapperX<BpmOALeaveDO> {

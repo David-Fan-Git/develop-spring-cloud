@@ -15,7 +15,7 @@ import com.develop.mvp.pk.module.mes.enums.DictTypeConstants;
 /**
  * MES 排班计划 DO
  *
- * @author 芋道源码
+ * @author David
  */
 @TableName("mes_cal_plan")
 @KeySequence("mes_cal_plan_seq")

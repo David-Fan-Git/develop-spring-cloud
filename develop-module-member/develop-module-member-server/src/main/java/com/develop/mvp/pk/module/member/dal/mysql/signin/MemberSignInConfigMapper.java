@@ -9,7 +9,7 @@ import java.util.List;
 /**
  * 签到规则 Mapper
  *
- * @author QingX
+ * @author David
  */
 @Mapper
 public interface MemberSignInConfigMapper extends BaseMapperX<MemberSignInConfigDO> {

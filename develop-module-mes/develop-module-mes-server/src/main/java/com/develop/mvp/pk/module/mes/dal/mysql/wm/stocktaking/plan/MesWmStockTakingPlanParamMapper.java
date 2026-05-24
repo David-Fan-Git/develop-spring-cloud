@@ -12,7 +12,7 @@ import java.util.List;
 /**
  * MES 盘点方案参数 Mapper
  *
- * @author 芋道源码
+ * @author David
  */
 @Mapper
 public interface MesWmStockTakingPlanParamMapper extends BaseMapperX<MesWmStockTakingPlanParamDO> {

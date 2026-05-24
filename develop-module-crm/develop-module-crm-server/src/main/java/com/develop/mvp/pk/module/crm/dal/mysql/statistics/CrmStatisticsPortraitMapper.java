@@ -8,7 +8,7 @@ import java.util.List;
 /**
  * CRM 数据画像 Mapper
  *
- * @author HUIHUI
+ * @author David
  */
 @Mapper
 public interface CrmStatisticsPortraitMapper {

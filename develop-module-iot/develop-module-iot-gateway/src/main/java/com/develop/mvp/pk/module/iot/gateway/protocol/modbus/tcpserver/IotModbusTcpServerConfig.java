@@ -8,7 +8,7 @@ import lombok.Data;
 /**
  * IoT Modbus TCP Server 协议配置
  *
- * @author 芋道源码
+ * @author David
  */
 @Data
 public class IotModbusTcpServerConfig {

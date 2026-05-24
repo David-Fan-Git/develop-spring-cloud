@@ -13,7 +13,7 @@ import java.math.BigDecimal;
 /**
  * WMS 出库单明细 DO
  *
- * @author 芋道源码
+ * @author David
  */
 @TableName("wms_shipment_order_detail")
 @KeySequence("wms_shipment_order_detail_seq")

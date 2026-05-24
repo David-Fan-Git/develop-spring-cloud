@@ -3,7 +3,7 @@ package com.develop.mvp.pk.module.trade.enums;
 /**
  * 通知模板枚举类
  *
- * @author HUIHUI
+ * @author David
  */
 public interface MessageTemplateConstants {
 

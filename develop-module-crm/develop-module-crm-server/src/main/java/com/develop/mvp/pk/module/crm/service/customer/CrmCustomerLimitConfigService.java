@@ -11,7 +11,7 @@ import java.util.List;
 /**
  * 客户限制配置 Service 接口
  *
- * @author Wanwan
+ * @author David
  */
 public interface CrmCustomerLimitConfigService {
 

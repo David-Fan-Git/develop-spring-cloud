@@ -14,7 +14,7 @@ import static com.develop.mvp.pk.framework.common.util.collection.CollectionUtil
 /**
  * MES 设备类型 Service 接口
  *
- * @author 芋道源码
+ * @author David
  */
 public interface MesDvMachineryTypeService {
 

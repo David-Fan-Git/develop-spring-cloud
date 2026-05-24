@@ -9,7 +9,7 @@ import java.util.Arrays;
 /**
  * Banner Position 枚举
  *
- * @author HUIHUI
+ * @author David
  */
 @AllArgsConstructor
 @Getter

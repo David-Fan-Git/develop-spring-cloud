@@ -14,7 +14,7 @@ import java.util.List;
 /**
  * 用户分组 Service 接口
  *
- * @author owen
+ * @author David
  */
 public interface MemberGroupService {
 

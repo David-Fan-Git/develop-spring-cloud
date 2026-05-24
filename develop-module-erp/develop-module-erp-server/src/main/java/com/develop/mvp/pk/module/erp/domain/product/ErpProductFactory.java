@@ -14,7 +14,7 @@ public final class ErpProductFactory {
                                      BigDecimal purchasePrice, BigDecimal salePrice,
                                      BigDecimal minPrice) {
         return new ErpProduct(
-                null, name, barCode, categoryId, unitId,
+                (ErpProductId) null, name, barCode, categoryId, unitId,
                 status != null ? ErpProductStatus.of(status) : ErpProductStatus.ENABLED,
                 standard, remark, expiryDay, weight, purchasePrice, salePrice, minPrice
         );

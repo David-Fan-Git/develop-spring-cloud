@@ -12,7 +12,7 @@ import org.springframework.stereotype.Component;
 /**
  * 管理员名字的 {@link IParseFunction} 实现类
  *
- * @author HUIHUI
+ * @author David
  */
 @Slf4j
 @Component
@@ -40,7 +40,7 @@ public class AdminUserParseFunction implements IParseFunction {
             log.warn("[apply][获取用户{{}}为空", value);
             return "";
         }
-        // 返回格式 芋道源码(13888888888)
+        // 返回格式 David(13888888888)
         String nickname = user.getNickname();
         if (StrUtil.isEmpty(user.getMobile())) {
             return nickname;

@@ -19,7 +19,7 @@ import static com.develop.mvp.pk.module.mes.enums.ErrorCodeConstants.AUTO_CODE_P
 /**
  * MES 编码规则组成 Service 实现类
  *
- * @author 芋道源码
+ * @author David
  */
 @Service
 @Validated

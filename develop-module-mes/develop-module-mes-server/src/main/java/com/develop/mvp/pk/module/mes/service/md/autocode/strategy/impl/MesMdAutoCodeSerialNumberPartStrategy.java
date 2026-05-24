@@ -17,7 +17,7 @@ import java.time.LocalDateTime;
 /**
  * MES 编码规则 - 流水号策略
  *
- * @author 芋道源码
+ * @author David
  */
 @Component
 public class MesMdAutoCodeSerialNumberPartStrategy implements MesMdAutoCodePartStrategy {

@@ -14,7 +14,7 @@ import ${PageParamClassName};
 /**
  * ${table.classComment} Service 接口
  *
- * @author ${table.author}
+ * @author David
  */
 public interface ${table.className}Service {
 

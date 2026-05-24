@@ -16,7 +16,7 @@ import org.apache.ibatis.annotations.Mapper;
 /**
  * ${subTable.classComment} Mapper
  *
- * @author ${subTable.author}
+ * @author David
  */
 @Mapper
 public interface ${subTable.className}Mapper extends BaseMapperX<${subTable.className}DO> {

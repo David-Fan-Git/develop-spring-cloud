@@ -17,7 +17,7 @@ import static com.develop.mvp.pk.framework.common.util.collection.CollectionUtil
 /**
  * ERP 销售出库项 Mapper
  *
- * @author 芋道源码
+ * @author David
  */
 @Mapper
 public interface ErpSaleOutItemMapper extends BaseMapperX<ErpSaleOutItemDO> {

@@ -14,7 +14,7 @@ import java.util.Set;
 /**
  * 砍价活动 Service 接口
  *
- * @author HUIHUI
+ * @author David
  */
 public interface BargainActivityService {
 

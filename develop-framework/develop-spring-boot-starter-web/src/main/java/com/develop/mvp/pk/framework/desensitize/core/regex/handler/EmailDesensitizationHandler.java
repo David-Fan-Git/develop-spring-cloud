@@ -5,7 +5,7 @@ import com.develop.mvp.pk.framework.desensitize.core.regex.annotation.EmailDesen
 /**
  * {@link EmailDesensitize} 的脱敏处理器
  *
- * @author gaibu
+ * @author David
  */
 public class EmailDesensitizationHandler extends AbstractRegexDesensitizationHandler<EmailDesensitize> {
 

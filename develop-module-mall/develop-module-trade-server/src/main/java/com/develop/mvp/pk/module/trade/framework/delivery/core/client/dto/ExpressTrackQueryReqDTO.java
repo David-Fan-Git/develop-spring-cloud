@@ -6,7 +6,7 @@ import lombok.Data;
 /**
  * 快递轨迹的查询 Req DTO
  *
- * @author jason
+ * @author David
  */
 @Data
 public class ExpressTrackQueryReqDTO {

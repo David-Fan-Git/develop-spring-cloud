@@ -12,7 +12,7 @@ import java.util.List;
 /**
  * 会员经验记录 Convert
  *
- * @author owen
+ * @author David
  */
 @Mapper
 public interface MemberExperienceRecordConvert {

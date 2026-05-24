@@ -8,7 +8,7 @@ import org.springframework.context.annotation.Configuration;
 /**
  * WMS 模块的 web 组件的 Configuration
  *
- * @author 芋道源码
+ * @author David
  */
 @Configuration(proxyBeanMethods = false)
 public class WmsWebConfiguration {

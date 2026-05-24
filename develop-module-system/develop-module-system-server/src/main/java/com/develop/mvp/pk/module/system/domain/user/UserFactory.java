@@ -17,7 +17,7 @@ public final class UserFactory {
                                String email, String mobile,
                                String nickname, String avatar, Integer sex, String remark,
                                Set<Long> postIds) {
-        return new User(
+        User user = new User(
                 UserId.of(id),
                 Username.of(username),
                 encodedPassword,
@@ -29,6 +29,8 @@ public final class UserFactory {
                 UserStatus.ENABLED,
                 postIds
         );
+        user.recordCreated();
+        return user;
     }
 
     /** 从持久化数据重建 User 聚合（供仓储实现调用） */

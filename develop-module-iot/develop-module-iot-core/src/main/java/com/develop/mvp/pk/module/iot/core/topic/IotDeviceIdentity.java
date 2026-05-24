@@ -10,7 +10,7 @@ import lombok.NoArgsConstructor;
  *
  * 用于标识一个设备的基本信息（productKey + deviceName）
  *
- * @author 芋道源码
+ * @author David
  */
 @Data
 @NoArgsConstructor

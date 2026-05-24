@@ -8,7 +8,7 @@ import org.springframework.context.annotation.Configuration;
 /**
  * iot 模块的 web 组件的 Configuration
  *
- * @author ahh
+ * @author David
  */
 @Configuration(proxyBeanMethods = false)
 public class IotWebConfiguration {

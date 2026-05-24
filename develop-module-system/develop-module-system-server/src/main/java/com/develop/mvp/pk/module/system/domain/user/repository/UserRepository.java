@@ -13,6 +13,9 @@ import java.util.Optional;
 // 验收标准 AC06：定义在 domain.user 包，不 import MyBatis 类
 
 public interface UserRepository {
+    User create(String username, EncodedPassword encodedPassword, Long tenantId, Long deptId,
+                String email, String mobile, String nickname, String avatar, Integer sex,
+                String remark, java.util.Set<Long> postIds);
     void save(User user);
     void delete(UserId id);
     User findById(UserId id);

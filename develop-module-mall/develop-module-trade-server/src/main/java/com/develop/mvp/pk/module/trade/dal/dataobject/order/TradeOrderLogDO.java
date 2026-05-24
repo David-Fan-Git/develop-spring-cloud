@@ -11,7 +11,7 @@ import lombok.*;
 /**
  * 订单日志 DO
  *
- * @author 陈賝
+ * @author David
  */
 @TableName("trade_order_log")
 @KeySequence("trade_order_log_seq") // 用于 Oracle、PostgreSQL、Kingbase、DB2、H2 数据库的主键自增。如果是 MySQL 等数据库，可不写。

@@ -8,7 +8,7 @@ import java.time.LocalDateTime;
 /**
  * 批次生成请求 VO
  *
- * @author 芋道源码
+ * @author David
  */
 @Data
 public class MesWmBatchGenerateReqVO {

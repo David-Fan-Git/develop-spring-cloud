@@ -19,7 +19,7 @@ import static com.develop.mvp.pk.module.system.enums.ErrorCodeConstants.NOTIFY_S
 /**
  * 站内信发送 Service 实现类
  *
- * @author xrcoder
+ * @author David
  */
 @Service
 @Validated

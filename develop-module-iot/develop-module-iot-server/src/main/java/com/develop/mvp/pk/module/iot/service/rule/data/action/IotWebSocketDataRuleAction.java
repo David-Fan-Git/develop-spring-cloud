@@ -19,7 +19,7 @@ import java.util.concurrent.locks.ReentrantLock;
  * 支持 ws:// 和 wss:// 协议，支持 JSON 和 TEXT 数据格式
  * 使用连接池管理 WebSocket 连接，提高性能和资源利用率
  *
- * @author HUIHUI
+ * @author David
  */
 @Component
 @Slf4j

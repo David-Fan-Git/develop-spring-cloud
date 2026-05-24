@@ -15,7 +15,7 @@ import com.develop.mvp.pk.module.mes.enums.DictTypeConstants;
 /**
  * MES 销售出库单 DO
  *
- * @author 芋道源码
+ * @author David
  */
 @TableName("mes_wm_product_sales")
 @KeySequence("mes_wm_product_sales_seq")

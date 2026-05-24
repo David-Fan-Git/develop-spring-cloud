@@ -81,10 +81,10 @@ public class TenantApplicationService {
         // 校验套餐（不变式 I06）
         TenantPackageDO tenantPackage = tenantPackageService.validTenantPackage(packageId);
 
-        // 创建租户聚合（规则 R01：默认 ENABLED）
-        Tenant tenant = TenantFactory.create(id, name, null, contactName, contactMobile,
-                websites, packageId, expireTime, accountCount);
-        tenantRepository.save(tenant);
+        Tenant tenant = id == null
+                ? tenantRepository.create(name, null, contactName, contactMobile, websites, packageId, expireTime, accountCount)
+                : tenantRepository.save(TenantFactory.create(
+                        id, name, null, contactName, contactMobile, websites, packageId, expireTime, accountCount));
 
         // 跨聚合编排：创建管理员角色和用户
         TenantUtils.execute(tenant.id().value(), () -> {

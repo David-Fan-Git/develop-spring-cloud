@@ -18,7 +18,7 @@ import java.util.Map;
 /**
  * 拼团记录 Service 接口
  *
- * @author HUIHUI
+ * @author David
  */
 public interface CombinationRecordService {
 

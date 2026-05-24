@@ -17,7 +17,7 @@ import static com.develop.mvp.pk.framework.common.util.collection.CollectionUtil
 /**
  * IoT 产品 Service 接口
  *
- * @author ahh
+ * @author David
  */
 public interface IotProductService {
 

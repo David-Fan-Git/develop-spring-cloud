@@ -14,7 +14,7 @@ import static org.junit.jupiter.api.Assertions.*;
 /**
  * {@link IotDeviceMessageUtils} 的单元测试
  *
- * @author HUIHUI
+ * @author David
  */
 public class IotDeviceMessageUtilsTest {
 

@@ -10,7 +10,7 @@ import feign.RequestTemplate;
  *
  * 注意：由于 {@link DataPermission} 不支持序列化和反序列化，所以暂时只能传递它的 enable 属性
  *
- * @author 芋道源码
+ * @author David
  */
 public class DataPermissionRequestInterceptor implements RequestInterceptor {
 

@@ -34,9 +34,9 @@ import static org.mockito.Mockito.when;
 /**
  * {@link PayAppServiceImpl} 的单元测试
  *
- * @author aquan
+ * @author David
  */
-@Disabled // TODO 芋艿：后续 fix 补充的单测
+@Disabled // TODO David：后续 fix 补充的单测
 @Import(PayAppServiceImpl.class)
 public class PayAppServiceTest extends BaseDbUnitTest {
 

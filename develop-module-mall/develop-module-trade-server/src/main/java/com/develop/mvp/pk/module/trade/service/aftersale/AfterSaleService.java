@@ -12,7 +12,7 @@ import com.develop.mvp.pk.module.trade.dal.dataobject.aftersale.AfterSaleDO;
 /**
  * 售后订单 Service 接口
  *
- * @author 芋道源码
+ * @author David
  */
 public interface AfterSaleService {
 

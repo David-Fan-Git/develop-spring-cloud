@@ -16,7 +16,7 @@ import static com.develop.mvp.pk.framework.common.util.collection.CollectionUtil
 /**
  * OTA 固件管理 Service 接口
  *
- * @author Shelly Chan
+ * @author David
  */
 public interface IotOtaFirmwareService {
 

@@ -17,7 +17,7 @@ import static com.develop.mvp.pk.module.crm.enums.LogRecordConstants.*;
 /**
  * 客户公海配置 Service 实现类
  *
- * @author Wanwan
+ * @author David
  */
 @Service
 @Validated

@@ -6,7 +6,7 @@ import lombok.Data;
 /**
  * 拼团记录的创建 Request DTO
  *
- * @author HUIHUI
+ * @author David
  */
 @Data
 public class CombinationRecordCreateReqDTO {

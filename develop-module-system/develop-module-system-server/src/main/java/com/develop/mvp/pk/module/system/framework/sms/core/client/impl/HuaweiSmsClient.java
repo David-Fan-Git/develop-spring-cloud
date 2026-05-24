@@ -30,7 +30,7 @@ import static com.develop.mvp.pk.framework.common.util.collection.CollectionUtil
 /**
  * 华为短信客户端的实现类
  *
- * @author scholar
+ * @author David
  * @since 2024/6/02 11:55
  */
 @Slf4j

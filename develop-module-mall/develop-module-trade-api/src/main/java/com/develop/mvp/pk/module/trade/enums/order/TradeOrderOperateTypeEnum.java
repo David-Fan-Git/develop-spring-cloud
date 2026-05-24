@@ -6,7 +6,7 @@ import lombok.RequiredArgsConstructor;
 /**
  * 订单操作类型的枚举
  *
- * @author 陈賝
+ * @author David
  * @since 2023/7/6 15:31
  */
 @RequiredArgsConstructor

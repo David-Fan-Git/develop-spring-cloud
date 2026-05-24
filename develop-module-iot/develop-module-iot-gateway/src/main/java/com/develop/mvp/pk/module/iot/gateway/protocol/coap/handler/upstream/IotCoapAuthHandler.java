@@ -20,7 +20,7 @@ import static com.develop.mvp.pk.module.iot.gateway.enums.ErrorCodeConstants.DEV
 /**
  * IoT 网关 CoAP 协议的【认证】处理器
  *
- * @author 芋道源码
+ * @author David
  */
 @Slf4j
 public class IotCoapAuthHandler extends IotCoapAbstractHandler {

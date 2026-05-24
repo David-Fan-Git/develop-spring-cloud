@@ -6,7 +6,7 @@ import lombok.Getter;
 public final class PayWalletRechargePackage {
     private final Long id;
     private String name; private Integer payPrice; private Integer bonusPrice; private Integer status;
-    public PayWalletRechargePackage(Long id) { this.id = Objects.requireNonNull(id); }
+    public PayWalletRechargePackage(Long id) { this.id = id; }
     public static PayWalletRechargePackage of(Long id) { return new PayWalletRechargePackage(id); }
     public Long id() { return id; } public String name() { return name; }
     public Integer payPrice() { return payPrice; } public Integer bonusPrice() { return bonusPrice; }

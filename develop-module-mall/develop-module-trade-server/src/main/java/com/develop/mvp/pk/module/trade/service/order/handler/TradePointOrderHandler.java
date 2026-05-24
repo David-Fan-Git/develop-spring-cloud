@@ -21,7 +21,7 @@ import static com.develop.mvp.pk.module.trade.enums.ErrorCodeConstants.ORDER_CRE
 /**
  * 积分商城活动订单的 {@link TradeOrderHandler} 实现类
  *
- * @author HUIHUI
+ * @author David
  */
 @Component
 public class TradePointOrderHandler implements TradeOrderHandler {

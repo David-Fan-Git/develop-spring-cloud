@@ -10,7 +10,7 @@ import java.util.Arrays;
 /**
  * 交易订单 - 类型
  *
- * @author Sin
+ * @author David
  */
 @RequiredArgsConstructor
 @Getter

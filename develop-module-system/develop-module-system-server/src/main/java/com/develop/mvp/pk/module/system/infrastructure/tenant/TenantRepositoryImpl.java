@@ -30,6 +30,26 @@ public class TenantRepositoryImpl implements TenantRepository {
 
     @Override
     @Transactional
+    public Tenant create(String name, Long contactUserId, String contactName, String contactMobile,
+                         List<String> websites, Long packageId,
+                         java.time.LocalDateTime expireTime, Integer accountCount) {
+        TenantDO tenantDO = new TenantDO();
+        tenantDO.setName(name);
+        tenantDO.setContactUserId(contactUserId);
+        tenantDO.setContactName(contactName);
+        tenantDO.setContactMobile(contactMobile);
+        tenantDO.setStatus(TenantStatus.ENABLED.code());
+        tenantDO.setWebsites(websites);
+        tenantDO.setPackageId(packageId);
+        tenantDO.setExpireTime(expireTime);
+        tenantDO.setAccountCount(accountCount);
+        tenantMapper.insert(tenantDO);
+        return TenantFactory.create(tenantDO.getId(), name, contactUserId, contactName, contactMobile,
+                websites, packageId, expireTime, accountCount);
+    }
+
+    @Override
+    @Transactional
     public Tenant save(Tenant tenant) {
         TenantDO tenantDO = toDataObject(tenant);
         if (tenantMapper.selectById(tenant.id().value()) == null) {

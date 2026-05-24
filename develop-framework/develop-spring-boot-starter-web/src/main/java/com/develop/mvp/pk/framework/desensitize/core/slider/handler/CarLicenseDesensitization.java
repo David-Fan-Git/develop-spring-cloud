@@ -5,7 +5,7 @@ import com.develop.mvp.pk.framework.desensitize.core.slider.annotation.CarLicens
 /**
  * {@link CarLicenseDesensitize} 的脱敏处理器
  *
- * @author gaibu
+ * @author David
  */
 public class CarLicenseDesensitization extends AbstractSliderDesensitizationHandler<CarLicenseDesensitize> {
 

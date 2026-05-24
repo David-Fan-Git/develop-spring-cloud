@@ -10,7 +10,7 @@ import com.develop.mvp.pk.module.iot.service.rule.scene.matcher.IotSceneRuleMatc
  *
  * 条件匹配器负责判断设备消息是否满足场景规则的附加条件，在触发器匹配成功后进行进一步的条件筛选
  *
- * @author HUIHUI
+ * @author David
  */
 public interface IotSceneRuleConditionMatcher extends IotSceneRuleMatcher {
 

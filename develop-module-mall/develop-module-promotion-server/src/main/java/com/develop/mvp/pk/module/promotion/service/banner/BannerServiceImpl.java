@@ -19,7 +19,7 @@ import static com.develop.mvp.pk.module.promotion.enums.ErrorCodeConstants.BANNE
 /**
  * 首页 banner 实现类
  *
- * @author xia
+ * @author David
  */
 @Service
 @Validated

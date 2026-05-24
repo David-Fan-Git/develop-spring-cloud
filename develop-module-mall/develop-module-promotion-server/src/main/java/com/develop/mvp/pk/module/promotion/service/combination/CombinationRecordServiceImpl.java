@@ -53,7 +53,7 @@ import static com.develop.mvp.pk.module.promotion.enums.MessageTemplateConstants
 /**
  * 拼团记录 Service 实现类
  *
- * @author HUIHUI
+ * @author David
  */
 @Service
 @Slf4j
@@ -77,7 +77,7 @@ public class CombinationRecordServiceImpl implements CombinationRecordService {
     @Resource
     public SocialClientApi socialClientApi;
 
-    // TODO @芋艿：在详细预览下；
+    // TODO @David：在详细预览下；
     @Override
     public KeyValue<CombinationActivityDO, CombinationProductDO> validateCombinationRecord(
             Long userId, Long activityId, Long headId, Long skuId, Integer count) {

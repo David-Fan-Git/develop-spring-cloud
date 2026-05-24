@@ -12,7 +12,7 @@ import static com.develop.mvp.pk.module.pay.dal.redis.RedisKeyConstants.PAY_NOTI
 /**
  * 支付通知的锁 Redis DAO
  *
- * @author 芋道源码
+ * @author David
  */
 @Repository
 public class PayNotifyLockRedisDAO {

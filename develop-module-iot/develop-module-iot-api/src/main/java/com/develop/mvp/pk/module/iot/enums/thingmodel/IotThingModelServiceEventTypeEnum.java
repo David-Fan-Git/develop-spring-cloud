@@ -9,7 +9,7 @@ import java.util.Arrays;
 /**
  * IoT 产品物模型事件类型枚举
  *
- * @author HUIHUI
+ * @author David
  */
 @AllArgsConstructor
 @Getter

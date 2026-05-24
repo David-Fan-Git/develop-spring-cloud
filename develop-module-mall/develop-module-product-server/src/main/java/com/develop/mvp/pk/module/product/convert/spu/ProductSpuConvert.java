@@ -19,7 +19,7 @@ import static com.develop.mvp.pk.framework.common.util.collection.CollectionUtil
 /**
  * 商品 SPU Convert
  *
- * @author 芋道源码
+ * @author David
  */
 @Mapper
 public interface ProductSpuConvert {

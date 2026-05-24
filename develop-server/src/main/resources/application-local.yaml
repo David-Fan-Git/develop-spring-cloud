@@ -1,6 +1,16 @@
 server:
   port: 48080
 
+--- #################### 注册中心 + 配置中心相关配置 ####################
+
+spring:
+  cloud:
+    nacos:
+      discovery:
+        enabled: false # 本地启动禁用 Nacos 注册发现
+      config:
+        enabled: false # 本地启动禁用 Nacos 配置中心
+
 --- #################### 数据库相关配置 ####################
 spring:
   autoconfigure:
@@ -172,7 +182,7 @@ logging:
     com.develop.mvp.pk.module.iot.dal.mysql: debug
     com.develop.mvp.pk.module.iot.dal.tdengine: DEBUG
     com.develop.mvp.pk.module.ai.dal.mysql: debug
-    org.springframework.context.support.PostProcessorRegistrationDelegate: ERROR # TODO 芋艿：先禁用，Spring Boot 3.X 存在部分错误的 WARN 提示
+    org.springframework.context.support.PostProcessorRegistrationDelegate: ERROR # TODO David：先禁用，Spring Boot 3.X 存在部分错误的 WARN 提示
 
 debug: false
 
@@ -204,9 +214,9 @@ wx:
       key-prefix: wa # Redis Key 的前缀
       http-client-type: HttpClient # 采用 HttpClient 请求微信公众号平台
 
---- #################### 芋道相关配置 ####################
+--- #################### David相关配置 ####################
 
-# 芋道配置项，设置当前项目所有自定义的配置
+# David配置项，设置当前项目所有自定义的配置
 develop:
   captcha:
     enable: false # 本地环境，暂时关闭图片验证码，方便登录等接口的测试；
@@ -258,7 +268,7 @@ justauth:
     prefix: 'social_auth_state:' # 缓存前缀，目前只对 Redis 缓存生效，默认 JUSTAUTH::STATE::
     timeout: 24h # 超时时长，目前只对 Redis 缓存生效，默认 3 分钟
 
---- #################### iot相关配置 TODO 芋艿【IOT】：再瞅瞅 ####################
+--- #################### iot相关配置 TODO David【IOT】：再瞅瞅 ####################
 pf4j:
 #  pluginsDir: /tmp/
   pluginsDir: ../plugins

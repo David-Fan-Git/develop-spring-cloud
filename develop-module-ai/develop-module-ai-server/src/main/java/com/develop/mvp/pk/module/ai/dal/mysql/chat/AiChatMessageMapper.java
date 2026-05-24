@@ -21,7 +21,7 @@ import java.util.Map;
 /**
  * AI 聊天对话 Mapper
  *
- * @author fansili
+ * @author David
  */
 @Mapper
 public interface AiChatMessageMapper extends BaseMapperX<AiChatMessageDO> {

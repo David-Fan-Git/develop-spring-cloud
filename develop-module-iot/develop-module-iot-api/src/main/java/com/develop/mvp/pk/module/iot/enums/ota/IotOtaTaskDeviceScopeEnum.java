@@ -9,7 +9,7 @@ import java.util.Arrays;
 /**
  * IoT OTA 升级任务的设备范围枚举
  *
- * @author haohao
+ * @author David
  */
 @RequiredArgsConstructor
 @Getter

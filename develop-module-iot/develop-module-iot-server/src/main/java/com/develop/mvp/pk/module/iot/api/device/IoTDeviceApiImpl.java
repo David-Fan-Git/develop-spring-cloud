@@ -40,7 +40,7 @@ import static com.develop.mvp.pk.framework.common.util.collection.CollectionUtil
 /**
  * IoT 设备 API 实现类
  *
- * @author haohao
+ * @author David
  */
 @RestController
 @Validated

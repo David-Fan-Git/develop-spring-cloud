@@ -4,17 +4,17 @@ import cn.hutool.core.text.CharSequenceUtil;
 import cn.hutool.core.util.ObjUtil;
 import com.develop.mvp.pk.framework.common.pojo.CommonResult;
 import com.develop.mvp.pk.framework.common.util.object.BeanUtils;
+import com.develop.mvp.pk.module.pay.application.wallet.PayWalletApplicationService;
 import com.develop.mvp.pk.module.pay.controller.admin.order.vo.PayOrderRespVO;
 import com.develop.mvp.pk.module.pay.controller.admin.order.vo.PayOrderSubmitRespVO;
 import com.develop.mvp.pk.module.pay.controller.app.order.vo.AppPayOrderSubmitReqVO;
 import com.develop.mvp.pk.module.pay.controller.app.order.vo.AppPayOrderSubmitRespVO;
 import com.develop.mvp.pk.module.pay.dal.dataobject.order.PayOrderDO;
-import com.develop.mvp.pk.module.pay.dal.dataobject.wallet.PayWalletDO;
+import com.develop.mvp.pk.module.pay.domain.wallet.PayWallet;
 import com.develop.mvp.pk.module.pay.enums.PayChannelEnum;
 import com.develop.mvp.pk.module.pay.enums.order.PayOrderStatusEnum;
 import com.develop.mvp.pk.module.pay.framework.pay.core.client.impl.wallet.WalletPayClient;
 import com.develop.mvp.pk.module.pay.service.order.PayOrderService;
-import com.develop.mvp.pk.module.pay.service.wallet.PayWalletService;
 import com.google.common.collect.Maps;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
@@ -42,7 +42,7 @@ public class AppPayOrderController {
     @Resource
     private PayOrderService payOrderService;
     @Resource
-    private PayWalletService payWalletService;
+    private PayWalletApplicationService payWalletApplicationService;
 
     @GetMapping("/get")
     @Operation(summary = "获得支付订单")
@@ -87,8 +87,8 @@ public class AppPayOrderController {
             if (reqVO.getChannelExtras() == null) {
                 reqVO.setChannelExtras(Maps.newHashMapWithExpectedSize(1));
             }
-            PayWalletDO wallet = payWalletService.getOrCreateWallet(getLoginUserId(), getLoginUserType());
-            reqVO.getChannelExtras().put(WalletPayClient.WALLET_ID_KEY, String.valueOf(wallet.getId()));
+            PayWallet wallet = payWalletApplicationService.getOrCreate(getLoginUserId(), getLoginUserType());
+            reqVO.getChannelExtras().put(WalletPayClient.WALLET_ID_KEY, String.valueOf(wallet.id()));
         }
 
         // 2. 提交支付

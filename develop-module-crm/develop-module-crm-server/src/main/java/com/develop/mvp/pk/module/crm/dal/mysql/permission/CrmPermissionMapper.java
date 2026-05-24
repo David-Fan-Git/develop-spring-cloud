@@ -11,7 +11,7 @@ import java.util.List;
 /**
  * crm 数据权限 mapper
  *
- * @author HUIHUI
+ * @author David
  */
 @Mapper
 public interface CrmPermissionMapper extends BaseMapperX<CrmPermissionDO> {

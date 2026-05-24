@@ -4,6 +4,9 @@ import cn.hutool.core.lang.Assert;
 import cn.hutool.core.map.MapUtil;
 import cn.hutool.extra.spring.SpringUtil;
 import com.develop.mvp.pk.framework.common.exception.ServiceException;
+import com.develop.mvp.pk.module.pay.application.wallet.PayWalletApplicationService;
+import com.develop.mvp.pk.module.pay.application.wallet.PayWalletTransactionApplicationService;
+import com.develop.mvp.pk.module.pay.domain.wallet.PayWalletTransaction;
 import com.develop.mvp.pk.module.pay.enums.PayChannelEnum;
 import com.develop.mvp.pk.module.pay.enums.refund.PayRefundStatusEnum;
 import com.develop.mvp.pk.module.pay.enums.transfer.PayTransferStatusEnum;
@@ -18,14 +21,11 @@ import com.develop.mvp.pk.module.pay.framework.pay.core.client.impl.NonePayClien
 import com.develop.mvp.pk.module.pay.dal.dataobject.order.PayOrderExtensionDO;
 import com.develop.mvp.pk.module.pay.dal.dataobject.refund.PayRefundDO;
 import com.develop.mvp.pk.module.pay.dal.dataobject.transfer.PayTransferDO;
-import com.develop.mvp.pk.module.pay.dal.dataobject.wallet.PayWalletTransactionDO;
 import com.develop.mvp.pk.module.pay.enums.order.PayOrderStatusEnum;
 import com.develop.mvp.pk.module.pay.enums.wallet.PayWalletBizTypeEnum;
 import com.develop.mvp.pk.module.pay.service.order.PayOrderService;
 import com.develop.mvp.pk.module.pay.service.refund.PayRefundService;
 import com.develop.mvp.pk.module.pay.service.transfer.PayTransferService;
-import com.develop.mvp.pk.module.pay.service.wallet.PayWalletService;
-import com.develop.mvp.pk.module.pay.service.wallet.PayWalletTransactionService;
 import lombok.extern.slf4j.Slf4j;
 
 import java.util.Map;
@@ -37,15 +37,15 @@ import static com.develop.mvp.pk.module.pay.enums.ErrorCodeConstants.REFUND_NOT_
 /**
  * 钱包支付的 PayClient 实现类
  *
- * @author jason
+ * @author David
  */
 @Slf4j
 public class WalletPayClient extends AbstractPayClient<NonePayClientConfig> {
 
     public static final String WALLET_ID_KEY = "walletId";
 
-    private PayWalletService wallService;
-    private PayWalletTransactionService walletTransactionService;
+    private PayWalletApplicationService payWalletApplicationService;
+    private PayWalletTransactionApplicationService transactionApplicationService;
 
     private PayOrderService orderService;
     private PayRefundService refundService;
@@ -57,11 +57,11 @@ public class WalletPayClient extends AbstractPayClient<NonePayClientConfig> {
 
     @Override
     protected void doInit() {
-        if (wallService == null) {
-            wallService = SpringUtil.getBean(PayWalletService.class);
+        if (payWalletApplicationService == null) {
+            payWalletApplicationService = SpringUtil.getBean(PayWalletApplicationService.class);
         }
-        if (walletTransactionService == null) {
-            walletTransactionService = SpringUtil.getBean(PayWalletTransactionService.class);
+        if (transactionApplicationService == null) {
+            transactionApplicationService = SpringUtil.getBean(PayWalletTransactionApplicationService.class);
         }
     }
 
@@ -71,10 +71,17 @@ public class WalletPayClient extends AbstractPayClient<NonePayClientConfig> {
         try {
             Long walletId = MapUtil.getLong(reqDTO.getChannelExtras(), WALLET_ID_KEY);
             Assert.notNull(walletId, "钱包编号");
-            PayWalletTransactionDO transaction = wallService.orderPay(walletId,
-                    reqDTO.getOutTradeNo(), reqDTO.getPrice());
-            return PayOrderRespDTO.successOf(transaction.getNo(), transaction.getCreator(),
-                    transaction.getCreateTime(),
+            if (orderService == null) {
+                orderService = SpringUtil.getBean(PayOrderService.class);
+            }
+            PayOrderExtensionDO orderExtension = orderService.getOrderExtensionByNo(reqDTO.getOutTradeNo());
+            if (orderExtension == null) {
+                throw com.develop.mvp.pk.framework.common.exception.util.ServiceExceptionUtil.exception(PAY_ORDER_EXTENSION_NOT_FOUND);
+            }
+            PayWalletTransaction transaction = payWalletApplicationService.deductBalance(walletId,
+                    orderExtension.getOrderId(), PayWalletBizTypeEnum.PAYMENT.getType(), reqDTO.getPrice());
+            return PayOrderRespDTO.successOf(transaction.no(), transaction.creator(),
+                    transaction.createTime(),
                     reqDTO.getOutTradeNo(), transaction);
         } catch (Throwable ex) {
             log.error("[doUnifiedOrder][reqDTO({}) 异常]", reqDTO, ex);
@@ -113,11 +120,11 @@ public class WalletPayClient extends AbstractPayClient<NonePayClientConfig> {
         }
         // 成功状态
         if (PayOrderStatusEnum.isSuccess(orderExtension.getStatus())) {
-            PayWalletTransactionDO walletTransaction = walletTransactionService.getWalletTransaction(
+            PayWalletTransaction walletTransaction = transactionApplicationService.getByBiz(
                     String.valueOf(orderExtension.getOrderId()), PayWalletBizTypeEnum.PAYMENT);
             Assert.notNull(walletTransaction, "支付单 {} 钱包流水不能为空", outTradeNo);
-            return PayOrderRespDTO.successOf(walletTransaction.getNo(), walletTransaction.getCreator(),
-                    walletTransaction.getCreateTime(), outTradeNo, walletTransaction);
+            return PayOrderRespDTO.successOf(walletTransaction.no(), walletTransaction.creator(),
+                    walletTransaction.createTime(), outTradeNo, walletTransaction);
         }
         // 其它状态为无效状态
         log.error("[doGetOrder] 支付单 {} 的状态不正确", outTradeNo);
@@ -128,9 +135,16 @@ public class WalletPayClient extends AbstractPayClient<NonePayClientConfig> {
     @SuppressWarnings("PatternVariableCanBeUsed")
     protected PayRefundRespDTO doUnifiedRefund(PayRefundUnifiedReqDTO reqDTO) {
         try {
-            PayWalletTransactionDO payWalletTransaction = wallService.orderRefund(reqDTO.getOutRefundNo(),
-                    reqDTO.getRefundPrice(), reqDTO.getReason());
-            return PayRefundRespDTO.successOf(payWalletTransaction.getNo(), payWalletTransaction.getCreateTime(),
+            if (refundService == null) {
+                refundService = SpringUtil.getBean(PayRefundService.class);
+            }
+            PayRefundDO payRefund = refundService.getRefundByNo(reqDTO.getOutRefundNo());
+            if (payRefund == null) {
+                throw com.develop.mvp.pk.framework.common.exception.util.ServiceExceptionUtil.exception(REFUND_NOT_FOUND);
+            }
+            PayWalletTransaction payWalletTransaction = payWalletApplicationService.refundPayment(payRefund.getId(),
+                    payRefund.getChannelOrderNo(), reqDTO.getRefundPrice());
+            return PayRefundRespDTO.successOf(payWalletTransaction.no(), payWalletTransaction.createTime(),
                     reqDTO.getOutRefundNo(), payWalletTransaction);
         } catch (Throwable ex) {
             log.error("[doUnifiedRefund][reqDOT({}) 异常]", reqDTO, ex);
@@ -169,10 +183,10 @@ public class WalletPayClient extends AbstractPayClient<NonePayClientConfig> {
         }
         // 退款成功
         if (PayRefundStatusEnum.isSuccess(payRefund.getStatus())) {
-            PayWalletTransactionDO walletTransaction = walletTransactionService.getWalletTransaction(
+            PayWalletTransaction walletTransaction = transactionApplicationService.getByBiz(
                     String.valueOf(payRefund.getId()), PayWalletBizTypeEnum.PAYMENT_REFUND);
             Assert.notNull(walletTransaction, "支付退款单 {} 钱包流水不能为空", outRefundNo);
-            return PayRefundRespDTO.successOf(walletTransaction.getNo(), walletTransaction.getCreateTime(),
+            return PayRefundRespDTO.successOf(walletTransaction.no(), walletTransaction.createTime(),
                     outRefundNo, walletTransaction);
         }
         // 其它状态为无效状态
@@ -185,9 +199,9 @@ public class WalletPayClient extends AbstractPayClient<NonePayClientConfig> {
     public PayTransferRespDTO doUnifiedTransfer(PayTransferUnifiedReqDTO reqDTO) {
         try {
             Long walletId = Long.parseLong(reqDTO.getUserAccount());
-            PayWalletTransactionDO transaction = wallService.addWalletBalance(walletId, String.valueOf(reqDTO.getOutTransferNo()),
-                    PayWalletBizTypeEnum.TRANSFER, reqDTO.getPrice());
-            return PayTransferRespDTO.successOf(transaction.getNo(), transaction.getCreateTime(),
+            PayWalletTransaction transaction = payWalletApplicationService.addBalance(walletId, reqDTO.getOutTransferNo(),
+                    PayWalletBizTypeEnum.TRANSFER.getType(), reqDTO.getPrice(), null);
+            return PayTransferRespDTO.successOf(transaction.no(), transaction.createTime(),
                     reqDTO.getOutTransferNo(), transaction);
         } catch (Throwable ex) {
             log.error("[doUnifiedTransfer][reqDTO({}) 异常]", reqDTO, ex);
@@ -227,10 +241,10 @@ public class WalletPayClient extends AbstractPayClient<NonePayClientConfig> {
         }
         // 成功状态
         if (PayTransferStatusEnum.isSuccess(transfer.getStatus())) {
-            PayWalletTransactionDO walletTransaction = walletTransactionService.getWalletTransaction(
+            PayWalletTransaction walletTransaction = transactionApplicationService.getByBiz(
                     String.valueOf(transfer.getId()), PayWalletBizTypeEnum.TRANSFER);
             Assert.notNull(walletTransaction, "转账单 {} 钱包流水不能为空", outTradeNo);
-            return PayTransferRespDTO.successOf(walletTransaction.getNo(), walletTransaction.getCreateTime(),
+            return PayTransferRespDTO.successOf(walletTransaction.no(), walletTransaction.createTime(),
                     outTradeNo, walletTransaction);
         }
         // 处理中状态

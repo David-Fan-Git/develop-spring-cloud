@@ -107,7 +107,7 @@ public class MemberUserController {
     @PreAuthorize("@ss.hasPermission('member:user:query')")
     public CommonResult<PageResult<MemberUserRespVO>> getUserPage(@Valid MemberUserPageReqVO pageVO) {
         PageResult<MemberUser> pageResult = memberUserApplicationService.getPage(
-                pageVO.getNickname(), pageVO.getMobile(), pageVO.getStatus(),
+                pageVO.getNickname(), pageVO.getMobile(), null,
                 pageVO.getLevelId(), pageVO.getGroupId(), pageVO.getTagIds(),
                 null, null, null, null,
                 pageVO.getPageNo(), pageVO.getPageSize());

@@ -9,7 +9,7 @@ import java.util.Arrays;
 /**
  * 商机的结束状态枚举
  *
- * @author lzxhqs
+ * @author David
  */
 @RequiredArgsConstructor
 @Getter

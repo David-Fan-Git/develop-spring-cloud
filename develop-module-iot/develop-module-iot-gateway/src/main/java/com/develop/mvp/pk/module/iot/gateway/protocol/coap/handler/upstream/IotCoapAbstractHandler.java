@@ -24,7 +24,7 @@ import static com.develop.mvp.pk.framework.common.exception.util.ServiceExceptio
 /**
  * IoT 网关 CoAP 协议的处理器抽象基类：提供通用的前置处理（认证）、请求解析、响应处理、全局的异常捕获等
  *
- * @author 芋道源码
+ * @author David
  */
 @Slf4j
 public abstract class IotCoapAbstractHandler {

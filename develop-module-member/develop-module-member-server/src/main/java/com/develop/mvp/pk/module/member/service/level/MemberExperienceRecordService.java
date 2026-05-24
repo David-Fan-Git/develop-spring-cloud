@@ -9,7 +9,7 @@ import com.develop.mvp.pk.module.member.enums.MemberExperienceBizTypeEnum;
 /**
  * 会员经验记录 Service 接口
  *
- * @author owen
+ * @author David
  */
 public interface MemberExperienceRecordService {
 

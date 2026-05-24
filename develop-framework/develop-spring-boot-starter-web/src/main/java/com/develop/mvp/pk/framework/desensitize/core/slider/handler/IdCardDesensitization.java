@@ -5,7 +5,7 @@ import com.develop.mvp.pk.framework.desensitize.core.slider.annotation.IdCardDes
 /**
  * {@link IdCardDesensitize} 的脱敏处理器
  *
- * @author gaibu
+ * @author David
  */
 public class IdCardDesensitization extends AbstractSliderDesensitizationHandler<IdCardDesensitize> {
     @Override

@@ -13,7 +13,7 @@ import static org.junit.jupiter.api.Assertions.*;
  * Property 1: TCP 客户端 dataFormat 默认值行为
  * Validates: Requirements 1.1, 1.2
  *
- * @author HUIHUI
+ * @author David
  */
 class IotTcpClientTest {
 

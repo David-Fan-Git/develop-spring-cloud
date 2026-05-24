@@ -17,7 +17,7 @@ import java.util.List;
 /**
  * 交易中心配置 DO
  *
- * @author owen
+ * @author David
  */
 @TableName(value = "trade_config", autoResultMap = true)
 @KeySequence("trade_config_seq") // 用于 Oracle、PostgreSQL、Kingbase、DB2、H2 数据库的主键自增。如果是 MySQL 等数据库，可不写。

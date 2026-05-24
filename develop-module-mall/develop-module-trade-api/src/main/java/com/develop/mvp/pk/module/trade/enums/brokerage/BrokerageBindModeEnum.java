@@ -9,7 +9,7 @@ import java.util.Arrays;
 /**
  * 分销关系绑定模式枚举
  *
- * @author owen
+ * @author David
  */
 @AllArgsConstructor
 @Getter

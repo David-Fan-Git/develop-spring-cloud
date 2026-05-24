@@ -10,7 +10,7 @@ import java.util.Collection;
 /**
  * 商品浏览记录 Service 接口
  *
- * @author owen
+ * @author David
  */
 public interface ProductBrowseHistoryService {
 

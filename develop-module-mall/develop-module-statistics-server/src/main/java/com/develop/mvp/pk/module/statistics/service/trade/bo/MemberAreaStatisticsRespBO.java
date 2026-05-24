@@ -5,7 +5,7 @@ import lombok.Data;
 /**
  * 会员地区统计 Response BO
  *
- * @author owen
+ * @author David
  */
 @Data
 public class MemberAreaStatisticsRespBO {

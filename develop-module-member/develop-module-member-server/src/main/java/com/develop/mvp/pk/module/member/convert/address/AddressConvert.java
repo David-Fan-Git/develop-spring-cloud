@@ -19,7 +19,7 @@ import java.util.stream.Collectors;
 /**
  * 用户收件地址 Convert
  *
- * @author 芋道源码
+ * @author David
  */
 @Mapper
 public interface AddressConvert {
@@ -50,13 +50,12 @@ public interface AddressConvert {
         if (bean == null) return null;
         AppAddressRespVO vo = new AppAddressRespVO();
         vo.setId(bean.id());
-        vo.setUserId(bean.userId());
         vo.setName(bean.name());
         vo.setMobile(bean.mobile());
         vo.setAreaId(bean.areaId());
         vo.setDetailAddress(bean.detailAddress());
         vo.setDefaultStatus(bean.defaultStatus());
-        vo.setAreaName(AreaUtils.format(bean.areaId()));
+        vo.setAreaName(bean.areaId() != null ? AreaUtils.format(bean.areaId().intValue()) : null);
         return vo;
     }
 
@@ -69,7 +68,6 @@ public interface AddressConvert {
         if (bean == null) return null;
         AddressRespVO vo = new AddressRespVO();
         vo.setId(bean.id());
-        vo.setUserId(bean.userId());
         vo.setName(bean.name());
         vo.setMobile(bean.mobile());
         vo.setAreaId(bean.areaId());

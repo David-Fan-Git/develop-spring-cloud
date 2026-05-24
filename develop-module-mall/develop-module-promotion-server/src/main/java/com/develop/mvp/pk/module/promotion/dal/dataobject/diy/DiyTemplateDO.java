@@ -17,7 +17,7 @@ import java.util.List;
  * 1. 新建一个模版，下面可以包含多个 {@link DiyPageDO} 页面，例如说首页、我的
  * 2. 如果需要使用某个模版，则将 {@link #used} 设置为 true，表示已使用，有且仅有一个
  *
- * @author owen
+ * @author David
  */
 @TableName(value = "promotion_diy_template", autoResultMap = true)
 @KeySequence("promotion_diy_template_seq") // 用于 Oracle、PostgreSQL、Kingbase、DB2、H2 数据库的主键自增。如果是 MySQL 等数据库，可不写。

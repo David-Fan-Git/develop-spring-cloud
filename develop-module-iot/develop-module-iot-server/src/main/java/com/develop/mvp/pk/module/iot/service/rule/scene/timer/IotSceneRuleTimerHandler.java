@@ -20,7 +20,7 @@ import static com.develop.mvp.pk.framework.common.util.collection.CollectionUtil
 /**
  * IoT 场景规则定时触发器处理器：负责管理定时触发器的注册、更新、删除等操作
  *
- * @author HUIHUI
+ * @author David
  */
 @Component
 @Slf4j

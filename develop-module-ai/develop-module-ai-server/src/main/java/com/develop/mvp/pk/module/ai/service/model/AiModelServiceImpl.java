@@ -35,7 +35,7 @@ import static com.develop.mvp.pk.module.ai.enums.ErrorCodeConstants.*;
 /**
  * AI 模型 Service 实现类
  *
- * @author fansili
+ * @author David
  */
 @Service
 @Validated

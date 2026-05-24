@@ -20,7 +20,7 @@ import static com.develop.mvp.pk.framework.common.util.json.JsonUtils.toJsonStri
 /**
  * 支付客户端的抽象类，提供模板方法，减少子类的冗余代码
  *
- * @author 芋道源码
+ * @author David
  */
 @Slf4j
 public abstract class AbstractPayClient<Config extends PayClientConfig> implements PayClient<Config> {

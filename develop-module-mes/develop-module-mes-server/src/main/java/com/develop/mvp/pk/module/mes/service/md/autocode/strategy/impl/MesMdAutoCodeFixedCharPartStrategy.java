@@ -10,7 +10,7 @@ import org.springframework.stereotype.Component;
 /**
  * MES 编码规则 - 固定字符策略
  *
- * @author 芋道源码
+ * @author David
  */
 @Component
 public class MesMdAutoCodeFixedCharPartStrategy implements MesMdAutoCodePartStrategy {

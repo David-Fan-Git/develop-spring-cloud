@@ -29,7 +29,7 @@ import static com.develop.mvp.pk.module.product.enums.ErrorCodeConstants.*;
 /**
  * 商品评论 Service 实现类
  *
- * @author wangzhs
+ * @author David
  */
 @Service
 @Validated

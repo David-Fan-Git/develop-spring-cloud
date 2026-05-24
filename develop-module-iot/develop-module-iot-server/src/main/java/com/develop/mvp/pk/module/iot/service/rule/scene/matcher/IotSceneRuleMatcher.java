@@ -9,7 +9,7 @@ import com.develop.mvp.pk.module.iot.service.rule.scene.matcher.trigger.IotScene
  * - {@link IotSceneRuleTriggerMatcher} 触发器匹配器
  * - {@link IotSceneRuleConditionMatcher} 条件匹配器
  *
- * @author HUIHUI
+ * @author David
  */
 public interface IotSceneRuleMatcher {
 

@@ -50,9 +50,9 @@ import static com.develop.mvp.pk.module.bpm.framework.flowable.core.util.BpmnMod
 /**
  * 流程模型实现：主要进行 Flowable {@link Model} 的维护
  *
- * @author yunlongn
- * @author 芋道源码
- * @author jason
+ * @author David
+ * @author David
+ * @author David
  */
 @Service
 @Validated

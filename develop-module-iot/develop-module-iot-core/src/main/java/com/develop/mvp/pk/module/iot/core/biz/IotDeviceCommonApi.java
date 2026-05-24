@@ -11,7 +11,7 @@ import java.util.List;
 /**
  * IoT 设备通用 API
  *
- * @author haohao
+ * @author David
  */
 public interface IotDeviceCommonApi {
 

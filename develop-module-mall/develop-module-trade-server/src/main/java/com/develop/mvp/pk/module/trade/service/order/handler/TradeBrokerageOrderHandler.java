@@ -27,7 +27,7 @@ import static com.develop.mvp.pk.framework.common.util.collection.CollectionUtil
 /**
  * 订单分销的 {@link TradeOrderHandler} 实现类
  *
- * @author 芋道源码
+ * @author David
  */
 @Component
 public class TradeBrokerageOrderHandler implements TradeOrderHandler {

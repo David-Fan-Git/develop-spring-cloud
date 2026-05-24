@@ -43,7 +43,7 @@ public class MesWmMiscIssueDO extends BaseDO {
      * 枚举 {@link com.develop.mvp.pk.module.mes.enums.wm.MesWmMiscIssueTypeEnum}
      */
     private Integer type;
-    // TODO @芋艿：这里还没定，关联哪些；
+    // TODO @David：这里还没定，关联哪些；
     /**
      * 来源单据类型
      */

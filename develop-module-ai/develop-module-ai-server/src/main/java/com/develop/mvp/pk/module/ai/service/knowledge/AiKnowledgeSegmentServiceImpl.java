@@ -49,7 +49,7 @@ import static org.springframework.ai.vectorstore.SearchRequest.SIMILARITY_THRESH
 /**
  * AI 知识库分片 Service 实现类
  *
- * @author xiaoxin
+ * @author David
  */
 @Service
 @Slf4j

@@ -12,7 +12,7 @@ import lombok.EqualsAndHashCode;
  *
  * 数据类型，取值为 bool 或 enum
  *
- * @author HUIHUI
+ * @author David
  */
 @Data
 @EqualsAndHashCode(callSuper = true)

@@ -12,7 +12,7 @@ import org.springframework.context.annotation.Configuration;
 /**
  * Metrics 配置类
  *
- * @author 芋道源码
+ * @author David
  */
 @AutoConfiguration
 @ConditionalOnClass({MeterRegistryCustomizer.class})

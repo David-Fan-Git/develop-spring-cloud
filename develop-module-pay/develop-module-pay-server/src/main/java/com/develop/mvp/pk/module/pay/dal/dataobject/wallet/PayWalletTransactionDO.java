@@ -10,7 +10,7 @@ import lombok.Data;
 /**
  * 会员钱包流水 DO
  *
- * @author jason
+ * @author David
  */
 @TableName(value ="pay_wallet_transaction")
 @KeySequence("pay_wallet_transaction_seq") // 用于 Oracle、PostgreSQL、Kingbase、DB2、H2 数据库的主键自增。如果是 MySQL 等数据库，可不写。

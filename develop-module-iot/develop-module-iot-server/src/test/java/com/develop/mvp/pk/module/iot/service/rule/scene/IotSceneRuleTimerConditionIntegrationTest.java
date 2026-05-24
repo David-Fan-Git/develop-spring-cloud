@@ -41,7 +41,7 @@ import static org.mockito.Mockito.*;
  * <p>
  * Validates: Requirements 2.1, 2.2, 2.3, 2.4, 2.5
  *
- * @author HUIHUI
+ * @author David
  */
 public class IotSceneRuleTimerConditionIntegrationTest extends BaseMockitoUnitTest {
 

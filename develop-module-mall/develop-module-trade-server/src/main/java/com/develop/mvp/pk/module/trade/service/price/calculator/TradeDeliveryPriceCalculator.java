@@ -34,7 +34,7 @@ import static com.develop.mvp.pk.module.trade.enums.ErrorCodeConstants.*;
 /**
  * 运费的 {@link TradePriceCalculator} 实现类
  *
- * @author jason
+ * @author David
  */
 @Component
 @Order(TradePriceCalculator.ORDER_DELIVERY)

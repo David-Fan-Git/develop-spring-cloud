@@ -17,7 +17,7 @@ import java.util.Map;
 /**
  * 转账单创建 Request DTO
  *
- * @author jason
+ * @author David
  */
 @Data
 public class PayTransferCreateReqDTO {

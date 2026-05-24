@@ -14,7 +14,7 @@ import java.util.List;
 /**
  * 交易订单的统计 Mapper
  *
- * @author owen
+ * @author David
  */
 @Mapper
 public interface TradeOrderStatisticsMapper extends BaseMapperX<TradeStatisticsDO> {

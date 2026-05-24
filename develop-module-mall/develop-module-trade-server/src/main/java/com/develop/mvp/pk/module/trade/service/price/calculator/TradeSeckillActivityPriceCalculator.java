@@ -21,7 +21,7 @@ import static com.develop.mvp.pk.module.trade.enums.ErrorCodeConstants.PRICE_CAL
 /**
  * 秒杀活动的 {@link TradePriceCalculator} 实现类
  *
- * @author HUIHUI
+ * @author David
  */
 @Component
 @Order(TradePriceCalculator.ORDER_SECKILL_ACTIVITY)

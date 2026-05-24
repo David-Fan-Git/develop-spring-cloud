@@ -3,7 +3,7 @@ package com.develop.mvp.pk.module.pay.controller.admin.wallet;
 import com.develop.mvp.pk.framework.common.pojo.CommonResult;
 import com.develop.mvp.pk.module.pay.api.notify.dto.PayOrderNotifyReqDTO;
 import com.develop.mvp.pk.module.pay.api.notify.dto.PayRefundNotifyReqDTO;
-import com.develop.mvp.pk.module.pay.service.wallet.PayWalletRechargeService;
+import com.develop.mvp.pk.module.pay.application.wallet.PayWalletRechargeApplicationService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -26,13 +26,13 @@ import static com.develop.mvp.pk.framework.common.util.servlet.ServletUtils.getC
 public class PayWalletRechargeController {
 
     @Resource
-    private PayWalletRechargeService walletRechargeService;
+    private PayWalletRechargeApplicationService walletRechargeApplicationService;
 
     @PostMapping("/update-paid")
     @Operation(summary = "更新钱包充值为已充值") // 由 pay-module 支付服务，进行回调，可见 PayNotifyJob
     @PermitAll // 无需登录， 内部校验实现
     public CommonResult<Boolean> updateWalletRechargerPaid(@Valid @RequestBody PayOrderNotifyReqDTO notifyReqDTO) {
-        walletRechargeService.updateWalletRechargerPaid(Long.valueOf(notifyReqDTO.getMerchantOrderId()),
+        walletRechargeApplicationService.updatePaid(Long.valueOf(notifyReqDTO.getMerchantOrderId()),
                 notifyReqDTO.getPayOrderId());
         return success(true);
     }
@@ -41,7 +41,7 @@ public class PayWalletRechargeController {
     @Operation(summary = "发起钱包充值退款")
     @Parameter(name = "id", description = "编号", required = true, example = "1024")
     public CommonResult<Boolean> refundWalletRecharge(@RequestParam("id") Long id) {
-        walletRechargeService.refundWalletRecharge(id, getClientIP());
+        walletRechargeApplicationService.refund(id, getClientIP());
         return success(true);
     }
 
@@ -49,7 +49,7 @@ public class PayWalletRechargeController {
     @Operation(summary = "更新钱包充值为已退款") // 由 pay-module 支付服务，进行回调，可见 PayNotifyJob
     @PermitAll // 无需登录， 内部校验实现
     public CommonResult<Boolean> updateWalletRechargeRefunded(@RequestBody PayRefundNotifyReqDTO notifyReqDTO) {
-        walletRechargeService.updateWalletRechargeRefunded(
+        walletRechargeApplicationService.updateRefunded(
                 Long.valueOf(notifyReqDTO.getMerchantOrderId()),
                 notifyReqDTO.getMerchantRefundId(),
                 notifyReqDTO.getPayRefundId());

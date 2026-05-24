@@ -9,7 +9,7 @@ import java.util.List;
 /**
  * 公众号模版消息 Service 接口
  *
- * @author dengsl
+ * @author David
  */
 public interface MpMessageTemplateService {
 

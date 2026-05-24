@@ -54,7 +54,7 @@ import static com.develop.mvp.pk.module.ai.enums.ErrorCodeConstants.*;
 /**
  * AI 绘画 Service 实现类
  *
- * @author fansili
+ * @author David
  */
 @Service
 @Slf4j

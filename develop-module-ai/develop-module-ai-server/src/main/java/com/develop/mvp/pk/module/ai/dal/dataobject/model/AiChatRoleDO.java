@@ -16,7 +16,7 @@ import java.util.List;
 /**
  * AI 聊天角色 DO
  *
- * @author fansili
+ * @author David
  * @since 2024/4/24 19:39
  */
 @TableName(value = "ai_chat_role", autoResultMap = true)

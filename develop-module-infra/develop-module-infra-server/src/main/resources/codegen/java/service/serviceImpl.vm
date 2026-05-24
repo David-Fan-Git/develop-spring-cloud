@@ -35,7 +35,7 @@ import static ${basePackage}.module.${table.moduleName}.enums.ErrorCodeConstants
 /**
  * ${table.classComment} Service 实现类
  *
- * @author ${table.author}
+ * @author David
  */
 @Service
 @Validated

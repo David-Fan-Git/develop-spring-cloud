@@ -12,7 +12,7 @@ import java.util.List;
 /**
  * IoT EMQX 协议配置
  *
- * @author 芋道源码
+ * @author David
  */
 @Data
 public class IotEmqxConfig {

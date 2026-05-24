@@ -3,12 +3,12 @@ package com.develop.mvp.pk.module.pay.controller.app.wallet;
 import com.develop.mvp.pk.framework.common.enums.UserTypeEnum;
 import com.develop.mvp.pk.framework.common.pojo.CommonResult;
 import com.develop.mvp.pk.framework.common.pojo.PageResult;
-import com.develop.mvp.pk.framework.common.util.object.BeanUtils;
+import com.develop.mvp.pk.module.pay.application.wallet.PayWalletTransactionApplicationService;
 import com.develop.mvp.pk.module.pay.controller.app.wallet.vo.transaction.AppPayWalletTransactionSummaryRespVO;
 import com.develop.mvp.pk.module.pay.controller.app.wallet.vo.transaction.AppPayWalletTransactionPageReqVO;
 import com.develop.mvp.pk.module.pay.controller.app.wallet.vo.transaction.AppPayWalletTransactionRespVO;
-import com.develop.mvp.pk.module.pay.dal.dataobject.wallet.PayWalletTransactionDO;
-import com.develop.mvp.pk.module.pay.service.wallet.PayWalletTransactionService;
+import com.develop.mvp.pk.module.pay.convert.wallet.PayWalletTransactionConvert;
+import com.develop.mvp.pk.module.pay.domain.wallet.PayWalletTransaction;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -37,15 +37,16 @@ import static com.develop.mvp.pk.framework.security.core.util.SecurityFrameworkU
 public class AppPayWalletTransactionController {
 
     @Resource
-    private PayWalletTransactionService payWalletTransactionService;
+    private PayWalletTransactionApplicationService transactionApplicationService;
 
     @GetMapping("/page")
     @Operation(summary = "获得钱包流水分页")
     public CommonResult<PageResult<AppPayWalletTransactionRespVO>> getWalletTransactionPage(
             @Valid AppPayWalletTransactionPageReqVO pageReqVO) {
-        PageResult<PayWalletTransactionDO> pageResult = payWalletTransactionService.getWalletTransactionPage(
-                getLoginUserId(), UserTypeEnum.MEMBER.getValue(), pageReqVO);
-        return success(BeanUtils.toBean(pageResult, AppPayWalletTransactionRespVO.class));
+        PageResult<PayWalletTransaction> pageResult = transactionApplicationService.getAppPage(
+                getLoginUserId(), UserTypeEnum.MEMBER.getValue(), pageReqVO.getType(), pageReqVO.getCreateTime(),
+                pageReqVO.getPageNo(), pageReqVO.getPageSize());
+        return success(PayWalletTransactionConvert.INSTANCE.convertAppDomainPage(pageResult));
     }
 
     @GetMapping("/get-summary")
@@ -53,7 +54,7 @@ public class AppPayWalletTransactionController {
     @Parameter(name = "times", description = "时间段", required = true)
     public CommonResult<AppPayWalletTransactionSummaryRespVO> getWalletTransactionSummary(
             @RequestParam("createTime") @DateTimeFormat(pattern = FORMAT_YEAR_MONTH_DAY_HOUR_MINUTE_SECOND) LocalDateTime[] createTime) {
-        AppPayWalletTransactionSummaryRespVO summary = payWalletTransactionService.getWalletTransactionSummary(
+        AppPayWalletTransactionSummaryRespVO summary = transactionApplicationService.getSummary(
                 getLoginUserId(), UserTypeEnum.MEMBER.getValue(), createTime);
         return success(summary);
     }

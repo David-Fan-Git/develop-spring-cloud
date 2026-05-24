@@ -10,7 +10,7 @@ import lombok.NoArgsConstructor;
 /**
  * 转账单的通知 Request DTO
  *
- * @author jason
+ * @author David
  */
 @Data
 @Builder

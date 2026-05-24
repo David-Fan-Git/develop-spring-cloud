@@ -22,7 +22,7 @@ import static com.develop.mvp.pk.framework.common.util.collection.CollectionUtil
 /**
  * 佣金记录 Service 接口
  *
- * @author owen
+ * @author David
  */
 public interface BrokerageRecordService {
 

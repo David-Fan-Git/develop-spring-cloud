@@ -20,7 +20,7 @@ import com.develop.mvp.pk.module.mes.enums.DictTypeConstants;
 /**
  * MES 过程检验单（IPQC, In-Process Quality Control） DO
  *
- * @author 芋道源码
+ * @author David
  */
 @TableName("mes_qc_ipqc")
 @KeySequence("mes_qc_ipqc_seq")

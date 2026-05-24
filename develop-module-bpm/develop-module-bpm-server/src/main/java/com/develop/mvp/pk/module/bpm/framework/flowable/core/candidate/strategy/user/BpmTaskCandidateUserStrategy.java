@@ -13,7 +13,7 @@ import java.util.LinkedHashSet;
 /**
  * 用户 {@link BpmTaskCandidateStrategy} 实现类
  *
- * @author kyle
+ * @author David
  */
 @Component
 public class BpmTaskCandidateUserStrategy implements BpmTaskCandidateStrategy {

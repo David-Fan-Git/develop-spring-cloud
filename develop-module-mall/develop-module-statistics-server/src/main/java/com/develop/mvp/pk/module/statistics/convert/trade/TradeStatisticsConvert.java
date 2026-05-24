@@ -21,7 +21,7 @@ import java.util.List;
 /**
  * 交易统计 Convert
  *
- * @author owen
+ * @author David
  */
 @Mapper
 public interface TradeStatisticsConvert {

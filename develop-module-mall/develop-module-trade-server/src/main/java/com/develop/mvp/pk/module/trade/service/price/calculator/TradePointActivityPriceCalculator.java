@@ -23,7 +23,7 @@ import static com.develop.mvp.pk.module.trade.enums.ErrorCodeConstants.PRICE_CAL
 /**
  * 积分商城的 {@link TradePriceCalculator} 实现类
  *
- * @author owen
+ * @author David
  */
 @Component
 @Order(TradePriceCalculator.ORDER_POINT_ACTIVITY)

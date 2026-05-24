@@ -3,7 +3,7 @@ package com.develop.mvp.pk.module.promotion.enums;
 /**
  * Promotion 的 WebSocket 消息类型枚举类
  *
- * @author HUIHUI
+ * @author David
  */
 public interface WebSocketMessageTypeConstants {
 

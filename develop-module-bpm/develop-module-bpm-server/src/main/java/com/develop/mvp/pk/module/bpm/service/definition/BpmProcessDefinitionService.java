@@ -20,9 +20,9 @@ import static com.develop.mvp.pk.framework.common.util.collection.CollectionUtil
 /**
  * 流程定义接口
  *
- * @author yunlong.li
- * @author ZJQ
- * @author 芋道源码
+ * @author David
+ * @author David
+ * @author David
  */
 public interface BpmProcessDefinitionService {
 

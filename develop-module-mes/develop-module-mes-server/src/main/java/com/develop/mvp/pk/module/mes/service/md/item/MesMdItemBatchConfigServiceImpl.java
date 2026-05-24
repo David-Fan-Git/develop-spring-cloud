@@ -16,7 +16,7 @@ import static com.develop.mvp.pk.module.mes.enums.ErrorCodeConstants.MD_ITEM_NOT
 /**
  * MES 物料批次属性配置 Service 实现类
  *
- * @author 芋道源码
+ * @author David
  */
 @Service
 @Validated

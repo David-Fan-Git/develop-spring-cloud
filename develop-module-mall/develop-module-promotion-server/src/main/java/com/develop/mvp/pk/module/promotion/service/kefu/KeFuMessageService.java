@@ -12,7 +12,7 @@ import java.util.List;
 /**
  * 客服消息 Service 接口
  *
- * @author HUIHUI
+ * @author David
  */
 public interface KeFuMessageService {
 

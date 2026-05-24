@@ -14,7 +14,7 @@ import java.util.List;
 /**
  * 自提门店 Service 接口
  *
- * @author jason
+ * @author David
  */
 public interface DeliveryPickUpStoreService {
 

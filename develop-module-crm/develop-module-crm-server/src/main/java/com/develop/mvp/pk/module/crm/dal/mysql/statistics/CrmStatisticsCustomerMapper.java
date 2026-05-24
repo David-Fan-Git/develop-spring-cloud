@@ -14,7 +14,7 @@ import static com.develop.mvp.pk.framework.common.util.collection.CollectionUtil
 /**
  * CRM 客户分析 Mapper
  *
- * @author dhb52
+ * @author David
  */
 @Mapper
 public interface CrmStatisticsCustomerMapper {
@@ -123,7 +123,7 @@ public interface CrmStatisticsCustomerMapper {
      * @param reqVO 请求参数
      * @return 统计数据
      */
-    // TODO: @芋艿 模拟数据, 需要增加 crm_owner_record 表
+    // TODO: @David 模拟数据, 需要增加 crm_owner_record 表
     default List<CrmStatisticsPoolSummaryByDateRespVO> selectPoolCustomerPutCountByDate(CrmStatisticsCustomerReqVO reqVO) {
         LocalDateTime currrentDate = LocalDateTimeUtil.beginOfDay(reqVO.getTimes()[0]);
         LocalDateTime endDate = LocalDateTimeUtil.endOfDay(reqVO.getTimes()[1]);
@@ -145,7 +145,7 @@ public interface CrmStatisticsCustomerMapper {
      * @param reqVO 请求参数
      * @return 统计数据
      */
-    // TODO: @芋艿 模拟数据, 需要增加 crm_owner_record 表
+    // TODO: @David 模拟数据, 需要增加 crm_owner_record 表
     default List<CrmStatisticsPoolSummaryByDateRespVO> selectPoolCustomerTakeCountByDate(CrmStatisticsCustomerReqVO reqVO) {
         return selectPoolCustomerPutCountByDate(reqVO);
     }
@@ -156,7 +156,7 @@ public interface CrmStatisticsCustomerMapper {
      * @param reqVO 请求参数
      * @return 统计数据
      */
-    // TODO: @芋艿 模拟数据, 需要增加 crm_owner_record 表
+    // TODO: @David 模拟数据, 需要增加 crm_owner_record 表
     default List<CrmStatisticsPoolSummaryByUserRespVO> selectPoolCustomerPutCountByUser(CrmStatisticsCustomerReqVO reqVO) {
         return convertList(reqVO.getUserIds(), userId ->
             (CrmStatisticsPoolSummaryByUserRespVO) new CrmStatisticsPoolSummaryByUserRespVO()
@@ -171,7 +171,7 @@ public interface CrmStatisticsCustomerMapper {
      * @param reqVO 请求参数
      * @return 统计数据
      */
-    // TODO: @芋艿 模拟数据, 需要增加 crm_owner_record 表
+    // TODO: @David 模拟数据, 需要增加 crm_owner_record 表
     default List<CrmStatisticsPoolSummaryByUserRespVO> selectPoolCustomerTakeCountByUser(CrmStatisticsCustomerReqVO reqVO) {
         return selectPoolCustomerPutCountByUser(reqVO);
     }

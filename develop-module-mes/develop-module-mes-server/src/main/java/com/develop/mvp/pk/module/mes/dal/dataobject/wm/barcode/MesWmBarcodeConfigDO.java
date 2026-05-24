@@ -10,7 +10,7 @@ import com.develop.mvp.pk.module.mes.enums.DictTypeConstants;
 /**
  * MES 条码配置 DO
  *
- * @author 芋道源码
+ * @author David
  */
 @TableName("mes_wm_barcode_config")
 @KeySequence("mes_wm_barcode_config_seq")

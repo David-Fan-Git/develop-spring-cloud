@@ -8,7 +8,7 @@ import java.util.Objects;
 /**
  * 示例提现单的状态枚举
  *
- * @author jason
+ * @author David
  */
 @Getter
 @AllArgsConstructor

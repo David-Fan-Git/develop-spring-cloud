@@ -12,7 +12,7 @@ import java.util.List;
 /**
  * 首页 Banner Service 接口
  *
- * @author xia
+ * @author David
  */
 public interface BannerService {
 

@@ -11,7 +11,7 @@ import com.develop.mvp.pk.module.iot.gateway.serialize.IotMessageSerializer;
  *
  * 直接使用 JsonUtils 序列化/反序列化 {@link IotDeviceMessage}，不包装额外字段
  *
- * @author 芋道源码
+ * @author David
  */
 public class IotJsonSerializer implements IotMessageSerializer {
 

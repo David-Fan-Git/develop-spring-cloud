@@ -48,7 +48,7 @@ import static com.develop.mvp.pk.module.ai.enums.ErrorCodeConstants.*;
 /**
  * AI 写作 Service 实现类
  *
- * @author xiaoxin
+ * @author David
  */
 @Service
 @Slf4j

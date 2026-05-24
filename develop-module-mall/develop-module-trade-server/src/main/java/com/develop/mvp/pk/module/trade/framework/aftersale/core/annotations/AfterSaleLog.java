@@ -10,7 +10,7 @@ import java.lang.annotation.*;
  *
  * 写在方法上时，会自动记录售后日志
  *
- * @author 陈賝
+ * @author David
  * @since 2023/6/8 17:04
  * @see AfterSaleLogAspect
  */

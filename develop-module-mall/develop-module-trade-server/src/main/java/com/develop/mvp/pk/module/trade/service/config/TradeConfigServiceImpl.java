@@ -14,7 +14,7 @@ import java.util.List;
 /**
  * 交易中心配置 Service 实现类
  *
- * @author owen
+ * @author David
  */
 @Service
 @Validated

@@ -16,7 +16,7 @@ import static org.mockito.Mockito.*;
 /**
  * {@link IotTcpDataRuleAction} 的单元测试
  *
- * @author HUIHUI
+ * @author David
  */
 class IotTcpDataRuleActionTest {
 

@@ -10,7 +10,7 @@ import org.apache.ibatis.annotations.Mapper;
 /**
  * 会员等级记录 Mapper
  *
- * @author owen
+ * @author David
  */
 @Mapper
 public interface MemberLevelRecordMapper extends BaseMapperX<MemberLevelRecordDO> {

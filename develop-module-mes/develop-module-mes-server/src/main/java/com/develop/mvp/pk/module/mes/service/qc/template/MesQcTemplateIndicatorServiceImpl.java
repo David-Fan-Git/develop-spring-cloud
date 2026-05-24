@@ -19,7 +19,7 @@ import static com.develop.mvp.pk.module.mes.enums.ErrorCodeConstants.QC_TEMPLATE
 /**
  * MES 质检方案-检测指标项 Service 实现类
  *
- * @author 芋道源码
+ * @author David
  */
 @Service
 @Validated

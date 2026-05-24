@@ -6,7 +6,7 @@ import lombok.Getter;
 /**
  * AI 知识库文档切片策略枚举
  *
- * @author runzhen
+ * @author David
  */
 @AllArgsConstructor
 @Getter

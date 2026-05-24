@@ -10,7 +10,7 @@ import org.springframework.stereotype.Component;
 /**
  * 产品单位的 {@link IParseFunction} 实现类
  *
- * @author anhaohao
+ * @author David
  */
 @Component
 @Slf4j

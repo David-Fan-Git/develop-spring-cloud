@@ -12,7 +12,7 @@ import java.util.Collection;
 /**
  * MES 物料产品 Mapper
  *
- * @author 芋道源码
+ * @author David
  */
 @Mapper
 public interface MesMdItemMapper extends BaseMapperX<MesMdItemDO> {

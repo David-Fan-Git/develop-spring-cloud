@@ -5,7 +5,7 @@ import com.develop.mvp.pk.module.iot.core.biz.dto.IotDeviceRespDTO;
 /**
  * IoT 设备信息 Service 接口
  *
- * @author 芋道源码
+ * @author David
  */
 public interface IotDeviceService {
 

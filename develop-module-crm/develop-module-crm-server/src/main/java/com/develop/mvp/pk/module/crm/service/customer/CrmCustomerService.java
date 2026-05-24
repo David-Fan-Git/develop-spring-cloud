@@ -16,7 +16,7 @@ import static com.develop.mvp.pk.framework.common.util.collection.CollectionUtil
 /**
  * 客户 Service 接口
  *
- * @author Wanwan
+ * @author David
  */
 public interface CrmCustomerService {
 
@@ -73,7 +73,7 @@ public interface CrmCustomerService {
      *
      * @param ids 客户编号数组
      * @return 客户列表
-     * @author ljlleo
+     * @author David
      */
     List<CrmCustomerDO> getCustomerList(Collection<Long> ids);
 

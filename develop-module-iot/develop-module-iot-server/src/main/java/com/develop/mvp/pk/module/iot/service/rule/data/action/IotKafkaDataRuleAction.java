@@ -21,7 +21,7 @@ import java.util.concurrent.TimeUnit;
 /**
  * Kafka 的 {@link IotDataRuleAction} 实现类
  *
- * @author HUIHUI
+ * @author David
  */
 @ConditionalOnClass(name = "org.springframework.kafka.core.KafkaTemplate")
 @Component

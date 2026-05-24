@@ -9,7 +9,7 @@ import com.develop.mvp.pk.module.member.enums.point.MemberPointBizTypeEnum;
 /**
  * 用户积分记录 Service 接口
  *
- * @author QingX
+ * @author David
  */
 public interface MemberPointRecordService {
 

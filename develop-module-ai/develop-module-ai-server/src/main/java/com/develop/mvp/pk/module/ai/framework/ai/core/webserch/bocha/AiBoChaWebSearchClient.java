@@ -26,7 +26,7 @@ import static com.develop.mvp.pk.framework.common.util.collection.CollectionUtil
  *
  * @see <a href="https://open.bochaai.com/overview">博查 AI 开放平台</a>
  *
- * @author 芋道源码
+ * @author David
  */
 @Slf4j
 public class AiBoChaWebSearchClient implements AiWebSearchClient {

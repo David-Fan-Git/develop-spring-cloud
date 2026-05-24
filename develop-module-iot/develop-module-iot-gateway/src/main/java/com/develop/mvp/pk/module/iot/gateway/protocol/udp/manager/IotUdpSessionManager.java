@@ -20,7 +20,7 @@ import java.util.concurrent.TimeUnit;
  * 2. 自动清理超时会话（expireAfterAccess）
  * 3. 限制最大会话数（maximumSize）
  *
- * @author 芋道源码
+ * @author David
  */
 @Slf4j
 public class IotUdpSessionManager {

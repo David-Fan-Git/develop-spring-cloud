@@ -19,7 +19,7 @@ import static com.develop.mvp.pk.module.member.enums.ErrorCodeConstants.SIGN_IN_
 /**
  * 签到规则 Service 实现类
  *
- * @author QingX
+ * @author David
  */
 @Service
 @Validated

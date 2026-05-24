@@ -7,9 +7,9 @@ import com.develop.mvp.pk.framework.common.pojo.PageResult;
 import com.develop.mvp.pk.framework.common.util.object.BeanUtils;
 import com.develop.mvp.pk.module.pay.application.app.PayAppApplicationService;
 import com.develop.mvp.pk.module.pay.controller.admin.app.vo.*;
-import com.develop.mvp.pk.module.pay.dal.dataobject.channel.PayChannelDO;
+import com.develop.mvp.pk.module.pay.application.channel.PayChannelApplicationService;
 import com.develop.mvp.pk.module.pay.domain.app.PayApp;
-import com.develop.mvp.pk.module.pay.service.channel.PayChannelService;
+import com.develop.mvp.pk.module.pay.domain.channel.PayChannel;
 import com.develop.mvp.pk.framework.common.util.collection.CollectionUtils;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
@@ -38,13 +38,15 @@ public class PayAppController {
     @Resource
     private PayAppApplicationService appApplicationService;
     @Resource
-    private PayChannelService channelService;
+    private PayChannelApplicationService channelApplicationService;
 
     @PostMapping("/create")
     @Operation(summary = "创建支付应用信息")
     @PreAuthorize("@ss.hasPermission('pay:app:create')")
     public CommonResult<Long> createApp(@Valid @RequestBody PayAppCreateReqVO createReqVO) {
-        return success(appApplicationService.create(createReqVO.getName(), createReqVO.getAppKey()).id());
+        return success(appApplicationService.create(createReqVO.getName(), createReqVO.getAppKey(), createReqVO.getStatus(),
+                createReqVO.getRemark(), createReqVO.getOrderNotifyUrl(), createReqVO.getRefundNotifyUrl(),
+                createReqVO.getTransferNotifyUrl()).id());
     }
 
     @PutMapping("/update")
@@ -52,7 +54,7 @@ public class PayAppController {
     @PreAuthorize("@ss.hasPermission('pay:app:update')")
     public CommonResult<Boolean> updateApp(@Valid @RequestBody PayAppUpdateReqVO updateReqVO) {
         appApplicationService.update(updateReqVO.getId(), updateReqVO.getName(), updateReqVO.getAppKey(),
-                updateReqVO.getRemark(), updateReqVO.getOrderNotifyUrl(),
+                updateReqVO.getStatus(), updateReqVO.getRemark(), updateReqVO.getOrderNotifyUrl(),
                 updateReqVO.getRefundNotifyUrl(), updateReqVO.getTransferNotifyUrl());
         return success(true);
     }
@@ -96,13 +98,13 @@ public class PayAppController {
         }
 
         // 得到所有的应用编号，查出所有的渠道，并移除未启用的渠道
-        List<PayChannelDO> channels = channelService.getChannelListByAppIds(
+        List<PayChannel> channels = channelApplicationService.getListByAppIds(
                 convertList(pageResult.getList(), PayApp::getId));
-        channels.removeIf(channel -> !CommonStatusEnum.ENABLE.getStatus().equals(channel.getStatus()));
+        channels.removeIf(channel -> !CommonStatusEnum.ENABLE.getStatus().equals(channel.status()));
 
         // 拼接后返回
         PageResult<PayAppPageItemRespVO> voResult = BeanUtils.toBean(pageResult, PayAppPageItemRespVO.class);
-        Map<Long, Set<String>> appIdChannelMap = CollectionUtils.convertMultiMap2(channels, PayChannelDO::getAppId, PayChannelDO::getCode);
+        Map<Long, Set<String>> appIdChannelMap = CollectionUtils.convertMultiMap2(channels, PayChannel::getAppId, PayChannel::getCode);
         voResult.getList().forEach(app -> app.setChannelCodes(appIdChannelMap.get(app.getId())));
         return success(voResult);
     }

@@ -9,7 +9,7 @@ import jakarta.validation.Valid;
 /**
  * IoT OTA 升级任务 Service 接口
  *
- * @author Shelly Chan
+ * @author David
  */
 public interface IotOtaTaskService {
 

@@ -9,7 +9,7 @@ import java.util.Objects;
 /**
  * 会员经验 - 业务类型
  *
- * @author owen
+ * @author David
  */
 @Getter
 @AllArgsConstructor

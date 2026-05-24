@@ -9,7 +9,7 @@ import java.util.Arrays;
 /**
  * IoT 设备状态枚举
  *
- * @author haohao
+ * @author David
  */
 @RequiredArgsConstructor
 @Getter

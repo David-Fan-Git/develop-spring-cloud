@@ -22,7 +22,7 @@ import static com.develop.mvp.pk.framework.common.util.collection.CollectionUtil
  *
  * 该类包含了匹配器实现中常用的工具方法，如条件评估、参数校验、日志记录等
  *
- * @author HUIHUI
+ * @author David
  */
 @Slf4j
 public final class IotSceneRuleMatcherHelper {

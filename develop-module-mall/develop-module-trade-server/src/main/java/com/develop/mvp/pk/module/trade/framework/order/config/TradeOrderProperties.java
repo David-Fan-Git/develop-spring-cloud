@@ -12,7 +12,7 @@ import java.time.Duration;
 /**
  * 交易订单的配置项
  *
- * @author LeeYan9
+ * @author David
  * @since 2022-09-15
  */
 @ConfigurationProperties(prefix = "develop.trade.order")

@@ -11,7 +11,7 @@ import lombok.EqualsAndHashCode;
  *
  * 数据类型，取值为 int、float 或 double
  *
- * @author HUIHUI
+ * @author David
  */
 @Data
 @EqualsAndHashCode(callSuper = true)

@@ -12,7 +12,7 @@ import java.util.List;
 /**
  * MES 轮班方式枚举
  *
- * @author 芋道源码
+ * @author David
  */
 @Getter
 @AllArgsConstructor

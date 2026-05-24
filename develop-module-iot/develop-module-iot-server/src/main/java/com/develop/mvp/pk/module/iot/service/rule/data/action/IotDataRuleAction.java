@@ -6,7 +6,7 @@ import com.develop.mvp.pk.module.iot.dal.dataobject.rule.IotDataSinkDO;
 /**
  * IoT 数据流转目的的执行器 action 接口
  *
- * @author HUIHUI
+ * @author David
  */
 public interface IotDataRuleAction {
 

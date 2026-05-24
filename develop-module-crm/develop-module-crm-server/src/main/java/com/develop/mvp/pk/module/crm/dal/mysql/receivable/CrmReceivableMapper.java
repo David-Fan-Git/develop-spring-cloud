@@ -26,7 +26,7 @@ import static com.develop.mvp.pk.framework.common.util.collection.CollectionUtil
 /**
  * 回款 Mapper
  *
- * @author 赤焰
+ * @author David
  */
 @Mapper
 public interface CrmReceivableMapper extends BaseMapperX<CrmReceivableDO> {

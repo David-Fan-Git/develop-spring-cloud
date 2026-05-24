@@ -9,7 +9,7 @@ public final class MpAccountFactory {
     public static MpAccount create(String name, String account, String appId, String appSecret,
                                     String token, String aesKey, String qrCodeUrl, String remark) {
         return new MpAccount(
-                null,
+                (MpAccountId) null,
                 name,
                 account,
                 appId,

@@ -17,7 +17,7 @@ import java.nio.charset.StandardCharsets;
 /**
  * MQTT 的 {@link IotDataRuleAction} 实现类
  *
- * @author HUIHUI
+ * @author David
  */
 @ConditionalOnClass(name = "org.eclipse.paho.client.mqttv3.MqttClient")
 @Component

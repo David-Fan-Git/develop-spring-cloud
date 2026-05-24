@@ -1,33 +1,17 @@
-# DDD Skill: AggregateRoot_Module_Skill
+# DDD Skill: AggregateRoot_Mes_Skill
 
-## 1. 技能名称
-`AggregateRoot_Module_Skill` — 模块聚合根的领域建模与重构技能
+## Status
 
-## 2. 适用场景
-业务模块管理
+此文件是 MES 模块 DDD skill 的占位入口，不是生产级重构指南。
 
-## 3. DDD 构造块
+旧内容与 ERP、IOT、MP、Report 的占位 skill 完全重复，已合并到统一草稿：`AggregateRoot_Module_Draft_Skill.md`。
 
-### 3.1 聚合根
-- 每个业务实体对应一个聚合根，封装业务规则和生命周期
+## How To Use
 
-### 3.2 值对象
-- 不可变类(final class, final字段, 无setter)，构造方法自校验
+1. 先阅读 `DDD_Skill_Production_Readiness_Standard.md`。
+2. 再阅读 `AggregateRoot_Module_Draft_Skill.md` 了解通用草稿约束。
+3. 在修改 MES 聚合前，必须基于当前 MES 代码事实源升级本文件，补齐 Controller、VO/DTO、DO、Mapper、Service、Convert、ErrorCode、事务边界、外部契约和验证命令。
 
-### 3.3 仓储接口
-- 每个聚合根对应一个Repository接口，定义在domain层，无infrastructure imports
+## Red Flag
 
-### 3.4 领域服务
-- 跨聚合操作通过领域服务接口定义
-
-## 4. 职责边界
-- **聚合负责**: 业务规则、状态流转、数据校验
-- **严禁外泄**: 直接操作Mapper、外部API调用
-
-## 5. 验收标准
-- AC01: 聚合根无MyBatis/Spring注解
-- AC02: 值对象不可变(final class, final字段, 无setter)
-- AC03: 仓储接口在领域层
-- AC04: 仓储实现在infrastructure层
-- AC05: 编译通过
-- AC06: Controller使用ApplicationService
+如果本文件仍未升级为 MES 专属生产级 skill，禁止按它直接执行 MES DDD 重构。

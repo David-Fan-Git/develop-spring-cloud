@@ -8,7 +8,7 @@ import org.apache.ibatis.annotations.Mapper;
 /**
  * 合同配置 Mapper
  *
- * @author Wanwan
+ * @author David
  */
 @Mapper
 public interface CrmContractConfigMapper extends BaseMapperX<CrmContractConfigDO> {

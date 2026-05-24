@@ -23,7 +23,7 @@ import lombok.extern.slf4j.Slf4j;
  *   <li>自定义字符串</li>
  * </ul>
  *
- * @author 芋道源码
+ * @author David
  */
 @Slf4j
 public class IotTcpDelimiterFrameCodec implements IotTcpFrameCodec {

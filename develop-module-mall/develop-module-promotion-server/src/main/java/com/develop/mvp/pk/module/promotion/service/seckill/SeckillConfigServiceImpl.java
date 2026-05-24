@@ -28,7 +28,7 @@ import static com.develop.mvp.pk.module.promotion.enums.ErrorCodeConstants.*;
 /**
  * 秒杀时段 Service 实现类
  *
- * @author halfninety
+ * @author David
  */
 @Service
 @Validated

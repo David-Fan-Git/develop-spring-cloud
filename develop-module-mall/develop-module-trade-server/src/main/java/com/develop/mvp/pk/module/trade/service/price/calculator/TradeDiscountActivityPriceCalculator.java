@@ -31,7 +31,7 @@ import static com.develop.mvp.pk.module.trade.service.price.calculator.TradePric
  *
  * 由于“会员折扣”和“限时折扣”是冲突，需要选择优惠金额多的，所以也放在这里计算
  *
- * @author 芋道源码
+ * @author David
  */
 @Component
 @Order(TradePriceCalculator.ORDER_DISCOUNT_ACTIVITY)

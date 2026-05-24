@@ -5,7 +5,7 @@ import java.time.LocalDateTime;
 /**
  * API 访问日志的统计 Service 接口
  *
- * @author owen
+ * @author David
  */
 public interface ApiAccessLogStatisticsService {
 

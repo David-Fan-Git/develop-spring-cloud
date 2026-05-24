@@ -11,7 +11,7 @@ import org.springframework.stereotype.Component;
 /**
  * 管理员名字的 {@link IParseFunction} 实现类
  *
- * @author HUIHUI
+ * @author David
  */
 @Slf4j
 @Component

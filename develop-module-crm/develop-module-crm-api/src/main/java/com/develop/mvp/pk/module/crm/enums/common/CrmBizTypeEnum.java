@@ -11,7 +11,7 @@ import java.util.Arrays;
 /**
  * CRM 业务类型枚举
  *
- * @author HUIHUI
+ * @author David
  */
 @RequiredArgsConstructor
 @Getter

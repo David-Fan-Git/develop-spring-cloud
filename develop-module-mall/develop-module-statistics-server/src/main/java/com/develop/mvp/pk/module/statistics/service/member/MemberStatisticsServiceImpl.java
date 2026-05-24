@@ -31,7 +31,7 @@ import static com.develop.mvp.pk.framework.common.util.collection.CollectionUtil
 /**
  * 会员信息的统计 Service 实现类
  *
- * @author owen
+ * @author David
  */
 @Service
 @Validated

@@ -12,7 +12,7 @@ import java.util.List;
 /**
  * MES 质检指标 Mapper
  *
- * @author 芋道源码
+ * @author David
  */
 @Mapper
 public interface MesQcIndicatorMapper extends BaseMapperX<MesQcIndicatorDO> {

@@ -10,7 +10,7 @@ import lombok.*;
 /**
  * 签到规则 DO
  *
- * @author QingX
+ * @author David
  */
 @TableName("member_sign_in_config")
 @KeySequence("member_sign_in_config_seq") // 用于 Oracle、PostgreSQL、Kingbase、DB2、H2 数据库的主键自增。如果是 MySQL 等数据库，可不写。

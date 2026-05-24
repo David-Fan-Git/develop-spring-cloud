@@ -10,7 +10,7 @@ import java.util.Arrays;
 /**
  * CRM 商品状态
  *
- * @author ZanGe丶
+ * @author David
  * @since 2023-11-30 21:53
  */
 @Getter

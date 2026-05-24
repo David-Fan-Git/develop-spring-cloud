@@ -5,7 +5,7 @@ import lombok.Data;
 /**
  * 订单统计 Response BO
  *
- * @author owen
+ * @author David
  */
 @Data
 public class TradeOrderSummaryRespBO {

@@ -32,7 +32,7 @@ import static com.develop.mvp.pk.module.iot.enums.ErrorCodeConstants.*;
 /**
  * IoT OTA 升级任务 Service 实现类
  *
- * @author Shelly Chan
+ * @author David
  */
 @Service
 @Validated

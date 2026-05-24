@@ -12,7 +12,7 @@ import java.util.List;
 /**
  * IoT 物模型中的服务
  *
- * @author HUIHUI
+ * @author David
  */
 @Data
 public class ThingModelService {

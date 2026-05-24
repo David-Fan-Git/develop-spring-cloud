@@ -54,6 +54,10 @@ public final class Tenant {
 
     // ── 业务方法 ──
 
+    void recordCreated() {
+        events.add(new TenantCreatedEvent(this.id.value(), this.name.value()));
+    }
+
     /** 规则 R08：禁用租户 */
     public void disable() {
         if (this.status.isDisabled()) return;

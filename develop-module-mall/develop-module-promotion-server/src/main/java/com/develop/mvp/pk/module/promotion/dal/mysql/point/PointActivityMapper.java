@@ -12,7 +12,7 @@ import org.apache.ibatis.annotations.Mapper;
 /**
  * 积分商城活动 Mapper
  *
- * @author HUIHUI
+ * @author David
  */
 @Mapper
 public interface PointActivityMapper extends BaseMapperX<PointActivityDO> {

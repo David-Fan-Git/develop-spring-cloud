@@ -21,7 +21,7 @@ import java.util.Map;
 /**
  * 拼团记录 Mapper
  *
- * @author HUIHUI
+ * @author David
  */
 @Mapper
 public interface CombinationRecordMapper extends BaseMapperX<CombinationRecordDO> {

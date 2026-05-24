@@ -19,7 +19,7 @@ import java.util.Properties;
 /**
  * 图片文字验证码
  *
- * @author Tsui
+ * @author David
  * @since 2025/7/23 20:44
  */
 public class PictureWordCaptchaServiceImpl extends AbstractCaptchaService {

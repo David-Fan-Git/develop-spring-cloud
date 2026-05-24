@@ -30,7 +30,7 @@ import java.util.stream.Collectors;
  * 参考 <a href="https://github.com/xiaoymin/knife4j/issues/913">Spring Boot 3.4 以上版本 /v3/api-docs 解决接口报错，依赖修复</a>
  *
  * @since 4.1.0
- * @author <a href="xiaoymin@foxmail.com">xiaoymin@foxmail.com</a>
+ * @author David
  * 2022/12/11 22:40
  */
 @Primary

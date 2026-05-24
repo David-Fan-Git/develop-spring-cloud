@@ -11,7 +11,7 @@ import org.mapstruct.factory.Mappers;
 /**
  * 会员配置 Convert
  *
- * @author QingX
+ * @author David
  */
 @Mapper
 public interface MemberConfigConvert {

@@ -15,7 +15,7 @@ import java.util.List;
  *
  * dataSpecs 和 dataSpecsList 之中必须传入且只能传入一个
  *
- * @author HUIHUI
+ * @author David
  */
 @Data
 public class ThingModelProperty {

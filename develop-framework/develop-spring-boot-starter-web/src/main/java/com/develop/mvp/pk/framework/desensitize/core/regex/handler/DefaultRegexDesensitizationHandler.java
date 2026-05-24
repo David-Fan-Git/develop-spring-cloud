@@ -5,7 +5,7 @@ import com.develop.mvp.pk.framework.desensitize.core.regex.annotation.RegexDesen
 /**
  * {@link RegexDesensitize} 的正则脱敏处理器
  *
- * @author gaibu
+ * @author David
  */
 public class DefaultRegexDesensitizationHandler extends AbstractRegexDesensitizationHandler<RegexDesensitize> {
 

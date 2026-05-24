@@ -22,7 +22,7 @@ import static com.develop.mvp.pk.module.ai.enums.ErrorCodeConstants.KNOWLEDGE_NO
 /**
  * AI 知识库-基础信息 Service 实现类
  *
- * @author xiaoxin
+ * @author David
  */
 @Service
 @Slf4j

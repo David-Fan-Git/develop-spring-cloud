@@ -24,7 +24,7 @@ import java.util.function.Predicate;
 /**
  * Midjourney API
  *
- * @author fansili
+ * @author David
  * @since 1.0
  */
 @Slf4j

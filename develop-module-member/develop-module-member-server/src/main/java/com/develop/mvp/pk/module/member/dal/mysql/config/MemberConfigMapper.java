@@ -7,7 +7,7 @@ import org.apache.ibatis.annotations.Mapper;
 /**
  * 积分设置 Mapper
  *
- * @author QingX
+ * @author David
  */
 @Mapper
 public interface MemberConfigMapper extends BaseMapperX<MemberConfigDO> {

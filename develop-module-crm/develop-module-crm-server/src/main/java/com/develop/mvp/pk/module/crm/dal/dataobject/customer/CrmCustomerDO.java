@@ -12,7 +12,7 @@ import java.time.LocalDateTime;
 /**
  * CRM 客户 DO
  *
- * @author Wanwan
+ * @author David
  */
 @TableName(value = "crm_customer")
 @KeySequence("crm_customer_seq") // 用于 Oracle、PostgreSQL、Kingbase、DB2、H2 数据库的主键自增。如果是 MySQL 等数据库，可不写。

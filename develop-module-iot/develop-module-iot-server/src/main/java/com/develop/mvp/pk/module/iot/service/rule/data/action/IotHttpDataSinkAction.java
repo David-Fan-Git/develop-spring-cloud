@@ -23,7 +23,7 @@ import static com.develop.mvp.pk.framework.web.core.util.WebFrameworkUtils.HEADE
 /**
  * HTTP 的 {@link IotDataRuleAction} 实现类
  *
- * @author HUIHUI
+ * @author David
  */
 @Component
 @Slf4j

@@ -15,7 +15,7 @@ import static com.develop.mvp.pk.module.mp.enums.ErrorCodeConstants.USER_NOT_EXI
 /**
  * 公众号粉丝 Service 接口
  *
- * @author 芋道源码
+ * @author David
  */
 public interface MpUserService {
 

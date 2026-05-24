@@ -10,7 +10,7 @@ import org.apache.ibatis.annotations.Mapper;
 /**
  * MES 上下工记录流水 Mapper
  *
- * @author 芋道源码
+ * @author David
  */
 @Mapper
 public interface MesProWorkRecordLogMapper extends BaseMapperX<MesProWorkRecordLogDO> {

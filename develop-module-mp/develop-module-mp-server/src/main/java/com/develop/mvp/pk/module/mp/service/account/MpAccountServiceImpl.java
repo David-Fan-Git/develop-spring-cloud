@@ -40,7 +40,7 @@ import static com.develop.mvp.pk.module.system.enums.ErrorCodeConstants.USER_USE
 /**
  * 公众号账号 Service 实现类
  *
- * @author fengdan
+ * @author David
  */
 @Slf4j
 @Service

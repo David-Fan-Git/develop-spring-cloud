@@ -14,7 +14,7 @@ import static com.develop.mvp.pk.framework.common.pojo.CommonResult.success;
 /**
  * 用户配置 API 实现类
  *
- * @author owen
+ * @author David
  */
 @RestController // 提供 RESTful API 接口，给 Feign 调用
 @Validated

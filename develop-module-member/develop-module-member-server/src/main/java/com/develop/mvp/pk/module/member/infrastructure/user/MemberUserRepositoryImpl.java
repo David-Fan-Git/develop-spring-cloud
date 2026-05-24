@@ -98,7 +98,7 @@ public class MemberUserRepositoryImpl implements MemberUserRepository {
                 .password(u.password() != null ? u.password().value() : null)
                 .status(u.status() != null ? u.status().code() : null)
                 .nickname(u.nickname() != null ? u.nickname().value() : null)
-                .avatar(u.avatar()).email(u.email()).tenantId(u.tenantId())
+                .avatar(u.avatar())
                 .loginIp(u.loginIp()).loginDate(u.loginDate())
                 .registerIp(u.registerIp()).registerTerminal(u.registerTerminal())
                 .levelId(u.levelId()).experience(u.experience()).point(u.point())
@@ -113,7 +113,7 @@ public class MemberUserRepositoryImpl implements MemberUserRepository {
                 d.getMobile() != null ? new Mobile(d.getMobile()) : null,
                 d.getPassword() != null ? new EncodedPassword(d.getPassword()) : null,
                 d.getStatus() != null ? new UserStatus(d.getStatus()) : UserStatus.enabled(),
-                d.getEmail(), d.getAvatar(), d.getTenantId(),
+                null, d.getAvatar(), d.getTenantId(),
                 d.getLoginIp(), d.getLoginDate(), d.getRegisterIp(), d.getRegisterTerminal(),
                 d.getLevelId(), d.getExperience(), d.getPoint(), d.getGroupId(), d.getTagIds());
     }

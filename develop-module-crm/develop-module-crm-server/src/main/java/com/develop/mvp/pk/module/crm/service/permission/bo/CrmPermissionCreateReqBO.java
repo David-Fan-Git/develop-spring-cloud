@@ -9,7 +9,7 @@ import lombok.Data;
 /**
  * crm 数据权限 Create Req BO
  *
- * @author HUIHUI
+ * @author David
  */
 @Data
 public class CrmPermissionCreateReqBO {

@@ -17,7 +17,7 @@ import lombok.extern.slf4j.Slf4j;
  *
  * 文档：<a href="https://pay.weixin.qq.com/wiki/doc/apiv3/apis/chapter3_3_1.shtml">H5下单API</>
  *
- * @author YYQ
+ * @author David
  */
 @Slf4j
 public class WxWapPayClient extends AbstractWxPayClient {

@@ -11,6 +11,7 @@ public final class PayChannel {
     private Double feeRate;
     private String remark;
     private Object config;
+    private Long tenantId;
     public PayChannel(Long id, String code, Long appId) {
         this.id = id;
         this.code = Objects.requireNonNull(code);
@@ -24,10 +25,12 @@ public final class PayChannel {
     public Double feeRate() { return feeRate; }
     public String remark() { return remark; }
     public Object config() { return config; }
+    public Long tenantId() { return tenantId; }
     public PayChannel status(Integer v) { status = v; return this; }
     public PayChannel feeRate(Double v) { feeRate = v; return this; }
     public PayChannel remark(String v) { remark = v; return this; }
     public PayChannel config(Object v) { config = v; return this; }
+    public PayChannel tenantId(Long v) { tenantId = v; return this; }
     public boolean isEnabled() { return Objects.equals(status, 0); }
     public void enable() { status = 0; }
     public void disable() { status = 1; }

@@ -9,7 +9,7 @@ import lombok.*;
 /**
  * 砍价助力 DO
  *
- * @author HUIHUI
+ * @author David
  */
 @TableName("promotion_bargain_help")
 @KeySequence("promotion_bargain_help_seq") // 用于 Oracle、PostgreSQL、Kingbase、DB2、H2 数据库的主键自增。如果是 MySQL 等数据库，可不写。

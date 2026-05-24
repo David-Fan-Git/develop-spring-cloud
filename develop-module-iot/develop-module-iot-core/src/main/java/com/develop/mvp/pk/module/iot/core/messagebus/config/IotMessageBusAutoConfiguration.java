@@ -31,7 +31,7 @@ import static com.develop.mvp.pk.framework.common.util.collection.CollectionUtil
 /**
  * IoT 消息总线自动配置
  *
- * @author 芋道源码
+ * @author David
  */
 @AutoConfiguration
 @EnableConfigurationProperties(IotMessageBusProperties.class)

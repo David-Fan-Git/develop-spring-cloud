@@ -16,7 +16,7 @@ import java.util.concurrent.ConcurrentHashMap;
 /**
  * 快递客户端工厂实现类
  *
- * @author jason
+ * @author David
  */
 @AllArgsConstructor
 public class ExpressClientFactoryImpl implements ExpressClientFactory {

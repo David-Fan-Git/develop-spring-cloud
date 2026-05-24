@@ -16,7 +16,7 @@ import static com.develop.mvp.pk.framework.common.util.collection.CollectionUtil
 /**
  * AI 聊天角色 Service 接口
  *
- * @author fansili
+ * @author David
  */
 public interface AiChatRoleService {
 

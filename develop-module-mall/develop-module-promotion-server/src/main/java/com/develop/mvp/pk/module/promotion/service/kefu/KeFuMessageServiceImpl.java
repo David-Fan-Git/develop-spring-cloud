@@ -36,7 +36,7 @@ import static com.develop.mvp.pk.module.promotion.enums.WebSocketMessageTypeCons
 /**
  * 客服消息 Service 实现类
  *
- * @author HUIHUI
+ * @author David
  */
 @Service
 @Validated

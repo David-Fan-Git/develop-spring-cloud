@@ -52,7 +52,7 @@ import static com.develop.mvp.pk.module.crm.enums.LogRecordConstants.*;
 /**
  * 商机 Service 实现类
  *
- * @author ljlleo
+ * @author David
  */
 @Service
 @Validated
@@ -275,7 +275,7 @@ public class CrmBusinessServiceImpl implements CrmBusinessService {
      * 删除校验合同是关联合同
      *
      * @param businessId 商机id
-     * @author lzxhqs
+     * @author David
      */
     private void validateContractExists(Long businessId) {
         if (contractService.getContractCountByBusinessId(businessId) > 0) {

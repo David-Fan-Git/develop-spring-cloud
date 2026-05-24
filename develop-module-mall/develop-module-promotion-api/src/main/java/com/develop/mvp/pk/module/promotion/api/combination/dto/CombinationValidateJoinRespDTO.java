@@ -5,7 +5,7 @@ import lombok.Data;
 /**
  * 校验参与拼团 Response DTO
  *
- * @author HUIHUI
+ * @author David
  */
 @Data
 public class CombinationValidateJoinRespDTO {

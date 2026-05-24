@@ -17,7 +17,7 @@ import com.develop.mvp.pk.module.mes.enums.DictTypeConstants;
 /**
  * MES 安灯呼叫记录 DO
  *
- * @author 芋道源码
+ * @author David
  */
 @TableName("mes_pro_andon_record")
 @KeySequence("mes_pro_andon_record_seq")

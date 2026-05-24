@@ -19,7 +19,7 @@ import static com.develop.mvp.pk.framework.common.exception.enums.GlobalErrorCod
  *
  * 补充：Spring Security 通过 {@link ExceptionTranslationFilter#sendStartAuthentication(HttpServletRequest, HttpServletResponse, FilterChain, AuthenticationException)} 方法，调用当前类
  *
- * @author ruoyi
+ * @author David
  */
 @Slf4j
 @SuppressWarnings("JavadocReference") // 忽略文档引用报错

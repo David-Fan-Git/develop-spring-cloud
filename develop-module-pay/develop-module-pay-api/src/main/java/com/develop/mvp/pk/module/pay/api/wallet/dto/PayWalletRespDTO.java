@@ -6,7 +6,7 @@ import lombok.Data;
 /**
  * 钱包 Response DTO
  *
- * @author jason
+ * @author David
  */
 @Data
 public class PayWalletRespDTO {

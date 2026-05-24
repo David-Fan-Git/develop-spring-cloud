@@ -26,7 +26,7 @@ import static com.develop.mvp.pk.module.promotion.enums.ErrorCodeConstants.*;
 /**
  * 优惠劵模板 Service 实现类
  *
- * @author 芋道源码
+ * @author David
  */
 @Service
 @Validated

@@ -10,7 +10,7 @@ import jakarta.validation.Valid;
 /**
  * 设备保养记录 Service 接口
  *
- * @author 芋道源码
+ * @author David
  */
 public interface MesDvMaintenRecordService {
 

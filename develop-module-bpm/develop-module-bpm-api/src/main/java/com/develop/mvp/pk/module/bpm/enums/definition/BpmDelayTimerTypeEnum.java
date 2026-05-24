@@ -9,7 +9,7 @@ import java.util.Arrays;
 /**
  * BPM 延迟器类型枚举
  *
- * @author Lesan
+ * @author David
  */
 @Getter
 @AllArgsConstructor

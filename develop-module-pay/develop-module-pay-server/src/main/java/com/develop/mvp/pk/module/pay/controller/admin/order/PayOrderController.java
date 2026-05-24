@@ -19,7 +19,6 @@ import com.develop.mvp.pk.module.pay.domain.wallet.PayWallet;
 import com.develop.mvp.pk.module.pay.enums.PayChannelEnum;
 import com.develop.mvp.pk.module.pay.enums.order.PayOrderStatusEnum;
 import com.develop.mvp.pk.module.pay.framework.pay.core.client.impl.wallet.WalletPayClient;
-import com.develop.mvp.pk.module.pay.service.app.PayAppService;
 import com.develop.mvp.pk.module.pay.service.order.PayOrderService;
 import com.google.common.collect.Maps;
 import io.swagger.v3.oas.annotations.Operation;
@@ -57,8 +56,6 @@ public class PayOrderController {
     private PayOrderService orderService;
     @Resource
     private PayAppApplicationService appApplicationService;
-    @Resource
-    private PayAppService appService;
     @Resource
     private PayWalletApplicationService walletApplicationService;
 
@@ -126,7 +123,7 @@ public class PayOrderController {
         }
 
         return success(PayOrderConvert.INSTANCE.convertPage(pageResult,
-                appService.getAppMap(convertList(pageResult.getList(), PayOrderDO::getAppId))));
+                getAppNameMap(convertList(pageResult.getList(), PayOrderDO::getAppId))));
     }
 
     @GetMapping("/export-excel")
@@ -143,8 +140,13 @@ public class PayOrderController {
         }
 
         List<PayOrderExcelVO> excelList = PayOrderConvert.INSTANCE.convertList(list,
-                appService.getAppMap(convertList(list, PayOrderDO::getAppId)));
+                getAppNameMap(convertList(list, PayOrderDO::getAppId)));
         ExcelUtils.write(response, "支付订单.xls", "数据", PayOrderExcelVO.class, excelList);
+    }
+
+    private java.util.Map<Long, String> getAppNameMap(List<Long> appIds) {
+        return appApplicationService.getList(appIds).stream()
+                .collect(java.util.stream.Collectors.toMap(PayApp::getId, PayApp::getName));
     }
 
 }

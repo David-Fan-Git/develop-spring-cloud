@@ -20,7 +20,7 @@ import static com.develop.mvp.pk.framework.common.util.collection.CollectionUtil
 /**
  * 优惠劵 Mapper
  *
- * @author 芋道源码
+ * @author David
  */
 @Mapper
 public interface CouponMapper extends BaseMapperX<CouponDO> {

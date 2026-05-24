@@ -32,6 +32,31 @@ public class UserRepositoryImpl implements UserRepository {
 
     @Override
     @Transactional
+    public User create(String username, EncodedPassword encodedPassword, Long tenantId, Long deptId,
+                       String email, String mobile, String nickname, String avatar, Integer sex,
+                       String remark, Set<Long> postIds) {
+        AdminUserDO userDO = new AdminUserDO();
+        userDO.setUsername(username);
+        userDO.setPassword(encodedPassword.toStoreValue());
+        userDO.setTenantId(tenantId);
+        userDO.setDeptId(deptId);
+        userDO.setEmail(email);
+        userDO.setMobile(mobile);
+        userDO.setNickname(nickname);
+        userDO.setAvatar(avatar);
+        userDO.setSex(sex);
+        userDO.setRemark(remark);
+        userDO.setStatus(UserStatus.ENABLED.code());
+        userDO.setPostIds(postIds != null ? new HashSet<>(postIds) : new HashSet<>());
+        userMapper.insert(userDO);
+        User user = UserFactory.create(userDO.getId(), username, encodedPassword, tenantId, deptId,
+                email, mobile, nickname, avatar, sex, remark, postIds);
+        syncUserPosts(user);
+        return user;
+    }
+
+    @Override
+    @Transactional
     public void save(User user) {
         AdminUserDO userDO = toDataObject(user);
         if (userMapper.selectById(user.id().value()) == null) {

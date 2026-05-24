@@ -9,7 +9,7 @@ import java.util.Arrays;
 /**
  * IoT 产品功能（物模型）类型枚举类
  *
- * @author ahh
+ * @author David
  */
 @AllArgsConstructor
 @Getter

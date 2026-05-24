@@ -8,7 +8,7 @@ import java.time.LocalDateTime;
 /**
  * 快递查询的轨迹 Resp DTO
  *
- * @author jason
+ * @author David
  */
 @Schema(description = "用户 App - 快递查询的轨迹 Response VO")
 @Data

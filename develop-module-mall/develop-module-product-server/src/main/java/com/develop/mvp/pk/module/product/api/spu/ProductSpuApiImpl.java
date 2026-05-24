@@ -18,7 +18,7 @@ import static com.develop.mvp.pk.framework.common.pojo.CommonResult.success;
 /**
  * 商品 SPU API 接口实现类
  *
- * @author LeeYan9
+ * @author David
  * @since 2022-09-06
  */
 @RestController // 提供 RESTful API 接口，给 Feign 调用

@@ -5,7 +5,7 @@ import com.develop.mvp.pk.framework.common.enums.RpcConstants;
 /**
  * API 相关的枚举
  *
- * @author 芋道源码
+ * @author David
  */
 public class ApiConstants {
 

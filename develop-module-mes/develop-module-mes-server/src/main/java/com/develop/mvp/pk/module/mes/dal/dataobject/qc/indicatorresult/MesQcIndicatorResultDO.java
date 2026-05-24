@@ -16,7 +16,7 @@ import com.develop.mvp.pk.module.mes.enums.DictTypeConstants;
 /**
  * MES 检验结果记录 DO
  *
- * @author 芋道源码
+ * @author David
  */
 @TableName("mes_qc_indicator_result")
 @KeySequence("mes_qc_indicator_result_seq")

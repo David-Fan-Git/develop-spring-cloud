@@ -17,7 +17,7 @@ import java.util.List;
 /**
  * 秒杀活动 DO
  *
- * @author halfninety
+ * @author David
  */
 @TableName(value = "promotion_seckill_activity", autoResultMap = true)
 @KeySequence("promotion_seckill_activity_seq") // 用于 Oracle、PostgreSQL、Kingbase、DB2、H2 数据库的主键自增。如果是 MySQL 等数据库，可不写。

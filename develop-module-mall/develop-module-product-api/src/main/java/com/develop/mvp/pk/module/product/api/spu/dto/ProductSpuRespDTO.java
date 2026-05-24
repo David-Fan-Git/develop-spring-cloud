@@ -10,7 +10,7 @@ import java.util.List;
 /**
  * 商品 SPU 信息 Response DTO
  *
- * @author LeeYan9
+ * @author David
  * @since 2022-08-26
  */
 @Data

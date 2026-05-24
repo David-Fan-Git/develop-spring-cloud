@@ -9,6 +9,7 @@ import com.develop.mvp.pk.module.pay.controller.app.wallet.vo.recharge.AppPayWal
 import com.develop.mvp.pk.module.pay.controller.app.wallet.vo.recharge.AppPayWalletRechargeRespVO;
 import com.develop.mvp.pk.module.pay.dal.dataobject.order.PayOrderDO;
 import com.develop.mvp.pk.module.pay.dal.dataobject.wallet.PayWalletRechargeDO;
+import com.develop.mvp.pk.module.pay.domain.wallet.PayWalletRecharge;
 import com.develop.mvp.pk.module.pay.enums.DictTypeConstants;
 import org.mapstruct.Mapper;
 import org.mapstruct.Mapping;
@@ -26,6 +27,21 @@ public interface PayWalletRechargeConvert {
     PayWalletRechargeDO convert(Long walletId, Integer payPrice, Integer bonusPrice, Long packageId);
 
     AppPayWalletRechargeCreateRespVO convert(PayWalletRechargeDO bean);
+
+    AppPayWalletRechargeCreateRespVO convert(PayWalletRecharge bean);
+
+    default PageResult<AppPayWalletRechargeRespVO> convertDomainPage(PageResult<PayWalletRecharge> pageResult,
+                                                                     List<PayOrderDO> payOrderList) {
+        PageResult<AppPayWalletRechargeRespVO> voPageResult = BeanUtils.toBean(pageResult, AppPayWalletRechargeRespVO.class);
+        Map<Long, PayOrderDO> payOrderMap = CollectionUtils.convertMap(payOrderList, PayOrderDO::getId);
+        voPageResult.getList().forEach(recharge -> {
+            recharge.setPayChannelName(DictFrameworkUtils.parseDictDataLabel(
+                    DictTypeConstants.CHANNEL_CODE, recharge.getPayChannelCode()));
+            MapUtils.findAndThen(payOrderMap, recharge.getPayOrderId(),
+                    order -> recharge.setPayOrderChannelOrderNo(order.getChannelOrderNo()));
+        });
+        return voPageResult;
+    }
 
     default PageResult<AppPayWalletRechargeRespVO> convertPage(PageResult<PayWalletRechargeDO> pageResult,
                                                                List<PayOrderDO> payOrderList) {

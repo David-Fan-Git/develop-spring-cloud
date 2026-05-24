@@ -9,7 +9,7 @@ import java.util.Arrays;
 /**
  * IoT 联网方式枚举类
  *
- * @author ahh
+ * @author David
  */
 @AllArgsConstructor
 @Getter

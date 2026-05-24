@@ -12,6 +12,7 @@ import com.develop.mvp.pk.module.trade.domain.aftersale.valueobject.AfterSaleId;
 import org.springframework.stereotype.Repository;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.Arrays;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -77,19 +78,25 @@ public class AfterSaleRepositoryImpl implements AfterSaleRepository {
 
     private AfterSaleDO toDataObject(AfterSale afterSale) {
         AfterSaleDO afterSaleDO = new AfterSaleDO();
-        afterSaleDO.setId(afterSale.id() != null ? afterSale.id().value() : null); afterSaleDO.setNo(afterSale.no());
-        afterSaleDO.setUserId(afterSale.userId()); afterSaleDO.setOrderId(afterSale.orderId());
+        afterSaleDO.setId(afterSale.id() != null ? afterSale.id().value() : null);
+        afterSaleDO.setNo(afterSale.no());
+        afterSaleDO.setUserId(afterSale.userId());
+        afterSaleDO.setOrderId(afterSale.orderId());
         afterSaleDO.setOrderItemId(afterSale.orderItemId());
-        afterSaleDO.setSpuId(afterSale.spuId()); afterSaleDO.setSkuId(afterSale.skuId());
-        afterSaleDO.setCount(afterSale.count()); afterSaleDO.setType(afterSale.type());
-        afterSaleDO.setReason(afterSale.reason()); afterSaleDO.setDescription(afterSale.description());
-        afterSaleDO.setProofPictures(afterSale.proofPictures());
-        afterSaleDO.setStatus(afterSale.status()); afterSaleDO.setRefundPrice(afterSale.refundPrice());
-        afterSaleDO.setRejectReason(afterSale.rejectReason());
-        afterSaleDO.setPayChannelCode(afterSale.payChannelCode());
+        afterSaleDO.setSpuId(afterSale.spuId());
+        afterSaleDO.setSkuId(afterSale.skuId());
+        afterSaleDO.setCount(afterSale.count());
+        afterSaleDO.setType(afterSale.type());
+        afterSaleDO.setApplyReason(afterSale.reason());
+        afterSaleDO.setApplyDescription(afterSale.description());
+        afterSaleDO.setApplyPicUrls(afterSale.proofPictures() != null ? Arrays.asList(afterSale.proofPictures()) : null);
+        afterSaleDO.setStatus(afterSale.status());
+        afterSaleDO.setRefundPrice(afterSale.refundPrice());
+        afterSaleDO.setAuditReason(afterSale.rejectReason());
         afterSaleDO.setPayRefundId(afterSale.payRefundId());
         afterSaleDO.setAuditTime(afterSale.auditTime());
-        afterSaleDO.setRefuseTime(afterSale.refuseTime());
+        afterSaleDO.setReceiveReason(afterSale.rejectReason());
+        afterSaleDO.setReceiveTime(afterSale.refuseTime());
         afterSaleDO.setRefundTime(afterSale.refundTime());
         return afterSaleDO;
     }
@@ -99,11 +106,11 @@ public class AfterSaleRepositoryImpl implements AfterSaleRepository {
                 afterSaleDO.getId(), afterSaleDO.getNo(), afterSaleDO.getUserId(),
                 afterSaleDO.getOrderId(), afterSaleDO.getOrderItemId(),
                 afterSaleDO.getSpuId(), afterSaleDO.getSkuId(),
-                afterSaleDO.getCount(), afterSaleDO.getType(), afterSaleDO.getReason(),
-                afterSaleDO.getDescription(), afterSaleDO.getProofPictures(),
+                afterSaleDO.getCount(), afterSaleDO.getType(), afterSaleDO.getApplyReason(),
+                afterSaleDO.getApplyDescription(), afterSaleDO.getApplyPicUrls() != null ? afterSaleDO.getApplyPicUrls().toArray(new String[0]) : null,
                 afterSaleDO.getStatus(), afterSaleDO.getRefundPrice(),
-                afterSaleDO.getRejectReason(), afterSaleDO.getPayChannelCode(),
+                afterSaleDO.getAuditReason(), null,
                 afterSaleDO.getPayRefundId(), afterSaleDO.getAuditTime(),
-                afterSaleDO.getRefuseTime(), afterSaleDO.getRefundTime());
+                afterSaleDO.getReceiveTime(), afterSaleDO.getRefundTime());
     }
 }

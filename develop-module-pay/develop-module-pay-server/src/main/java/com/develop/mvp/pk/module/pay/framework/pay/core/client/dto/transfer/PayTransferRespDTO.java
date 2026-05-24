@@ -8,7 +8,7 @@ import java.time.LocalDateTime;
 /**
  * 统一转账 Response DTO
  *
- * @author jason
+ * @author David
  */
 @Data
 public class PayTransferRespDTO {

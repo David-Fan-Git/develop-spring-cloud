@@ -14,7 +14,7 @@ import java.util.List;
 /**
  * 文章管理 Mapper
  *
- * @author HUIHUI
+ * @author David
  */
 @Mapper
 public interface ArticleMapper extends BaseMapperX<ArticleDO> {

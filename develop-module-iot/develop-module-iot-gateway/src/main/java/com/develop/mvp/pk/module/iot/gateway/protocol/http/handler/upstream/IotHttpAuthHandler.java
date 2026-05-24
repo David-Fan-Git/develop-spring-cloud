@@ -23,7 +23,7 @@ import static com.develop.mvp.pk.module.iot.gateway.enums.ErrorCodeConstants.DEV
  *
  * 参考 <a href="阿里云 IoT —— HTTPS 连接通信">https://help.aliyun.com/zh/iot/user-guide/establish-connections-over-https</a>
  *
- * @author 芋道源码
+ * @author David
  */
 public class IotHttpAuthHandler extends IotHttpAbstractHandler {
 

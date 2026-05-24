@@ -12,6 +12,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.util.Collection;
 import java.util.Collections;
+import java.util.Comparator;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -52,7 +53,10 @@ public class MemberLevelRepositoryImpl implements MemberLevelRepository {
 
     @Override
     public List<MemberLevel> findAll() {
-        return mapper.selectList().stream().map(this::fromDO).collect(Collectors.toList());
+        return mapper.selectList().stream()
+                .map(this::fromDO)
+                .sorted(Comparator.comparing(MemberLevel::level))
+                .collect(Collectors.toList());
     }
 
     // ── DO ↔ Domain 映射 ──

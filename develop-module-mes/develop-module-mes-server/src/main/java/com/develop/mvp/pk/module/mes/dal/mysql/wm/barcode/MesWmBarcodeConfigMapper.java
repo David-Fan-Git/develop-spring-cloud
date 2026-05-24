@@ -10,7 +10,7 @@ import org.apache.ibatis.annotations.Mapper;
 /**
  * MES 条码配置 Mapper
  *
- * @author 芋道源码
+ * @author David
  */
 @Mapper
 public interface MesWmBarcodeConfigMapper extends BaseMapperX<MesWmBarcodeConfigDO> {

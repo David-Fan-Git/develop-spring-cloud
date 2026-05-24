@@ -11,7 +11,7 @@ import jakarta.annotation.Resource;
 /**
  * 物理删除 N 天前的错误日志的 Job
  *
- * @author j-sentinel
+ * @author David
  */
 @Slf4j
 @Component

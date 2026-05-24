@@ -12,7 +12,7 @@ import java.time.LocalDateTime;
 /**
  * 支付序号的 Redis DAO
  *
- * @author 芋道源码
+ * @author David
  */
 @Repository
 public class PayNoRedisDAO {

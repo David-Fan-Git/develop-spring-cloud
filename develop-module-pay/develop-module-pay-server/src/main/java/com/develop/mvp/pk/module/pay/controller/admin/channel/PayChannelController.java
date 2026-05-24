@@ -36,14 +36,14 @@ public class PayChannelController {
     @PreAuthorize("@ss.hasPermission('pay:channel:create')")
     public CommonResult<Long> createChannel(@Valid @RequestBody PayChannelCreateReqVO createReqVO) {
         return success(channelApplicationService.create(createReqVO.getCode(), createReqVO.getAppId(),
-                createReqVO.getFeeRate(), createReqVO.getConfig()).id());
+                createReqVO.getStatus(), createReqVO.getFeeRate(), createReqVO.getRemark(), createReqVO.getConfig()).id());
     }
 
     @PutMapping("/update")
     @Operation(summary = "更新支付渠道 ")
     @PreAuthorize("@ss.hasPermission('pay:channel:update')")
     public CommonResult<Boolean> updateChannel(@Valid @RequestBody PayChannelUpdateReqVO updateReqVO) {
-        channelApplicationService.update(updateReqVO.getId(), updateReqVO.getFeeRate(),
+        channelApplicationService.update(updateReqVO.getId(), updateReqVO.getStatus(), updateReqVO.getFeeRate(),
                 updateReqVO.getRemark(), updateReqVO.getConfig());
         return success(true);
     }

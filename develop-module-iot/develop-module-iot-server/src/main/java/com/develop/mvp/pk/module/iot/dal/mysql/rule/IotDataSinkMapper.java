@@ -12,7 +12,7 @@ import java.util.List;
 /**
  * IoT 数据流转目的 Mapper
  *
- * @author HUIHUI
+ * @author David
  */
 @Mapper
 public interface IotDataSinkMapper extends BaseMapperX<IotDataSinkDO> {

@@ -15,7 +15,7 @@ import java.io.IOException;
 /**
  * 文件类型 Utils
  *
- * @author 芋道源码
+ * @author David
  */
 @Slf4j
 public class FileTypeUtils {

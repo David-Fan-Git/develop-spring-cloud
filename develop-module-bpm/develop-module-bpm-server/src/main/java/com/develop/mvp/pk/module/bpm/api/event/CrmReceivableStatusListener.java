@@ -9,7 +9,7 @@ import org.springframework.web.client.RestTemplate;
 /**
  * 回款审批的结果的监听器实现类
  *
- * @author 芋道源码
+ * @author David
  */
 public class CrmReceivableStatusListener extends BpmProcessInstanceStatusEventListener {
 

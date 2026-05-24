@@ -12,7 +12,7 @@ import org.springframework.ai.openai.api.OpenAiImageApi;
 /**
  * {@link OpenAiImageModel} 集成测试类
  *
- * @author fansili
+ * @author David
  */
 public class OpenAiImageModelTests {
 

@@ -10,7 +10,7 @@ import java.util.Arrays;
 /**
  * 拼团状态枚举
  *
- * @author HUIHUI
+ * @author David
  */
 @AllArgsConstructor
 @Getter

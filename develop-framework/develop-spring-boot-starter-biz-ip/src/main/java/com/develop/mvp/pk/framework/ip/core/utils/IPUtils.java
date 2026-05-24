@@ -12,7 +12,7 @@ import org.lionsoul.ip2region.xdb.Searcher;
  *
  * IP 数据源来自 ip2region.xdb 精简版，基于 <a href="https://gitee.com/zhijiantianya/ip2region"/> 项目
  *
- * @author wanglhup
+ * @author David
  */
 @Slf4j
 @UtilityClass

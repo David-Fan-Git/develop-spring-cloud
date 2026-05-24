@@ -15,7 +15,7 @@ import java.util.stream.Collectors;
 /**
  * 签到规则 Convert
  *
- * @author QingX
+ * @author David
  */
 @Mapper
 public interface MemberSignInConfigConvert {
@@ -37,7 +37,7 @@ public interface MemberSignInConfigConvert {
     default MemberSignInConfigRespVO convert(MemberSignInConfig bean) {
         if (bean == null) return null;
         MemberSignInConfigRespVO vo = new MemberSignInConfigRespVO();
-        vo.setId(bean.id());
+        vo.setId(bean.id() != null ? bean.id().intValue() : null);
         vo.setDay(bean.day());
         vo.setPoint(bean.point());
         vo.setExperience(bean.experience());
@@ -54,11 +54,8 @@ public interface MemberSignInConfigConvert {
         if (list == null) return null;
         return list.stream().map(c -> {
             AppMemberSignInConfigRespVO vo = new AppMemberSignInConfigRespVO();
-            vo.setId(c.id());
             vo.setDay(c.day());
             vo.setPoint(c.point());
-            vo.setExperience(c.experience());
-            vo.setStatus(c.status());
             return vo;
         }).collect(Collectors.toList());
     }

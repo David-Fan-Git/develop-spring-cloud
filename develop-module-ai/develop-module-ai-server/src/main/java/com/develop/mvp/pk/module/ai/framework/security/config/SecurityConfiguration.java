@@ -40,7 +40,7 @@ public class SecurityConfiguration {
                 // Druid 监控
                 registry.requestMatchers("/druid/**").permitAll();
 
-                // TODO 芋艿：这个每个项目都需要重复配置，得捉摸有没通用的方案
+                // TODO David：这个每个项目都需要重复配置，得捉摸有没通用的方案
                 // RPC 服务的安全配置
                 registry.requestMatchers(ApiConstants.PREFIX + "/**").permitAll();
 

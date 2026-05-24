@@ -1,4 +1,4 @@
-芋道源码 http://www.iocoder.cn
+David http://www.iocoder.cn
 Application Version: ${develop.info.version}
 Spring Boot Version: ${spring-boot.version}
 

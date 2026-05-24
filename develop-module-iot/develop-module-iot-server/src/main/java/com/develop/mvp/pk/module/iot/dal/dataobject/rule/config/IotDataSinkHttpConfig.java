@@ -7,7 +7,7 @@ import java.util.Map;
 /**
  * IoT HTTP 配置 {@link IotAbstractDataSinkConfig} 实现类
  *
- * @author HUIHUI
+ * @author David
  */
 @Data
 public class IotDataSinkHttpConfig extends IotAbstractDataSinkConfig {

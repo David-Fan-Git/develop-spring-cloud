@@ -10,7 +10,7 @@ import org.springframework.stereotype.Component;
 /**
  * 设备状态条件匹配器：处理设备状态相关的子条件匹配逻辑
  *
- * @author HUIHUI
+ * @author David
  */
 @Component
 public class IotDeviceStateConditionMatcher implements IotSceneRuleConditionMatcher {

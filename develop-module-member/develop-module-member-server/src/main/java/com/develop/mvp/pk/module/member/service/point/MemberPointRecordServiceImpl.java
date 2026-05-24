@@ -29,7 +29,7 @@ import static com.develop.mvp.pk.module.member.enums.ErrorCodeConstants.USER_POI
 /**
  * 积分记录 Service 实现类
  *
- * @author QingX
+ * @author David
  */
 @Slf4j
 @Service

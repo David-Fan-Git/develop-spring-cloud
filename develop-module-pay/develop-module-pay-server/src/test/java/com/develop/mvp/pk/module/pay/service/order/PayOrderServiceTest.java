@@ -1,9 +1,11 @@
 package com.develop.mvp.pk.module.pay.service.order;
 
+import cn.hutool.core.util.ObjectUtil;
 import cn.hutool.extra.spring.SpringUtil;
 import com.develop.mvp.pk.framework.common.pojo.PageResult;
 import com.develop.mvp.pk.framework.test.core.ut.BaseDbAndRedisUnitTest;
 import com.develop.mvp.pk.module.pay.api.order.dto.PayOrderCreateReqDTO;
+import com.develop.mvp.pk.module.pay.application.channel.PayChannelApplicationService;
 import com.develop.mvp.pk.module.pay.controller.admin.order.vo.PayOrderExportReqVO;
 import com.develop.mvp.pk.module.pay.controller.admin.order.vo.PayOrderPageReqVO;
 import com.develop.mvp.pk.module.pay.controller.admin.order.vo.PayOrderSubmitReqVO;
@@ -11,6 +13,7 @@ import com.develop.mvp.pk.module.pay.controller.admin.order.vo.PayOrderSubmitRes
 import com.develop.mvp.pk.module.pay.dal.dataobject.app.PayAppDO;
 import com.develop.mvp.pk.module.pay.dal.dataobject.channel.PayChannelDO;
 import com.develop.mvp.pk.module.pay.dal.dataobject.order.PayOrderDO;
+import com.develop.mvp.pk.module.pay.domain.channel.PayChannel;
 import com.develop.mvp.pk.module.pay.dal.dataobject.order.PayOrderExtensionDO;
 import com.develop.mvp.pk.module.pay.dal.mysql.order.PayOrderExtensionMapper;
 import com.develop.mvp.pk.module.pay.dal.mysql.order.PayOrderMapper;
@@ -23,7 +26,6 @@ import com.develop.mvp.pk.module.pay.framework.pay.core.client.PayClient;
 import com.develop.mvp.pk.module.pay.framework.pay.core.client.dto.order.PayOrderRespDTO;
 import com.develop.mvp.pk.module.pay.framework.pay.core.enums.PayOrderDisplayModeEnum;
 import com.develop.mvp.pk.module.pay.service.app.PayAppService;
-import com.develop.mvp.pk.module.pay.service.channel.PayChannelService;
 import com.develop.mvp.pk.module.pay.service.notify.PayNotifyService;
 import jakarta.annotation.Resource;
 import org.junit.jupiter.api.BeforeEach;
@@ -52,7 +54,7 @@ import static org.mockito.Mockito.*;
 /**
  * {@link PayOrderServiceImpl} 的单元测试类
  *
- * @author 芋艿
+ * @author David
  */
 @Import({PayOrderServiceImpl.class, PayNoRedisDAO.class})
 public class PayOrderServiceTest extends BaseDbAndRedisUnitTest {
@@ -70,13 +72,30 @@ public class PayOrderServiceTest extends BaseDbAndRedisUnitTest {
     @MockitoBean
     private PayAppService appService;
     @MockitoBean
-    private PayChannelService channelService;
+    private PayChannelApplicationService channelApplicationService;
     @MockitoBean
     private PayNotifyService notifyService;
 
     @BeforeEach
     public void setUp() {
         when(properties.getOrderNotifyUrl()).thenReturn("http://127.0.0.1");
+    }
+
+    private PayChannel toChannel(PayChannelDO channel) {
+        return new PayChannel(channel.getId(), channel.getCode(), channel.getAppId())
+                .status(channel.getStatus()).feeRate(channel.getFeeRate()).remark(channel.getRemark())
+                .config(channel.getConfig()).tenantId(channel.getTenantId());
+    }
+
+    private PayChannelDO sameChannelAs(PayChannelDO channel) {
+        return argThat(actual -> actual != null
+                && ObjectUtil.equal(actual.getId(), channel.getId())
+                && ObjectUtil.equal(actual.getCode(), channel.getCode())
+                && ObjectUtil.equal(actual.getAppId(), channel.getAppId())
+                && ObjectUtil.equal(actual.getStatus(), channel.getStatus())
+                && ObjectUtil.equal(actual.getFeeRate(), channel.getFeeRate())
+                && ObjectUtil.equal(actual.getRemark(), channel.getRemark())
+                && ObjectUtil.equal(actual.getTenantId(), channel.getTenantId()));
     }
 
     @Test
@@ -318,8 +337,8 @@ public class PayOrderServiceTest extends BaseDbAndRedisUnitTest {
         when(appService.validPayApp(eq(1L))).thenReturn(app);
         // mock 方法（channel）
         PayChannelDO channel = randomPojo(PayChannelDO.class, o -> o.setCode(PayChannelEnum.ALIPAY_APP.getCode()));
-        when(channelService.validPayChannel(eq(1L), eq(PayChannelEnum.ALIPAY_APP.getCode())))
-                .thenReturn(channel);
+        when(channelApplicationService.valid(eq(1L), eq(PayChannelEnum.ALIPAY_APP.getCode())))
+                .thenReturn(toChannel(channel));
 
         // 调用, 并断言异常
         assertServiceException(() -> orderService.submitOrder(reqVO, userIp), CHANNEL_NOT_FOUND);
@@ -346,18 +365,18 @@ public class PayOrderServiceTest extends BaseDbAndRedisUnitTest {
             // mock 方法（channel）
             PayChannelDO channel = randomPojo(PayChannelDO.class, o -> o.setId(10L)
                     .setCode(PayChannelEnum.ALIPAY_APP.getCode()));
-            when(channelService.validPayChannel(eq(1L), eq(PayChannelEnum.ALIPAY_APP.getCode())))
-                    .thenReturn(channel);
+            when(channelApplicationService.valid(eq(1L), eq(PayChannelEnum.ALIPAY_APP.getCode())))
+                    .thenReturn(toChannel(channel));
             // mock 方法（client）
             PayClient<?> client = mock(PayClient.class);
-            when(channelService.getPayClient(eq(10L))).thenReturn(client);
+            doReturn(client).when(channelApplicationService).getPayClient(eq(10L));
             // mock 方法（）
             PayOrderRespDTO unifiedOrderResp = randomPojo(PayOrderRespDTO.class, o ->
                     o.setChannelErrorCode("001").setChannelErrorMsg("模拟异常"));
             when(client.unifiedOrder(argThat(payOrderUnifiedReqDTO -> {
                 assertNotNull(payOrderUnifiedReqDTO.getOutTradeNo());
                 assertThat(payOrderUnifiedReqDTO)
-//                        .extracting("subject", "body", "notifyUrl", "returnUrl", "price", "expireTime") // TODO @芋艿：win11 下，时间不太准
+//                        .extracting("subject", "body", "notifyUrl", "returnUrl", "price", "expireTime") // TODO @David：win11 下，时间不太准
                         .extracting("subject", "body", "notifyUrl", "returnUrl", "price")
                         .containsExactly(order.getSubject(), order.getBody(), "http://127.0.0.1/10",
 //                                reqVO.getReturnUrl(), order.getPrice(), order.getExpireTime());
@@ -402,18 +421,18 @@ public class PayOrderServiceTest extends BaseDbAndRedisUnitTest {
             // mock 方法（channel）
             PayChannelDO channel = randomPojo(PayChannelDO.class, o -> o.setId(10L)
                     .setCode(PayChannelEnum.ALIPAY_APP.getCode()));
-            when(channelService.validPayChannel(eq(1L), eq(PayChannelEnum.ALIPAY_APP.getCode())))
-                    .thenReturn(channel);
+            when(channelApplicationService.valid(eq(1L), eq(PayChannelEnum.ALIPAY_APP.getCode())))
+                    .thenReturn(toChannel(channel));
             // mock 方法（client）
             PayClient<?> client = mock(PayClient.class);
-            when(channelService.getPayClient(eq(10L))).thenReturn(client);
+            doReturn(client).when(channelApplicationService).getPayClient(eq(10L));
             // mock 方法（支付渠道的调用）
             PayOrderRespDTO unifiedOrderResp = randomPojo(PayOrderRespDTO.class, o -> o.setChannelErrorCode(null).setChannelErrorMsg(null)
                     .setDisplayMode(PayOrderDisplayModeEnum.URL.getMode()).setDisplayContent("tudou"));
             when(client.unifiedOrder(argThat(payOrderUnifiedReqDTO -> {
                 assertNotNull(payOrderUnifiedReqDTO.getOutTradeNo());
                 assertThat(payOrderUnifiedReqDTO)
-//                        .extracting("subject", "body", "notifyUrl", "returnUrl", "price", "expireTime") // TODO @芋艿：win11 下，时间不太准
+//                        .extracting("subject", "body", "notifyUrl", "returnUrl", "price", "expireTime") // TODO @David：win11 下，时间不太准
                         .extracting("subject", "body", "notifyUrl", "returnUrl", "price")
                         .containsExactly(order.getSubject(), order.getBody(), "http://127.0.0.1/10",
 //                                reqVO.getReturnUrl(), order.getPrice(), order.getExpireTime());
@@ -438,7 +457,7 @@ public class PayOrderServiceTest extends BaseDbAndRedisUnitTest {
                     .extracting("status", "displayMode", "displayContent")
                     .containsExactly(PayOrderStatusEnum.WAITING.getStatus(), PayOrderDisplayModeEnum.URL.getMode(), "tudou");
             // 断言，调用
-            verify(payOrderServiceImpl).notifyOrder(same(channel), same(unifiedOrderResp));
+            verify(payOrderServiceImpl).notifyOrder(sameChannelAs(channel), same(unifiedOrderResp));
         }
     }
 
@@ -466,7 +485,7 @@ public class PayOrderServiceTest extends BaseDbAndRedisUnitTest {
         orderExtensionMapper.insert(orderExtension);
         // mock 方法（PayClient 已支付）
         PayClient<?> client = mock(PayClient.class);
-        when(channelService.getPayClient(eq(orderExtension.getChannelId()))).thenReturn(client);
+        doReturn(client).when(channelApplicationService).getPayClient(eq(orderExtension.getChannelId()));
         when(client.getOrder(eq(orderExtension.getNo()))).thenReturn(randomPojo(PayOrderRespDTO.class,
                 o -> o.setStatus(PayOrderStatusEnum.SUCCESS.getStatus())));
 
@@ -485,7 +504,7 @@ public class PayOrderServiceTest extends BaseDbAndRedisUnitTest {
         orderExtensionMapper.insert(orderExtension);
         // mock 方法（PayClient 已支付）
         PayClient<?> client = mock(PayClient.class);
-        when(channelService.getPayClient(eq(orderExtension.getChannelId()))).thenReturn(client);
+        doReturn(client).when(channelApplicationService).getPayClient(eq(orderExtension.getChannelId()));
         when(client.getOrder(eq(orderExtension.getNo()))).thenReturn(randomPojo(PayOrderRespDTO.class,
                 o -> o.setStatus(PayOrderStatusEnum.WAITING.getStatus())));
 
@@ -504,12 +523,12 @@ public class PayOrderServiceTest extends BaseDbAndRedisUnitTest {
             PayOrderRespDTO notify = randomPojo(PayOrderRespDTO.class);
             // mock 方法（channel）
             PayChannelDO channel = randomPojo(PayChannelDO.class, o -> o.setId(10L));
-            when(channelService.validPayChannel(eq(10L))).thenReturn(channel);
+            when(channelApplicationService.valid(eq(10L))).thenReturn(toChannel(channel));
 
             // 调用
             orderService.notifyOrder(channelId, notify);
             // 断言
-            verify(payOrderServiceImpl).notifyOrder(same(channel), same(notify));
+            verify(payOrderServiceImpl).notifyOrder(sameChannelAs(channel), same(notify));
         }
     }
 
@@ -877,7 +896,7 @@ public class PayOrderServiceTest extends BaseDbAndRedisUnitTest {
         orderExtensionMapper.insert(orderExtension);
         // mock 方法（PayClient）
         PayClient<?> client = mock(PayClient.class);
-        when(channelService.getPayClient(eq(10L))).thenReturn(client);
+        doReturn(client).when(channelApplicationService).getPayClient(eq(10L));
         // mock 方法（PayClient 异常）
         when(client.getOrder(any())).thenThrow(new RuntimeException());
 
@@ -904,20 +923,20 @@ public class PayOrderServiceTest extends BaseDbAndRedisUnitTest {
             orderExtensionMapper.insert(orderExtension);
             // mock 方法（PayClient）
             PayClient<?> client = mock(PayClient.class);
-            when(channelService.getPayClient(eq(10L))).thenReturn(client);
+            doReturn(client).when(channelApplicationService).getPayClient(eq(10L));
             // mock 方法（PayClient 成功返回）
             PayOrderRespDTO respDTO = randomPojo(PayOrderRespDTO.class,
                     o -> o.setStatus(PayOrderStatusEnum.SUCCESS.getStatus()));
             when(client.getOrder(eq("P110"))).thenReturn(respDTO);
             // mock 方法（PayChannelDO）
             PayChannelDO channel = randomPojo(PayChannelDO.class, o -> o.setId(10L));
-            when(channelService.validPayChannel(eq(10L))).thenReturn(channel);
+            when(channelApplicationService.valid(eq(10L))).thenReturn(toChannel(channel));
 
             // 调用
             int count = orderService.syncOrder(minCreateTime);
             // 断言
             assertEquals(count, 1);
-            verify(payOrderServiceImpl).notifyOrder(same(channel), same(respDTO));
+            verify(payOrderServiceImpl).notifyOrder(sameChannelAs(channel), same(respDTO));
         }
     }
 
@@ -938,20 +957,20 @@ public class PayOrderServiceTest extends BaseDbAndRedisUnitTest {
             orderExtensionMapper.insert(orderExtension);
             // mock 方法（PayClient）
             PayClient<?> client = mock(PayClient.class);
-            when(channelService.getPayClient(eq(10L))).thenReturn(client);
+            doReturn(client).when(channelApplicationService).getPayClient(eq(10L));
             // mock 方法（PayClient 成功返回）
             PayOrderRespDTO respDTO = randomPojo(PayOrderRespDTO.class,
                     o -> o.setStatus(PayOrderStatusEnum.CLOSED.getStatus()));
             when(client.getOrder(eq("P110"))).thenReturn(respDTO);
             // mock 方法（PayChannelDO）
             PayChannelDO channel = randomPojo(PayChannelDO.class, o -> o.setId(10L));
-            when(channelService.validPayChannel(eq(10L))).thenReturn(channel);
+            when(channelApplicationService.valid(eq(10L))).thenReturn(toChannel(channel));
 
             // 调用
             int count = orderService.syncOrder(minCreateTime);
             // 断言
             assertEquals(count, 0);
-            verify(payOrderServiceImpl, never()).notifyOrder(same(channel), same(respDTO));
+            verify(payOrderServiceImpl, never()).notifyOrder(sameChannelAs(channel), same(respDTO));
         }
     }
 
@@ -969,7 +988,7 @@ public class PayOrderServiceTest extends BaseDbAndRedisUnitTest {
         orderExtensionMapper.insert(orderExtension);
         // mock 方法（PayClient）
         PayClient<?> client = mock(PayClient.class);
-        when(channelService.getPayClient(eq(10L))).thenReturn(client);
+        doReturn(client).when(channelApplicationService).getPayClient(eq(10L));
 
         // 调用
         int count = orderService.expireOrder();
@@ -1016,7 +1035,7 @@ public class PayOrderServiceTest extends BaseDbAndRedisUnitTest {
         orderExtensionMapper.insert(orderExtension);
         // mock 方法（PayClient）
         PayClient<?> client = mock(PayClient.class);
-        when(channelService.getPayClient(eq(10L))).thenReturn(client);
+        doReturn(client).when(channelApplicationService).getPayClient(eq(10L));
         // mock 方法（PayClient 退款返回）
         PayOrderRespDTO respDTO = randomPojo(PayOrderRespDTO.class,
                 o -> o.setStatus(PayOrderStatusEnum.REFUND.getStatus()));
@@ -1050,14 +1069,14 @@ public class PayOrderServiceTest extends BaseDbAndRedisUnitTest {
             orderExtensionMapper.insert(orderExtension);
             // mock 方法（PayClient）
             PayClient<?> client = mock(PayClient.class);
-            when(channelService.getPayClient(eq(10L))).thenReturn(client);
+            doReturn(client).when(channelApplicationService).getPayClient(eq(10L));
             // mock 方法（PayClient 成功返回）
             PayOrderRespDTO respDTO = randomPojo(PayOrderRespDTO.class,
                     o -> o.setStatus(PayOrderStatusEnum.SUCCESS.getStatus()));
             when(client.getOrder(eq("P110"))).thenReturn(respDTO);
             // mock 方法（PayChannelDO）
             PayChannelDO channel = randomPojo(PayChannelDO.class, o -> o.setId(10L));
-            when(channelService.validPayChannel(eq(10L))).thenReturn(channel);
+            when(channelApplicationService.valid(eq(10L))).thenReturn(toChannel(channel));
 
             // 调用
             int count = orderService.expireOrder();
@@ -1065,7 +1084,7 @@ public class PayOrderServiceTest extends BaseDbAndRedisUnitTest {
             assertEquals(count, 0);
             // 断言 order 没有变化，因为没更新
             assertPojoEquals(order, orderMapper.selectOne(null));
-            verify(payOrderServiceImpl).notifyOrder(same(channel), same(respDTO));
+            verify(payOrderServiceImpl).notifyOrder(sameChannelAs(channel), same(respDTO));
         }
     }
 
@@ -1084,7 +1103,7 @@ public class PayOrderServiceTest extends BaseDbAndRedisUnitTest {
         orderExtensionMapper.insert(orderExtension);
         // mock 方法（PayClient）
         PayClient<?> client = mock(PayClient.class);
-        when(channelService.getPayClient(eq(10L))).thenReturn(client);
+        doReturn(client).when(channelApplicationService).getPayClient(eq(10L));
         // mock 方法（PayClient 关闭返回）
         PayOrderRespDTO respDTO = randomPojo(PayOrderRespDTO.class,
                 o -> o.setStatus(PayOrderStatusEnum.CLOSED.getStatus()));

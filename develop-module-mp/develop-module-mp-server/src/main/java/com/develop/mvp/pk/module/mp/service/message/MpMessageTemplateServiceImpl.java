@@ -36,7 +36,7 @@ import static com.develop.mvp.pk.module.mp.enums.ErrorCodeConstants.*;
 /**
  * 公众号模版消息 Service 实现类
  *
- * @author dengsl
+ * @author David
  */
 @Service
 @Validated

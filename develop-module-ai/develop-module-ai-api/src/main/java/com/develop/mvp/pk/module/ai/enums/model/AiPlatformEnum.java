@@ -9,7 +9,7 @@ import java.util.Arrays;
 /**
  * AI 模型平台
  *
- * @author fansili
+ * @author David
  */
 @Getter
 @AllArgsConstructor

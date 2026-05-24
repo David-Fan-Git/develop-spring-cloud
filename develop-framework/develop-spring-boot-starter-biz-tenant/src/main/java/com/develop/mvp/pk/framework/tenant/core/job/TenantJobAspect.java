@@ -26,7 +26,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
  *
  * 注意，需要保证 JobHandler 的幂等性。因为 Job 因为某个租户执行失败重试时，之前执行成功的租户也会再次执行。
  *
- * @author 芋道源码
+ * @author David
  */
 @Aspect
 @RequiredArgsConstructor
@@ -48,7 +48,7 @@ public class TenantJobAspect {
         AtomicBoolean success = new AtomicBoolean(true); // 标记，是否存在失败的情况
         XxlJobContext xxlJobContext = XxlJobContext.getXxlJobContext(); // XXL-Job 上下文
         tenantIds.parallelStream().forEach(tenantId -> {
-            // TODO 芋艿：先通过 parallel 实现并行；1）多个租户，是一条执行日志；2）异常的情况
+            // TODO David：先通过 parallel 实现并行；1）多个租户，是一条执行日志；2）异常的情况
             TenantUtils.execute(tenantId, () -> {
                 try {
                     XxlJobContext.setXxlJobContext(xxlJobContext);

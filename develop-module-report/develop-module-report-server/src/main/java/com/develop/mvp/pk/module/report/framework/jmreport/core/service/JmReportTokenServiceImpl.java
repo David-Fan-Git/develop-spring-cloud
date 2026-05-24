@@ -23,7 +23,7 @@ import java.util.Objects;
 /**
  * {@link JmReportTokenServiceI} 实现类，提供积木报表的 Token 校验、用户信息的查询等功能
  *
- * @author 随心
+ * @author David
  */
 @RequiredArgsConstructor
 public class JmReportTokenServiceImpl implements JmReportTokenServiceI {

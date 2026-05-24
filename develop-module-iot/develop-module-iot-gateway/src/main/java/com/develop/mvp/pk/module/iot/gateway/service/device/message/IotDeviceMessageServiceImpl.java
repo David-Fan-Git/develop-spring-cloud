@@ -22,7 +22,7 @@ import static com.develop.mvp.pk.module.iot.gateway.enums.ErrorCodeConstants.DEV
 /**
  * IoT 设备消息 Service 实现类
  *
- * @author 芋道源码
+ * @author David
  */
 @Service
 @Slf4j

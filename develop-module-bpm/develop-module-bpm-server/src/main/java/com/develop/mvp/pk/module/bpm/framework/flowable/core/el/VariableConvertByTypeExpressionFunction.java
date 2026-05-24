@@ -8,9 +8,9 @@ import org.springframework.stereotype.Component;
  * 根据流程变量 variable 的类型，转换参数的值
  *
  * @deprecated 已无调用方
- * @author jason
+ * @author David
  */
-@Deprecated // TODO @芋艿：兼容老版本，预计 27 年删除；
+@Deprecated // TODO @David：兼容老版本，预计 27 年删除；
 @Component
 public class VariableConvertByTypeExpressionFunction extends AbstractFlowableVariableExpressionFunction {
 

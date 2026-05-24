@@ -7,7 +7,7 @@ import lombok.EqualsAndHashCode;
 import lombok.ToString;
 
 /**
- * @author xia
+ * @author David
  */
 @Schema(description = "管理后台 - Banner更新 Request VO")
 @Data

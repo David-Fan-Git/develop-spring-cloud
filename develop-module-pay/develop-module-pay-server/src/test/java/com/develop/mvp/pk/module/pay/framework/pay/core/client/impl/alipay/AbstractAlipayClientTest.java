@@ -17,7 +17,6 @@ import com.alipay.api.DefaultSigner;
 import com.alipay.api.domain.AlipayTradeRefundModel;
 import com.alipay.api.request.AlipayTradeRefundRequest;
 import com.alipay.api.response.AlipayTradeRefundResponse;
-import lombok.Setter;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -36,7 +35,7 @@ import static org.mockito.Mockito.when;
 /**
  * 支付宝 Client 的测试基类
  *
- * @author jason
+ * @author David
  */
 public abstract class AbstractAlipayClientTest extends BaseMockitoUnitTest {
 
@@ -53,8 +52,11 @@ public abstract class AbstractAlipayClientTest extends BaseMockitoUnitTest {
     @Mock
     protected DefaultAlipayClient defaultAlipayClient;
 
-    @Setter
     private AbstractAlipayPayClient client;
+
+    protected void setClient(AbstractAlipayPayClient client) {
+        this.client = client;
+    }
 
     /**
      * 子类需要实现该方法. 设置 client 的具体实现

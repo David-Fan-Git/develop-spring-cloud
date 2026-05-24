@@ -3,7 +3,7 @@ package com.develop.mvp.pk.module.mes.service.md.autocode;
 /**
  * MES 编码生成记录 Service 接口
  *
- * @author 芋道源码
+ * @author David
  */
 public interface MesMdAutoCodeRecordService {
 

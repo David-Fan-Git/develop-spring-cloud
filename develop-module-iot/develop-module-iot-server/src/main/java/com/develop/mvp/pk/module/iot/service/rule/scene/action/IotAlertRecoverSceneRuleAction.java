@@ -17,7 +17,7 @@ import static com.develop.mvp.pk.framework.common.util.collection.CollectionUtil
 /**
  * IoT 告警恢复的 {@link IotSceneRuleAction} 实现类
  *
- * @author 芋道源码
+ * @author David
  */
 @Component
 public class IotAlertRecoverSceneRuleAction implements IotSceneRuleAction {

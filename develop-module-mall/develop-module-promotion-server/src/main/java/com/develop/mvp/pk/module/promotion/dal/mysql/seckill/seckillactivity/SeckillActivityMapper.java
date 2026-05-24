@@ -17,7 +17,7 @@ import java.util.List;
 /**
  * 秒杀活动 Mapper
  *
- * @author halfninety
+ * @author David
  */
 @Mapper
 public interface SeckillActivityMapper extends BaseMapperX<SeckillActivityDO> {

@@ -1,7 +1,6 @@
 package com.develop.mvp.pk.module.member.domain.user.valueobject;
 
 import cn.hutool.core.util.StrUtil;
-import com.develop.mvp.pk.framework.common.validation.Mobile;
 import java.util.Objects;
 
 // Skill: AggregateRoot_MemberUser_Skill — 值对象 Mobile

@@ -10,7 +10,7 @@ import java.util.Arrays;
 /**
  * 快递配送计费方式枚举
  *
- * @author jason
+ * @author David
  */
 @AllArgsConstructor
 @Getter

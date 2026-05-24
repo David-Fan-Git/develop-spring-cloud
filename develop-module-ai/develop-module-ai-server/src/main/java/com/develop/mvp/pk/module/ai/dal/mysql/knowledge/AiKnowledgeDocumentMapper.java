@@ -14,7 +14,7 @@ import java.util.List;
 /**
  * AI 知识库文档 Mapper
  *
- * @author xiaoxin
+ * @author David
  */
 @Mapper
 public interface AiKnowledgeDocumentMapper extends BaseMapperX<AiKnowledgeDocumentDO> {

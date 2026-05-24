@@ -8,7 +8,7 @@ import com.develop.mvp.pk.module.mes.dal.dataobject.wm.stocktaking.task.MesWmSto
 /**
  * MES 盘点结果 Service 接口
  *
- * @author 芋道源码
+ * @author David
  */
 public interface MesWmStockTakingTaskResultService {
 

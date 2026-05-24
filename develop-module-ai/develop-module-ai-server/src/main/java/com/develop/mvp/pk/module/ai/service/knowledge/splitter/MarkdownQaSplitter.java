@@ -23,7 +23,7 @@ import java.util.regex.Pattern;
  *   <li>支持自定义 Token 估算器</li>
  * </ul>
  *
- * @author runzhen
+ * @author David
  */
 @Slf4j
 @SuppressWarnings("SizeReplaceableByIsEmpty")

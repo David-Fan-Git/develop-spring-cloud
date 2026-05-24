@@ -13,7 +13,7 @@ import lombok.*;
 /**
  * MES 工作站 DO
  *
- * @author 芋道源码
+ * @author David
  */
 @TableName("mes_md_workstation")
 @KeySequence("mes_md_workstation_seq")

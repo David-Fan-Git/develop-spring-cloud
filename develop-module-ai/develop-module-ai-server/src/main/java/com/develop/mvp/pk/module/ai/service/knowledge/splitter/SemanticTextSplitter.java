@@ -22,7 +22,7 @@ import java.util.regex.Pattern;
  *   <li>支持中英文标点符号识别</li>
  * </ul>
  *
- * @author runzhen
+ * @author David
  */
 @Slf4j
 public class SemanticTextSplitter extends TextSplitter {

@@ -21,7 +21,7 @@ import static com.develop.mvp.pk.framework.security.core.util.SecurityFrameworkU
 /**
  * 默认的 {@link SecurityFrameworkService} 实现类
  *
- * @author 芋道源码
+ * @author David
  */
 @AllArgsConstructor
 public class SecurityFrameworkServiceImpl implements SecurityFrameworkService {

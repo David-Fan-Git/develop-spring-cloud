@@ -9,7 +9,7 @@ import com.develop.mvp.pk.module.member.dal.dataobject.signin.MemberSignInRecord
 /**
  * 签到记录 Service 接口
  *
- * @author 芋道源码
+ * @author David
  */
 public interface MemberSignInRecordService {
 

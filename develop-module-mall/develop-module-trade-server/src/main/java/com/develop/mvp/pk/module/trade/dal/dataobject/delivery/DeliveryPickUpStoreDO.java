@@ -16,7 +16,7 @@ import java.util.List;
 /**
  * 自提门店 DO
  *
- * @author jason
+ * @author David
  */
 @TableName(value ="trade_delivery_pick_up_store", autoResultMap = true)
 @KeySequence("trade_delivery_pick_up_store_seq") // 用于 Oracle、PostgreSQL、Kingbase、DB2、H2 数据库的主键自增。如果是 MySQL 等数据库，可不写。

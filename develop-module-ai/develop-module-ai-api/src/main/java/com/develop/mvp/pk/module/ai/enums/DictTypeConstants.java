@@ -3,7 +3,7 @@ package com.develop.mvp.pk.module.ai.enums;
 /**
  * AI 字典类型的枚举类
  *
- * @author xiaoxin
+ * @author David
  */
 public interface DictTypeConstants {
 

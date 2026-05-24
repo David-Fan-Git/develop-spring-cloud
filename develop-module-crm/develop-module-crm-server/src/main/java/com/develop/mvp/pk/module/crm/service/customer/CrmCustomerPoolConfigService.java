@@ -7,7 +7,7 @@ import jakarta.validation.Valid;
 /**
  * 客户公海配置 Service 接口
  *
- * @author Wanwan
+ * @author David
  */
 public interface CrmCustomerPoolConfigService {
 

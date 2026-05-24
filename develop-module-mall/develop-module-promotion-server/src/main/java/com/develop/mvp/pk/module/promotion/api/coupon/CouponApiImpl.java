@@ -18,7 +18,7 @@ import static com.develop.mvp.pk.framework.common.pojo.CommonResult.success;
 /**
  * 优惠劵 API 实现类
  *
- * @author 芋道源码
+ * @author David
  */
 @RestController // 提供 RESTful API 接口，给 Feign 调用
 @Validated

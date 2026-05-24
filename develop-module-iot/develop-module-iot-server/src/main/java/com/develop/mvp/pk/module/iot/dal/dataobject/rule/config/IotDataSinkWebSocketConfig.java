@@ -8,7 +8,7 @@ import lombok.Data;
  * 配置设备消息通过 WebSocket 协议发送到外部 WebSocket 服务器
  * 支持 WebSocket (ws://) 和 WebSocket Secure (wss://) 连接
  *
- * @author HUIHUI
+ * @author David
  */
 @Data
 public class IotDataSinkWebSocketConfig extends IotAbstractDataSinkConfig {

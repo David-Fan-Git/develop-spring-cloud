@@ -61,7 +61,7 @@ public class CrmCustomerRepositoryImpl implements CrmCustomerRepository {
         reqVO.setPageNo(query.pageNo());
         reqVO.setPageSize(query.pageSize());
 
-        PageResult<CrmCustomerDO> doPage = crmCustomerMapper.selectPage(reqVO);
+        PageResult<CrmCustomerDO> doPage = crmCustomerMapper.selectPage(reqVO, query.ownerUserId());
         List<CrmCustomer> customers = doPage.getList().stream()
                 .map(this::toDomain).collect(Collectors.toList());
         return new PageResult<>(customers, doPage.getTotal());

@@ -9,7 +9,7 @@ import org.springframework.stereotype.Component;
 /**
  * Midjourney 同步 Job：定时拉去 midjourney 绘制状态
  *
- * @author fansili
+ * @author David
  */
 @Component
 @Slf4j

@@ -17,7 +17,7 @@ import com.develop.mvp.pk.module.mes.enums.DictTypeConstants;
 /**
  * MES 物料消耗记录 DO
  *
- * @author 芋道源码
+ * @author David
  */
 @TableName("mes_wm_item_consume")
 @KeySequence("mes_wm_item_consume_seq")

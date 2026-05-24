@@ -12,7 +12,7 @@ import java.util.List;
 /**
  * 秒杀活动商品 Mapper
  *
- * @author halfninety
+ * @author David
  */
 @Mapper
 public interface SeckillProductMapper extends BaseMapperX<SeckillProductDO> {

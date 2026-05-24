@@ -12,7 +12,7 @@ import org.apache.ibatis.annotations.Mapper;
 /**
  * 会员经验记录 Mapper
  *
- * @author owen
+ * @author David
  */
 @Mapper
 public interface MemberExperienceRecordMapper extends BaseMapperX<MemberExperienceRecordDO> {

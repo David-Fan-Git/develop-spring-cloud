@@ -18,7 +18,7 @@ import static com.develop.mvp.pk.module.system.enums.ErrorCodeConstants.OAUTH2_C
 /**
  * OAuth2.0 授权码 Service 实现类
  *
- * @author 芋道源码
+ * @author David
  */
 @Service
 @Validated

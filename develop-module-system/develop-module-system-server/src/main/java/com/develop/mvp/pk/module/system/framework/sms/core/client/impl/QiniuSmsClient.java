@@ -27,7 +27,7 @@ import static com.develop.mvp.pk.framework.common.util.collection.CollectionUtil
 /**
  * 七牛云短信客户端的实现类
  *
- * @author scholar
+ * @author David
  * @since 2024/08/26 15:35
  */
 @Slf4j

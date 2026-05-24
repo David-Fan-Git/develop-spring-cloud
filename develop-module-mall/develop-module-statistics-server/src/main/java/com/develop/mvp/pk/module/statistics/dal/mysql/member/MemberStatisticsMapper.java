@@ -14,7 +14,7 @@ import java.util.List;
 /**
  * 会员信息的统计 Mapper
  *
- * @author owen
+ * @author David
  */
 @Mapper
 @SuppressWarnings("rawtypes")

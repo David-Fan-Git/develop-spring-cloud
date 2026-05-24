@@ -4,9 +4,9 @@ import lombok.Data;
 import org.springframework.boot.context.properties.ConfigurationProperties;
 
 /**
- * 芋道 AI 配置类
+ * David AI 配置类
  *
- * @author fansili
+ * @author David
  * @since 1.0
  */
 @ConfigurationProperties(prefix = "develop.ai")

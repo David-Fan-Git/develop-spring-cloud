@@ -10,7 +10,7 @@ import org.apache.ibatis.annotations.Mapper;
 /**
  * AI 工作流 Mapper
  *
- * @author lesan
+ * @author David
  */
 @Mapper
 public interface AiWorkflowMapper extends BaseMapperX<AiWorkflowDO> {

@@ -17,7 +17,7 @@ import static com.develop.mvp.pk.framework.common.util.date.DateUtils.TIME_ZONE_
  *
  * 参见 <a href="https://www.yuque.com/kdnjishuzhichi/dfcrg1/wugo6k">快递鸟接口文档</a>
  *
- * @author jason
+ * @author David
  */
 @Data
 public class KdNiaoExpressQueryRespDTO {

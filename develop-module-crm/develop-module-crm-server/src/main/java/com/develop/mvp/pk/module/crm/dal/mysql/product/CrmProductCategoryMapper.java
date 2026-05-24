@@ -11,7 +11,7 @@ import java.util.List;
 /**
  * CRM 产品分类 Mapper
  *
- * @author ZanGe丶
+ * @author David
  */
 @Mapper
 public interface CrmProductCategoryMapper extends BaseMapperX<CrmProductCategoryDO> {

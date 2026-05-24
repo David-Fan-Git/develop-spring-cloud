@@ -14,7 +14,7 @@ import java.util.List;
 /**
  * WMS 商品 Mapper
  *
- * @author 芋道源码
+ * @author David
  */
 @Mapper
 public interface WmsItemMapper extends BaseMapperX<WmsItemDO> {

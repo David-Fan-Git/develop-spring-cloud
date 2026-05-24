@@ -25,7 +25,7 @@ import static com.develop.mvp.pk.module.infra.enums.ErrorCodeConstants.API_ERROR
 /**
  * API 错误日志 Service 实现类
  *
- * @author 芋道源码
+ * @author David
  */
 @Service
 @Validated

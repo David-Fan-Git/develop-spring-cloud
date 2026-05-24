@@ -14,7 +14,7 @@ import java.util.List;
 /**
  * 客户限制配置 DO
  *
- * @author Wanwan
+ * @author David
  */
 @TableName(value = "crm_customer_limit_config", autoResultMap = true)
 @KeySequence("crm_customer_limit_config_seq") // 用于 Oracle、PostgreSQL、Kingbase、DB2、H2 数据库的主键自增。如果是 MySQL 等数据库，可不写。

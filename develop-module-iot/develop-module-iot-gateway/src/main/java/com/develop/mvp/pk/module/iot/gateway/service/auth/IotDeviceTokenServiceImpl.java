@@ -24,7 +24,7 @@ import static com.develop.mvp.pk.module.iot.gateway.enums.ErrorCodeConstants.DEV
  *
  * 注意：目前仅 HTTP 协议使用
  *
- * @author 芋道源码
+ * @author David
  */
 @Service
 @Slf4j

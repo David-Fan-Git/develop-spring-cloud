@@ -14,7 +14,7 @@ import com.develop.mvp.pk.module.mes.enums.DictTypeConstants;
 /**
  * MES 盘点方案 DO
  *
- * @author 芋道源码
+ * @author David
  */
 @TableName("mes_wm_stock_taking_plan")
 @KeySequence("mes_wm_stock_taking_plan_seq")

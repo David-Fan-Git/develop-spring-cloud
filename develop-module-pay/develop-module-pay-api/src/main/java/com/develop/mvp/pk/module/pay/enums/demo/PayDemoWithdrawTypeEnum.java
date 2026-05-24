@@ -9,7 +9,7 @@ import java.util.Arrays;
 /**
  * 示例提现单的类型枚举
  *
- * @author owen
+ * @author David
  */
 @AllArgsConstructor
 @Getter

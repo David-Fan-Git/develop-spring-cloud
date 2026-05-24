@@ -11,7 +11,7 @@ import org.apache.ibatis.annotations.Mapper;
 /**
  * WMS 盘库单 Mapper
  *
- * @author 芋道源码
+ * @author David
  */
 @Mapper
 public interface WmsCheckOrderMapper extends BaseMapperX<WmsCheckOrderDO> {

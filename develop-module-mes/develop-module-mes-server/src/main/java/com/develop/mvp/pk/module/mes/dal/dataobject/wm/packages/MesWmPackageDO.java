@@ -15,7 +15,7 @@ import com.develop.mvp.pk.module.mes.enums.DictTypeConstants;
 /**
  * MES 装箱单 DO
  *
- * @author 芋道源码
+ * @author David
  */
 @TableName("mes_wm_package")
 @KeySequence("mes_wm_package_seq")

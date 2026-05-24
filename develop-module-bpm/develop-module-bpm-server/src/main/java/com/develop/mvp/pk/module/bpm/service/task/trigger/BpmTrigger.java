@@ -2,13 +2,13 @@ package com.develop.mvp.pk.module.bpm.service.task.trigger;
 
 import com.develop.mvp.pk.module.bpm.enums.definition.BpmTriggerTypeEnum;
 
-// TODO @芋艿：可能会想换个包地址
+// TODO @David：可能会想换个包地址
 /**
  * BPM 触发器接口
  * <p>
  * 处理不同的动作
  *
- * @author jason
+ * @author David
  */
 public interface BpmTrigger {
 

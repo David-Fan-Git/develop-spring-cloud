@@ -38,7 +38,7 @@ import static java.util.Collections.singletonList;
 /**
  * 积分商城活动 Service 实现类
  *
- * @author HUIHUI
+ * @author David
  */
 @Service
 @Validated

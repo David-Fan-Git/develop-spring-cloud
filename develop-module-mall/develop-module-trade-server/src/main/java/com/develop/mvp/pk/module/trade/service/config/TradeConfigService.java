@@ -8,7 +8,7 @@ import jakarta.validation.Valid;
 /**
  * 交易中心配置 Service 接口
  *
- * @author owen
+ * @author David
  */
 public interface TradeConfigService {
 

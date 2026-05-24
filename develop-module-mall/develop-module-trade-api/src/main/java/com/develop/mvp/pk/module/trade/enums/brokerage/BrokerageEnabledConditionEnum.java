@@ -9,7 +9,7 @@ import java.util.Arrays;
 /**
  * 分佣模式枚举
  *
- * @author owen
+ * @author David
  */
 @AllArgsConstructor
 @Getter

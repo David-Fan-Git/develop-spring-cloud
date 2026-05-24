@@ -8,7 +8,7 @@ import org.apache.ibatis.annotations.Mapper;
 /**
  * 客户公海配置 Mapper
  *
- * @author Wanwan
+ * @author David
  */
 @Mapper
 public interface CrmCustomerPoolConfigMapper extends BaseMapperX<CrmCustomerPoolConfigDO> {

@@ -27,7 +27,7 @@ import static com.develop.mvp.pk.framework.common.util.collection.CollectionUtil
 /**
  * 社交应用的 API 实现类
  *
- * @author 芋道源码
+ * @author David
  */
 @RestController
 @Validated

@@ -19,7 +19,7 @@ package com.develop.mvp.pk.module.ai.framework.ai.core.model.siliconflow;
 /**
  * SiliconFlow API 枚举类
  *
- * @author zzt
+ * @author David
  */
 public final class SiliconFlowApiConstants {
 

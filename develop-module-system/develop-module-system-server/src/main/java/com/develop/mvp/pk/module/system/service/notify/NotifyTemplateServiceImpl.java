@@ -28,7 +28,7 @@ import static com.develop.mvp.pk.module.system.enums.ErrorCodeConstants.NOTIFY_T
 /**
  * 站内信模版 Service 实现类
  *
- * @author xrcoder
+ * @author David
  */
 @Service
 @Validated

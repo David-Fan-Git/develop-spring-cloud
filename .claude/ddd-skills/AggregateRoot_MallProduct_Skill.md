@@ -1,305 +1,752 @@
-# DDD Skill: AggregateRoot_MallProduct_Skill
+---
+name: aggregateroot-mall-product-skill
+description: Use when refactoring or validating Mall Product DDD code, product category/brand/SPU/SKU/property/comment/favorite/history flows, product API contracts, stock updates, category validation, and local/remote API splitting.
+type: ddd-aggregate-skill
+module: mall-product
+status: production-ready
+last_verified: 2026-05-24
+---
 
-## 1. 技能名称
-`AggregateRoot_MallProduct_Skill` — 商城商品域(Product)聚合根的领域建模与重构技能
+# AggregateRoot Mall Product Skill
 
-## 2. 适用场景
-商城商品子域：商品分类(Category)、商品品牌(Brand)、商品SPU(Spu)、商品SKU(Sku)、商品属性(Property)、商品评论(Comment)、商品收藏(Favorite)、商品浏览记录(BrowseHistory)。
+## Overview
 
-## 3. DDD 构造块
+Mall Product covers product category, brand, SPU, SKU, property, property value, comment, favorite, and browse history behavior. This skill is the production refactoring contract for moving product code from legacy `service/dal` into `domain/application/infrastructure/convert` without changing external API, Controller, DTO, error-code, transaction, stock, or integration behavior.
 
-### 3.1 聚合根
-- **ProductCategory** — 商品分类聚合根，支持两级层级结构，含启用/禁用，parentId=0L为根节点
-- **ProductBrand** — 商品品牌聚合根，含启用/禁用，name唯一约束
-- **ProductSpu** — 商品SPU聚合根（旗舰聚合根），含上下架、回收站、SKU管理、库存/销量变更，状态枚举: ENABLE/DISABLE/RECYCLE
-- **ProductComment** — 商品评论聚合根，含可见性控制、商家回复、评分(描述/服务/物流)
-- **ProductFavorite** — 商品收藏聚合根，per user+spu唯一
+Current compilable behavior wins over this document if a conflict is found. If this skill conflicts with current code, stop implementation and update the skill first.
 
-### 3.2 值对象
-- `ProductCategoryId`, `ProductCategoryName` — 分类标识与名称值对象（final class，构造自校验）
-- `ProductBrandId`, `ProductBrandName` — 品牌标识与名称值对象，name不可为空
-- `ProductSpuId`, `ProductSpuStatus` — SPU标识与状态值对象（状态枚举支持 enabled()/disabled()/recycle()/isEnabled()/isDisabled()/isRecycle()）
-- `ProductSku`, `SkuProperty` — SKU与属性值对象（record类型，包含price/marketPrice/costPrice/stock/properties）
-- `ProductPropertyId`, `ProductPropertyName` — 属性项标识
-- `ProductPropertyValueId`, `ProductPropertyValueName` — 属性值标识
-- 不可变类，构造方法自校验，使用record或final class
+## When to Use
 
-### 3.3 仓储接口
-- `ProductCategoryRepository` — findById/save/delete/findByParentId/findByStatus
-- `ProductBrandRepository` — findById/save/delete/findByName/findByStatus
-- `ProductSpuRepository` — findById/save/delete/page/findByCategoryId/findByStatus/findByStock/findByIdIncludeDeleted
-- `ProductSkuRepository` — findBySpuId/saveBatch/deleteBySpuId/updateStock(乐观锁)
-- `ProductPropertyRepository` — findById/save/delete/findByName
-- `ProductPropertyValueRepository` — findByPropertyId/save/deleteByPropertyId
-- `ProductCommentRepository` — findById/save/page/findByUserIdAndOrderItemId
-- `ProductFavoriteRepository` — findByUserIdAndSpuId/save/delete/findByUserId/page
-- `ProductBrowseHistoryRepository` — findByUserIdAndSpuId/save/delete/findByUserId/page
-- 所有Repository定义在domain层，无infrastructure imports
+Use this skill when changing:
 
-### 3.4 领域事件
-- `ProductCategoryStatusChangedEvent` — 分类状态变更(启用/禁用)
-- `ProductBrandStatusChangedEvent` — 品牌状态变更
-- `ProductSpuCreatedEvent` — SPU创建
-- `ProductSpuStatusChangedEvent` — SPU状态变更(上架/下架/回收站)
-- `ProductSpuDeletedEvent` — SPU删除
-- `ProductCommentCreatedEvent` — 评论创建
-- `ProductFavoriteToggledEvent` — 收藏/取消收藏
+- Product API contracts under `develop-module-mall/develop-module-product-api`.
+- Product server Controller, application, domain, infrastructure, repository, convert, legacy service, mapper, or DO code.
+- Stock increment/decrement, SPU price/stock derivation, SKU property validation, category validation, brand validation, comment creation, favorite uniqueness, or browse history retention.
+- Product local/remote API split for ProductCategoryApi, ProductSkuApi, ProductSpuApi, or ProductCommentApi.
 
-### 3.5 工厂
-- `ProductCategoryFactory` — 创建分类聚合根，校验层级约束
-- `ProductBrandFactory` — 创建品牌聚合根，校验name唯一性
-- `ProductSpuFactory` — 创建SPU聚合根，包含SKU初始化、默认状态设置
-- `ProductCommentFactory` — 创建评论聚合根
+## When Not to Use
 
-### 3.6 领域服务
-- `ProductCategoryDomainService` — 分类层级校验服务、分类与SPU绑定校验
-- `ProductSpuDomainService` — SPU唯一性校验、SPU与活动冲突校验
+Do not use this skill as the authority for promotion, trade, statistics, member, or infra behavior except where product integrates with those modules through explicit API contracts. Do not use draft method names here to rename public API or Controller routes unless the API-contract migration explicitly includes that change.
 
-## 4. 职责边界
+## Baseline Failure Findings
 
-### R01 — 商品分类必须二级或以上才能绑定SPU
-分类层级必须 >= 2（即最末级分类），一级分类不能直接关联商品。
-- Source: `ProductCategoryServiceImpl.validateCategoryList()` line 126-128, `ProductSpuServiceImpl.validateCategory()` line 129-132
+Earlier Product skill drafts were not production-safe because they:
 
-### R02 — 商品分类父节点不能是二级分类（最多两级深度）
-父分类必须是一级分类(parentId=0L)或根节点。父分类如果是二级分类则抛出`CATEGORY_PARENT_NOT_FIRST_LEVEL`。
-- Source: `ProductCategoryServiceImpl.validateParentProductCategory()` line 93-96
+- Had no YAML frontmatter and could not be reliably discovered or versioned.
+- Mixed desired DDD design with current behavior without source anchors.
+- Invented state-machine constraints not implemented by legacy services.
+- Omitted exact API signatures, DTO fields, fixed DO fields, error-code parameters, transaction contracts, and local/remote API conflicts.
+- Did not capture current partial DDD conflicts such as create methods passing `id` into aggregate factories and repositories checking `selectById(spu.id().value())` before insert.
 
-### R03 — 删除分类时需确保无子分类和绑定的SPU
-必须先查询是否有子分类(`selectCountByParentId`)和是否有绑定的SPU(`getSpuCountByCategoryId`)，任一存在则禁止删除。
-- Source: `ProductCategoryServiceImpl.deleteCategory()` line 67-81
+## Reproducibility Contract
 
-### R04 — 品牌名称必须唯一
-创建和更新时都需要校验`selectByName`是否已被占用，排除自身id。
-- Source: `ProductBrandServiceImpl.validateBrandNameUnique()` line 71-84
+A clean agent must be able to reproduce Product refactoring from this skill by following only repository facts and this document:
 
-### R05 — SPU分类和品牌必须为启用状态
-创建/更新SPU时校验分类`validateCategory()`和品牌`validateProductBrand()`必须为ENABLE状态。
-- Source: `ProductSpuServiceImpl.createSpu()` line 60-61, `ProductCategoryServiceImpl.validateCategory()` line 138-146
+1. Read `DDD_Skill_Production_Readiness_Standard.md` and `Module_Structure_Standard.md` first.
+2. Treat legacy `service/*ServiceImpl` and public `api/*Api.java` as behavior facts until parity tests prove replacement behavior.
+3. Preserve all Controller paths, permissions, request/response DTOs, OpenAPI annotations, error codes, and pagination semantics unless a separate API migration explicitly changes them.
+4. Refactor one Product aggregate or one tightly coupled aggregate set at a time.
+5. Compile `develop-module-mall/develop-module-product-api` and `develop-module-mall/develop-module-product-server` after each batch.
 
-### R06 — SPU必须至少包含一个SKU
-创建SPU时校验SKU列表非空`skus.isEmpty()`，空则抛出`SKU_NOT_EXISTS`。
-- Source: `ProductSkuServiceImpl.validateSkuList()` line 89-92, `ProductSpu.publish()` line 98-100
+## Current Source Anchors
 
-### R07 — SPU状态流转约束
-- 上架：不能在回收站状态上架(prerequisite: status != RECYCLE, 必须有SKU)
-- 下架：任意状态可下架
-- 回收站：仅ENABLE/DISABLE状态可进回收站
-- 删除：仅RECYCLE状态可彻底删除(`SPU_NOT_RECYCLE`)
-- Source: `ProductSpuServiceImpl.deleteSpu()` line 167-169, `ProductSpu` aggregate root lines 95-127
+### API module
 
-### R08 — SKU属性严格校验
-- 单规格：自动赋予默认属性
-- 多规格：所有SKU必须有相同数量的属性条目
-- 同一SKU内不能有重复属性(propertyId重复)
-- 不同SKU之间属性组合不能重复(属性值集合去重校验)
-- Source: `ProductSkuServiceImpl.validateSkuList()` lines 88-143
+- `develop-module-mall/develop-module-product-api/src/main/java/com/develop/mvp/pk/module/product/api/category/ProductCategoryApi.java`
+- `develop-module-mall/develop-module-product-api/src/main/java/com/develop/mvp/pk/module/product/api/sku/ProductSkuApi.java`
+- `develop-module-mall/develop-module-product-api/src/main/java/com/develop/mvp/pk/module/product/api/spu/ProductSpuApi.java`
+- `develop-module-mall/develop-module-product-api/src/main/java/com/develop/mvp/pk/module/product/api/comment/ProductCommentApi.java`
+- `develop-module-mall/develop-module-product-api/src/main/java/com/develop/mvp/pk/module/product/api/comment/dto/ProductCommentCreateReqDTO.java`
+- `develop-module-mall/develop-module-product-api/src/main/java/com/develop/mvp/pk/module/product/api/sku/dto/ProductSkuRespDTO.java`
+- `develop-module-mall/develop-module-product-api/src/main/java/com/develop/mvp/pk/module/product/api/sku/dto/ProductSkuUpdateStockReqDTO.java`
+- `develop-module-mall/develop-module-product-api/src/main/java/com/develop/mvp/pk/module/product/api/spu/dto/ProductSpuRespDTO.java`
+- `develop-module-mall/develop-module-product-api/src/main/java/com/develop/mvp/pk/module/product/api/property/dto/ProductPropertyValueDetailRespDTO.java`
+- `develop-module-mall/develop-module-product-api/src/main/java/com/develop/mvp/pk/module/product/enums/ErrorCodeConstants.java`
+- `develop-module-mall/develop-module-product-api/src/main/java/com/develop/mvp/pk/module/product/enums/ProductConstants.java`
+- `develop-module-mall/develop-module-product-api/src/main/java/com/develop/mvp/pk/module/product/enums/spu/ProductSpuStatusEnum.java`
 
-### R09 — SKU库存扣减必须防止超卖
-扣减使用`updateStockDecr`返回影响行数判断，为0表示库存不足(`SKU_STOCK_NOT_ENOUGH`)。
-- Source: `ProductSkuServiceImpl.updateSkuStock()` lines 256-268
+### Server entry and adapters
 
-### R10 — SPU级价格从SKU派生
-SPU的price/marketPrice/costPrice取各SKU的最小值，stock取各SKU之和。
-- Source: `ProductSpuServiceImpl.initSpuFromSkus()` lines 104-119
+- `develop-module-mall/develop-module-product-server/src/main/java/com/develop/mvp/pk/module/product/api/category/ProductCategoryApiImpl.java`
+- `develop-module-mall/develop-module-product-server/src/main/java/com/develop/mvp/pk/module/product/api/sku/ProductSkuApiImpl.java`
+- `develop-module-mall/develop-module-product-server/src/main/java/com/develop/mvp/pk/module/product/api/spu/ProductSpuApiImpl.java`
+- `develop-module-mall/develop-module-product-server/src/main/java/com/develop/mvp/pk/module/product/api/comment/ProductCommentApiImpl.java`
+- `develop-module-mall/develop-module-product-server/src/main/java/com/develop/mvp/pk/module/product/controller/admin/category/ProductCategoryController.java`
+- `develop-module-mall/develop-module-product-server/src/main/java/com/develop/mvp/pk/module/product/controller/admin/brand/ProductBrandController.java`
+- `develop-module-mall/develop-module-product-server/src/main/java/com/develop/mvp/pk/module/product/controller/admin/spu/ProductSpuController.java`
+- `develop-module-mall/develop-module-product-server/src/main/java/com/develop/mvp/pk/module/product/controller/admin/property/ProductPropertyController.java`
+- `develop-module-mall/develop-module-product-server/src/main/java/com/develop/mvp/pk/module/product/controller/admin/property/ProductPropertyValueController.java`
+- `develop-module-mall/develop-module-product-server/src/main/java/com/develop/mvp/pk/module/product/controller/admin/comment/ProductCommentController.java`
+- `develop-module-mall/develop-module-product-server/src/main/java/com/develop/mvp/pk/module/product/controller/admin/favorite/ProductFavoriteController.java`
+- `develop-module-mall/develop-module-product-server/src/main/java/com/develop/mvp/pk/module/product/controller/admin/history/ProductBrowseHistoryController.java`
+- `develop-module-mall/develop-module-product-server/src/main/java/com/develop/mvp/pk/module/product/controller/app/category/AppCategoryController.java`
+- `develop-module-mall/develop-module-product-server/src/main/java/com/develop/mvp/pk/module/product/controller/app/spu/AppProductSpuController.java`
+- `develop-module-mall/develop-module-product-server/src/main/java/com/develop/mvp/pk/module/product/controller/app/comment/AppProductCommentController.java`
+- `develop-module-mall/develop-module-product-server/src/main/java/com/develop/mvp/pk/module/product/controller/app/favorite/AppFavoriteController.java`
+- `develop-module-mall/develop-module-product-server/src/main/java/com/develop/mvp/pk/module/product/controller/app/history/AppProductBrowseHistoryController.java`
 
-### R11 — 商品评论确保每个订单项只能评论一次
-通过`selectByUserIdAndOrderItemId`校验，重复评论抛出`COMMENT_ORDER_EXISTS`。
-- Source: `ProductCommentServiceImpl.validateCommentExists()` lines 86-91
+### Legacy behavior source
 
-### R12 — 商品收藏确保用户+SPU唯一
-收藏前检查`selectByUserIdAndSpuId`，已存在则抛出`FAVORITE_EXISTS`。取消收藏需记录存在。
-- Source: `ProductFavoriteServiceImpl.createFavorite()` lines 31-35, `deleteFavorite()` lines 43-49
+- `develop-module-mall/develop-module-product-server/src/main/java/com/develop/mvp/pk/module/product/service/category/ProductCategoryServiceImpl.java`
+- `develop-module-mall/develop-module-product-server/src/main/java/com/develop/mvp/pk/module/product/service/brand/ProductBrandServiceImpl.java`
+- `develop-module-mall/develop-module-product-server/src/main/java/com/develop/mvp/pk/module/product/service/spu/ProductSpuServiceImpl.java`
+- `develop-module-mall/develop-module-product-server/src/main/java/com/develop/mvp/pk/module/product/service/sku/ProductSkuServiceImpl.java`
+- `develop-module-mall/develop-module-product-server/src/main/java/com/develop/mvp/pk/module/product/service/property/ProductPropertyServiceImpl.java`
+- `develop-module-mall/develop-module-product-server/src/main/java/com/develop/mvp/pk/module/product/service/property/ProductPropertyValueServiceImpl.java`
+- `develop-module-mall/develop-module-product-server/src/main/java/com/develop/mvp/pk/module/product/service/comment/ProductCommentServiceImpl.java`
+- `develop-module-mall/develop-module-product-server/src/main/java/com/develop/mvp/pk/module/product/service/favorite/ProductFavoriteServiceImpl.java`
+- `develop-module-mall/develop-module-product-server/src/main/java/com/develop/mvp/pk/module/product/service/history/ProductBrowseHistoryServiceImpl.java`
 
-### R13 — 浏览历史最多保存100条/用户
-新浏览记录插入前检查总数，超过100条则删除最早一条。
-- Source: `ProductBrowseHistoryServiceImpl.createBrowseHistory()` lines 30-53, 常量`USER_STORE_MAXIMUM=100`
+### Data, mapper, and convert source
 
-## 5. 依赖与协作
+- `develop-module-mall/develop-module-product-server/src/main/java/com/develop/mvp/pk/module/product/dal/dataobject/category/ProductCategoryDO.java`
+- `develop-module-mall/develop-module-product-server/src/main/java/com/develop/mvp/pk/module/product/dal/dataobject/brand/ProductBrandDO.java`
+- `develop-module-mall/develop-module-product-server/src/main/java/com/develop/mvp/pk/module/product/dal/dataobject/spu/ProductSpuDO.java`
+- `develop-module-mall/develop-module-product-server/src/main/java/com/develop/mvp/pk/module/product/dal/dataobject/sku/ProductSkuDO.java`
+- `develop-module-mall/develop-module-product-server/src/main/java/com/develop/mvp/pk/module/product/dal/dataobject/property/ProductPropertyDO.java`
+- `develop-module-mall/develop-module-product-server/src/main/java/com/develop/mvp/pk/module/product/dal/dataobject/property/ProductPropertyValueDO.java`
+- `develop-module-mall/develop-module-product-server/src/main/java/com/develop/mvp/pk/module/product/dal/dataobject/comment/ProductCommentDO.java`
+- `develop-module-mall/develop-module-product-server/src/main/java/com/develop/mvp/pk/module/product/dal/dataobject/favorite/ProductFavoriteDO.java`
+- `develop-module-mall/develop-module-product-server/src/main/java/com/develop/mvp/pk/module/product/dal/dataobject/history/ProductBrowseHistoryDO.java`
+- `develop-module-mall/develop-module-product-server/src/main/java/com/develop/mvp/pk/module/product/dal/mysql/sku/ProductSkuMapper.java`
+- `develop-module-mall/develop-module-product-server/src/main/java/com/develop/mvp/pk/module/product/dal/mysql/spu/ProductSpuMapper.java`
+- `develop-module-mall/develop-module-product-server/src/main/java/com/develop/mvp/pk/module/product/convert/brand/ProductBrandConvert.java`
+- `develop-module-mall/develop-module-product-server/src/main/java/com/develop/mvp/pk/module/product/convert/comment/ProductCommentConvert.java`
+- `develop-module-mall/develop-module-product-server/src/main/java/com/develop/mvp/pk/module/product/convert/favorite/ProductFavoriteConvert.java`
+- `develop-module-mall/develop-module-product-server/src/main/java/com/develop/mvp/pk/module/product/convert/sku/ProductSkuConvert.java`
+- `develop-module-mall/develop-module-product-server/src/main/java/com/develop/mvp/pk/module/product/convert/spu/ProductSpuConvert.java`
 
-### 5.1 模块内依赖
-- `ProductSpu` → `ProductCategory`: 校验分类合法性和层级
-- `ProductSpu` → `ProductBrand`: 校验品牌合法性
-- `ProductSpu` ↔ `ProductSku`: 级联创建/更新/删除，库存同步
-- `ProductSku` → `ProductProperty`/`ProductPropertyValue`: 校验属性存在
-- `ProductComment` → `ProductSpu`/`ProductSku`: 校验商品存在(含已删除)
-- `ProductCategory` ← `ProductSpu`: 删除分类时检查SPU绑定
+### Current partial DDD source
 
-### 5.2 模块间依赖
-- `ProductSpu`/`ProductSku` → `trade`: 通过API提供商品信息(价格/库存/状态)给交易和营销模块
-- `ProductComment` → `member`: 通过`MemberUserApi`获取用户信息
-- `ProductCategory` → `promotion`: 通过API提供分类校验给优惠券和满减送活动
-- `ProductFavorite` → 无外部依赖
-- `ProductBrowseHistory` → 无外部依赖
+- `develop-module-mall/develop-module-product-server/src/main/java/com/develop/mvp/pk/module/product/domain/event/DomainEvent.java`
+- `develop-module-mall/develop-module-product-server/src/main/java/com/develop/mvp/pk/module/product/domain/event/DomainEventPublisher.java`
+- `develop-module-mall/develop-module-product-server/src/main/java/com/develop/mvp/pk/module/product/infrastructure/SpringDomainEventPublisher.java`
+- `develop-module-mall/develop-module-product-server/src/main/java/com/develop/mvp/pk/module/product/domain/productcategory/ProductCategory.java`
+- `develop-module-mall/develop-module-product-server/src/main/java/com/develop/mvp/pk/module/product/domain/productcategory/repository/ProductCategoryRepository.java`
+- `develop-module-mall/develop-module-product-server/src/main/java/com/develop/mvp/pk/module/product/domain/productbrand/ProductBrand.java`
+- `develop-module-mall/develop-module-product-server/src/main/java/com/develop/mvp/pk/module/product/domain/productbrand/repository/ProductBrandRepository.java`
+- `develop-module-mall/develop-module-product-server/src/main/java/com/develop/mvp/pk/module/product/domain/productspu/ProductSpu.java`
+- `develop-module-mall/develop-module-product-server/src/main/java/com/develop/mvp/pk/module/product/domain/productspu/repository/ProductSpuRepository.java`
+- `develop-module-mall/develop-module-product-server/src/main/java/com/develop/mvp/pk/module/product/domain/productspu/repository/ProductSpuPageQuery.java`
+- `develop-module-mall/develop-module-product-server/src/main/java/com/develop/mvp/pk/module/product/application/productcategory/ProductCategoryApplicationService.java`,
+- `develop-module-mall/develop-module-product-server/src/main/java/com/develop/mvp/pk/module/product/application/productbrand/ProductBrandApplicationService.java`
+- `develop-module-mall/develop-module-product-server/src/main/java/com/develop/mvp/pk/module/product/application/productspu/ProductSpuApplicationService.java`
+- `develop-module-mall/develop-module-product-server/src/main/java/com/develop/mvp/pk/module/product/infrastructure/productcategory/ProductCategoryRepositoryImpl.java`
+- `develop-module-mall/develop-module-product-server/src/main/java/com/develop/mvp/pk/module/product/infrastructure/productbrand/ProductBrandRepositoryImpl.java`
+- `develop-module-mall/develop-module-product-server/src/main/java/com/develop/mvp/pk/module/product/infrastructure/productspu/ProductSpuRepositoryImpl.java`
 
-## 6. 不变式与约束
+### Integration config and tests
 
-### I01 — 分类层级不变式
-分类最多两层：根节点(level=0) → 一级分类(level=1) → 二级分类(level=2)。SPU只能挂在二级分类下。
-- 约束方式：validateParentProductCategory拒绝二级分类作为父节点
+- `develop-module-mall/develop-module-product-server/src/main/java/com/develop/mvp/pk/module/product/framework/rpc/config/RpcConfiguration.java` — class `RpcConfiguration`, bean name `productRpcConfiguration`, scans `MemberUserRemoteClient` and `MemberLevelRemoteClient`.
+- `develop-module-mall/develop-module-product-server/src/test/resources/application-unit-test.yaml`
+- `develop-module-mall/develop-module-product-server/src/test/resources/sql/create_tables.sql`
+- `develop-module-mall/develop-module-product-server/src/test/resources/sql/clean.sql`
 
-### I02 — SPU状态机[重要]
-```
-→ ENABLE ←→ DISABLE ←→ RECYCLE → (deleted)
-   ↑___________________________|
-```
-- ENABLE可下架到DISABLE，可进回收站到RECYCLE
-- DISABLE可上架到ENABLE，可进回收站到RECYCLE
-- RECYCLE只能恢复上架到ENABLE或彻底删除
-- 上架必须有至少一个SKU
+## Fixed API Contract
 
-### I03 — 价格不变式
-- SPU.price ≤ SPU.marketPrice（如果两者都非null）
-- 所有价格 >= 0
-- SPU.price = min(skus.price)
-- SPU.stock = sum(skus.stock)
-- SKU的库存扣减(spu.stock += incrCount)在SPU级别保障同步
+Current stable Product APIs still carry Feign annotations. Preserve these exact signatures until the local/remote split migrates `@FeignClient` to `remote/*RemoteClient`:
 
-### I04 — SKU属性完整约束
-- 多规格SKU必须都有相同数量的属性
-- 单一SKU内属性propertyId不能重复
-- 全部SKU中属性组合(propertyValueId集合)不能重复
+```java
+@FeignClient(name = ApiConstants.NAME)
+@Tag(name = "RPC 服务 - 商品分类")
+public interface ProductCategoryApi {
+    String PREFIX = ApiConstants.PREFIX + "/category";
 
-## 7. 验收标准
-
-### AC01 — 聚合根纯净性
-聚合根类无MyBatis/Spring注解(@Service/@Repository/@Table/@TableName等)，不注入Mapper。
-- 验证方法: grep聚合根文件确认无上述注解
-
-### AC02 — 值对象不可变性
-所有值对象为final class或record，字段均为final，无setter方法，构造时自校验合法性。
-- 验证方法: 检查每个值对象文件
-
-### AC03 — 仓储接口位置
-所有Repository接口定义在`domain/{aggregate}/repository/`包下，无infrastructure层import。
-- 验证方法: 检查Repository接口的import语句
-
-### AC04 — 仓储实现位置
-Repository实现在`infrastructure/{aggregate}/`包下，使用MyBatis Mapper。
-- 验证方法: 确认实现类在infrastructure层
-
-### AC05 — 应用服务不包含领域逻辑
-ApplicationService只负责事务编排、调用Repository和发布事件，不含if-else领域校验。
-- 验证方法: 审查ApplicationService代码
-
-### AC06 — 规格校验完整性
-单规格SKU自动补充默认属性，多规格进行完整的属性维度校验(存在性/重复/数量一致/组合去重)。
-- 验证方法: 单元测试覆盖单规格和多规格场景
-
-### AC07 — 库存扣减防超卖
-SKU库存扣减使用乐观锁(updateStockDecr返回int)，为0时抛出异常。
-- 验证方法: 并发测试/代码审查确认乐观锁机制
-
-### AC08 — 状态流转合法性
-SPU状态流转按I02状态机严格执行，不合法的流转抛出IllegalStateException。
-- 验证方法: 状态流转单元测试覆盖所有合法/非法路径
-
-### AC09 — 编译通过
-- 验证方法: `mvn compile -pl develop-module-mall/develop-module-product-server`
-
-## 8. 目录结构规划
-
-```
-develop-module-product-server/src/main/java/com/develop/mvp/pk/module/product/
-├── domain/
-│   ├── productcategory/
-│   │   ├── ProductCategory.java              (聚合根)
-│   │   ├── ProductCategoryFactory.java
-│   │   ├── valueobject/
-│   │   │   ├── ProductCategoryId.java
-│   │   │   └── ProductCategoryName.java
-│   │   ├── repository/
-│   │   │   └── ProductCategoryRepository.java
-│   │   └── event/
-│   │       └── ProductCategoryStatusChangedEvent.java
-│   ├── productbrand/
-│   │   ├── ProductBrand.java                 (聚合根)
-│   │   ├── ProductBrandFactory.java
-│   │   ├── valueobject/
-│   │   │   ├── ProductBrandId.java
-│   │   │   └── ProductBrandName.java
-│   │   ├── repository/
-│   │   │   └── ProductBrandRepository.java
-│   │   └── event/
-│   │       └── ProductBrandStatusChangedEvent.java
-│   ├── productspu/
-│   │   ├── ProductSpu.java                   (旗舰聚合根)
-│   │   ├── ProductSpuFactory.java
-│   │   ├── valueobject/
-│   │   │   ├── ProductSpuId.java
-│   │   │   ├── ProductSpuStatus.java
-│   │   │   ├── ProductSku.java               (record)
-│   │   │   └── SkuProperty.java              (record)
-│   │   ├── repository/
-│   │   │   ├── ProductSpuRepository.java
-│   │   │   └── ProductSpuPageQuery.java
-│   │   └── event/
-│   │       ├── ProductSpuCreatedEvent.java
-│   │       ├── ProductSpuStatusChangedEvent.java
-│   │       └── ProductSpuDeletedEvent.java
-│   ├── productcomment/
-│   │   ├── ProductComment.java               (聚合根)
-│   │   ├── ProductCommentFactory.java
-│   │   ├── valueobject/
-│   │   │   ├── ProductCommentId.java
-│   │   │   └── CommentScore.java
-│   │   ├── repository/
-│   │   │   └── ProductCommentRepository.java
-│   │   └── event/
-│   │       └── ProductCommentCreatedEvent.java
-│   ├── productfavorite/
-│   │   ├── ProductFavorite.java              (聚合根)
-│   │   ├── valueobject/
-│   │   │   └── ProductFavoriteId.java
-│   │   ├── repository/
-│   │   │   └── ProductFavoriteRepository.java
-│   │   └── event/
-│   │       └── ProductFavoriteToggledEvent.java
-│   └── event/
-│       ├── DomainEvent.java                  (抽象接口)
-│       └── DomainEventPublisher.java
-├── application/{aggregate}/
-│   └── ProductSpuApplicationService.java     (应用服务)
-├── infrastructure/{aggregate}/
-│   ├── ProductCategoryRepositoryImpl.java
-│   ├── ProductBrandRepositoryImpl.java
-│   ├── ProductSpuRepositoryImpl.java
-│   ├── ProductSkuRepositoryImpl.java
-│   └── ... (其他仓储实现)
-└── convert/                                  (MapStruct转换器)
+    @GetMapping(PREFIX + "/valid")
+    @Operation(summary = "校验部门是否合法")
+    CommonResult<Boolean> validateCategoryList(@RequestParam("ids") Collection<Long> ids);
+}
 ```
 
-## 9. 回滚条件
+```java
+@FeignClient(name = ApiConstants.NAME)
+@Tag(name = "RPC 服务 - 商品 SKU")
+public interface ProductSkuApi {
+    String PREFIX = ApiConstants.PREFIX + "/sku";
 
-以下任一情况应回滚当前步骤：
-1. 编译失败（`mvn compile` 不通过）
-2. 领域事件发布后未正确消费导致数据不一致
-3. 聚合根的接口变更导致应用服务层大面积编译错误
-4. 原有业务接口（Controller/API）行为发生变化
-5. 单元测试覆盖率低于原有水平
+    @GetMapping(PREFIX + "/get")
+    CommonResult<ProductSkuRespDTO> getSku(@RequestParam("id") Long id);
 
-## 10. 分步执行计划
+    @GetMapping(PREFIX + "/list")
+    CommonResult<List<ProductSkuRespDTO>> getSkuList(@RequestParam("ids") Collection<Long> ids);
 
-### Step 1: 完善已有聚合根
-- 1.1 审查 `ProductCategory` 聚合根，补充 `delete()` 方法（校验无子分类和SPU绑定）
-- 1.2 审查 `ProductBrand` 聚合根，补充name唯一性校验
-- 1.3 审查 `ProductSpu` 聚合根，补充 `updateSkus()` 的价格重算逻辑和状态校验完整性
+    default Map<Long, ProductSkuRespDTO> getSkuMap(Collection<Long> ids) {
+        return convertMap(getSkuList(ids).getCheckedData(), ProductSkuRespDTO::getId);
+    }
 
-### Step 2: 新建领域对象
-- 2.1 创建 `ProductComment` 聚合根（包含visible控制、reply方法、评分值对象）
-- 2.2 创建 `ProductFavorite` 聚合根（唯一性约束保障在Factory层）
-- 2.3 创建对应值对象和事件
+    @GetMapping(PREFIX + "/list-by-spu-id")
+    CommonResult<List<ProductSkuRespDTO>> getSkuListBySpuId(@RequestParam("spuIds") Collection<Long> spuIds);
 
-### Step 3: 完善仓储接口与实现
-- 3.1 为 `ProductComment`/`ProductFavorite` 创建Repository接口和实现
-- 3.2 为已有聚合根补齐缺失的查询方法（如批量查询、分页查询、按状态查询）
+    @PostMapping(PREFIX + "/update-stock")
+    CommonResult<Boolean> updateSkuStock(@RequestBody @Valid ProductSkuUpdateStockReqDTO updateStockReqDTO);
+}
+```
 
-### Step 4: 创建应用服务
-- 4.1 抽取原有Service中的业务逻辑到ApplicationService
-- 4.2 ApplicationService只负责：①调用Repository ②调用聚合根业务方法 ③发布事件
-- 4.3 Controller改为调用ApplicationService
+```java
+@FeignClient(name = ApiConstants.NAME)
+@Tag(name = "RPC 服务 - 商品 SPU")
+public interface ProductSpuApi {
+    String PREFIX = ApiConstants.PREFIX + "/spu";
 
-### Step 5: 验证
-- 5.1 运行全部单元测试
-- 5.2 编译通过
-- 5.3 确认Controller使用ApplicationService
+    @GetMapping(PREFIX + "/list")
+    CommonResult<List<ProductSpuRespDTO>> getSpuList(@RequestParam("ids") Collection<Long> ids);
+
+    default Map<Long, ProductSpuRespDTO> getSpuMap(Collection<Long> ids) {
+        return convertMap(getSpuList(ids).getCheckedData(), ProductSpuRespDTO::getId);
+    }
+
+    @GetMapping(PREFIX + "/valid")
+    CommonResult<List<ProductSpuRespDTO>> validateSpuList(@RequestParam("ids") Collection<Long> ids);
+
+    @GetMapping(PREFIX + "/get")
+    CommonResult<ProductSpuRespDTO> getSpu(@RequestParam("id") Long id);
+}
+```
+
+```java
+@FeignClient(name = ApiConstants.NAME)
+@Tag(name = "RPC 服务 - 产品评论")
+public interface ProductCommentApi {
+    String PREFIX = ApiConstants.PREFIX + "/comment";
+
+    @PostMapping(PREFIX + "/create")
+    @Operation(summary = "创建评论")
+    CommonResult<Long> createComment(@RequestBody @Valid ProductCommentCreateReqDTO createReqDTO);
+}
+```
+
+Do not fix the current `ProductCategoryApi` OpenAPI text `校验部门是否合法` unless the task explicitly includes API documentation cleanup.
+
+## Fixed Data Model
+
+All Product DOs extend `BaseDO`, so `creator`, `createTime`, `updater`, `updateTime`, and `deleted` behavior is inherited and must remain mapped through MyBatis Plus.
+
+### ProductCategoryDO: `product_category`
+
+- `id: Long` primary key.
+- `parentId: Long`; root is `ProductCategoryDO.PARENT_ID_NULL = 0L`.
+- `name: String`.
+- `picUrl: String`.
+- `sort: Integer`.
+- `status: Integer`, `CommonStatusEnum`.
+- Constant `CATEGORY_LEVEL = 2`; SPU can only bind category level >= 2.
+
+### ProductBrandDO: `product_brand`
+
+- `id: Long` primary key.
+- `name: String`, unique by service rule.
+- `picUrl: String`.
+- `sort: Integer`.
+- `description: String`.
+- `status: Integer`, `CommonStatusEnum`.
+
+### ProductSpuDO: `product_spu`
+
+- `id: Long` primary key.
+- `name`, `keyword`, `introduction`, `description: String`.
+- `categoryId: Long`, `brandId: Long`.
+- `picUrl: String`.
+- `sliderPicUrls: List<String>` using `JacksonTypeHandler`.
+- `sort: Integer`.
+- `status: Integer`, `ProductSpuStatusEnum`.
+- `specType: Boolean`.
+- `price`, `marketPrice`, `costPrice`, `stock: Integer`; derived from SKUs.
+- `deliveryTypes: List<Integer>` using `IntegerListTypeHandler`.
+- `deliveryTemplateId: Long`.
+- `giveIntegral: Integer`.
+- `subCommissionType: Boolean`.
+- `salesCount`, `virtualSalesCount`, `browseCount: Integer`.
+
+### ProductSkuDO: `product_sku`
+
+- `id: Long` primary key.
+- `spuId: Long`.
+- `properties: List<ProductSkuDO.Property>` using `JacksonTypeHandler`.
+- `price`, `marketPrice`, `costPrice: Integer` in cents.
+- `barCode`, `picUrl: String`.
+- `stock: Integer`.
+- `weight`, `volume: Double`.
+- `firstBrokeragePrice`, `secondBrokeragePrice: Integer`.
+- `salesCount: Integer`.
+- Nested `Property`: `propertyId`, `propertyName`, `valueId`, `valueName`.
+
+### ProductPropertyDO: `product_property`
+
+- `id: Long` primary key.
+- `name: String`.
+- `remark: String`.
+- Single-spec defaults: `ID_DEFAULT = 0L`, `NAME_DEFAULT = "默认"`.
+
+### ProductPropertyValueDO: `product_property_value`
+
+- `id: Long` primary key.
+- `propertyId: Long`.
+- `name: String`.
+- `remark: String`.
+- Single-spec defaults: `ID_DEFAULT = 0L`, `NAME_DEFAULT = "默认"`.
+
+### ProductCommentDO: `product_comment`
+
+- `id: Long` primary key.
+- `userId`, `orderId`, `orderItemId`, `spuId`, `skuId: Long`.
+- `userNickname`, `userAvatar`, `spuName`, `skuPicUrl: String`.
+- `anonymous`, `visible`, `replyStatus: Boolean`.
+- `skuProperties: List<ProductSkuDO.Property>` using `JacksonTypeHandler`.
+- `scores`, `descriptionScores`, `benefitScores: Integer`.
+- `content: String`.
+- `picUrls: List<String>` using `JacksonTypeHandler`.
+- `replyUserId: Long`, `replyContent: String`, `replyTime: LocalDateTime`.
+- Constant `NICKNAME_ANONYMOUS = "匿名用户"`.
+
+### ProductFavoriteDO: `product_favorite`
+
+- `id: Long` primary key.
+- `userId: Long`.
+- `spuId: Long`.
+
+### ProductBrowseHistoryDO: `product_browse_history`
+
+- `id: Long` primary key.
+- `spuId: Long`.
+- `userId: Long`.
+- `userDeleted: Boolean`.
+
+### External DTO fixed fields
+
+| DTO | Required fields | Nullable/current defaults | Mapping source/target |
+|---|---|---|---|
+| `ProductCommentCreateReqDTO` | `skuId`, `descriptionScores`, `benefitScores`, `content`, `anonymous`, `userId` | `orderId`, `orderItemId`, `picUrls` nullable | API request -> `ProductCommentConvert` -> `ProductCommentDO`; service fills SPU/SKU/member fields |
+| `ProductSkuRespDTO` | `id`, `spuId`, `properties`, `price`, `marketPrice`, `costPrice`, `barCode`, `picUrl`, `stock`, `weight`, `volume`, `firstBrokeragePrice`, `secondBrokeragePrice` | Mirrors SKU read model; no defaults in DTO | `ProductSkuDO` -> API response; `properties` maps to `ProductPropertyValueDetailRespDTO` |
+| `ProductSkuUpdateStockReqDTO` | `items` | no default; empty-list behavior is not explicitly validated by DTO | API request -> `ProductSkuServiceImpl#updateSkuStock` |
+| `ProductSkuUpdateStockReqDTO.Item` | `id`, `incrCount` | positive increments, negative decrements, zero no-ops in service | Item ids resolve to current SKU rows for SPU stock grouping |
+| `ProductSpuRespDTO` | `id`, `name`, `unit`, `categoryId`, `picUrl`, `status`, `specType`, `price`, `marketPrice`, `costPrice`, `stock`, `deliveryTypes`, `deliveryTemplateId`, `giveIntegral`, `subCommissionType` | DTO contains subset of DO; many fields are nullable by Java type | `ProductSpuDO` -> API response |
+| `ProductPropertyValueDetailRespDTO` | `propertyId`, `propertyName`, `valueId`, `valueName` | no default in DTO | SKU property detail response; preserve exact names |
+
+### Controller VO fixed field groups
+
+| VO | Field group | Required/default behavior | Mapping source/target |
+|---|---|---|---|
+| `ProductSpuSaveReqVO` | `id`, `name`, `keyword`, `introduction`, `description`, `categoryId`, `brandId`, `picUrl`, `sliderPicUrls`, `sort`, `specType`, `deliveryTypes`, `deliveryTemplateId`, `giveIntegral`, `subCommissionType`, `virtualSalesCount`, `salesCount`, `browseCount`, `skus` | Bean validation requires name/keyword/introduction/description/categoryId/brandId/picUrl/sort/specType/deliveryTypes/giveIntegral/subCommissionType; `id` nullable on create | Admin Controller -> legacy service/application -> `ProductSpuDO`/domain |
+| `ProductSkuSaveReqVO` | `name`, `price`, `marketPrice`, `costPrice`, `barCode`, `picUrl`, `stock`, `weight`, `volume`, `firstBrokeragePrice`, `secondBrokeragePrice`, `properties` | `price`, `picUrl`, `stock` required; single-spec flow overwrites `properties` with default property/value | Nested under `ProductSpuSaveReqVO#skus`; maps to `ProductSkuDO` or domain `ProductSku` |
+| `ProductSkuSaveReqVO.Property` | `propertyId`, `propertyName`, `valueId`, `valueName` | nullable by VO, but multi-spec validation requires coherent existing ids | Maps to `ProductSkuDO.Property` / `SkuProperty` |
+| `ProductCategorySaveReqVO` | `id`, `parentId`, `name`, `picUrl`, `sort`, `status` | `parentId=0L` means root | Maps to `ProductCategoryDO` / `ProductCategory` |
+| `ProductBrandCreateReqVO` and `ProductBrandUpdateReqVO` | `name`, `picUrl`, `sort`, `description`, `status`; update includes `id` | name uniqueness checked by service | Maps to `ProductBrandDO` / `ProductBrand` |
+| `ProductCommentCreateReqVO` | admin-created comment fields | validates SKU/SPU but does not use member RPC path | Maps through `ProductCommentConvert` to `ProductCommentDO` |
+| `ProductCommentUpdateVisibleReqVO` and `ProductCommentReplyReqVO` | `id` plus visible/reply fields | existing comment required | partial update of `ProductCommentDO` |
+| `AppFavoriteReqVO`, `AppFavoriteBatchReqVO`, `AppFavoritePageReqVO` | user-facing favorite request/page fields | current user id comes from app security context | maps to favorite service calls |
+| `AppProductBrowseHistoryDeleteReqVO` and `AppProductBrowseHistoryPageReqVO` | app browse-history request/page fields | current user id comes from app security context | maps to history service calls |
+
+### Domain fixed model
+
+| Domain type | Fields/capabilities | Current status |
+|---|---|---|
+| `ProductCategory` | id, name, parentId, picUrl, sort, status, domain events; enable/disable/profile update | Exists as partial DDD model |
+| `ProductBrand` | id, name, picUrl, sort, description, status, domain events; enable/disable/profile update | Exists as partial DDD model |
+| `ProductSpu` | id, name, keyword, introduction, description, categoryId, brandId, picUrl, sliderPicUrls, sort, status, specType, skus, derived prices/stock, delivery, integral, commission, sales/virtual/browse counts, domain events | Exists but not legacy-parity complete |
+| `ProductSku` value object | sku id, properties, price, marketPrice, costPrice, barCode, picUrl, stock, weight, volume, salesCount | Exists under `domain/productspu/valueobject` |
+| `SkuProperty` value object | propertyId, propertyName, valueId, valueName | Exists under `domain/productspu/valueobject` |
+| ProductProperty/ProductPropertyValue/ProductComment/ProductFavorite/ProductBrowseHistory aggregates | Required for final target, but currently absent as full DDD aggregates | Must be introduced only after preserving legacy service behavior |
+
+### Cross-layer mapping invariants
+
+- `ProductSpuSaveReqVO.skus[*]` -> `ProductSkuDO`/`ProductSku`; SPU price and stock are derived after SKU validation, not copied from request.
+- `ProductSkuDO.Property` <-> `ProductSkuSaveReqVO.Property` <-> `SkuProperty` must preserve `propertyId/propertyName/valueId/valueName` exactly.
+- `ProductSkuRespDTO.properties[*]` exposes property/value details and must not be collapsed to ids only.
+- `ProductCommentCreateReqDTO` does not carry SPU/member display fields; service fills them from SKU/SPU/member lookups.
+- `ProductSpuDO.sliderPicUrls`, `ProductSkuDO.properties`, and `ProductCommentDO.picUrls/skuProperties` must remain JSON-compatible list fields.
+
+## Required Method Signatures and Capabilities
+
+These signatures describe capabilities that must be preserved. New DDD application service method names may differ only if Controller/API behavior and tests prove parity.
+
+### Target DDD signatures
+
+These names are recommended for consistency with current partial DDD code. If a future batch renames them, the parameter semantics and return contracts must remain equivalent.
+
+#### ProductCategory target
+
+```java
+public interface ProductCategoryRepository {
+    ProductCategory save(ProductCategory category);
+    void delete(ProductCategoryId id);
+    ProductCategory findById(ProductCategoryId id);
+    Optional<ProductCategory> findByName(String name);
+    List<ProductCategory> findByParentId(Long parentId);
+    List<ProductCategory> findByStatus(Integer status);
+    List<ProductCategory> findAll();
+    long countByParentId(Long parentId);
+}
+```
+
+Application capabilities must include create, update, delete, status update, get by id, list by parent, list all, list by status, parent validation, child-count validation, and bound-SPU validation before delete.
+
+#### ProductBrand target
+
+```java
+public interface ProductBrandRepository {
+    ProductBrand save(ProductBrand brand);
+    void delete(ProductBrandId id);
+    ProductBrand findById(ProductBrandId id);
+    Optional<ProductBrand> findByName(String name);
+    List<ProductBrand> findByStatus(Integer status);
+    List<ProductBrand> findAll();
+    long count();
+}
+```
+
+Application capabilities must include create, update, delete, status update, get/list, and name uniqueness with current-id exclusion.
+
+#### ProductSpu target
+
+```java
+public interface ProductSpuRepository {
+    ProductSpu save(ProductSpu spu);
+    void delete(ProductSpuId id);
+    ProductSpu findById(ProductSpuId id);
+    ProductSpu findByIdIncludeDeleted(ProductSpuId id);
+    List<ProductSpu> findByIds(Collection<ProductSpuId> ids);
+    List<ProductSpu> findByStatus(Integer status);
+    PageResult<ProductSpu> findPage(ProductSpuPageQuery query);
+    long countByCategoryId(Long categoryId);
+    void updateStock(Long id, int incrCount);
+    void updateBrowseCount(Long id, int incrCount);
+    Map<Integer, Long> getTabsCount();
+}
+```
+
+`ProductSpuFactory` must support both create from request semantics and reconstitution from persisted DO/SKU data. Create semantics must not require a non-null database id before insert; reconstitution may require an id.
+
+Application capabilities must include create, update, delete, status update, recycle if exposed, stock update, browse-count update, get, ordered list, status list, admin page, app page behavior, tab counts, and category-bound count.
+
+#### Missing target repositories
+
+The final DDD target also needs repository interfaces for ProductSku, ProductProperty, ProductPropertyValue, ProductComment, ProductFavorite, and ProductBrowseHistory. They are currently absent. Do not invent these in a broad batch; introduce each with the aggregate/service migration that proves parity.
+
+Minimum required capabilities when introduced:
+
+- `ProductSkuRepository`: find by id including deleted, find by ids, find by SPU id(s), create batch, update diff by property key, delete by SPU id, update stock incr/decr with affected-row guard, update redundant property names.
+- `ProductPropertyRepository`: find by id, find by name, save, delete, page/list.
+- `ProductPropertyValueRepository`: find by id, find by `(propertyId, name)`, find by property ids, count by property id, save, delete, delete by property id.
+- `ProductCommentRepository`: find by id, find by `(userId, orderItemId)`, save, page, visible/reply partial updates.
+- `ProductFavoriteRepository`: find by `(userId, spuId)`, save, delete, page, count by user.
+- `ProductBrowseHistoryRepository`: find by `(userId, spuId)`, find oldest/page count by user, save, delete, hide by user and SPU ids, page.
+
+### Legacy service capability signatures
+
+### Category
+
+- `Long createCategory(ProductCategorySaveReqVO createReqVO)`.
+- `void updateCategory(ProductCategorySaveReqVO updateReqVO)`.
+- `void deleteCategory(Long id)`.
+- `void validateCategoryList(Collection<Long> ids)`.
+- `void validateCategory(Long id)`.
+- `Integer getCategoryLevel(Long id)`.
+- `List<ProductCategoryDO> getEnableCategoryList()` and `getEnableCategoryList(List<Long> ids)`.
+
+### Brand
+
+- `Long createBrand(ProductBrandCreateReqVO createReqVO)`.
+- `void updateBrand(ProductBrandUpdateReqVO updateReqVO)`.
+- `void deleteBrand(Long id)`.
+- `void validateProductBrand(Long id)`.
+- `void validateBrandNameUnique(Long id, String name)` behavior must be preserved.
+
+### SPU and SKU
+
+- `Long createSpu(ProductSpuSaveReqVO createReqVO)`.
+- `void updateSpu(ProductSpuSaveReqVO updateReqVO)`.
+- `void deleteSpu(Long id)`.
+- `void updateSpuStatus(ProductSpuUpdateStatusReqVO updateReqVO)`.
+- `List<ProductSpuDO> validateSpuList(Collection<Long> ids)`.
+- `List<ProductSpuDO> getSpuList(Collection<Long> ids)` must preserve input order.
+- `PageResult<ProductSpuDO> getSpuPage(AppProductSpuPageReqVO pageReqVO)` must include enabled child categories when category filters are used.
+- `void validateSkuList(List<ProductSkuSaveReqVO> skus, Boolean specType)`.
+- `void updateSkuStock(ProductSkuUpdateStockReqDTO updateStockReqDTO)`.
+- `int updateSkuProperty(Long propertyId, String propertyName)`.
+- `int updateSkuPropertyValue(Long propertyValueId, String propertyValueName)`.
+
+### Property and property value
+
+- Creating an existing property by name returns the existing id instead of throwing.
+- Updating property with another row's name throws `PROPERTY_EXISTS`.
+- Deleting property with values throws `PROPERTY_DELETE_FAIL_VALUE_EXISTS`.
+- Creating an existing property value under the same property returns the existing id instead of throwing.
+- Updating property value with another row's name under the same property throws `PROPERTY_VALUE_EXISTS`.
+- Property and property-value name changes must update redundant SKU property names.
+
+### Comment, favorite, and browse history
+
+- `Long createComment(ProductCommentCreateReqDTO createReqDTO)` validates SKU/SPU including deleted rows, checks `(userId, orderItemId)` uniqueness, loads member user detail, and inserts comment.
+- `void updateCommentVisible(ProductCommentUpdateVisibleReqVO updateReqVO)`.
+- `void replyComment(ProductCommentReplyReqVO replyVO, Long userId)`.
+- `Long createFavorite(Long userId, Long spuId)` enforces `(userId, spuId)` uniqueness.
+- `void deleteFavorite(Long userId, Long spuId)` requires an existing favorite.
+- `void createBrowseHistory(Long userId, Long spuId)` ignores null users, keeps only latest record per user/SPU, and caps each user at 100 records.
+- `void hideUserBrowseHistory(Long userId, Collection<Long> spuIds)` sets `userDeleted=true`.
+
+## Business Rules
+
+### Category rules
+
+- Root category id is `0L`.
+- Parent validation allows root; non-root parent must exist and must itself be first-level (`parentId == 0L`).
+- Category deletion requires: category exists, no child categories, and no bound SPU.
+- API category validation ignores empty id collections.
+- API category validation fails if any id does not exist, is disabled, or has level lower than `CATEGORY_LEVEL`.
+- `getCategoryLevel` uses an upper loop bound of `Byte.MAX_VALUE` to avoid dirty-data infinite loops.
+
+### Brand rules
+
+- Brand creation and update require unique `name`, excluding the current id on update.
+- `validateProductBrand` throws if the brand is missing or disabled.
+- Brand deletion currently only checks existence; it does not check SPU binding in legacy behavior.
+
+### SPU rules
+
+- Create/update validates category, brand, and SKU list before writing.
+- Create initializes SPU status to `ENABLE`, `salesCount` to `0`, and `browseCount` to `0` when status is null.
+- Update preserves existing status instead of accepting status from the save request.
+- `price`, `marketPrice`, and `costPrice` are the minimum values from SKU list; `stock` is the sum of SKU stock.
+- Delete requires current status `RECYCLE`; otherwise throw `SPU_NOT_RECYCLE`.
+- `validateSpuList` ignores empty collections and throws `SPU_NOT_EXISTS` or `SPU_NOT_ENABLE` with SPU name.
+- `getSpuList(Collection<Long> ids)` returns results in the same order as requested ids.
+- App SPU page includes children of selected enabled categories.
+- Tab counts include for-sale, in-warehouse, sold-out, alert-stock, and recycle-bin counts.
+
+### SKU rules
+
+- Empty SKU list throws `SKU_NOT_EXISTS`.
+- Single spec (`specType == false`) mutates the first SKU to use default property/value `0L/默认` and returns without multi-spec validation.
+- Multi-spec validation requires all referenced property ids to exist.
+- Duplicate properties inside one SKU throw `SKU_PROPERTIES_DUPLICATED`.
+- Inconsistent property counts across SKUs throw `SPU_ATTR_NUMBERS_MUST_BE_EQUALS`.
+- Duplicate SKU property-value combinations throw `SPU_SKU_NOT_DUPLICATE`.
+- Stock increment updates SKU `stock += incrCount` and `sales_count -= incrCount`.
+- Stock decrement uses affected-row guard `stock >= abs(incrCount)`; zero affected rows throws `SKU_STOCK_NOT_ENOUGH`.
+- After SKU stock updates, SPU stock/sales changes are grouped by actual SKU-to-SPU mapping and applied through `ProductSpuService.updateSpuStock`.
+
+### Property rules
+
+- Creating a property whose name already exists returns the existing id.
+- Updating a property to another property's name throws `PROPERTY_EXISTS`.
+- Deleting a property with any values throws `PROPERTY_DELETE_FAIL_VALUE_EXISTS`.
+- Property name changes must update redundant names inside all SKU JSON property entries.
+
+### Property value rules
+
+- Creating a property value whose `(propertyId, name)` already exists returns the existing id.
+- Updating a property value to another value's name under the same property throws `PROPERTY_VALUE_EXISTS`.
+- Property value name changes must update redundant names inside all SKU JSON property entries.
+
+### Comment rules
+
+- Comment creation through RPC validates SKU by `getSku(skuId, true)` and SPU by `getSpu(spuId, true)`, meaning deleted SKU/SPU rows are still accepted if found by include-deleted mapper methods.
+- RPC comment creation checks one comment per `(userId, orderItemId)` and throws `COMMENT_ORDER_EXISTS` on duplicates.
+- RPC comment creation loads `MemberUserApi#getUser(userId).getCheckedData()` before converting and inserting.
+- Visible update and reply require existing comment; missing comment throws `COMMENT_NOT_EXISTS`.
+
+### Favorite rules
+
+- Favorite creation checks `(userId, spuId)`; existing favorite throws `FAVORITE_EXISTS`.
+- Favorite deletion checks `(userId, spuId)`; missing favorite throws `FAVORITE_NOT_EXISTS`.
+
+### Browse history rules
+
+- Null `userId` means no browse history is recorded.
+- Same user and SPU keeps only the latest record by deleting the old one before insert.
+- Each user keeps at most `USER_STORE_MAXIMUM = 100` records; when at or over the limit, delete the oldest record before insert.
+- User hiding browse history sets `userDeleted=true` for the selected user/SPU rows.
+
+## Error Code Contract
+
+All thrown errors must reuse `develop-module-mall/develop-module-product-api/src/main/java/com/develop/mvp/pk/module/product/enums/ErrorCodeConstants.java`.
+
+| Constant | Code | Message | Required parameter behavior |
+|---|---:|---|---|
+| `CATEGORY_NOT_EXISTS` | `1_008_001_000` | 商品分类不存在 | no parameter |
+| `CATEGORY_PARENT_NOT_EXISTS` | `1_008_001_001` | 父分类不存在 | no parameter |
+| `CATEGORY_PARENT_NOT_FIRST_LEVEL` | `1_008_001_002` | 父分类不能是二级分类 | no parameter |
+| `CATEGORY_EXISTS_CHILDREN` | `1_008_001_003` | 存在子分类，无法删除 | no parameter |
+| `CATEGORY_DISABLED` | `1_008_001_004` | 商品分类({})已禁用，无法使用 | pass category name |
+| `CATEGORY_HAVE_BIND_SPU` | `1_008_001_005` | 类别下存在商品，无法删除 | no parameter |
+| `BRAND_NOT_EXISTS` | `1_008_002_000` | 品牌不存在 | no parameter |
+| `BRAND_DISABLED` | `1_008_002_001` | 品牌已禁用 | no parameter |
+| `BRAND_NAME_EXISTS` | `1_008_002_002` | 品牌名称已存在 | no parameter |
+| `PROPERTY_NOT_EXISTS` | `1_008_003_000` | 属性项不存在 | no parameter |
+| `PROPERTY_EXISTS` | `1_008_003_001` | 属性项的名称已存在 | no parameter |
+| `PROPERTY_DELETE_FAIL_VALUE_EXISTS` | `1_008_003_002` | 属性项下存在属性值，无法删除 | no parameter |
+| `PROPERTY_VALUE_NOT_EXISTS` | `1_008_004_000` | 属性值不存在 | no parameter |
+| `PROPERTY_VALUE_EXISTS` | `1_008_004_001` | 属性值的名称已存在 | no parameter |
+| `SPU_NOT_EXISTS` | `1_008_005_000` | 商品 SPU 不存在 | no parameter |
+| `SPU_SAVE_FAIL_CATEGORY_LEVEL_ERROR` | `1_008_005_001` | 商品分类不正确，原因：必须使用第二级的商品分类及以下 | no parameter |
+| `SPU_SAVE_FAIL_COUPON_TEMPLATE_NOT_EXISTS` | `1_008_005_002` | 商品 SPU 保存失败，原因：优惠劵不存在 | current product services do not throw this during normal SPU save |
+| `SPU_NOT_ENABLE` | `1_008_005_003` | 商品 SPU【{}】不处于上架状态 | pass SPU name |
+| `SPU_NOT_RECYCLE` | `1_008_005_004` | 商品 SPU 不处于回收站状态 | no parameter |
+| `SKU_NOT_EXISTS` | `1_008_006_000` | 商品 SKU 不存在 | no parameter |
+| `SKU_PROPERTIES_DUPLICATED` | `1_008_006_001` | 商品 SKU 的属性组合存在重复 | no parameter |
+| `SPU_ATTR_NUMBERS_MUST_BE_EQUALS` | `1_008_006_002` | 一个 SPU 下的每个 SKU，其属性项必须一致 | no parameter |
+| `SPU_SKU_NOT_DUPLICATE` | `1_008_006_003` | 一个 SPU 下的每个 SKU，必须不重复 | no parameter |
+| `SKU_STOCK_NOT_ENOUGH` | `1_008_006_004` | 商品 SKU 库存不足 | no parameter |
+| `COMMENT_NOT_EXISTS` | `1_008_007_000` | 商品评价不存在 | no parameter |
+| `COMMENT_ORDER_EXISTS` | `1_008_007_001` | 订单的商品评价已存在 | no parameter |
+| `FAVORITE_EXISTS` | `1_008_008_000` | 该商品已经被收藏 | no parameter |
+| `FAVORITE_NOT_EXISTS` | `1_008_008_001` | 商品收藏不存在 | no parameter |
+
+Do not replace `ServiceExceptionUtil.exception(...)` with plain Java exceptions in application or infrastructure paths that currently surface framework error codes.
+
+## Transaction Contract
+
+- `ProductSpuServiceImpl#createSpu`, `updateSpu`, `deleteSpu`, `updateSpuStock`, and `updateSpuStatus` use `@Transactional(rollbackFor = Exception.class)`.
+- `ProductSkuServiceImpl#updateSkuList` and `updateSkuStock` use `@Transactional(rollbackFor = Exception.class)`.
+- `ProductPropertyServiceImpl#createProperty` and `updateProperty` use `@Transactional(rollbackFor = Exception.class)`.
+- DDD application services must use `@Transactional(rollbackFor = Exception.class)` on equivalent write use cases when migrated; plain `@Transactional` is not parity with this contract.
+- Stock updates must keep SKU update and SPU stock aggregation in the same transaction.
+- SPU create/update must keep SPU and SKU writes in the same transaction.
+- Comment/favorite/history writes are currently non-transactional single-aggregate operations; add transactions only when introducing multiple writes that must roll back together.
+
+## Integration Contract
+
+- Product server currently scans Feign clients in `develop-module-mall/develop-module-product-server/src/main/java/com/develop/mvp/pk/module/product/framework/rpc/config/RpcConfiguration.java`; the actual class is `RpcConfiguration` with configuration bean name `productRpcConfiguration`, and it scans `MemberUserRemoteClient` plus `MemberLevelRemoteClient`.
+- Product comment creation depends on stable `MemberUserApi`, not a remote client directly.
+- Product APIs are consumed by trade and promotion modules for product validation, stock updates, SKU/SPU/category reads, and comment creation.
+- API local/remote split must keep business callers injecting stable `ProductCategoryApi`, `ProductSkuApi`, `ProductSpuApi`, or `ProductCommentApi` while moving Feign identity to `remote/*RemoteClient`.
+- Product server local implementations must implement the stable API contracts and must not depend on remote product clients.
+- Do not move product DTOs, DOs, VOs, mappers, message objects, or domain objects during local/remote split unless explicitly included in the migration task.
+
+## Mapping Rules
+
+- Controller VO mapping can stay in existing `convert/*` during incremental migration.
+- Domain objects must not import Controller VO, DO, Mapper, Feign, Spring, MyBatis, or framework RPC classes.
+- Infrastructure repository implementations may import Mapper and DO, but should not construct Controller VO for mapper paging if a domain query object can be mapped locally.
+- ProductSku JSON property mapping must preserve `propertyId`, `propertyName`, `valueId`, and `valueName` exactly.
+- ProductSpu `sliderPicUrls` and ProductComment `picUrls` must remain JSON-list fields.
+- ProductSpu `deliveryTypes` must remain `IntegerListTypeHandler` compatible.
+- API DTO field sets must remain stable: `ProductSkuRespDTO`, `ProductSpuRespDTO`, `ProductCommentCreateReqDTO`, `ProductSkuUpdateStockReqDTO`, and `ProductPropertyValueDetailRespDTO` are external contracts.
+
+## Current Conflict Notes
+
+These are known current-code conflicts that must be resolved before replacing legacy services:
+
+1. `ProductCategoryApplicationService#createCategory`, `ProductBrandApplicationService#createBrand`, and `ProductSpuApplicationService#createSpu` accept `id` and pass it into factories. Legacy create paths create DOs with null ids and return database-generated ids.
+2. `ProductSpuRepositoryImpl#save` checks `productSpuMapper.selectById(spu.id().value())`; this fails for database-generated create flows if the domain id is null.
+3. Current partial DDD application services use plain `@Transactional`, while legacy multi-write methods use `rollbackFor = Exception.class`.
+4. `ProductCategoryApplicationService#deleteCategory` checks child categories but does not check bound SPU count, while legacy `deleteCategory` throws `CATEGORY_HAVE_BIND_SPU` if bound SPUs exist.
+5. `ProductCategoryApplicationService#createCategory` validates only parent existence, not the legacy `CATEGORY_PARENT_NOT_FIRST_LEVEL` rule.
+6. `ProductSpuApplicationService#createSpu` does not call category, brand, or SKU validation equivalent to legacy `ProductSpuServiceImpl`.
+7. `ProductSpuApplicationService#updateSpuStatus` ignores recycle status in the generic status update path unless `recycleSpu` is called separately; legacy status update sets the requested status directly after existence validation.
+8. `ProductSpuRepositoryImpl#getTabsCount` omits alert-stock count and hard-codes tab keys; legacy `getTabsCount` uses `ProductSpuPageReqVO` constants and includes five counts.
+9. `ProductSpuRepositoryImpl#findPage` constructs `ProductSpuPageReqVO` in infrastructure; this is an accepted temporary migration bridge but not the final DDD boundary.
+10. ProductComment, ProductFavorite, ProductBrowseHistory, ProductProperty, and ProductPropertyValue are not yet fully represented as DDD aggregates/application services in current code.
+11. Product API interfaces still include `@FeignClient`; this violates the target local/remote split but is current external behavior until that migration runs.
+12. Current `ProductCategoryApi` OpenAPI summary says `校验部门是否合法`; do not silently change it during DDD refactoring.
+
+## Acceptance Criteria
+
+- Public API signatures and DTO field names remain unchanged unless an explicit API migration says otherwise.
+- Product server compiles after each aggregate batch.
+- Legacy service behavior listed in this skill is covered by migrated application/domain/infrastructure code before callers switch from legacy service to application service.
+- Category deletion still rejects child categories and bound SPUs.
+- Brand uniqueness behavior is preserved.
+- SPU create/update still validates category, brand, and SKU list and still derives SPU price/marketPrice/costPrice/stock from SKUs.
+- SKU stock decrement remains affected-row guarded and throws `SKU_STOCK_NOT_ENOUGH` on insufficient stock.
+- SPU stock/sales counters remain synchronized with SKU stock updates.
+- Property/property-value name changes still update redundant SKU JSON property names.
+- Comment creation still validates include-deleted SKU/SPU rows, member user data, and `(userId, orderItemId)` uniqueness.
+- Favorite uniqueness and missing-delete errors are preserved.
+- Browse history still ignores anonymous users, deduplicates by user/SPU, and caps each user at 100 records.
+- Domain layer remains pure Java and imports no Spring, MyBatis, Mapper, DO, Controller VO, Feign, Redis, or framework RPC classes.
+
+## Verification Commands
+
+Run document checks after editing this skill:
+
+```bash
+git diff --check -- .claude/ddd-skills/AggregateRoot_MallProduct_Skill.md
+grep -n "^## " .claude/ddd-skills/AggregateRoot_MallProduct_Skill.md
+```
+
+Run code checks after Product API or Product server changes:
+
+```bash
+mvn compile -pl develop-module-mall/develop-module-product-api -am -DskipTests
+mvn compile -pl develop-module-mall/develop-module-product-server -am -DskipTests
+```
+
+For stock behavior changes, add or run targeted tests that prove:
+
+- Decrement with enough stock updates SKU and SPU stock/sales.
+- Decrement with insufficient stock throws `SKU_STOCK_NOT_ENOUGH` and rolls back.
+- Increment reverses stock/sales counters consistently.
+
+## Quick Reference
+
+| Area | Preserve |
+|---|---|
+| Category | root `0L`, max parent depth, bind-SPU delete guard, level >= 2 for SPU |
+| Brand | name uniqueness, disabled-brand validation |
+| SPU | category/brand/SKU validation, derived price/stock, recycle-only delete |
+| SKU | single-spec default property, multi-spec duplicate checks, stock affected-row guard |
+| Property | duplicate create returns existing id, rename updates SKU JSON names |
+| Comment | include-deleted SKU/SPU lookup, member user lookup, order-item uniqueness |
+| Favorite | `(userId, spuId)` uniqueness |
+| History | null user ignored, user/SPU dedup, max 100 records |
+| API split | stable API injected by callers, Feign only in remote client after migration |
+
+## Common Mistakes
+
+- Treating the previous draft's ideal SPU state machine as implemented legacy behavior.
+- Removing `@FeignClient` from stable API without adding and scanning `remote/*RemoteClient`.
+- Changing `ProductCategoryApi` documentation text while doing unrelated DDD migration.
+- Returning unordered SPU lists from `getSpuList(Collection<Long> ids)`.
+- Replacing affected-row stock decrement with in-memory validation.
+- Forgetting to update SPU stock after SKU stock update.
+- Forgetting to update redundant SKU property/property-value names.
+- Making comment creation reject deleted SKU/SPU rows when legacy include-deleted lookup accepts them.
+- Creating DDD aggregate ids before insert in a way that breaks database-generated ids.
+- Adding domain imports of DO, Mapper, Controller VO, Spring, Feign, or MyBatis.
+
+## Rationalization Table
+
+| Excuse | Reality |
+|---|---|
+| "The DDD aggregate already models this better." | Legacy behavior is the public contract until parity is proven. |
+| "Feign annotations are wrong, so remove them now." | Local/remote split requires stable API plus remote client migration and consumer compile checks. |
+| "Stock can be validated before update." | Current anti-oversell behavior is the affected-row guarded SQL update. |
+| "Comment should not use deleted SKU/SPU." | Current behavior explicitly uses include-deleted lookup. Changing it is a product decision. |
+| "The OpenAPI summary typo is harmless to fix." | Public API docs are an external contract; fix only in an API-doc migration. |
+| "Application service can throw IllegalStateException." | Existing callers expect framework error codes from `ServiceExceptionUtil.exception(...)`. |
+
+## Red Flags
+
+Stop the current refactor if any of these happen:
+
+- Controller path, HTTP method, permission, DTO field, response wrapper, or pagination semantics would change.
+- API compile requires moving DTOs or renaming stable `Product*Api` interfaces.
+- Domain code needs Mapper/DO/VO/Feign/Spring imports to make progress.
+- Stock behavior cannot preserve affected-row guard and SPU stock synchronization in one transaction.
+- Category deletion no longer checks bound SPUs.
+- Product comment behavior would change from include-deleted SKU/SPU lookup to normal lookup without explicit approval.
+- Compile errors spread beyond Product module and direct API consumers.
+
+## Rollback Conditions
+
+Rollback the current Product batch if:
+
+- `develop-module-product-api` or `develop-module-product-server` cannot compile after scoped fixes.
+- Any public Product API signature or DTO field changes unintentionally.
+- Stock decrement no longer prevents oversell by SQL affected-row guard.
+- SPU create/update can persist SPU without corresponding SKU parity.
+- Category/brand/SPU/comment/favorite/history error-code behavior changes without tests and explicit approval.
+- A change requires deleting unrelated user modifications or broad rewrites outside the current aggregate.
+
+## AI Self-Check
+
+Before reporting a Product refactor complete, answer yes to every item:
+
+- Did I read this skill plus both global standards before modifying code?
+- Did I identify the exact Product aggregate or API slice for this batch?
+- Did I compare migrated behavior against the listed legacy service methods?
+- Did I preserve public API signatures, DTO fields, Controller behavior, and error codes?
+- Did I keep domain pure and infrastructure as the only Mapper/DO adapter layer?
+- Did I run the relevant Maven compile command fresh and read the result?
+- Did I document any unresolved conflict rather than silently broadening scope?

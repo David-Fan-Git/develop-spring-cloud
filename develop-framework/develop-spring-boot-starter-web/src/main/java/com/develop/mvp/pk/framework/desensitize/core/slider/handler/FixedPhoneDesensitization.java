@@ -5,7 +5,7 @@ import com.develop.mvp.pk.framework.desensitize.core.slider.annotation.FixedPhon
 /**
  * {@link FixedPhoneDesensitize} 的脱敏处理器
  *
- * @author gaibu
+ * @author David
  */
 public class FixedPhoneDesensitization extends AbstractSliderDesensitizationHandler<FixedPhoneDesensitize> {
 

@@ -40,7 +40,7 @@ public class CartApplicationService {
     @Transactional
     public void updateCount(Long userId, Long skuId, Integer count) {
         Cart cart = cartRepository.findByUserIdAndSkuId(userId, skuId);
-        if (cart == null) throw exception(CART_NOT_EXISTS);
+        if (cart == null) throw exception(CARD_ITEM_NOT_FOUND);
         cart.updateCount(count);
         cartRepository.save(cart);
     }

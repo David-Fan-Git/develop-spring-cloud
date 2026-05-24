@@ -4,12 +4,13 @@ import java.util.Objects;
 import lombok.Getter;
 @Getter
 public final class PayApp {
-    private final Long id; private final String name;
+    private final Long id; private String name;
     private String appKey; private Integer status; private String remark;
     private String orderNotifyUrl; private String refundNotifyUrl; private String transferNotifyUrl;
     public PayApp(Long id, String name) { this.id = id; this.name = Objects.requireNonNull(name); }
     public static PayApp of(Long id, String name) { return new PayApp(id, name); }
     public Long id() { return id; } public String name() { return name; }
+    public PayApp name(String v) { name = Objects.requireNonNull(v); return this; }
     public String appKey() { return appKey; } public Integer status() { return status; }
     public String remark() { return remark; }
     public String orderNotifyUrl() { return orderNotifyUrl; }

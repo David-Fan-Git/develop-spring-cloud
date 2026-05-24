@@ -3,7 +3,7 @@ package com.develop.mvp.pk.module.member.enums;
 /**
  * Member 字典类型的枚举类
  *
- * @author owen
+ * @author David
  */
 public interface DictTypeConstants {
 

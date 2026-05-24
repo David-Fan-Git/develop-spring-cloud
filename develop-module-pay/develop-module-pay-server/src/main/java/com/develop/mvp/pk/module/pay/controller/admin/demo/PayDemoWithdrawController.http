@@ -23,7 +23,7 @@ tenant-id: {{adminTenantId}}
   "subject": "测试转账",
   "price": 1,
   "userAccount": "oiSC85elO_OZogXODC5RoGyXamK4",
-  "userName": "芋艿"
+  "userName": "David"
 }
 
 ### 请求 /pay/demo-withdraw/create 接口（钱包余额）

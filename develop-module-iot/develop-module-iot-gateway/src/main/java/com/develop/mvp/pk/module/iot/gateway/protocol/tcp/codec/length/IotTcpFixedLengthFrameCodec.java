@@ -14,7 +14,7 @@ import lombok.extern.slf4j.Slf4j;
  * <p>
  * 基于固定长度的拆包策略，每条消息固定字节数
  *
- * @author 芋道源码
+ * @author David
  */
 @Slf4j
 public class IotTcpFixedLengthFrameCodec implements IotTcpFrameCodec {

@@ -19,7 +19,7 @@ import java.util.List;
 /**
  * {@link XingHuoChatModel} 集成测试
  *
- * @author fansili
+ * @author David
  */
 public class XingHuoChatModelTests {
 

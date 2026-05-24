@@ -55,6 +55,10 @@ public final class User {
         this.lastLogin = null;
     }
 
+    void recordCreated() {
+        events.add(new UserCreatedEvent(this.id.value(), this.username.value(), this.tenantId));
+    }
+
     public void disable() {
         if (this.status.isDisabled()) return;
         this.status = this.status.disable();

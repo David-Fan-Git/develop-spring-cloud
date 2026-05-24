@@ -40,7 +40,7 @@ import static com.develop.mvp.pk.framework.common.util.collection.MapUtils.findA
 /**
  * 拼团活动 Convert
  *
- * @author HUIHUI
+ * @author David
  */
 @Mapper
 public interface CombinationActivityConvert {

@@ -14,7 +14,7 @@ import com.develop.mvp.pk.module.mes.enums.DictTypeConstants;
 /**
  * MES 生产流转卡 DO
  *
- * @author 芋道源码
+ * @author David
  */
 @TableName("mes_pro_card")
 @KeySequence("mes_pro_card_seq")

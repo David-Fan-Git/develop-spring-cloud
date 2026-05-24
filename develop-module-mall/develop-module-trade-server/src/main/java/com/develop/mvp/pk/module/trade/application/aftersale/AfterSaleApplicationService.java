@@ -78,7 +78,7 @@ public class AfterSaleApplicationService {
 
     private AfterSale findExistingAfterSale(AfterSaleId id) {
         AfterSale afterSale = afterSaleRepository.findById(id);
-        if (afterSale == null) throw exception(AFTER_SALE_NOT_EXISTS);
+        if (afterSale == null) throw exception(AFTER_SALE_NOT_FOUND);
         return afterSale;
     }
 }

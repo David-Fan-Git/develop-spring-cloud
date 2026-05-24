@@ -5,7 +5,7 @@ import com.develop.mvp.pk.module.mes.dal.dataobject.md.autocode.MesMdAutoCodePar
 /**
  * MES 编码规则分段策略接口
  *
- * @author 芋道源码
+ * @author David
  */
 public interface MesMdAutoCodePartStrategy {
 

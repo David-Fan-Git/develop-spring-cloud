@@ -9,7 +9,7 @@ import java.util.List;
 /**
  * 交易下单日志 Service 接口
  *
- * @author 陈賝
+ * @author David
  * @since 2023/7/6 15:44
  */
 public interface TradeOrderLogService {
@@ -18,7 +18,7 @@ public interface TradeOrderLogService {
      * 创建交易下单日志
      *
      * @param logDTO 日志记录
-     * @author 陈賝
+     * @author David
      * @since 2023/7/6 15:45
      */
     @Async

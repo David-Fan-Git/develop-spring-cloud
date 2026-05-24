@@ -7,7 +7,7 @@ import org.springframework.validation.annotation.Validated;
 /**
  * Cache 配置项
  *
- * @author Wanwan
+ * @author David
  */
 @ConfigurationProperties("develop.cache")
 @Data

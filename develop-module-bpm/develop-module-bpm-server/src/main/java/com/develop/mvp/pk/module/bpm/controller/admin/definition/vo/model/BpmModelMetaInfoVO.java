@@ -23,7 +23,7 @@ import java.util.List;
  * {@link com.develop.mvp.pk.module.bpm.dal.dataobject.definition.BpmProcessDefinitionInfoDO}
  * 是一致的
  *
- * @author 芋道源码
+ * @author David
  */
 @Data
 public class BpmModelMetaInfoVO {

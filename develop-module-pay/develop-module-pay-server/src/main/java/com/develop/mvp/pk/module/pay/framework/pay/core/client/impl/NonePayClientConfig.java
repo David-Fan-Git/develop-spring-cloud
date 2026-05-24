@@ -8,7 +8,7 @@ import jakarta.validation.Validator;
 /**
  * 无需任何配置 PayClientConfig 实现类
  *
- * @author jason
+ * @author David
  */
 @Data
 public class NonePayClientConfig implements PayClientConfig {

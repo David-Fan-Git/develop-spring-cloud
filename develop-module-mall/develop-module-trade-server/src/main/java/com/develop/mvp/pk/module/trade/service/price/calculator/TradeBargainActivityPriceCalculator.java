@@ -17,7 +17,7 @@ import jakarta.annotation.Resource;
 /**
  * 砍价活动的 {@link TradePriceCalculator} 实现类
  *
- * @author 芋道源码
+ * @author David
  */
 @Component
 @Order(TradePriceCalculator.ORDER_BARGAIN_ACTIVITY)
@@ -41,7 +41,7 @@ public class TradeBargainActivityPriceCalculator implements TradePriceCalculator
 
         // 3.1 记录优惠明细
         Integer discountPrice = orderItem.getPayPrice() - bargainActivity.getBargainPrice() * orderItem.getCount();
-        // TODO 芋艿：极端情况，优惠金额为负数，需要处理
+        // TODO David：极端情况，优惠金额为负数，需要处理
         TradePriceCalculatorHelper.addPromotion(result, orderItem,
                 bargainActivity.getActivityId(), bargainActivity.getName(), PromotionTypeEnum.BARGAIN_ACTIVITY.getType(),
                 StrUtil.format("砍价活动：省 {} 元", TradePriceCalculatorHelper.formatPrice(discountPrice)),

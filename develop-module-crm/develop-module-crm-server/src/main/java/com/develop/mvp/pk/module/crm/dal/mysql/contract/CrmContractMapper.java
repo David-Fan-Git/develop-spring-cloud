@@ -20,7 +20,7 @@ import java.util.List;
 /**
  * CRM 合同 Mapper
  *
- * @author dhb52
+ * @author David
  */
 @Mapper
 public interface CrmContractMapper extends BaseMapperX<CrmContractDO> {

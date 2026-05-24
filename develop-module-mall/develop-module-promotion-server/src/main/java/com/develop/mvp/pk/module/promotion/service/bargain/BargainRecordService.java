@@ -16,7 +16,7 @@ import java.util.Map;
 /**
  * 砍价记录 service 接口
  *
- * @author HUIHUI
+ * @author David
  */
 public interface BargainRecordService {
 

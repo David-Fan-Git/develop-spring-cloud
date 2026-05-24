@@ -10,7 +10,7 @@ import lombok.*;
 /**
  * MES 工艺路线工序 DO
  *
- * @author 芋道源码
+ * @author David
  */
 @TableName("mes_pro_route_process")
 @KeySequence("mes_pro_route_process_seq")

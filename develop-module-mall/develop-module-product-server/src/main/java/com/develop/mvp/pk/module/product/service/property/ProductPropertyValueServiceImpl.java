@@ -22,7 +22,7 @@ import static com.develop.mvp.pk.module.product.enums.ErrorCodeConstants.PROPERT
 /**
  * 商品属性值 Service 实现类
  *
- * @author LuoWenFeng
+ * @author David
  */
 @Service
 @Validated

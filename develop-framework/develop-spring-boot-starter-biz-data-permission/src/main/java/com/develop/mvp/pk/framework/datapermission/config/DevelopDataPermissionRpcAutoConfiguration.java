@@ -12,7 +12,7 @@ import static com.develop.mvp.pk.framework.common.enums.WebFilterOrderEnum.TENAN
 /**
  * 数据权限针对 RPC 的自动配置类
  *
- * @author 芋道源码
+ * @author David
  */
 @AutoConfiguration
 @ConditionalOnClass(name = "feign.RequestInterceptor")

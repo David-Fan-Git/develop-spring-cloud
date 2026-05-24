@@ -13,7 +13,7 @@ import java.util.Objects;
  *
  * copy from develop-spring-boot-starter-env 的 EnvUtils 类
  *
- * @author 芋道源码
+ * @author David
  */
 public class EnvUtils {
 

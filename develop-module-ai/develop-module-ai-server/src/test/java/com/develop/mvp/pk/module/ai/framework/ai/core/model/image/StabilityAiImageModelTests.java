@@ -18,7 +18,7 @@ import java.util.concurrent.TimeUnit;
 /**
  * {@link StabilityAiImageModel} 集成测试类
  *
- * @author fansili
+ * @author David
  */
 public class StabilityAiImageModelTests {
 

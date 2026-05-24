@@ -15,7 +15,7 @@ import java.util.Set;
 /**
  * 表单内部门负责人 {@link BpmTaskCandidateStrategy} 实现类
  *
- * @author jason
+ * @author David
  */
 @Component
 public class BpmTaskCandidateFormDeptLeaderStrategy extends AbstractBpmTaskCandidateDeptLeaderStrategy {

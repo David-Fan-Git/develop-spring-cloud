@@ -12,7 +12,7 @@ import java.util.List;
 /**
  * MES 流转卡工序记录 Mapper
  *
- * @author 芋道源码
+ * @author David
  */
 @Mapper
 public interface MesProCardProcessMapper extends BaseMapperX<MesProCardProcessDO> {

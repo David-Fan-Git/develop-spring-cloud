@@ -19,7 +19,7 @@ import static com.develop.mvp.pk.framework.common.exception.util.ServiceExceptio
 /**
  * OAuth2 授予 Service 实现类
  *
- * @author 芋道源码
+ * @author David
  */
 @Service
 public class OAuth2GrantServiceImpl implements OAuth2GrantService {

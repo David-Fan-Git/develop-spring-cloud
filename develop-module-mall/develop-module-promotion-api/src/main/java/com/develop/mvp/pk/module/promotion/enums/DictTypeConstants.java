@@ -3,7 +3,7 @@ package com.develop.mvp.pk.module.promotion.enums;
 /**
  * promotion 字典类型的枚举类
  *
- * @author HUIHUI
+ * @author David
  */
 public class DictTypeConstants {
 

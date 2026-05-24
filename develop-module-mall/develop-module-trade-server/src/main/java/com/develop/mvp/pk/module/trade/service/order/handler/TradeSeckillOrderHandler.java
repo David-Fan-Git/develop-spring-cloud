@@ -14,7 +14,7 @@ import java.util.List;
 /**
  * 秒杀订单的 {@link TradeOrderHandler} 实现类
  *
- * @author HUIHUI
+ * @author David
  */
 @Component
 public class TradeSeckillOrderHandler implements TradeOrderHandler {

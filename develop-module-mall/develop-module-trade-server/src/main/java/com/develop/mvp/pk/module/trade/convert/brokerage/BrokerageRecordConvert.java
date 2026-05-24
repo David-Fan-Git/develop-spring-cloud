@@ -23,7 +23,7 @@ import java.util.Optional;
 /**
  * 佣金记录 Convert
  *
- * @author owen
+ * @author David
  */
 @Mapper
 public interface BrokerageRecordConvert {

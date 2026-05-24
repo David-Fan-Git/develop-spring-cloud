@@ -10,7 +10,7 @@ import java.util.List;
 /**
  * {@link SunoApi} 集成测试
  *
- * @author xiaoxin
+ * @author David
  */
 public class SunoApiTests {
 

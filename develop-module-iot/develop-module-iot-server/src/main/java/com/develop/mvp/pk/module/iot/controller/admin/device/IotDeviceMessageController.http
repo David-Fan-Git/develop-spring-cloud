@@ -14,7 +14,7 @@ Authorization: Bearer {{token}}
   }
 }
 
-### 请求 /iot/device/downstream 接口（服务调用）=> 成功 TODO 芋艿：未更新为最新
+### 请求 /iot/device/downstream 接口（服务调用）=> 成功 TODO David：未更新为最新
 POST {{baseUrl}}/iot/device/downstream
 Content-Type: application/json
 tenant-id: {{adminTenantId}}
@@ -29,7 +29,7 @@ Authorization: Bearer {{token}}
   }
 }
 
-### 请求 /iot/device/downstream 接口（属性设置）=> 成功 TODO 芋艿：未更新为最新
+### 请求 /iot/device/downstream 接口（属性设置）=> 成功 TODO David：未更新为最新
 POST {{baseUrl}}/iot/device/downstream
 Content-Type: application/json
 tenant-id: {{adminTenantId}}
@@ -44,7 +44,7 @@ Authorization: Bearer {{token}}
   }
 }
 
-### 请求 /iot/device/downstream 接口（属性获取）=> 成功 TODO 芋艿：未更新为最新
+### 请求 /iot/device/downstream 接口（属性获取）=> 成功 TODO David：未更新为最新
 POST {{baseUrl}}/iot/device/downstream
 Content-Type: application/json
 tenant-id: {{adminTenantId}}
@@ -57,7 +57,7 @@ Authorization: Bearer {{token}}
   "data": ["xx", "yy"]
 }
 
-### 请求 /iot/device/downstream 接口（配置设置）=> 成功 TODO 芋艿：未更新为最新
+### 请求 /iot/device/downstream 接口（配置设置）=> 成功 TODO David：未更新为最新
 POST {{baseUrl}}/iot/device/downstream
 Content-Type: application/json
 tenant-id: {{adminTenantId}}
@@ -69,7 +69,7 @@ Authorization: Bearer {{token}}
   "identifier": "set"
 }
 
-### 请求 /iot/device/downstream 接口（OTA 升级）=> 成功 TODO 芋艿：未更新为最新
+### 请求 /iot/device/downstream 接口（OTA 升级）=> 成功 TODO David：未更新为最新
 POST {{baseUrl}}/iot/device/downstream
 Content-Type: application/json
 tenant-id: {{adminTenantId}}

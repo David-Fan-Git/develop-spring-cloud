@@ -10,7 +10,7 @@ import org.apache.ibatis.annotations.Mapper;
 /**
  * AI 写作 Mapper
  *
- * @author xiaoxin
+ * @author David
  */
 @Mapper
 public interface AiWriteMapper extends BaseMapperX<AiWriteDO> {

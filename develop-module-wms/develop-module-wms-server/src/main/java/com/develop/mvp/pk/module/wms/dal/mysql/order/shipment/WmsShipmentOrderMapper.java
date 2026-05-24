@@ -11,7 +11,7 @@ import org.apache.ibatis.annotations.Mapper;
 /**
  * WMS 出库单 Mapper
  *
- * @author 芋道源码
+ * @author David
  */
 @Mapper
 public interface WmsShipmentOrderMapper extends BaseMapperX<WmsShipmentOrderDO> {

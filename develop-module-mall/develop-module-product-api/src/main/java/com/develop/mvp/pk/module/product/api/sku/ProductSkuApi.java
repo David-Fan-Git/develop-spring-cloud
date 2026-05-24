@@ -20,7 +20,7 @@ import java.util.Map;
 
 import static com.develop.mvp.pk.framework.common.util.collection.CollectionUtils.convertMap;
 
-@FeignClient(name = ApiConstants.NAME) // TODO 芋艿：fallbackFactory =
+@FeignClient(name = ApiConstants.NAME) // TODO David：fallbackFactory =
 @Tag(name = "RPC 服务 - 商品 SKU")
 public interface ProductSkuApi {
 

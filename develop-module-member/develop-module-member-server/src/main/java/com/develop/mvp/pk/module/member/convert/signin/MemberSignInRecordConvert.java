@@ -24,7 +24,7 @@ import static com.develop.mvp.pk.framework.common.util.collection.CollectionUtil
 /**
  * 签到记录 Convert
  *
- * @author 芋道源码
+ * @author David
  */
 @Mapper
 public interface MemberSignInRecordConvert {
@@ -73,7 +73,7 @@ public interface MemberSignInRecordConvert {
             vo.setUserId(r.userId());
             vo.setDay(r.day());
             vo.setPoint(r.point());
-            vo.setExperience(r.experience());
+            vo.setCreateTime(r.createTime());
             return vo;
         }).collect(Collectors.toList());
         PageResult<MemberSignInRecordRespVO> result = new PageResult<>(list, pageResult.getTotal());
@@ -86,11 +86,10 @@ public interface MemberSignInRecordConvert {
     default AppMemberSignInRecordRespVO coverRecordToAppRecordVo(MemberSignInRecord record) {
         if (record == null) return null;
         AppMemberSignInRecordRespVO vo = new AppMemberSignInRecordRespVO();
-        vo.setId(record.id());
-        vo.setUserId(record.userId());
         vo.setDay(record.day());
         vo.setPoint(record.point());
         vo.setExperience(record.experience());
+        vo.setCreateTime(record.createTime());
         return vo;
     }
 
@@ -98,11 +97,10 @@ public interface MemberSignInRecordConvert {
         if (pageResult == null) return null;
         List<AppMemberSignInRecordRespVO> list = pageResult.getList().stream().map(r -> {
             AppMemberSignInRecordRespVO vo = new AppMemberSignInRecordRespVO();
-            vo.setId(r.id());
-            vo.setUserId(r.userId());
             vo.setDay(r.day());
             vo.setPoint(r.point());
             vo.setExperience(r.experience());
+            vo.setCreateTime(r.createTime());
             return vo;
         }).collect(Collectors.toList());
         return new PageResult<>(list, pageResult.getTotal());

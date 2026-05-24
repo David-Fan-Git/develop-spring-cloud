@@ -24,7 +24,7 @@ import static com.develop.mvp.pk.module.iot.gateway.enums.ErrorCodeConstants.DEV
  * <p>
  * 处理 MQTT CONNECT 事件，完成设备认证、连接注册、上线通知
  *
- * @author 芋道源码
+ * @author David
  */
 @Slf4j
 public class IotMqttAuthHandler extends IotMqttAbstractHandler {

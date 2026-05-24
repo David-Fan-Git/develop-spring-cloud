@@ -21,7 +21,7 @@ import com.develop.mvp.pk.module.mes.enums.DictTypeConstants;
 /**
  * MES 来料检验单（IQC, Incoming Quality Control） DO
  *
- * @author 芋道源码
+ * @author David
  */
 @TableName("mes_qc_iqc")
 @KeySequence("mes_qc_iqc_seq")

@@ -9,7 +9,7 @@ import java.util.Arrays;
 /**
  * ERP 业务类型枚举
  *
- * @author HUIHUI
+ * @author David
  */
 @RequiredArgsConstructor
 @Getter

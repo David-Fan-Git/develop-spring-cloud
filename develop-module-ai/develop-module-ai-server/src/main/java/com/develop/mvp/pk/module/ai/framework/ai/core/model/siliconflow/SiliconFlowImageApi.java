@@ -38,7 +38,7 @@ import java.util.Map;
  *
  * @see <a href= "https://docs.siliconflow.cn/cn/api-reference/images/images-generations">Images</a>
  *
- * @author zzt
+ * @author David
  */
 public class SiliconFlowImageApi {
 

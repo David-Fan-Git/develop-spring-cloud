@@ -9,7 +9,7 @@ import java.util.Arrays;
 /**
  * CRM 的审批状态
  *
- * @author 赤焰
+ * @author David
  */
 @RequiredArgsConstructor
 @Getter

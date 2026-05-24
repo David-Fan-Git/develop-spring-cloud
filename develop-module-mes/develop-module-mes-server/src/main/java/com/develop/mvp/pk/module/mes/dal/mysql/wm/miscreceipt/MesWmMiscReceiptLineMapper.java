@@ -12,7 +12,7 @@ import java.util.List;
 /**
  * MES 杂项入库单行 Mapper
  *
- * @author 芋道源码
+ * @author David
  */
 @Mapper
 public interface MesWmMiscReceiptLineMapper extends BaseMapperX<MesWmMiscReceiptLineDO> {

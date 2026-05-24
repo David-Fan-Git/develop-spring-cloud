@@ -34,7 +34,7 @@ import static com.develop.mvp.pk.module.ai.enums.ErrorCodeConstants.MUSIC_NOT_EX
 /**
  * AI 音乐 Service 实现类
  *
- * @author xiaoxin
+ * @author David
  */
 @Service
 @Slf4j

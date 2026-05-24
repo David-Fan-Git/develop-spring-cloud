@@ -12,7 +12,7 @@
     <packaging>jar</packaging>
 
     <name>${project.artifactId}</name>
-    <!-- TODO 芋艿：需要在整理下，特别是 PF4J -->
+    <!-- TODO David：需要在整理下，特别是 PF4J -->
     <description>
         物联网 模块 API，暴露给其它模块调用
     </description>

@@ -23,7 +23,7 @@ import static com.develop.mvp.pk.module.product.enums.ErrorCodeConstants.*;
 /**
  * 商品属性项 Service 实现类
  *
- * @author 芋道源码
+ * @author David
  */
 @Service
 @Validated

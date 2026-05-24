@@ -15,7 +15,7 @@ import java.util.Map;
 /**
  * 设备服务调用触发器匹配器：处理设备服务调用的触发器匹配逻辑
  *
- * @author HUIHUI
+ * @author David
  */
 @Component
 public class IotDeviceServiceInvokeTriggerMatcher implements IotSceneRuleTriggerMatcher {

@@ -18,7 +18,7 @@ import org.springframework.stereotype.Component;
  * 支持 MySQL、PostgreSQL、Oracle、SQL Server、DM 达梦等数据库，
  * HikariCP 会根据 JDBC URL 自动加载对应的驱动。
  *
- * @author HUIHUI
+ * @author David
  */
 @Component
 @Slf4j

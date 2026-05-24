@@ -11,7 +11,7 @@ import org.springframework.stereotype.Component;
 /**
  * 物理删除过期 N 天的令牌的 Job
  *
- * @author preschooler
+ * @author David
  */
 @Component
 @Slf4j

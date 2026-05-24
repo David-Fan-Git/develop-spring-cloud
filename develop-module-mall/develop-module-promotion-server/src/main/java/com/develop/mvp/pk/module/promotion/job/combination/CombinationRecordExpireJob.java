@@ -9,11 +9,11 @@ import org.springframework.stereotype.Component;
 
 import jakarta.annotation.Resource;
 
-// TODO 芋艿：配置一个 Job
+// TODO David：配置一个 Job
 /**
  * 拼团过期 Job
  *
- * @author HUIHUI
+ * @author David
  */
 @Component
 public class CombinationRecordExpireJob {

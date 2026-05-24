@@ -14,7 +14,7 @@ import java.util.List;
 /**
  * 积分商城活动 Service 接口
  *
- * @author HUIHUI
+ * @author David
  */
 public interface PointActivityService {
 

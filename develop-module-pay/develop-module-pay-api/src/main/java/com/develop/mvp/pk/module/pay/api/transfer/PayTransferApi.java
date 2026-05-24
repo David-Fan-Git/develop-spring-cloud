@@ -16,7 +16,7 @@ import org.springframework.web.bind.annotation.RequestBody;
 import jakarta.validation.Valid;
 import org.springframework.web.bind.annotation.RequestParam;
 
-@FeignClient(name = ApiConstants.NAME) // TODO 芋艿：fallbackFactory =
+@FeignClient(name = ApiConstants.NAME) // TODO David：fallbackFactory =
 @Tag(name = "RPC 服务 - 转账单")
 public interface PayTransferApi {
 

@@ -12,7 +12,7 @@ import java.util.List;
 /**
  * 用户分组 Mapper
  *
- * @author owen
+ * @author David
  */
 @Mapper
 public interface MemberGroupMapper extends BaseMapperX<MemberGroupDO> {

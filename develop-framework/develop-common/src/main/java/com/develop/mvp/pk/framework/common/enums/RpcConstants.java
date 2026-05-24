@@ -5,7 +5,7 @@ package com.develop.mvp.pk.framework.common.enums;
  *
  * 虽然放在 develop-spring-boot-starter-rpc 会相对合适，但是每个 API 模块需要使用到，所以暂时只好放在此处
  *
- * @author 芋道源码
+ * @author David
  */
 public interface RpcConstants {
 

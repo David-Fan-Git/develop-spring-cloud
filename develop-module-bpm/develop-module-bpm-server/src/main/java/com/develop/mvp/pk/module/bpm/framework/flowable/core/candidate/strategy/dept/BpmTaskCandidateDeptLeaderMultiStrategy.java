@@ -12,7 +12,7 @@ import java.util.Set;
 /**
  * 连续多级部门的负责人 {@link BpmTaskCandidateStrategy} 实现类
  *
- * @author jason
+ * @author David
  */
 @Component
 public class BpmTaskCandidateDeptLeaderMultiStrategy extends AbstractBpmTaskCandidateDeptLeaderStrategy {

@@ -28,7 +28,7 @@ import static com.develop.mvp.pk.module.ai.enums.ErrorCodeConstants.CHAT_ROLE_NO
 /**
  * AI 聊天角色 Service 实现类
  *
- * @author fansili
+ * @author David
  */
 @Service
 @Slf4j

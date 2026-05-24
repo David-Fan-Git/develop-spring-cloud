@@ -9,7 +9,7 @@ import lombok.*;
 /**
  * WMS 仓库 DO
  *
- * @author 芋道源码
+ * @author David
  */
 @TableName("wms_warehouse")
 @KeySequence("wms_warehouse_seq")

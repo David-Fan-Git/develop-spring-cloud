@@ -22,7 +22,7 @@ import static com.develop.mvp.pk.framework.mq.redis.config.DevelopRedisMQConsume
 /**
  * Redis 的 {@link IotMessageBus} 实现类
  *
- * @author 芋道源码
+ * @author David
  */
 @Slf4j
 public class IotRedisMessageBus implements IotMessageBus {

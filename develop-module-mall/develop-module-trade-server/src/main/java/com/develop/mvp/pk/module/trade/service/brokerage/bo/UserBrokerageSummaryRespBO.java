@@ -7,7 +7,7 @@ import lombok.NoArgsConstructor;
 /**
  * 用户佣金合计 BO
  *
- * @author owen
+ * @author David
  */
 @Data
 @NoArgsConstructor

@@ -6,7 +6,7 @@ import lombok.Getter;
 /**
  * AI 绘画状态的枚举
  *
- * @author fansili
+ * @author David
  */
 @AllArgsConstructor
 @Getter

@@ -18,7 +18,7 @@ import static com.develop.mvp.pk.framework.common.util.collection.CollectionUtil
 /**
  * 用户积分记录 Convert
  *
- * @author QingX
+ * @author David
  */
 @Mapper
 public interface MemberPointRecordConvert {

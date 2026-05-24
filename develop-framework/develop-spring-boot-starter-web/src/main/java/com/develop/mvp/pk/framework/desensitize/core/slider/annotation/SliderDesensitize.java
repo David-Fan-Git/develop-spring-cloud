@@ -9,7 +9,7 @@ import java.lang.annotation.*;
 /**
  * 滑动脱敏注解
  *
- * @author gaibu
+ * @author David
  */
 @Documented
 @Target({ElementType.FIELD, ElementType.ANNOTATION_TYPE})

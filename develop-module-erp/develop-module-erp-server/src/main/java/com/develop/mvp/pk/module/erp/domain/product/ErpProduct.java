@@ -68,7 +68,7 @@ public final class ErpProduct {
     }
 
     public static ErpProduct of(Long id, String name) {
-        return new ErpProduct(id, name, null, null, null, null, null, null, null, null, null, null, null);
+        return new ErpProduct(id != null ? ErpProductId.of(id) : null, name, null, null, null, null, null, null, null, null, null, null, null);
     }
 
     public void updateProfile(String name, String barCode, Long categoryId, Long unitId,

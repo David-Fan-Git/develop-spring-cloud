@@ -9,7 +9,7 @@ import java.util.Arrays;
 /**
  * 佣金提现状态枚举
  *
- * @author owen
+ * @author David
  */
 @AllArgsConstructor
 @Getter

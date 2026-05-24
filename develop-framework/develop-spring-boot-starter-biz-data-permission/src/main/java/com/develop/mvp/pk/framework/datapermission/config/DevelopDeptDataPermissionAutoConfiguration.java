@@ -16,7 +16,7 @@ import java.util.List;
 /**
  * 基于部门的数据权限 AutoConfiguration
  *
- * @author 芋道源码
+ * @author David
  */
 @AutoConfiguration
 @ConditionalOnClass(LoginUser.class)

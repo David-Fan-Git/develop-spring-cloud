@@ -9,7 +9,7 @@ import java.util.Arrays;
 /**
  * CRM 回款方式枚举
  *
- * @author HUIHUI
+ * @author David
  */
 @Getter
 @AllArgsConstructor

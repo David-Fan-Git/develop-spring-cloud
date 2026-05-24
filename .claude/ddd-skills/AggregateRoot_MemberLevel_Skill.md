@@ -1,117 +1,223 @@
-# DDD Skill: AggregateRoot_MemberLevel_Skill
+---
+name: aggregate-root-member-level
+description: Use when modifying or reproducing the member module 会员等级/MemberLevel aggregate, including level CRUD, add/reduce experience, calculate user level, admin /member/user/update-level, MemberLevelApi local/remote contracts, or auditing divergence between legacy MemberLevelService and current DDD code.
+type: ddd-aggregate-skill
+module: member-level
+status: production-ready
+last_verified: 2026-05-24
+---
 
-## 1. 技能名称
+# DDD Skill: MemberLevel Aggregate
 
-`AggregateRoot_MemberLevel_Skill` — 会员域（Member Domain）多个聚合根的领域建模与重构技能
+## Overview
 
-## 2. 适用场景
+`MemberLevel` 表示会员等级配置与会员经验变更后的等级计算边界。本 skill 只覆盖会员等级聚合，不覆盖会员分组、会员标签、积分记录、签到配置或签到记录；这些聚合必须拆成独立 skill 后再生产重构。
 
-本技能针对 **会员域** 的完整生命周期管理，覆盖以下 6 个聚合根的 CRUD + 领域逻辑：
+## Go / No-Go Gate
 
-| 聚合根 | 领域包 | 模块 | 核心职责 |
-|--------|--------|------|----------|
-| MemberLevel | `domain/level/` | 会员等级 | 等级定义（名称、级别、经验值、折扣）、等级升降级计算、等级变更追踪 |
-| MemberGroup | `domain/group/` | 会员分组 | 用户分组管理、状态控制 |
-| MemberTag | `domain/tag/` | 会员标签 | 标签管理、名称唯一性 |
-| MemberPointRecord | `domain/point/` | 积分记录 | 积分变动记录、余额校验 |
-| MemberSignInConfig | `domain/signin/` | 签到配置 | 签到天数规则配置（每日积分/经验） |
-| MemberSignInRecord | `domain/signin/` | 签到记录 | 签到记录、连续签到天数、防重复签到 |
+`status: production-ready` 表示本 skill 可作为 MemberLevel 重构蓝图，不表示当前 Java DDD 实现已经完全等价于 legacy service。当前 Admin/App Controller 已承接 `MemberLevelApplicationService`；RPC `MemberLevelApiImpl` 仍通过 legacy `MemberLevelService` 处理 get/add/reduce。DDD 路径仍存在迁移期风险：`addExperience` 会在用户不存在时直接 return，legacy 路径会继续访问用户对象；`calculateNewLevel` 返回当前等级时也会插入等级记录，而 legacy `calculateNewLevel(MemberUserDO, int)` 在新旧 `levelId` 相同时返回 null；`MemberLevelConvert` 从领域对象转响应时未回填 `createTime`，简单列表未回填 `icon`；`MemberLevelRepositoryImpl.findAll` 没有显式按 level 升序，`findByNameLike` 仍是 `List.of()` stub。修 Java 前必须分别验证 Controller DDD 路径与 RPC legacy 路径，不能假设 RPC 已迁移到 DDD application service。
 
-## 3. DDD 构造块
+## When to Use
 
-### 3.1 聚合根清单
+- 修改会员等级配置、经验增减、等级升降级计算、等级变更记录时。
+- 将 `MemberLevelServiceImpl` 中等级相关业务规则迁移到 DDD 层时。
+- 校验 `member` API local/remote 契约中 `MemberLevelApi`、`MemberLevelRemoteClient`、`MemberLevelApiImpl` 是否保持稳定时。
+- 审查 `MemberLevel` 当前 DDD 实现与 legacy service 行为差异时。
 
-#### MemberLevel — 会员等级
+## When Not to Use
 
-```
-com.develop.mvp.pk.module.member.domain.level.MemberLevel
-```
+- 不用于 `MemberGroup`、`MemberTag`、`MemberPointRecord`、`MemberSignInConfig`、`MemberSignInRecord` 的重构。
+- 不用于修改 Controller 外部路径、权限、VO/DTO 字段、错误码、Feign contextId。
+- 不用于把所有 member 子域一次性重构；每次只处理一个聚合或一个小协作边界。
 
-**角色**：会员等级的定义，封装等级名称、级别数值、升级所需经验值、折扣百分比，以及等级间的排序关系。
+## Reproducibility Contract
 
-**聚合边界**：
-- MemberLevel（根实体）
-- 不包含：MemberUser（通过 levelId 引用）、MemberLevelRecord、MemberExperienceRecord（独立聚合/日志）
+1. 先读本 skill，再读 Current Source Anchors。
+2. 若本 skill 与当前代码冲突，以当前可编译代码的外部行为和 legacy 测试/服务为事实源。
+3. 先修订本 skill，再改 Java。
+4. 保持 HTTP/RPC 契约、权限、错误码、参数顺序、分页和响应字段不变。
+5. 领域层禁止依赖 Controller VO、Mapper、DO、Spring、MyBatis。
+6. 迁移期允许 infrastructure/application 适配旧 DO/Mapper/Service，但必须把债务写入 Red Flags 或 Acceptance Criteria。
 
-#### MemberGroup — 会员分组
+## Baseline Failure Findings
 
-```
-com.develop.mvp.pk.module.member.domain.group.MemberGroup
-```
+| 压力场景 | 旧 skill 暴露的问题 | 本 skill 的约束 |
+|---|---|---|
+| 赶时间直接按文档改代码 | 一个 `AggregateRoot_MemberLevel_Skill.md` 同时覆盖 level/group/tag/point/signin 六个复杂聚合 | 本 skill 只覆盖 MemberLevel，其它聚合只作为外部协作引用 |
+| 无上下文 AI 复现 | 缺少完整 Controller/VO/API/DO/Mapper/Service/Application/Repository/测试路径 | Current Source Anchors 列出必须读取的事实源 |
+| 生产 API 不能破坏 | 旧 skill 未固定 `/member/level`、RPC `/level`、权限、Feign contextId | Production API Contract 固定这些外部契约 |
+| 代码与 skill 不一致 | 旧 skill 没说明 DDD 当前实现与 legacy 行为差异 | Go / No-Go Gate 和 Current Migration Debts 明确差异先处理 |
 
-**角色**：会员分组标签，用于对会员进行分组管理。
+## Current Source Anchors
 
-**聚合边界**：
-- MemberGroup（根实体）
-- 不包含：MemberUser（通过 groupId 引用）
+### API module
 
-#### MemberTag — 会员标签
+| 事实源 | 路径 |
+|---|---|
+| RPC stable contract | `develop-module-member/develop-module-member-api/src/main/java/com/develop/mvp/pk/module/member/api/level/MemberLevelApi.java` |
+| RPC response DTO | `develop-module-member/develop-module-member-api/src/main/java/com/develop/mvp/pk/module/member/api/level/dto/MemberLevelRespDTO.java` |
+| Feign remote client | `develop-module-member/develop-module-member-api/src/main/java/com/develop/mvp/pk/module/member/api/level/remote/MemberLevelRemoteClient.java` |
+| Error codes | `develop-module-member/develop-module-member-api/src/main/java/com/develop/mvp/pk/module/member/enums/ErrorCodeConstants.java` |
+| Experience biz enum | `develop-module-member/develop-module-member-api/src/main/java/com/develop/mvp/pk/module/member/enums/MemberExperienceBizTypeEnum.java` |
 
-```
-com.develop.mvp.pk.module.member.domain.tag.MemberTag
-```
+### Server entry and contract adapters
 
-**角色**：会员标签，用于对会员进行打标分类。
+| 事实源 | 路径 |
+|---|---|
+| RPC implementation | `develop-module-member/develop-module-member-server/src/main/java/com/develop/mvp/pk/module/member/api/level/MemberLevelApiImpl.java` |
+| Admin controller | `develop-module-member/develop-module-member-server/src/main/java/com/develop/mvp/pk/module/member/controller/admin/level/MemberLevelController.java` |
+| App controller | `develop-module-member/develop-module-member-server/src/main/java/com/develop/mvp/pk/module/member/controller/app/level/AppMemberLevelController.java` |
+| Admin user controller level update entry | `develop-module-member/develop-module-member-server/src/main/java/com/develop/mvp/pk/module/member/controller/admin/user/MemberUserController.java` |
+| Admin base VO | `develop-module-member/develop-module-member-server/src/main/java/com/develop/mvp/pk/module/member/controller/admin/level/vo/level/MemberLevelBaseVO.java` |
+| Admin create VO | `develop-module-member/develop-module-member-server/src/main/java/com/develop/mvp/pk/module/member/controller/admin/level/vo/level/MemberLevelCreateReqVO.java` |
+| Admin update VO | `develop-module-member/develop-module-member-server/src/main/java/com/develop/mvp/pk/module/member/controller/admin/level/vo/level/MemberLevelUpdateReqVO.java` |
+| Admin list VO | `develop-module-member/develop-module-member-server/src/main/java/com/develop/mvp/pk/module/member/controller/admin/level/vo/level/MemberLevelListReqVO.java` |
+| Admin response VO | `develop-module-member/develop-module-member-server/src/main/java/com/develop/mvp/pk/module/member/controller/admin/level/vo/level/MemberLevelRespVO.java` |
+| Admin simple response VO | `develop-module-member/develop-module-member-server/src/main/java/com/develop/mvp/pk/module/member/controller/admin/level/vo/level/MemberLevelSimpleRespVO.java` |
+| App response VO | `develop-module-member/develop-module-member-server/src/main/java/com/develop/mvp/pk/module/member/controller/app/level/vo/level/AppMemberLevelRespVO.java` |
+| Admin update user level VO | `develop-module-member/develop-module-member-server/src/main/java/com/develop/mvp/pk/module/member/controller/admin/user/vo/MemberUserUpdateLevelReqVO.java` |
 
-**聚合边界**：
-- MemberTag（根实体）
-- 不包含：MemberUser（通过 tagId 引用）
+### Current DDD and persistence sources
 
-#### MemberPointRecord — 积分记录
+| 事实源 | 路径 |
+|---|---|
+| Application service | `develop-module-member/develop-module-member-server/src/main/java/com/develop/mvp/pk/module/member/application/level/MemberLevelApplicationService.java` |
+| Aggregate root | `develop-module-member/develop-module-member-server/src/main/java/com/develop/mvp/pk/module/member/domain/level/MemberLevel.java` |
+| Domain repository interface | `develop-module-member/develop-module-member-server/src/main/java/com/develop/mvp/pk/module/member/domain/level/repository/MemberLevelRepository.java` |
+| Repository implementation | `develop-module-member/develop-module-member-server/src/main/java/com/develop/mvp/pk/module/member/infrastructure/level/MemberLevelRepositoryImpl.java` |
+| Convert | `develop-module-member/develop-module-member-server/src/main/java/com/develop/mvp/pk/module/member/convert/level/MemberLevelConvert.java` |
+| Level DO | `develop-module-member/develop-module-member-server/src/main/java/com/develop/mvp/pk/module/member/dal/dataobject/level/MemberLevelDO.java` |
+| Level mapper | `develop-module-member/develop-module-member-server/src/main/java/com/develop/mvp/pk/module/member/dal/mysql/level/MemberLevelMapper.java` |
+| Level record DO | `develop-module-member/develop-module-member-server/src/main/java/com/develop/mvp/pk/module/member/dal/dataobject/level/MemberLevelRecordDO.java` |
+| Level record mapper | `develop-module-member/develop-module-member-server/src/main/java/com/develop/mvp/pk/module/member/dal/mysql/level/MemberLevelRecordMapper.java` |
+| Experience record DO | `develop-module-member/develop-module-member-server/src/main/java/com/develop/mvp/pk/module/member/dal/dataobject/level/MemberExperienceRecordDO.java` |
+| Experience record mapper | `develop-module-member/develop-module-member-server/src/main/java/com/develop/mvp/pk/module/member/dal/mysql/level/MemberExperienceRecordMapper.java` |
+| MemberUser aggregate | `develop-module-member/develop-module-member-server/src/main/java/com/develop/mvp/pk/module/member/domain/user/MemberUser.java` |
+| MemberUser repository | `develop-module-member/develop-module-member-server/src/main/java/com/develop/mvp/pk/module/member/domain/user/repository/MemberUserRepository.java` |
 
-```
-com.develop.mvp.pk.module.member.domain.point.MemberPointRecord
-```
+### Legacy behavior baseline
 
-**角色**：用户积分变动记录（只追加，不修改），每个业务行为导致积分变动时记录。
+| 事实源 | 路径 |
+|---|---|
+| Legacy service interface | `develop-module-member/develop-module-member-server/src/main/java/com/develop/mvp/pk/module/member/service/level/MemberLevelService.java` |
+| Legacy service implementation | `develop-module-member/develop-module-member-server/src/main/java/com/develop/mvp/pk/module/member/service/level/MemberLevelServiceImpl.java` |
+| Legacy level record service | `develop-module-member/develop-module-member-server/src/main/java/com/develop/mvp/pk/module/member/service/level/MemberLevelRecordService.java` |
+| Legacy level record service impl | `develop-module-member/develop-module-member-server/src/main/java/com/develop/mvp/pk/module/member/service/level/MemberLevelRecordServiceImpl.java` |
+| Legacy experience record service | `develop-module-member/develop-module-member-server/src/main/java/com/develop/mvp/pk/module/member/service/level/MemberExperienceRecordService.java` |
+| Legacy experience record service impl | `develop-module-member/develop-module-member-server/src/main/java/com/develop/mvp/pk/module/member/service/level/MemberExperienceRecordServiceImpl.java` |
+| Current domain test | `develop-module-member/develop-module-member-server/src/test/java/com/develop/mvp/pk/module/member/domain/level/MemberLevelTest.java` |
 
-**聚合边界**：
-- MemberPointRecord（根实体，只追加，不修改）
-- 不包含：MemberUser（通过 userId 引用）
+## Production API Contract
 
-#### MemberSignInConfig — 签到配置
+### Admin HTTP API
 
-```
-com.develop.mvp.pk.module.member.domain.signin.MemberSignInConfig
-```
+| Method | Path | Method name | Permission | Request/Response |
+|---|---|---|---|---|
+| POST | `/member/level/create` | `createLevel` | `member:level:create` | `MemberLevelCreateReqVO` → `CommonResult<Long>` |
+| PUT | `/member/level/update` | `updateLevel` | `member:level:update` | `MemberLevelUpdateReqVO` → `CommonResult<Boolean>` |
+| DELETE | `/member/level/delete?id=` | `deleteLevel` | `member:level:delete` | `Long id` → `CommonResult<Boolean>` |
+| GET | `/member/level/get?id=` | `getLevel` | `member:level:query` | `Long id` → `CommonResult<MemberLevelRespVO>` |
+| GET | `/member/level/list-all-simple` | `getSimpleLevelList` | no permission in current code | `CommonResult<List<MemberLevelSimpleRespVO>>` |
+| GET | `/member/level/list` | `getLevelList` | `member:level:query` | `MemberLevelListReqVO` → `CommonResult<List<MemberLevelRespVO>>` |
 
-**角色**：签到天数奖励规则配置（第 N 天签到获得 x 积分 + y 经验）。
+### Admin user-level API
 
-**聚合边界**：
-- MemberSignInConfig（根实体）
-- 不包含：MemberSignInRecord（独立聚合）
+| Method | Path | Method name | Permission | Request/Response |
+|---|---|---|---|---|
+| PUT | `/member/user/update-level` | `updateUserLevel` | `member:user:update-level` | `MemberUserUpdateLevelReqVO` → `CommonResult<Boolean>` |
 
-#### MemberSignInRecord — 签到记录
+`MemberUserUpdateLevelReqVO.id` is required, `reason` is required and non-blank, and `levelId` may be null when the admin cancels a user level.
 
-```
-com.develop.mvp.pk.module.member.domain.signin.MemberSignInRecord
-```
+### App HTTP API
 
-**角色**：会员签到记录，追踪每日签到、连续签到天数。
+| Method | Path | Annotation | Response |
+|---|---|---|---|
+| GET | `/member/level/list` | `@PermitAll` | `CommonResult<List<AppMemberLevelRespVO>>` |
 
-**聚合边界**：
-- MemberSignInRecord（根实体）
-- 不包含：MemberUser（通过 userId 引用）、MemberSignInConfig（通过 day 关联）
+### RPC API
 
-### 3.2 值对象（Value Objects）
+`MemberLevelApi.PREFIX = ApiConstants.PREFIX + "/level"` must stay stable.
 
-| 聚合 | 值对象 | 类名 | 封装字段 | 不可变 | 自校验 |
-|------|--------|------|---------|--------|--------|
-| MemberLevel | 等级名称 | `LevelName` | `String value` | ✅ | 非空、全局唯一 |
-| MemberLevel | 等级值 | `LevelValue` | `Integer value` | ✅ | 0-100、全局唯一 |
-| MemberLevel | 折扣百分比 | `DiscountPercent` | `Integer value` | ✅ | 0-100 |
-| MemberLevel | 经验范围 | `ExperienceRange` | `Integer min, max` | ✅ | min>=0, max>min, 不与其他等级重叠 |
-| MemberGroup | 分组状态 | `GroupStatus` | `Integer code` | ✅ | ENABLE(0)/DISABLE(1) |
-| MemberTag | 标签名称 | `TagName` | `String value` | ✅ | 非空、全局唯一 |
-| MemberPointRecord | 积分变动值 | `PointDelta` | `Integer value` | ✅ | 变动值 |
-| MemberPointRecord | 业务类型引用 | `PointBizRef` | `bizType, bizId` | ✅ | 非空 |
-| MemberSignInConfig | 签到天数 | `SignInDay` | `Integer value` | ✅ | day>=1、全局唯一 |
-| MemberSignInRecord | 连续天数 | `ContinuousDay` | `Integer value` | ✅ | day>=1 |
+| Method | Path | Parameters | Response |
+|---|---|---|---|
+| GET | `${PREFIX}/get` | `id: Long` | `CommonResult<MemberLevelRespDTO>` |
+| POST | `${PREFIX}/add` | `userId: Long`, `experience: Integer`, `bizType: Integer`, `bizId: String` | `CommonResult<Boolean>` |
+| POST | `${PREFIX}/reduce` | same as add | `CommonResult<Boolean>` |
 
-### 3.3 仓储接口（Repository Interfaces）
+`MemberLevelRemoteClient` must remain `@FeignClient(name = ApiConstants.NAME, contextId = "memberLevelRemoteClient")` and extend `MemberLevelApi`. Server-side `MemberLevelApiImpl` implements `MemberLevelApi`; it must not become a Feign client or depend on the remote client.
+
+## Fixed Data Model
+
+### MemberLevel fields
+
+| Field | DO type | Domain type | API DTO | Admin VO | App VO | Nullable/default | Mapping rule |
+|---|---|---|---|---|---|---|---|
+| `id` | `Long` | `Long` | yes | resp only | no | null before insert | DB-generated id returned after save |
+| `name` | `String` | `String` | yes | required | yes | non-blank in VO | Level display name |
+| `level` | `Integer` | `Integer` | yes | required positive | yes | positive | Numeric level, unique globally |
+| `experience` | `Integer` | `Integer` | yes | required positive | yes | positive | Required upgrade experience |
+| `discountPercent` | `Integer` | `Integer` | yes | required 0-100 | yes | 0-100 | Member discount percent |
+| `icon` | `String` | `String` | no | optional URL | yes | nullable | Simple list VO also has `icon`; current domain conversion omits it |
+| `backgroundUrl` | `String` | `String` | no | optional URL | yes | nullable | App display background |
+| `status` | `Integer` | `Integer` | yes | required `CommonStatusEnum` | no | ENABLE/DISABLE | Use `CommonStatusEnum.ENABLE.getStatus()` / `DISABLE.getStatus()` |
+| `createTime` | `BaseDO` | absent currently | no | resp only | no | generated by BaseDO | Current domain conversion cannot fill it unless domain/query model carries it |
+
+### MemberLevelRecord fields
+
+| Field | Meaning | Source |
+|---|---|---|
+| `userId` | changed user | update/add experience use case |
+| `levelId` | new level id, nullable when admin cancels level | `MemberLevel.id()` or null |
+| `level` | redundant numeric level | copied from `MemberLevel.level()` |
+| `discountPercent` | redundant discount | copied from `MemberLevel.discountPercent()` |
+| `experience` | delta experience for this level change | admin adjustment or experience delta |
+| `userExperience` | user total experience after change | calculated by application service |
+| `remark` | admin reason | `MemberUserUpdateLevelReqVO.reason` |
+| `description` | display description | admin adjustment/cancel text |
+
+### MemberExperienceRecord fields
+
+| Field | Meaning | Source |
+|---|---|---|
+| `userId` | user id | use case input |
+| `bizType` | enum type | `MemberExperienceBizTypeEnum.getType()` |
+| `bizId` | external business id | use case input |
+| `title` | display title | `MemberExperienceBizTypeEnum.getTitle()` |
+| `description` | formatted description | `StrUtil.format(bizType.getDescription(), experience)` |
+| `experience` | delta experience | normalized delta |
+| `totalExperience` | total after change | calculated non-negative total |
+
+## Method Signatures
+
+### Aggregate root
+
+Current minimum signatures in `domain/level/MemberLevel.java`:
 
 ```java
-// domain/level/repository/MemberLevelRepository.java
+public final class MemberLevel {
+    public static MemberLevel create(String name);
+    public static MemberLevel reconstitute(Long id, String name, Integer level, Integer experience,
+                                           Integer discountPercent, String icon, String backgroundUrl, Integer status);
+    public void updateConfig(String name, Integer level, Integer experience, Integer discountPercent,
+                             String icon, String backgroundUrl, Integer status);
+    public void enable();
+    public void disable();
+    public Long id();
+    public String name();
+    public Integer level();
+    public Integer experience();
+    public Integer discountPercent();
+    public String icon();
+    public String backgroundUrl();
+    public Integer status();
+}
+```
+
+Future value-object extraction is allowed only if Controller/API/DTO/DO contracts stay stable and conversion/tests are updated in the same batch.
+
+### Repository interface
+
+```java
 public interface MemberLevelRepository {
     MemberLevel save(MemberLevel level);
     void delete(Long id);
@@ -121,334 +227,258 @@ public interface MemberLevelRepository {
     List<MemberLevel> findByStatus(Integer status);
     List<MemberLevel> findAll();
 }
-
-// domain/group/repository/MemberGroupRepository.java
-public interface MemberGroupRepository {
-    MemberGroup save(MemberGroup group);
-    void delete(Long id);
-    MemberGroup findById(Long id);
-    List<MemberGroup> findByIds(Collection<Long> ids);
-    List<MemberGroup> findByStatus(Integer status);
-    PageResult<MemberGroup> findPage(MemberGroupPageQuery query);
-    List<MemberGroup> findAll();
-}
-
-// domain/tag/repository/MemberTagRepository.java
-public interface MemberTagRepository {
-    MemberTag save(MemberTag tag);
-    void delete(Long id);
-    MemberTag findById(Long id);
-    List<MemberTag> findByIds(Collection<Long> ids);
-    List<MemberTag> findAll();
-    PageResult<MemberTag> findPage(MemberTagPageQuery query);
-    List<MemberTag> findByNameLike(String name);
-    Optional<MemberTag> findByName(String name);
-}
-
-// domain/point/repository/MemberPointRecordRepository.java
-public interface MemberPointRecordRepository {
-    void save(MemberPointRecord record);
-    MemberPointRecord findById(Long id);
-    PageResult<MemberPointRecord> findPage(MemberPointRecordPageQuery query);
-    PageResult<MemberPointRecord> findByUserId(Long userId, PageParam pageParam);
-}
-
-// domain/signin/repository/MemberSignInConfigRepository.java
-public interface MemberSignInConfigRepository {
-    MemberSignInConfig save(MemberSignInConfig config);
-    void delete(Long id);
-    MemberSignInConfig findById(Long id);
-    List<MemberSignInConfig> findAll();
-    List<MemberSignInConfig> findByStatus(Integer status);
-    Optional<MemberSignInConfig> findByDay(Integer day);
-}
-
-// domain/signin/repository/MemberSignInRecordRepository.java
-public interface MemberSignInRecordRepository {
-    void save(MemberSignInRecord record);
-    MemberSignInRecord findById(Long id);
-    PageResult<MemberSignInRecord> findPage(MemberSignInRecordPageQuery query);
-    PageResult<MemberSignInRecord> findByUserId(Long userId, PageParam pageParam);
-    Optional<MemberSignInRecord> findLastByUserId(Long userId);
-    Long countByUserId(Long userId);
-}
 ```
 
-### 3.4 领域服务（Domain Service）
+`findByNameLike` must not remain a stub if any production path begins to call it. Current `MemberLevelApplicationService.getList` filters `repo.findAll()` in memory, so the stub is not currently on the hot path.
 
-| 领域服务 | 职责 | 原因 | 对应原代码位置 |
-|---------|------|------|-------------|
-| `LevelUpgrader` | 根据经验值计算会员应升级到的等级 | 需要跨所有等级配置计算，属于领域服务 | `MemberLevelServiceImpl.java:270-292` `calculateNewLevel()` |
-| `PointBalanceChecker` | 校验用户积分余额是否充足 | 需要联动 MemberUser 跨聚合查询 | `MemberPointRecordServiceImpl.java:73-80` |
+### Application service
 
-### 3.5 领域事件（Domain Events）
+```java
+@Transactional
+Long createLevel(String name, Integer level, Integer experience, Integer discountPercent,
+                 String icon, String backgroundUrl, Integer status);
 
-| 聚合 | 事件 | 触发时机 | 携带数据 | 消费者 |
-|------|------|---------|---------|--------|
-| MemberLevel | `LevelChangedEvent` | 会员等级变更后 | userId, oldLevelId, newLevelId, experience | 通知、操作日志 |
-| MemberLevel | `LevelDeletedEvent` | 等级删除后 | levelId, name | 操作日志 |
-| MemberPointRecord | `PointChangedEvent` | 积分变动后 | userId, point, totalPoint, bizType, bizId | 通知、操作日志 |
-| MemberSignInRecord | `SignInCompletedEvent` | 签到成功后 | userId, day, point, experience | 通知、积分/经验发放 |
+@Transactional
+void updateLevel(Long id, String name, Integer level, Integer experience, Integer discountPercent,
+                 String icon, String backgroundUrl, Integer status);
 
-## 4. 职责边界
+@Transactional
+void deleteLevel(Long id);
 
-### 4.1 各聚合根必须负责的规则
+MemberLevel get(Long id);
+List<MemberLevel> getList(Collection<Long> ids);
+List<MemberLevel> getList(String name, Integer status);
+List<MemberLevel> getListByStatus(Integer status);
+List<MemberLevel> getEnableList();
 
-#### MemberLevel 聚合根规则
+@Transactional
+void updateUserLevel(Long userId, Long newLevelId, String reason);
 
-| 规则编号 | 规则描述 | 对应原代码位置 |
-|---------|---------|-------------|
-| R-L01 | 等级名称在全局不可重复 | `MemberLevelServiceImpl.java:98-107` `validateNameUnique()` |
-| R-L02 | 等级值（level 字段）在全局不可重复 | `MemberLevelServiceImpl.java:110-119` `validateLevelUnique()` |
-| R-L03 | 升级所需经验值必须大于前一个等级的经验值、小于后一个等级的经验值 | `MemberLevelServiceImpl.java:123-141` `validateExperienceOutRange()` |
-| R-L04 | 等级下有用户时不可删除 | `MemberLevelServiceImpl.java:155-159` `validateLevelHasUser()` 调用 `memberUserService.getUserCountByLevelId()` |
-| R-L05 | 计算新等级时：取经验值 >= 升级经验的所有等级中的最高级 | `MemberLevelServiceImpl.java:270-292` `calculateNewLevel()` 使用 `.max(Comparator.comparing(MemberLevelDO::getLevel))` |
-| R-L06 | 等级未变化时（新旧 levelId 相同），不产生变更事件 | `MemberLevelServiceImpl.java:193` `if (ObjUtil.equal(user.getLevelId(), updateReqVO.getLevelId())) return;` |
-
-#### MemberGroup 聚合根规则
-
-| 规则编号 | 规则描述 | 对应原代码位置 |
-|---------|---------|-------------|
-| R-G01 | 分组下有用户时不可删除 | `MemberGroupServiceImpl.java:73-78` `validateGroupHasUser()` 调用 `memberUserService.getUserCountByGroupId(id)` |
-
-#### MemberTag 聚合根规则
-
-| 规则编号 | 规则描述 | 对应原代码位置 |
-|---------|---------|-------------|
-| R-T01 | 标签名称在全局不可重复 | `MemberTagServiceImpl.java:77-92` `validateTagNameUnique()` 通过 `selelctByName()` 校验 |
-| R-T02 | 标签下有用户时不可删除 | `MemberTagServiceImpl.java:95-99` `validateTagHasUser()` 调用 `memberUserService.getUserCountByTagId(id)` |
-
-#### MemberPointRecord 聚合根规则
-
-| 规则编号 | 规则描述 | 对应原代码位置 |
-|---------|---------|-------------|
-| R-P01 | 积分变动值为 0 时跳过处理 | `MemberPointRecordServiceImpl.java:69-71` `if (point == 0) return;` |
-| R-P02 | 积分变动后余额不可为负数 | `MemberPointRecordServiceImpl.java:75-79` `totalPoint = userPoint + point; if (totalPoint < 0)` 抛警告并 return |
-| R-P03 | 并发情况下通过乐观锁/数据库更新防止积分为负 | `MemberPointRecordServiceImpl.java:83-85` `boolean success = memberUserService.updateUserPoint(userId, point)` 返回失败时抛 `USER_POINT_NOT_ENOUGH` |
-
-#### MemberSignInConfig 聚合根规则
-
-| 规则编号 | 规则描述 | 对应原代码位置 |
-|---------|---------|-------------|
-| R-SC01 | 签到天数（day）不可重复 | `MemberSignInConfigServiceImpl.java:75-84` `validateSignInConfigDayDuplicate()` |
-| R-SC02 | 签到配置列表按 day 升序排列 | `MemberSignInConfigServiceImpl.java:95` `list.sort(Comparator.comparing(MemberSignInConfigDO::getDay))` |
-
-#### MemberSignInRecord 聚合根规则
-
-| 规则编号 | 规则描述 | 对应原代码位置 |
-|---------|---------|-------------|
-| R-SR01 | 同一用户一天只能签到一次 | `MemberSignInRecordServiceImpl.java:136-142` `validateSigned()` 检查上次签到是否为今天，是则抛 `SIGN_IN_RECORD_TODAY_EXISTS` |
-| R-SR02 | 连续签到天数计算：上次签到是昨天则连续+1，否则重置为1 | `MemberSignInRecordServiceImpl.java:120` — 通过 `MemberSignInRecordConvert.INSTANCE.convert(userId, lastRecord, signInConfigs)` 实现 |
-| R-SR03 | 签到成功后异步增加积分和经验 | `MemberSignInRecordServiceImpl.java:126-132` — 积分通过 `pointRecordService.createPointRecord()`，经验通过 `memberLevelService.addExperience()` |
-| R-SR04 | 签到记录摘要：总天数、连续天数、今日是否已签到 | `MemberSignInRecordServiceImpl.java:57-86` `getSignInRecordSummary()` |
-
-### 4.2 严禁外泄的职责
-
-| 禁止行为 | 原因 | 应由谁处理 |
-|---------|------|----------|
-| 直接调用 Mapper/操作 DO | 破坏持久化无关性 | RepositoryImpl |
-| 直接操作 MemberUser 的积分/等级字段 | MemberUser 是独立聚合 | 应用层通过 MemberUserRepository 更新 |
-| 计算会员等级时查询数据库 | 应使用 LevelUpgrader 领域服务 | LevelUpgrader 领域服务 |
-| Excel 导入导出 | 表示层关注点 | Controller/Convert |
-| 发送通知消息（等级变更/签到提醒） | 基础设施关注点 | 领域事件订阅者 |
-| 记录操作日志 | 基础设施关注点 | 领域事件订阅者 |
-
-## 5. 依赖与协作
-
-### 5.1 领域层依赖（向内）
-
-每个聚合根仅依赖：
-- 自身值对象
-- 仓储接口
-- 领域事件接口
-
-### 5.2 跨聚合协作（仅通过 ID 引用）
-
-| 源聚合 | 目标聚合 | 引用方式 | 协作场景 |
-|-------|---------|---------|---------|
-| MemberLevel | MemberUser | `levelId: Long` | 等级变更时更新 user.levelId |
-| MemberGroup | MemberUser | `groupId: Long` | 删除分组时校验是否有用户引用 |
-| MemberTag | MemberUser | `tagId: Long` | 删除标签时校验是否有用户引用 |
-| MemberPointRecord | MemberUser | `userId: Long` | 积分变动后更新 user.point |
-| MemberSignInRecord | MemberSignInConfig | `day: Integer` | 签到完成后根据 day 获取奖励配置 |
-| MemberSignInRecord | MemberLevel | `experience: Integer` | 签到获得经验后触发等级升级计算 |
-
-### 5.3 基础设施依赖（向外，通过接口倒置）
-
-```
-领域层定义接口                               基础设施层实现
-─────────────                               ──────────────
-MemberLevelRepository           ←──         MemberLevelRepositoryImpl (委托 MemberLevelMapper)
-MemberGroupRepository           ←──         MemberGroupRepositoryImpl (委托 MemberGroupMapper)
-MemberTagRepository             ←──         MemberTagRepositoryImpl (委托 MemberTagMapper)
-MemberPointRecordRepository     ←──         MemberPointRecordRepositoryImpl (委托 MemberPointRecordMapper)
-MemberSignInConfigRepository    ←──         MemberSignInConfigRepositoryImpl (委托 MemberSignInConfigMapper)
-MemberSignInRecordRepository    ←──         MemberSignInRecordRepositoryImpl (委托 MemberSignInRecordMapper)
-DomainEventPublisher            ←──         SpringDomainEventPublisher (委托 Spring ApplicationEventPublisher)
+@Transactional
+void addExperience(Long userId, Integer experience, MemberExperienceBizTypeEnum bizType, String bizId);
 ```
 
-## 6. 不变式与约束（Invariants）
+## Business Rules
 
-| 编号 | 不变式 | 聚合 | 类型 | 验证点 |
-|------|--------|------|------|--------|
-| I01 | 等级名称在全局不可重复 | MemberLevel | 跨聚合唯一性 | 创建/修改时 |
-| I02 | 等级值（level）在全局不可重复 | MemberLevel | 跨聚合唯一性 | 创建/修改时 |
-| I03 | 等级经验值范围不可重叠（前一个 < 当前 < 后一个） | MemberLevel | 聚合间约束 | 创建/修改时 |
-| I04 | 有用户引用的等级不可删除 | MemberLevel | 聚合外部约束 | 删除时 |
-| I05 | 标签名称在全局不可重复 | MemberTag | 跨聚合唯一性 | 创建/修改时 |
-| I06 | 有用户引用的标签不可删除 | MemberTag | 聚合外部约束 | 删除时 |
-| I07 | 有用户引用的分组不可删除 | MemberGroup | 聚合外部约束 | 删除时 |
-| I08 | 签到天数（day）不可重复 | MemberSignInConfig | 跨聚合唯一性 | 创建/修改时 |
-| I09 | 同一用户一天只能签到一次 | MemberSignInRecord | 聚合内部 | 签到前校验 |
-| I10 | 积分变动后总余额不可为负数 | MemberPointRecord | 聚合外部约束 | 创建积分记录时 |
-| I11 | 积分变动值为 0 时跳过处理 | MemberPointRecord | 应用层约束 | 创建积分记录时 |
-| I12 | 等级经验值为 null 时不做升降级计算 | MemberLevel | 应用层约束 | 等级变更时 |
+| Rule | Layer | Current baseline | Error/behavior |
+|---|---|---|---|
+| ML-R01 | VO | `name` must be non-blank | Bean Validation message `等级名称不能为空` |
+| ML-R02 | VO | `experience` must be non-null and positive | `升级经验不能为空` / `升级经验必须大于 0` |
+| ML-R03 | VO | `level` must be non-null and positive | `等级不能为空` / `等级必须大于 0` |
+| ML-R04 | VO | `discountPercent` must be non-null and 0-100 | `享受折扣不能为空` / range 0-100 |
+| ML-R05 | VO | `icon` and `backgroundUrl` must be URL when present | Bean Validation `@URL` |
+| ML-R06 | VO | `status` must be `CommonStatusEnum` | `@InEnum(CommonStatusEnum.class)` |
+| ML-R07 | Application | name must be globally unique except current id on update | `LEVEL_NAME_EXISTS(name)` |
+| ML-R08 | Application | numeric `level` must be globally unique except current id on update | `LEVEL_VALUE_EXISTS(level, name)` |
+| ML-R09 | Application | experience must be greater than all lower levels and less than all higher levels | `LEVEL_EXPERIENCE_MIN(prevName, prevExp)` / `LEVEL_EXPERIENCE_MAX(nextName, nextExp)` |
+| ML-R10 | Application | cannot delete a level referenced by users | `LEVEL_HAS_USER` using `MemberUserRepository.countByLevelId(id)` |
+| ML-R11 | Application | add/reduce experience with zero delta is no-op | return without record/update |
+| ML-R12 | Application | non-add biz type with positive experience is normalized to negative | `if (!bizType.isAdd() && experience > 0) experience = -experience` |
+| ML-R13 | Application | total user experience cannot go below 0 | `NumberUtil.max(current + delta, 0)` |
+| ML-R14 | Application | new level is highest enabled level whose required experience is <= total experience | sort by max numeric `level` |
+| ML-R15 | Legacy parity | if calculated new level equals current `user.levelId`, no level-change record should be created | legacy returns null; current DDD must be reviewed/fixed before claiming parity |
+| ML-R16 | RPC adapter | unsupported `bizType` rejects before application service | `EXPERIENCE_BIZ_NOT_SUPPORT` in `MemberLevelApiImpl.addExperience` |
+| ML-R17 | RPC adapter | reduce delegates to add with negative experience | `reduceExperience` calls `addExperience(userId, -experience, bizType, bizId)` |
+| ML-R18 | VO | admin user-level update requires non-null user id and non-blank reason; `levelId` may be null to cancel level | Bean Validation in `MemberUserUpdateLevelReqVO` |
+| ML-R19 | Migration gate | add/reduce experience user-not-found behavior must be decided before parity claim | preserve legacy, switch to `USER_NOT_EXISTS`, or approve no-op with compatibility note |
 
-## 7. 验收标准
+## Error Code Contract
 
-| 编号 | 验收标准 | 验证方法 |
-|------|---------|---------|
-| AC01 | MemberLevel、MemberGroup、MemberTag、MemberPointRecord、MemberSignInConfig、MemberSignInRecord 均无 MyBatis/Spring 注解 | 代码审查 |
-| AC02 | 所有值对象是 final class，字段是 final，无 setter | 代码审查 |
-| AC03 | 所有仓储接口定义在 `domain/{aggregate}/repository/` 包，不 import MyBatis 类 | 代码审查 |
-| AC04 | 所有 RepositoryImpl 在 `infrastructure/{aggregate}/` 包，负责 DO 与领域模型映射 | 代码审查 |
-| AC05 | ApplicationService 在 `application/{aggregate}/` 包，使用 `@Transactional` 管理事务 | 代码审查 |
-| AC06 | MemberLevel 聚合根提供业务方法如 `updateConfig()`, `enable()`, `disable()`，名称体现业务语义 | 代码审查 |
-| AC07 | 等级经验值范围校验封装在 `ExperienceRange` 值对象或 `LevelUpgrader` 领域服务中 | 代码审查 |
-| AC08 | MemberLevelServiceImpl 等旧 Service 仅保留编排逻辑，所有业务规则迁移到对应聚合根 | 代码审查 |
-| AC09 | 签到配置按 day 升序排列的逻辑由仓储层或应用层保证，不在聚合根内 | 代码审查 |
-| AC10 | 积分变动跨聚合协作（更新 MemberUser.point）通过 ApplicationService 编排 | 代码审查 |
-| AC11 | 等级计算（calculateNewLevel）封装为 `LevelUpgrader` 领域服务 | 代码审查 |
-| AC12 | 签到流水和积分/经验发放为同一个事务 | 代码审查 |
-| AC13 | 编译通过，Controller 行为无回归 | 编译 + 集成测试 |
-| AC14 | 等级升降级测试通过：经验增加时升级、经验扣减时降级 | 单元测试 |
-| AC15 | 签到唯一性测试通过：同用户同一天不能两次签到 | 单元测试 |
-| AC16 | 积分负余额测试通过：积分不足时操作失败 | 单元测试 |
+All codes are in `develop-module-member-api/.../ErrorCodeConstants.java`.
 
-## 8. 目录结构规划（重构后）
+| Scenario | Error code | Message | Parameters | Throwing layer |
+|---|---|---|---|---|
+| Level not found | `LEVEL_NOT_EXISTS` `1_004_011_000` | `用户等级不存在` | none | application validation |
+| Duplicate name | `LEVEL_NAME_EXISTS` `1_004_011_001` | `用户等级名称[{}]已被使用` | `name` | application validation |
+| Duplicate level value | `LEVEL_VALUE_EXISTS` `1_004_011_002` | `用户等级值[{}]已被[{}]使用` | `level`, `name` | application validation |
+| Experience not greater than previous | `LEVEL_EXPERIENCE_MIN` `1_004_011_003` | `升级经验必须大于上一个等级[{}]设置的升级经验[{}]` | previous level name, previous experience | application validation |
+| Experience not less than next | `LEVEL_EXPERIENCE_MAX` `1_004_011_004` | `升级经验必须小于下一个等级[{}]设置的升级经验[{}]` | next level name, next experience | application validation |
+| Level has users | `LEVEL_HAS_USER` `1_004_011_005` | `用户等级下存在用户，无法删除` | none | application validation |
+| Unsupported experience biz type | `EXPERIENCE_BIZ_NOT_SUPPORT` `1_004_011_201` | `用户经验业务类型不支持` | none | RPC adapter |
+| User not found for admin level update | `USER_NOT_EXISTS` `1_004_001_000` | `用户不存在` | none | application validation |
 
+Do not change numeric codes, messages, or parameter order during DDD refactor. Before claiming parity, choose one approved behavior for add/reduce experience when `userId` does not exist: preserve legacy external behavior and add regression coverage; change to explicit `USER_NOT_EXISTS` with migration approval; or keep current DDD no-op only with approved compatibility note and RPC/consumer impact review.
+
+## Transaction Contract
+
+| Use case | Current transaction | Must cover |
+|---|---|---|
+| `createLevel` | `@Transactional` | uniqueness/range validation and insert |
+| `updateLevel` | `@Transactional` | existence validation, uniqueness/range validation, update |
+| `deleteLevel` | `@Transactional` | existence validation, user reference check, delete |
+| `updateUserLevel` | `@Transactional` | user load, no-op same level, level record insert, experience record insert, user level/experience update, notification call point |
+| `addExperience` | `@Transactional` | delta normalization, user load, experience record insert, optional level record insert, user level/experience update, notification call point |
+| read/list methods | none required | must not mutate state |
+
+Current DDD application service directly uses `MemberExperienceRecordMapper` and `MemberLevelRecordMapper`. This is a migration debt: future cleanup may introduce record repositories or services, but must preserve the same transaction boundary and record contents.
+
+## Integration Contract
+
+| Integration | Required behavior |
+|---|---|
+| Feign/RPC | Stable `MemberLevelApi` contract plus `remote/MemberLevelRemoteClient`; consumers inject stable API where possible |
+| MemberUser | Cross-aggregate update through `MemberUserRepository`; level deletion uses `countByLevelId` |
+| Level record | Insert when admin changes level or experience calculation changes level; do not insert when level stays unchanged |
+| Experience record | Insert for non-zero experience changes with enum title/description/biz id/type |
+| Notification | Current implementation has `notifyLevelChange` TODO; do not remove call point or silently add external side effects without plan |
+| Tenant/data permission | No explicit tenant/data-permission annotations in current MemberLevel controller/service; do not add/remove such behavior casually |
+| Cache/MQ/Job/Excel | No required MemberLevel-specific cache/MQ/job/Excel behavior in current anchors |
+| Ordering | All MemberLevel list/read-for-validation queries that affect external list order or error parameter selection must use deterministic `level` ascending ordering unless a migration note approves otherwise |
+
+## Mapping Rules
+
+| Mapping | Correct location | Notes |
+|---|---|---|
+| Create/Update VO → application args | Controller | Controller may pass scalar fields, not VO into domain |
+| DO ↔ Domain | `MemberLevelRepositoryImpl` or `MemberLevelConvert` if explicitly chosen | Domain must not import DO/Mapper |
+| Domain → Admin `MemberLevelRespVO` | `MemberLevelConvert` | Current gap: `createTime` absent from domain mapping |
+| Domain → `MemberLevelSimpleRespVO` | `MemberLevelConvert` | Current gap: `icon` should be preserved because VO exposes it |
+| Domain → App `AppMemberLevelRespVO` | `MemberLevelConvert` | Preserve fields: name, level, experience, discountPercent, icon, backgroundUrl |
+| DO → RPC `MemberLevelRespDTO` | `MemberLevelConvert.INSTANCE.convert02(...)` in current `MemberLevelApiImpl` legacy service path | If moving RPC to domain path, preserve id/name/level/experience/discountPercent/status |
+| Level/experience record mapping | Application service currently constructs DO directly | Future repository extraction must preserve all fields and transaction boundary |
+
+## Current Migration Debts
+
+| Debt | Current fact | Required handling before Java refactor claims completion |
+|---|---|---|
+| Multi-aggregate draft | Old skill covered level/group/tag/point/signin | Keep this skill MemberLevel-only; create separate skills for others |
+| RPC legacy path | `MemberLevelApiImpl` injects `MemberLevelService`, not `MemberLevelApplicationService` | Migration to DDD requires fixed get/add/reduce tests, error-code checks, record-write checks, and DTO mapping checks |
+| Same-level experience record | Current DDD `calculateNewLevel(int)` returns current level; legacy suppresses record when matched level id equals user level id | Add test and fix or explicitly approve behavior change |
+| Missing `createTime` mapping | Domain `MemberLevel` does not carry createTime; `MemberLevelRespVO` exposes it | Preserve response field via query model, DO mapping, or documented contract decision |
+| Missing simple `icon` mapping | `convertSimpleListFromDomain` sets id/name only | Set icon or document why simple list changed |
+| `findByNameLike` stub | RepositoryImpl returns `List.of()` | Implement if used; otherwise keep off production paths and mark debt |
+| Direct mapper use in application | Record mappers injected into application service | Accept as migration debt or extract record repositories in focused batch |
+| User-not-found divergence | Current DDD `addExperience` returns when user missing | Compare with legacy behavior and tests before claiming parity |
+| Unordered `findAll` | `MemberLevelRepositoryImpl.findAll` uses `mapper.selectList()` without explicit `orderByAsc(level)`, while legacy list paths order by level asc | Implement ordered repository query or document and test approved behavior |
+| In-memory filtering | `getList(name,status)` filters `repo.findAll()` | Preserve result ordering/performance expectations or move filtering to repository |
+
+## Acceptance Criteria
+
+| AC | Criterion | Verification |
+|---|---|---|
+| AC01 | `AggregateRoot_MemberLevel_Skill.md` has production frontmatter and covers only MemberLevel | grep + review |
+| AC02 | Current Source Anchors include API, remote client, controllers, VOs, DOs, mapper, convert, domain, repository, application, legacy service, records, tests | review |
+| AC03 | Controller paths, HTTP methods, permissions, `@PermitAll`, RPC paths, Feign contextId remain unchanged | grep + API review |
+| AC04 | `MemberLevel` domain remains free of Spring/MyBatis/DO/Mapper/VO imports | grep |
+| AC05 | Repository interface remains in `domain/level/repository` and infrastructure implementation owns Mapper/DO access | grep + review |
+| AC06 | Create/update preserve name uniqueness, level uniqueness, and experience range errors with parameter order | unit/integration tests |
+| AC07 | Delete preserves user-reference guard through `countByLevelId` and throws `LEVEL_HAS_USER` | unit/integration tests |
+| AC08 | Add/reduce experience preserve zero no-op, delta normalization, non-negative total experience, experience record creation | unit/integration tests |
+| AC09 | Level-change record is not created when calculated level equals current user level unless an approved external-contract change exists | regression test |
+| AC10 | `createTime` and `icon` response mapping gaps are fixed or explicitly documented before claiming Java parity | controller/RPC response test |
+| AC11 | `MemberLevelRepositoryImpl.findByNameLike` is not used in production while stubbed, or is implemented with mapper query | grep/test |
+| AC12 | Member API module and member server compile | Maven compile |
+| AC13 | Existing `MemberLevelTest` and required application/RPC/controller mapping tests pass; if tests do not exist, they must be added before claiming Java parity | Maven test |
+| AC14 | Add/reduce experience user-not-found behavior is fixed by regression test and documented contract decision | focused application/RPC test |
+| AC15 | Admin list and enabled list preserve legacy order by numeric level ascending | controller/application test |
+| AC16 | Experience range validation error parameter selection is deterministic and matches legacy expectation | focused validation test |
+
+## Verification Commands
+
+```bash
+# Documentation checks
+grep -E "^(name: aggregate-root-member-level|status: production-ready|last_verified: 2026-05-24|## Go / No-Go Gate|## Current Migration Debts)" .claude/ddd-skills/AggregateRoot_MemberLevel_Skill.md
+grep -n "MemberGroup\|MemberTag\|MemberPointRecord\|MemberSignIn" .claude/ddd-skills/AggregateRoot_MemberLevel_Skill.md
+grep -n "same level\|createTime\|findByNameLike\|memberLevelRemoteClient\|EXPERIENCE_BIZ_NOT_SUPPORT" .claude/ddd-skills/AggregateRoot_MemberLevel_Skill.md
+
+# Architecture checks
+grep -R "import .*\(springframework\|mybatis\|dal\.dataobject\|dal\.mysql\|controller\).*" develop-module-member/develop-module-member-server/src/main/java/com/develop/mvp/pk/module/member/domain/level || true
+grep -R "findByNameLike" develop-module-member/develop-module-member-server/src/main/java/com/develop/mvp/pk/module/member
+
+# Compile checks
+mvn compile -pl develop-module-member/develop-module-member-api -am -DskipTests
+mvn compile -pl develop-module-member/develop-module-member-server -am -DskipTests
+
+# Existing focused test
+mvn test -pl develop-module-member/develop-module-member-server -Dtest=MemberLevelTest
+
+# Required focused tests before Java parity can be claimed; add these classes if absent
+mvn test -pl develop-module-member/develop-module-member-server -Dtest=MemberLevelApplicationServiceTest,MemberLevelApiImplTest,MemberLevelControllerMappingTest
 ```
-develop-module-member/develop-module-member-server/src/main/java/com/develop/mvp/pk/module/member/
-├── domain/                                              # 领域层
-│   ├── level/
-│   │   ├── MemberLevel.java                             # 聚合根
-│   │   ├── event/
-│   │   │   ├── LevelChangedEvent.java
-│   │   │   └── LevelDeletedEvent.java
-│   │   ├── service/
-│   │   │   └── LevelUpgrader.java                       # 领域服务
-│   │   └── repository/
-│   │       └── MemberLevelRepository.java
-│   ├── group/
-│   │   ├── MemberGroup.java                             # 聚合根
-│   │   ├── valueobject/
-│   │   │   └── GroupStatus.java
-│   │   └── repository/
-│   │       └── MemberGroupRepository.java
-│   ├── tag/
-│   │   ├── MemberTag.java                               # 聚合根
-│   │   ├── valueobject/
-│   │   │   └── TagName.java
-│   │   └── repository/
-│   │       └── MemberTagRepository.java
-│   ├── point/
-│   │   ├── MemberPointRecord.java                       # 聚合根
-│   │   ├── valueobject/
-│   │   │   ├── PointDelta.java
-│   │   │   └── PointBizRef.java
-│   │   ├── event/
-│   │   │   └── PointChangedEvent.java
-│   │   └── repository/
-│   │       └── MemberPointRecordRepository.java
-│   └── signin/
-│       ├── MemberSignInConfig.java                      # 聚合根
-│       ├── MemberSignInRecord.java                      # 聚合根
-│       ├── valueobject/
-│       │   └── SignInDay.java
-│       ├── event/
-│       │   └── SignInCompletedEvent.java
-│       └── repository/
-│           ├── MemberSignInConfigRepository.java
-│           └── MemberSignInRecordRepository.java
-├── application/                                         # 应用层
-│   ├── level/
-│   │   └── MemberLevelApplicationService.java
-│   ├── group/
-│   │   └── MemberGroupApplicationService.java
-│   ├── tag/
-│   │   └── MemberTagApplicationService.java
-│   ├── point/
-│   │   └── MemberPointApplicationService.java
-│   └── signin/
-│       ├── MemberSignInConfigApplicationService.java
-│       └── MemberSignInRecordApplicationService.java
-├── infrastructure/                                      # 基础设施层
-│   ├── level/
-│   │   └── MemberLevelRepositoryImpl.java
-│   ├── group/
-│   │   └── MemberGroupRepositoryImpl.java
-│   ├── tag/
-│   │   └── MemberTagRepositoryImpl.java
-│   ├── point/
-│   │   └── MemberPointRecordRepositoryImpl.java
-│   └── signin/
-│       ├── MemberSignInConfigRepositoryImpl.java
-│       └── MemberSignInRecordRepositoryImpl.java
-├── controller/                                          # 接口层（保留）
-├── dal/                                                 # 数据访问层（保留）
-└── convert/                                             # 转换层（保留）
-```
 
-## 9. 回滚条件
+Required new focused tests before Java parity can be claimed:
 
-如果以下任一情况发生，应回滚当前修改并重新分析：
+- `MemberLevelApplicationServiceTest#createLevel_duplicateName_throwsLevelNameExists`
+- `MemberLevelApplicationServiceTest#updateLevel_invalidExperienceBelowPrevious_throwsLevelExperienceMin`
+- `MemberLevelApplicationServiceTest#deleteLevel_withUsers_throwsLevelHasUser`
+- `MemberLevelApplicationServiceTest#addExperience_zeroDelta_noRecordsNoUserUpdate`
+- `MemberLevelApplicationServiceTest#addExperience_sameLevel_noLevelRecord`
+- `MemberLevelApplicationServiceTest#addExperience_reduceCannotGoBelowZero`
+- `MemberLevelApplicationServiceTest#addExperience_userNotFound_matchesDocumentedContract`
+- `MemberLevelApplicationServiceTest#updateUserLevel_cancelLevel_writesLevelAndExperienceRecord`
+- `MemberLevelApplicationServiceTest#list_ordersByNumericLevelAscending`
+- `MemberLevelApplicationServiceTest#experienceRangeErrorParameters_areDeterministic`
+- `MemberLevelApiImplTest#addExperience_unsupportedBizType_throwsExperienceBizNotSupport`
+- `MemberLevelControllerMappingTest#simpleList_preservesIcon`
 
-1. 编译失败
-2. 聚合根内部注入了 Mapper/基础设施依赖
-3. 值对象存在 setter 或可变字段
-4. 等级升降级计算逻辑从聚合根泄漏回旧 Service
-5. 积分余额并发控制失效（通过乐观锁 update 返回值校验）
-6. 签到防重复校验失效（同用户同一天多次签到）
-7. 等级、标签、分组删除时未校验用户引用导致数据不一致
-8. 原有 Controller 接口行为出现回归（例如积分分页参数改变）
-9. 事务边界混乱：签到+积分+经验未在同一个事务中完成
+If future work changes experience/level behavior, these tests must be updated with the approved contract instead of weakened or skipped.
 
-## 10. 分步执行计划
+## Quick Reference
 
-### 阶段 1：创建值对象（通用型，无依赖）
-- LevelName、LevelValue、DiscountPercent、ExperienceRange
-- GroupStatus、TagName
-- PointDelta、PointBizRef
-- SignInDay
+| 要做什么 | 正确位置 | 禁止位置 |
+|---|---|---|
+| 固定外部 API | Controller/API section | domain/infrastructure |
+| 校验 VO 字段格式 | VO Bean Validation | domain repository |
+| 校验名称/等级/经验范围 | Application/domain service | Controller |
+| 访问 `member_level` 表 | `MemberLevelRepositoryImpl` / Mapper | domain aggregate |
+| 更新用户等级/经验 | Application service via `MemberUserRepository` | `MemberLevel` aggregate directly操作其它聚合 |
+| 插入等级/经验记录 | Application orchestration or dedicated record repository | Controller |
+| 计算新等级 | domain service/application with enabled level list | Mapper XML/Controller |
+| Feign remote identity | `remote/MemberLevelRemoteClient` | stable `MemberLevelApi` implementation |
 
-### 阶段 2：创建独立聚合根（MemberTag、MemberGroup、MemberSignInConfig）
-- MemberTag 聚合根（rename 方法封装名称更新）
-- MemberGroup 聚合根（updateInfo、enable、disable）
-- MemberSignInConfig 聚合根（update、enable、disable）
+## Common Mistakes
 
-### 阶段 3：创建事件型聚合根（MemberPointRecord、MemberSignInRecord）
-- MemberPointRecord 聚合根（只追加，create → save）
-- MemberSignInRecord 聚合根（createSignIn、validateSigned）
+| Mistake | Consequence | Fix |
+|---|---|---|
+| 继续让本 skill 覆盖 group/tag/point/signin | 重构范围失控，验收无法闭环 | 拆独立 skill |
+| 为了 DDD 改 Controller path 或 VO 字段 | 前端/RPC 调用回归 | 保持契约，另写迁移计划 |
+| 忽略 same-level 记录差异 | 经验变更多插等级记录，用户消息/审计异常 | 加 regression test 后修复或审批变更 |
+| 忽略 `createTime`/`icon` 映射 | 响应字段回归 | 修改 mapping/query model 并测试 |
+| 在 domain 中 import DO/Mapper | 领域层污染 | 移到 infrastructure/application adapter |
+| 把 `MemberLevelRemoteClient` 当本地实现注入 | monolith/local mode 装配破坏 | 本地实现实现 stable API，remote 只做 Feign adapter |
+| 只跑 compile 不跑行为测试 | 错误码/记录/经验计算回归漏掉 | 增加 focused tests |
 
-### 阶段 4：创建复杂聚合根（MemberLevel）
-- MemberLevel 聚合根（updateConfig、enable、disable）
-- LevelUpgrader 领域服务（calculateNewLevel，引用所有等级配置）
-- 注意：等级之间的经验值范围校验是核心复杂度
+## Rationalization Table
 
-### 阶段 5：创建仓储接口 + RepositoryImpl（每个聚合根对）
-- 领域层定义接口
-- 基础设施层实现（委托 Mapper + DO ↔ Domain 转换）
+| Excuse | Reality |
+|---|---|
+| “旧 skill 已经写了所有会员域，一起改更快” | 这是生产标准红旗；复杂聚合必须拆分 |
+| “当前 DDD 代码能编译，所以行为就是对的” | 当前已有 legacy 差异，必须用测试证明 |
+| “createTime/icon 只是小字段” | 它们是外部响应契约字段，丢失就是回归 |
+| “findByNameLike 没人用，不用管” | 可以不修，但必须确保生产路径不调用并记录债务 |
+| “应用层直接用 mapper 也能工作” | 迁移期可接受，但不能把它说成最终 DDD 形态 |
+| “错误码文案差不多即可” | 前端和调用方可能依赖错误码和参数顺序，必须保持 |
 
-### 阶段 6：创建领域事件 + 事件订阅者
-- LevelChangedEvent
-- PointChangedEvent
-- SignInCompletedEvent
+## Red Flags
 
-### 阶段 7：创建 ApplicationService，迁移编排逻辑
-- 签到 ApplicationService 编排：保存记录 → 发放积分 → 增加经验 → 等级升降级
-- 积分 ApplicationService 编排：检查余额 → 扣/增积分 → 创建记录
-- 等级 ApplicationService 编排：校验名称/等级/经验范围唯一性
+出现以下任一情况，停止本批次并先修 skill 或测试：
 
-### 阶段 8：适配 Controller，精简旧 Service，编译验证
-- Controller 注入 ApplicationService
-- 编译通过 + 集成测试
+- 修改范围扩散到 MemberGroup/MemberTag/Point/SignIn 的核心业务。
+- Controller 路径、权限、VO、RPC 参数或 Feign contextId 发生变化。
+- `domain/level` 引入 Spring、MyBatis、DO、Mapper、Controller VO。
+- `addExperience` 没有覆盖 same-level、zero、negative、unsupported biz type 行为测试。
+- 等级列表排序从按 `level` 升序变成不稳定顺序。
+- 错误码、错误参数顺序与 `ErrorCodeConstants` 不一致。
+- 只凭手动阅读宣称 legacy parity。
+
+## Rollback Conditions
+
+- `develop-module-member-api` 或 `develop-module-member-server` 编译失败。
+- 会员等级 CRUD、列表、RPC add/reduce、app list 任一外部契约回归。
+- 等级/经验记录少写、多写或字段值与 legacy 行为不一致且无批准迁移说明。
+- 删除等级绕过用户引用校验。
+- 领域层依赖基础设施或表示层。
+- 修复一个债务时引入跨聚合大范围改动。
+
+## AI Self-Check
+
+完成任何 MemberLevel Java 重构前逐项确认：
+
+- [ ] 我只处理 MemberLevel，没有顺手重构 group/tag/point/signin。
+- [ ] 我已读取 Current Source Anchors 中与本次修改有关的文件。
+- [ ] 我没有改变 Controller/API/Feign 外部契约。
+- [ ] 我保留了错误码和参数顺序。
+- [ ] 我明确处理了 same-level、zero experience、negative delta、unsupported biz type。
+- [ ] 我确认 `createTime`、`icon` 映射没有回归。
+- [ ] 我运行了 member API/server compile 或说明了未运行原因。
+- [ ] 我补充或运行了能证明行为的 focused tests。

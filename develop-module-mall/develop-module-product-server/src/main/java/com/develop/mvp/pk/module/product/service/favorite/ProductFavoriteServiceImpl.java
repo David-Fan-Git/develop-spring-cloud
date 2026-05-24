@@ -18,7 +18,7 @@ import static com.develop.mvp.pk.module.product.enums.ErrorCodeConstants.FAVORIT
 /**
  * 商品收藏 Service 实现类
  *
- * @author jason
+ * @author David
  */
 @Service
 @Validated

@@ -11,7 +11,7 @@ import java.util.Arrays;
 /**
  * CRM 客户限制配置规则类型
  *
- * @author Wanwan
+ * @author David
  */
 @Getter
 @AllArgsConstructor

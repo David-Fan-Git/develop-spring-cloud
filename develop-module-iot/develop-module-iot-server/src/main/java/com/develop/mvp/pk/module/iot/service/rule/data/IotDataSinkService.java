@@ -12,7 +12,7 @@ import java.util.List;
 /**
  * IoT 数据流转目的 Service 接口
  *
- * @author HUIHUI
+ * @author David
  */
 public interface IotDataSinkService {
 

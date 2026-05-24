@@ -16,7 +16,7 @@ import static com.develop.mvp.pk.framework.common.util.collection.CollectionUtil
 /**
  * WMS 商品 SKU Service 接口
  *
- * @author 芋道源码
+ * @author David
  */
 public interface WmsItemSkuService {
 

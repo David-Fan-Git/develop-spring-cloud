@@ -15,7 +15,7 @@ import static com.develop.mvp.pk.framework.common.util.date.DateUtils.FORMAT_YEA
 @Data
 public class BpmProcessInstancePageReqVO extends PageParam {
 
-    @Schema(description = "流程名称", example = "芋道")
+    @Schema(description = "流程名称", example = "David")
     private String name;
 
     @Schema(description = "流程定义的标识", example = "2048")

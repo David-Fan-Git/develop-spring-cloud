@@ -24,7 +24,7 @@ import static com.develop.mvp.pk.framework.common.util.collection.CollectionUtil
 /**
  * 商机 Service 接口
  *
- * @author ljlleo
+ * @author David
  */
 public interface CrmBusinessService {
 

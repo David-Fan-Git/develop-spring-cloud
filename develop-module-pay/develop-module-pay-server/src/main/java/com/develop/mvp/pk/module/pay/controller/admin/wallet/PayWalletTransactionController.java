@@ -2,11 +2,11 @@ package com.develop.mvp.pk.module.pay.controller.admin.wallet;
 
 import com.develop.mvp.pk.framework.common.pojo.CommonResult;
 import com.develop.mvp.pk.framework.common.pojo.PageResult;
+import com.develop.mvp.pk.module.pay.application.wallet.PayWalletTransactionApplicationService;
 import com.develop.mvp.pk.module.pay.controller.admin.wallet.vo.transaction.PayWalletTransactionPageReqVO;
 import com.develop.mvp.pk.module.pay.controller.admin.wallet.vo.transaction.PayWalletTransactionRespVO;
 import com.develop.mvp.pk.module.pay.convert.wallet.PayWalletTransactionConvert;
-import com.develop.mvp.pk.module.pay.dal.dataobject.wallet.PayWalletTransactionDO;
-import com.develop.mvp.pk.module.pay.service.wallet.PayWalletTransactionService;
+import com.develop.mvp.pk.module.pay.domain.wallet.PayWalletTransaction;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.extern.slf4j.Slf4j;
@@ -29,15 +29,16 @@ import static com.develop.mvp.pk.framework.common.pojo.CommonResult.success;
 public class PayWalletTransactionController {
 
     @Resource
-    private PayWalletTransactionService payWalletTransactionService;
+    private PayWalletTransactionApplicationService transactionApplicationService;
 
     @GetMapping("/page")
     @Operation(summary = "获得钱包流水分页")
     @PreAuthorize("@ss.hasPermission('pay:wallet:query')")
     public CommonResult<PageResult<PayWalletTransactionRespVO>> getWalletTransactionPage(
             @Valid PayWalletTransactionPageReqVO pageReqVO) {
-        PageResult<PayWalletTransactionDO> result = payWalletTransactionService.getWalletTransactionPage(pageReqVO);
-        return success(PayWalletTransactionConvert.INSTANCE.convertPage2(result));
+        PageResult<PayWalletTransaction> result = transactionApplicationService.getAdminPage(pageReqVO.getWalletId(),
+                pageReqVO.getUserId(), pageReqVO.getUserType(), pageReqVO.getPageNo(), pageReqVO.getPageSize());
+        return success(PayWalletTransactionConvert.INSTANCE.convertDomainPage(result));
     }
 
 }

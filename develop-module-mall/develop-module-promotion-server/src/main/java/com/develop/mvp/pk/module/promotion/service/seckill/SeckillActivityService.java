@@ -16,7 +16,7 @@ import java.util.List;
 /**
  * 秒杀活动 Service 接口
  *
- * @author halfninety
+ * @author David
  */
 public interface SeckillActivityService {
 

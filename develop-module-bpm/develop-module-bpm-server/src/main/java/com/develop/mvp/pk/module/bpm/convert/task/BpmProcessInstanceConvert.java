@@ -49,7 +49,7 @@ import static com.develop.mvp.pk.framework.common.util.collection.CollectionUtil
 /**
  * 流程实例 Convert
  *
- * @author 芋道源码
+ * @author David
  */
 @Mapper
 public interface BpmProcessInstanceConvert {

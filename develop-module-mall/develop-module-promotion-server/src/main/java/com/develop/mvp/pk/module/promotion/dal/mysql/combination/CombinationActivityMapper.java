@@ -14,7 +14,7 @@ import java.util.List;
 /**
  * 拼团活动 Mapper
  *
- * @author HUIHUI
+ * @author David
  */
 @Mapper
 public interface CombinationActivityMapper extends BaseMapperX<CombinationActivityDO> {

@@ -43,7 +43,7 @@ import static com.develop.mvp.pk.module.trade.enums.ErrorCodeConstants.*;
 /**
  * 分销用户 Service 实现类
  *
- * @author owen
+ * @author David
  */
 @Service
 @Validated

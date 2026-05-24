@@ -28,7 +28,7 @@ import cn.idev.excel.annotation.*;
 /**
  * ${table.classComment} DO
  *
- * @author ${table.author}
+ * @author David
  */
 @TableName("${table.tableName.toLowerCase()}")
 @KeySequence("${table.tableName.toLowerCase()}_seq") // 用于 Oracle、PostgreSQL、Kingbase、DB2、H2 数据库的主键自增。如果是 MySQL 等数据库，可不写。
