@@ -1,4 +1,4 @@
-package com.develop.mvp.pk.module.system.application.user;
+package com.develop.mvp.pk.module.system.application.user.service;
 
 import com.develop.mvp.pk.framework.common.enums.CommonStatusEnum;
 import com.develop.mvp.pk.framework.test.core.ut.BaseDbUnitTest;
@@ -10,8 +10,8 @@ import com.develop.mvp.pk.module.system.dal.mysql.user.AdminUserMapper;
 import com.develop.mvp.pk.module.system.domain.user.event.DomainEventPublisher;
 import com.develop.mvp.pk.module.system.domain.user.event.UserCreatedEvent;
 import com.develop.mvp.pk.module.system.domain.user.service.PasswordEncoder;
-import com.develop.mvp.pk.module.system.infrastructure.user.UserRepositoryImpl;
-import com.develop.mvp.pk.module.system.infrastructure.user.UserUniquenessCheckerImpl;
+import com.develop.mvp.pk.module.system.infrastructure.user.persistence.UserRepositoryImpl;
+import com.develop.mvp.pk.module.system.infrastructure.user.persistence.UserUniquenessCheckerImpl;
 import com.develop.mvp.pk.module.system.service.dept.DeptService;
 import com.develop.mvp.pk.module.system.service.dept.PostService;
 import jakarta.annotation.Resource;

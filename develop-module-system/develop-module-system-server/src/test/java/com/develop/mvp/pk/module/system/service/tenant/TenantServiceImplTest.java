@@ -12,6 +12,10 @@ import com.develop.mvp.pk.module.system.dal.dataobject.permission.RoleDO;
 import com.develop.mvp.pk.module.system.dal.dataobject.tenant.TenantDO;
 import com.develop.mvp.pk.module.system.dal.dataobject.tenant.TenantPackageDO;
 import com.develop.mvp.pk.module.system.dal.mysql.tenant.TenantMapper;
+import com.develop.mvp.pk.module.system.domain.user.event.DomainEventPublisher;
+import com.develop.mvp.pk.module.system.application.tenant.service.TenantApplicationService;
+import com.develop.mvp.pk.module.system.infrastructure.tenant.persistence.TenantRepositoryImpl;
+import com.develop.mvp.pk.module.system.infrastructure.tenant.persistence.TenantUniquenessCheckerImpl;
 import com.develop.mvp.pk.module.system.enums.permission.RoleCodeEnum;
 import com.develop.mvp.pk.module.system.enums.permission.RoleTypeEnum;
 import com.develop.mvp.pk.module.system.service.permission.MenuService;
@@ -53,7 +57,7 @@ import static org.mockito.Mockito.*;
  *
  * @author David
  */
-@Import(TenantServiceImpl.class)
+@Import({TenantServiceImpl.class, TenantApplicationService.class, TenantRepositoryImpl.class, TenantUniquenessCheckerImpl.class})
 public class TenantServiceImplTest extends BaseDbUnitTest {
 
     @Resource
@@ -74,6 +78,8 @@ public class TenantServiceImplTest extends BaseDbUnitTest {
     private MenuService menuService;
     @MockitoBean
     private PermissionService permissionService;
+    @MockitoBean
+    private DomainEventPublisher eventPublisher;
 
     @BeforeEach
     public void setUp() {

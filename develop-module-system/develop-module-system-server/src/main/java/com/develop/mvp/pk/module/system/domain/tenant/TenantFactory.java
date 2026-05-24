@@ -17,17 +17,29 @@ public final class TenantFactory {
     public static Tenant create(Long id, String name, Long contactUserId, String contactName,
                                  String contactMobile, List<String> websites,
                                  Long packageId, LocalDateTime expireTime, Integer accountCount) {
+        return create(id, name, contactUserId, contactName, contactMobile, TenantStatus.ENABLED,
+                websites, packageId, expireTime, accountCount);
+    }
+
+    public static Tenant create(Long id, String name, Long contactUserId, String contactName,
+                                 String contactMobile, TenantStatus status, List<String> websites,
+                                 Long packageId, LocalDateTime expireTime, Integer accountCount) {
         Tenant tenant = new Tenant(
                 TenantId.of(id),
                 TenantName.of(name),
                 contactUserId,
                 contactName,
                 contactMobile,
-                TenantStatus.ENABLED, // 规则 R01
+                status,
                 websites,
                 TenantPackageRef.of(packageId),
                 TenantExpireTime.of(expireTime),
-                accountCount
+                accountCount,
+                null,
+                null,
+                null,
+                null,
+                null
         );
         tenant.recordCreated();
         return tenant;
@@ -38,7 +50,9 @@ public final class TenantFactory {
                                        String contactName, String contactMobile,
                                        Integer statusCode, List<String> websites,
                                        Long packageId, LocalDateTime expireTime,
-                                       Integer accountCount) {
+                                       Integer accountCount, LocalDateTime createTime,
+                                       LocalDateTime updateTime, String creator,
+                                       String updater, Boolean deleted) {
         return new Tenant(
                 TenantId.of(id),
                 TenantName.of(name),
@@ -49,7 +63,12 @@ public final class TenantFactory {
                 websites,
                 TenantPackageRef.of(packageId),
                 TenantExpireTime.of(expireTime),
-                accountCount
+                accountCount,
+                createTime,
+                updateTime,
+                creator,
+                updater,
+                deleted
         );
     }
 }

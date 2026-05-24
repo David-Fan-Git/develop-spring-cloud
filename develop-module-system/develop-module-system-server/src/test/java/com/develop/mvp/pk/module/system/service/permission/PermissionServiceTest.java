@@ -5,6 +5,7 @@ import cn.hutool.extra.spring.SpringUtil;
 import com.develop.mvp.pk.framework.common.biz.system.permission.dto.DeptDataPermissionRespDTO;
 import com.develop.mvp.pk.framework.common.enums.CommonStatusEnum;
 import com.develop.mvp.pk.framework.test.core.ut.BaseDbUnitTest;
+import com.develop.mvp.pk.module.system.application.permission.service.PermissionApplicationService;
 import com.develop.mvp.pk.module.system.dal.dataobject.dept.DeptDO;
 import com.develop.mvp.pk.module.system.dal.dataobject.permission.MenuDO;
 import com.develop.mvp.pk.module.system.dal.dataobject.permission.RoleDO;
@@ -13,7 +14,12 @@ import com.develop.mvp.pk.module.system.dal.dataobject.permission.UserRoleDO;
 import com.develop.mvp.pk.module.system.dal.dataobject.user.AdminUserDO;
 import com.develop.mvp.pk.module.system.dal.mysql.permission.RoleMenuMapper;
 import com.develop.mvp.pk.module.system.dal.mysql.permission.UserRoleMapper;
+import com.develop.mvp.pk.module.system.domain.user.event.DomainEventPublisher;
 import com.develop.mvp.pk.module.system.enums.permission.DataScopeEnum;
+import com.develop.mvp.pk.module.system.infrastructure.permission.persistence.MenuRepositoryImpl;
+import com.develop.mvp.pk.module.system.infrastructure.permission.persistence.RoleMenuRepositoryImpl;
+import com.develop.mvp.pk.module.system.infrastructure.permission.persistence.RoleRepositoryImpl;
+import com.develop.mvp.pk.module.system.infrastructure.permission.persistence.UserRoleRepositoryImpl;
 import com.develop.mvp.pk.module.system.service.dept.DeptService;
 import com.develop.mvp.pk.module.system.service.user.AdminUserService;
 import jakarta.annotation.Resource;
@@ -37,7 +43,8 @@ import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.*;
 
-@Import({PermissionServiceImpl.class})
+@Import({PermissionServiceImpl.class, PermissionApplicationService.class, RoleRepositoryImpl.class, MenuRepositoryImpl.class,
+        RoleMenuRepositoryImpl.class, UserRoleRepositoryImpl.class})
 public class PermissionServiceTest extends BaseDbUnitTest {
 
     @Resource
@@ -56,6 +63,8 @@ public class PermissionServiceTest extends BaseDbUnitTest {
     private DeptService deptService;
     @MockitoBean
     private AdminUserService userService;
+    @MockitoBean
+    private DomainEventPublisher eventPublisher;
 
     @Test
     public void testHasAnyPermissions_superAdmin() {

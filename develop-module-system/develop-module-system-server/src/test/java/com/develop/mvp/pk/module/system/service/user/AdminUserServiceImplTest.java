@@ -10,6 +10,7 @@ import com.develop.mvp.pk.framework.common.util.collection.CollectionUtils;
 import com.develop.mvp.pk.framework.test.core.ut.BaseDbUnitTest;
 import com.develop.mvp.pk.module.infra.api.config.ConfigApi;
 import com.develop.mvp.pk.module.infra.api.file.FileApi;
+import com.develop.mvp.pk.module.system.application.user.service.UserApplicationService;
 import com.develop.mvp.pk.module.system.controller.admin.user.vo.profile.UserProfileUpdatePasswordReqVO;
 import com.develop.mvp.pk.module.system.controller.admin.user.vo.profile.UserProfileUpdateReqVO;
 import com.develop.mvp.pk.module.system.controller.admin.user.vo.user.UserImportExcelVO;
@@ -23,7 +24,12 @@ import com.develop.mvp.pk.module.system.dal.dataobject.tenant.TenantDO;
 import com.develop.mvp.pk.module.system.dal.dataobject.user.AdminUserDO;
 import com.develop.mvp.pk.module.system.dal.mysql.dept.UserPostMapper;
 import com.develop.mvp.pk.module.system.dal.mysql.user.AdminUserMapper;
+import com.develop.mvp.pk.module.system.domain.user.event.DomainEventPublisher;
+import com.develop.mvp.pk.module.system.domain.user.valueobject.EncodedPassword;
+import com.develop.mvp.pk.module.system.domain.user.valueobject.RawPassword;
 import com.develop.mvp.pk.module.system.enums.common.SexEnum;
+import com.develop.mvp.pk.module.system.infrastructure.user.persistence.UserRepositoryImpl;
+import com.develop.mvp.pk.module.system.infrastructure.user.persistence.UserUniquenessCheckerImpl;
 import com.develop.mvp.pk.module.system.service.dept.DeptService;
 import com.develop.mvp.pk.module.system.service.dept.PostService;
 import com.develop.mvp.pk.module.system.service.oauth2.OAuth2TokenService;
@@ -60,7 +66,7 @@ import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.Mockito.*;
 
-@Import(AdminUserServiceImpl.class)
+@Import({AdminUserServiceImpl.class, UserApplicationService.class, UserRepositoryImpl.class, UserUniquenessCheckerImpl.class})
 public class AdminUserServiceImplTest extends BaseDbUnitTest {
 
     @Resource
@@ -79,6 +85,10 @@ public class AdminUserServiceImplTest extends BaseDbUnitTest {
     private PermissionService permissionService;
     @MockitoBean
     private PasswordEncoder passwordEncoder;
+    @MockitoBean
+    private com.develop.mvp.pk.module.system.domain.user.service.PasswordEncoder domainPasswordEncoder;
+    @MockitoBean
+    private DomainEventPublisher eventPublisher;
     @MockitoBean
     private TenantService tenantService;
     @MockitoBean
@@ -240,9 +250,9 @@ public class AdminUserServiceImplTest extends BaseDbUnitTest {
             o.setNewPassword("yuanma");
         });
         // mock 方法
-        when(passwordEncoder.encode(anyString())).then(
-                (Answer<String>) invocationOnMock -> "encode:" + invocationOnMock.getArgument(0));
-        when(passwordEncoder.matches(eq(reqVO.getOldPassword()), eq(dbUser.getPassword()))).thenReturn(true);
+        when(domainPasswordEncoder.encode(any(RawPassword.class))).then(
+                invocationOnMock -> EncodedPassword.of("encode:" + ((RawPassword) invocationOnMock.getArgument(0)).rawValue()));
+        when(domainPasswordEncoder.matches(any(RawPassword.class), eq(EncodedPassword.of(dbUser.getPassword())))).thenReturn(true);
 
         // 调用
         userService.updateUserPassword(userId, reqVO);
@@ -260,8 +270,8 @@ public class AdminUserServiceImplTest extends BaseDbUnitTest {
         Long userId = dbUser.getId();
         String password = "develop";
         // mock 方法
-        when(passwordEncoder.encode(anyString())).then(
-                (Answer<String>) invocationOnMock -> "encode:" + invocationOnMock.getArgument(0));
+        when(domainPasswordEncoder.encode(any(RawPassword.class))).then(
+                invocationOnMock -> EncodedPassword.of("encode:" + ((RawPassword) invocationOnMock.getArgument(0)).rawValue()));
 
         // 调用
         userService.updateUserPassword(userId, password);

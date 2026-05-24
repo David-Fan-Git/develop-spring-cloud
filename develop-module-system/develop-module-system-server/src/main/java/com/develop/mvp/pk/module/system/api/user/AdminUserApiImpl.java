@@ -9,7 +9,7 @@ import com.develop.mvp.pk.framework.common.pojo.CommonResult;
 import com.develop.mvp.pk.framework.datapermission.core.annotation.DataPermission;
 import com.develop.mvp.pk.framework.datapermission.core.util.DataPermissionUtils;
 import com.develop.mvp.pk.module.system.api.user.dto.AdminUserRespDTO;
-import com.develop.mvp.pk.module.system.application.user.UserApplicationService;
+import com.develop.mvp.pk.module.system.application.user.service.UserApplicationService;
 import com.develop.mvp.pk.module.system.dal.dataobject.dept.DeptDO;
 import com.develop.mvp.pk.module.system.domain.user.User;
 import com.develop.mvp.pk.module.system.service.dept.DeptService;

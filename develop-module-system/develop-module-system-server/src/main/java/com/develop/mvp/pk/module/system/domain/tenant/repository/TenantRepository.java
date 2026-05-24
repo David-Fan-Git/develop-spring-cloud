@@ -17,7 +17,7 @@ import java.util.Optional;
 
 public interface TenantRepository {
     Tenant create(String name, Long contactUserId, String contactName, String contactMobile,
-                  java.util.List<String> websites, Long packageId,
+                  TenantStatus status, java.util.List<String> websites, Long packageId,
                   java.time.LocalDateTime expireTime, Integer accountCount);
     Tenant save(Tenant tenant);
     void delete(TenantId id);

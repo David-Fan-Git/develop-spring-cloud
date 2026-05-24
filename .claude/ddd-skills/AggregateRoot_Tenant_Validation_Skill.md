@@ -125,7 +125,7 @@ RED 阶段使用旧版 skill 进行压力测试，发现旧 skill 只能指导�
 | `contactUserId` | `Long` | 管理员用户 ID | `Tenant.contactUserId()` |
 | `contactName` | `String` | 联系人 | `Tenant.contactName()` |
 | `contactMobile` | `String` | 联系手机号 | `Tenant.contactMobile()` |
-| `status` | `Integer` | `0=ENABLE`, `1=DISABLE` | `TenantStatus.code()` |
+| `status` | `Integer` | `0=ENABLE`, `1=DISABLE`；创建请求传入的状态必须保留，未传入时才默认 ENABLE | `TenantStatus.code()` |
 | `websites` | `List<String>` | 域名列表 | `Tenant.websites()` |
 | `packageId` | `Long` | 套餐 ID | `TenantPackageRef.packageId()` |
 | `expireTime` | `LocalDateTime` | 过期时间 | `TenantExpireTime.value()` |
@@ -185,7 +185,7 @@ public static Tenant reconstitute(Long id, String name, Long contactUserId,
                                   Integer accountCount)
 ```
 
-`create` 必须默认使用 `TenantStatus.ENABLED`；`reconstitute` 必须保留持久化状态。当前 `TenantId.of(id)` 要求非空，因此 create path 不能直接传入 Controller 创建请求中的空 ID，除非先引入与持久化自增兼容的安全生成/回填方案并补测试。
+`create` 在未显式传入状态时默认使用 `TenantStatus.ENABLED`；`TenantApplicationService#createTenant` 必须保留 `TenantSaveReqVO.status` 的外部行为，允许创建禁用租户但不得因此记录 `TenantDisabledEvent`。`reconstitute` 必须保留持久化状态。当前 `TenantId.of(id)` 要求非空，因此 create path 不能直接传入 Controller 创建请求中的空 ID，除非先引入与持久化自增兼容的安全生成/回填方案并补测试。
 
 ### 9.2 Tenant aggregate
 

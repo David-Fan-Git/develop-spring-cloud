@@ -5,7 +5,7 @@ package com.develop.mvp.pk.module.system.api.tenant;
 import com.develop.mvp.pk.framework.common.biz.system.tenant.TenantCommonApi;
 import com.develop.mvp.pk.framework.common.pojo.CommonResult;
 import com.develop.mvp.pk.framework.tenant.core.aop.TenantIgnore;
-import com.develop.mvp.pk.module.system.application.tenant.TenantApplicationService;
+import com.develop.mvp.pk.module.system.application.tenant.service.TenantApplicationService;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.RestController;
 

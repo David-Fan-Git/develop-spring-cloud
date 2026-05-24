@@ -7,6 +7,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.List;
 
+import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 class SystemArchitectureTest {
@@ -17,36 +18,65 @@ class SystemArchitectureTest {
     }
 
     @Test
-    void permissionShouldExposeStandardDddSkeleton() {
+    void migratedSystemSubdomainsShouldExposeStandardDddSkeleton() {
         Path sourceRoot = mainSourceRoot();
-        List<String> requiredPackages = List.of(
-                "domain/permission/model",
-                "domain/permission/valueobject",
-                "domain/permission/event",
-                "domain/permission/service",
-                "domain/permission/repository",
-                "application/permission/command",
-                "application/permission/query",
-                "application/permission/dto",
-                "application/permission/port/inbound",
-                "application/permission/port/outbound",
-                "application/permission/service",
-                "infrastructure/permission/persistence",
-                "infrastructure/permission/external",
-                "infrastructure/permission/rpc",
-                "infrastructure/permission/cache",
-                "infrastructure/permission/messaging",
-                "convert/permission",
-                "controller/admin/permission",
-                "job",
-                "mq",
-                "framework"
+        List<String> migratedSubdomains = List.of("auth", "dept", "dict", "logger", "mail", "member", "notice", "notify", "oauth2", "permission", "sms", "social", "tenant", "user");
+        List<String> requiredSuffixes = List.of(
+                "domain/%s/model",
+                "domain/%s/valueobject",
+                "domain/%s/event",
+                "domain/%s/service",
+                "domain/%s/repository",
+                "application/%s/command",
+                "application/%s/query",
+                "application/%s/dto",
+                "application/%s/port/inbound",
+                "application/%s/port/outbound",
+                "application/%s/service",
+                "infrastructure/%s/persistence",
+                "infrastructure/%s/external",
+                "infrastructure/%s/rpc",
+                "infrastructure/%s/cache",
+                "infrastructure/%s/messaging",
+                "convert/%s"
         );
 
-        for (String requiredPackage : requiredPackages) {
-            assertTrue(Files.isDirectory(sourceRoot.resolve(requiredPackage)),
-                    () -> "Missing permission DDD skeleton package: " + requiredPackage);
+        for (String subdomain : migratedSubdomains) {
+            for (String suffix : requiredSuffixes) {
+                String requiredPackage = suffix.formatted(subdomain);
+                assertTrue(Files.isDirectory(sourceRoot.resolve(requiredPackage)),
+                        () -> "Missing system DDD skeleton package: " + requiredPackage);
+            }
         }
+    }
+
+    @Test
+    void migratedApplicationServicesShouldImplementInboundPorts() {
+        assertImplementsInboundPort("permission", "RoleUseCase", "RoleApplicationService");
+        assertImplementsInboundPort("permission", "MenuUseCase", "PermissionApplicationService");
+        assertImplementsInboundPort("permission", "PermissionUseCase", "PermissionApplicationService");
+        assertImplementsInboundPort("auth", "AuthUseCase", "AuthApplicationService");
+        assertImplementsInboundPort("dept", "DeptUseCase", "DeptApplicationService");
+        assertImplementsInboundPort("dict", "DictUseCase", "DictApplicationService");
+        assertImplementsInboundPort("logger", "LoggerUseCase", "LoggerApplicationService");
+        assertImplementsInboundPort("mail", "MailUseCase", "MailApplicationService");
+        assertImplementsInboundPort("member", "MemberUseCase", "MemberApplicationService");
+        assertImplementsInboundPort("notice", "NoticeUseCase", "NoticeApplicationService");
+        assertImplementsInboundPort("notify", "NotifyUseCase", "NotifyApplicationService");
+        assertImplementsInboundPort("oauth2", "OAuth2UseCase", "OAuth2ApplicationService");
+        assertImplementsInboundPort("sms", "SmsUseCase", "SmsApplicationService");
+        assertImplementsInboundPort("social", "SocialUseCase", "SocialApplicationService");
+        assertImplementsInboundPort("tenant", "TenantUseCase", "TenantApplicationService");
+        assertImplementsInboundPort("user", "UserUseCase", "UserApplicationService");
+    }
+
+    private void assertImplementsInboundPort(String subdomain, String portSimpleName, String serviceSimpleName) {
+        String basePackage = "com.develop.mvp.pk.module.system.application." + subdomain;
+        assertDoesNotThrow(() -> {
+            Class<?> port = Class.forName(basePackage + ".port.inbound." + portSimpleName);
+            Class<?> service = Class.forName(basePackage + ".service." + serviceSimpleName);
+            assertTrue(port.isAssignableFrom(service), serviceSimpleName + " must implement " + portSimpleName);
+        });
     }
 
     private Path mainSourceRoot() {

@@ -96,7 +96,7 @@ RED 基线验证发现旧 skill 会诱导以下失败：
 
 ### Service, Application, Auth, OAuth2
 
-- DDD application service: `develop-module-system/develop-module-system-server/src/main/java/com/develop/mvp/pk/module/system/application/user/UserApplicationService.java`
+- DDD application service: `develop-module-system/develop-module-system-server/src/main/java/com/develop/mvp/pk/module/system/application/user/service/UserApplicationService.java`
 - Legacy service interface: `develop-module-system/develop-module-system-server/src/main/java/com/develop/mvp/pk/module/system/service/user/AdminUserService.java`
 - Legacy service implementation: `develop-module-system/develop-module-system-server/src/main/java/com/develop/mvp/pk/module/system/service/user/AdminUserServiceImpl.java`
 - Auth service: `develop-module-system/develop-module-system-server/src/main/java/com/develop/mvp/pk/module/system/service/auth/AdminAuthServiceImpl.java`
@@ -117,13 +117,13 @@ RED 基线验证发现旧 skill 会诱导以下失败：
 
 ### Infrastructure
 
-- Repository implementation: `develop-module-system/develop-module-system-server/src/main/java/com/develop/mvp/pk/module/system/infrastructure/user/UserRepositoryImpl.java`
-- Password adapter: `develop-module-system/develop-module-system-server/src/main/java/com/develop/mvp/pk/module/system/infrastructure/user/BCryptPasswordEncoderAdapter.java`
-- Event publisher: `develop-module-system/develop-module-system-server/src/main/java/com/develop/mvp/pk/module/system/infrastructure/user/SpringDomainEventPublisher.java`
-- Uniqueness checker: `develop-module-system/develop-module-system-server/src/main/java/com/develop/mvp/pk/module/system/infrastructure/user/UserUniquenessCheckerImpl.java`
+- Repository implementation: `develop-module-system/develop-module-system-server/src/main/java/com/develop/mvp/pk/module/system/infrastructure/user/persistence/UserRepositoryImpl.java`
+- Password adapter: `develop-module-system/develop-module-system-server/src/main/java/com/develop/mvp/pk/module/system/infrastructure/user/external/BCryptPasswordEncoderAdapter.java`
+- Event publisher: `develop-module-system/develop-module-system-server/src/main/java/com/develop/mvp/pk/module/system/infrastructure/user/messaging/SpringDomainEventPublisher.java`
+- Uniqueness checker: `develop-module-system/develop-module-system-server/src/main/java/com/develop/mvp/pk/module/system/infrastructure/user/persistence/UserUniquenessCheckerImpl.java`
 - Subscribers:
-  - `develop-module-system/develop-module-system-server/src/main/java/com/develop/mvp/pk/module/system/infrastructure/user/subscriber/UserDisabledTokenCleaner.java`
-  - `develop-module-system/develop-module-system-server/src/main/java/com/develop/mvp/pk/module/system/infrastructure/user/subscriber/UserDeletedPermissionCleaner.java`
+  - `develop-module-system/develop-module-system-server/src/main/java/com/develop/mvp/pk/module/system/infrastructure/user/messaging/UserDisabledTokenCleaner.java`
+  - `develop-module-system/develop-module-system-server/src/main/java/com/develop/mvp/pk/module/system/infrastructure/user/messaging/UserDeletedPermissionCleaner.java`
 
 ### Error Codes and Tests
 
@@ -150,8 +150,8 @@ RED 基线验证发现旧 skill 会诱导以下失败：
 | `remark` | `String` | 备注 | Admin/profile field; maps to `UserProfile.remark` |
 | `deptId` | `Long` | 部门 ID | External Dept aggregate id; validate through DeptService |
 | `postIds` | `Set<Long>` | 岗位 IDs | Stored with Jackson type handler and synchronized with `UserPostDO` relation |
-| `email` | `String` | 邮箱 | Optional unique when nonblank |
-| `mobile` | `String` | 手机号 | Optional unique when nonblank |
+| `email` | `String` | 邮箱 | Optional unique when nonblank；格式由 VO/API 入参校验，领域重建必须兼容历史持久化值；持久化/API 输出必须保留原始大小写，不得在 `Email.value()` 中自动转小写 |
+| `mobile` | `String` | 手机号 | Optional unique when nonblank；格式由 VO/API 入参校验，领域重建必须兼容历史持久化值 |
 | `sex` | `Integer` | 性别 | `SexEnum`; maps to `UserProfile.sex` |
 | `avatar` | `String` | 头像 | Exposed in API/VO/profile |
 | `status` | `Integer` | 账号状态 | `CommonStatusEnum`; maps to `UserStatus` |
@@ -259,7 +259,7 @@ public Set<Long> getDeptCondition(Long deptId)
 | BR03 | 创建/更新时邮箱非空唯一 | Application/legacy service | `USER_EMAIL_EXISTS` |
 | BR04 | 创建/更新时手机号非空唯一 | Application/legacy service | `USER_MOBILE_EXISTS` |
 | BR05 | 创建、注册、重置密码、导入初始密码必须 BCrypt 加密 | Domain adapter/legacy service | Password is encoded before persistence |
-| BR06 | 个人修改密码必须校验旧密码 | Legacy service/domain migration | `USER_PASSWORD_FAILED` |
+| BR06 | 个人修改密码必须校验旧密码；旧密码比对兼容历史短密码，不套用新密码长度校验，新密码仍必须校验长度并加密 | Legacy service/domain migration | `USER_PASSWORD_FAILED` |
 | BR07 | 禁用用户必须清理 admin OAuth2 access token | Legacy service or subscriber | `OAuth2TokenService.removeAccessToken(id, ADMIN)` equivalent |
 | BR08 | 删除用户必须清理权限和岗位关联 | Legacy service/application/subscriber/repository | `PermissionService.processUserDeleted`, `UserPostMapper.deleteByUserId` |
 | BR09 | 创建/注册必须校验租户配额 | Legacy service/application migration | `USER_COUNT_MAX` with account count parameter |

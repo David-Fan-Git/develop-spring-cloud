@@ -1,54 +1,35 @@
 package com.develop.mvp.pk.module.system.service.tenant;
 
-import cn.hutool.core.collection.CollUtil;
-import cn.hutool.core.lang.Assert;
-import cn.hutool.core.util.ObjectUtil;
+import com.baomidou.dynamic.datasource.annotation.DSTransactional;
 import com.develop.mvp.pk.framework.common.enums.CommonStatusEnum;
 import com.develop.mvp.pk.framework.common.pojo.PageResult;
 import com.develop.mvp.pk.framework.common.util.collection.CollectionUtils;
-import com.develop.mvp.pk.framework.common.util.date.DateUtils;
-import com.develop.mvp.pk.framework.common.util.object.BeanUtils;
 import com.develop.mvp.pk.framework.datapermission.core.annotation.DataPermission;
 import com.develop.mvp.pk.framework.tenant.config.TenantProperties;
 import com.develop.mvp.pk.framework.tenant.core.context.TenantContextHolder;
-import com.develop.mvp.pk.framework.tenant.core.util.TenantUtils;
-import com.develop.mvp.pk.module.system.controller.admin.permission.vo.role.RoleSaveReqVO;
+import com.develop.mvp.pk.module.system.application.tenant.service.TenantApplicationService;
 import com.develop.mvp.pk.module.system.controller.admin.tenant.vo.tenant.TenantPageReqVO;
 import com.develop.mvp.pk.module.system.controller.admin.tenant.vo.tenant.TenantSaveReqVO;
-import com.develop.mvp.pk.module.system.convert.tenant.TenantConvert;
 import com.develop.mvp.pk.module.system.dal.dataobject.permission.MenuDO;
-import com.develop.mvp.pk.module.system.dal.dataobject.permission.RoleDO;
 import com.develop.mvp.pk.module.system.dal.dataobject.tenant.TenantDO;
-import com.develop.mvp.pk.module.system.dal.dataobject.tenant.TenantPackageDO;
-import com.develop.mvp.pk.module.system.dal.mysql.tenant.TenantMapper;
-import com.develop.mvp.pk.module.system.enums.permission.RoleCodeEnum;
-import com.develop.mvp.pk.module.system.enums.permission.RoleTypeEnum;
+import com.develop.mvp.pk.module.system.domain.tenant.Tenant;
+import com.develop.mvp.pk.module.system.domain.tenant.repository.TenantPageQuery;
 import com.develop.mvp.pk.module.system.service.permission.MenuService;
-import com.develop.mvp.pk.module.system.service.permission.PermissionService;
-import com.develop.mvp.pk.module.system.service.permission.RoleService;
 import com.develop.mvp.pk.module.system.service.tenant.handler.TenantInfoHandler;
 import com.develop.mvp.pk.module.system.service.tenant.handler.TenantMenuHandler;
-import com.develop.mvp.pk.module.system.service.user.AdminUserService;
-import com.baomidou.dynamic.datasource.annotation.DSTransactional;
 import jakarta.annotation.Resource;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
 import org.springframework.validation.annotation.Validated;
 
 import java.util.List;
 import java.util.Objects;
 import java.util.Set;
-
-import static com.develop.mvp.pk.framework.common.exception.util.ServiceExceptionUtil.exception;
-import static com.develop.mvp.pk.module.system.enums.ErrorCodeConstants.*;
-import static java.util.Collections.singleton;
+import java.util.stream.Collectors;
 
 /**
- * 租户 Service 实现类
- *
- * @author David
+ * 租户兼容 Service，业务用例委托给 TenantApplicationService。
  */
 @Service
 @Validated
@@ -56,256 +37,131 @@ import static java.util.Collections.singleton;
 public class TenantServiceImpl implements TenantService {
 
     @SuppressWarnings("SpringJavaAutowiredFieldsWarningInspection")
-    @Autowired(required = false) // 由于 develop.tenant.enable 配置项，可以关闭多租户的功能，所以这里只能不强制注入
+    @Autowired(required = false)
     private TenantProperties tenantProperties;
 
     @Resource
-    private TenantMapper tenantMapper;
-
+    private TenantApplicationService tenantApplicationService;
     @Resource
     private TenantPackageService tenantPackageService;
     @Resource
-    @Lazy // 延迟，避免循环依赖报错
-    private AdminUserService userService;
-    @Resource
-    private RoleService roleService;
-    @Resource
     private MenuService menuService;
-    @Resource
-    private PermissionService permissionService;
 
     @Override
     public List<Long> getTenantIdList() {
-        List<TenantDO> tenants = tenantMapper.selectList();
-        return CollectionUtils.convertList(tenants, TenantDO::getId);
+        return tenantApplicationService.getTenantIdList();
     }
 
     @Override
     public void validTenant(Long id) {
-        TenantDO tenant = getTenant(id);
-        if (tenant == null) {
-            throw exception(TENANT_NOT_EXISTS);
-        }
-        if (tenant.getStatus().equals(CommonStatusEnum.DISABLE.getStatus())) {
-            throw exception(TENANT_DISABLE, tenant.getName());
-        }
-        if (DateUtils.isExpired(tenant.getExpireTime())) {
-            throw exception(TENANT_EXPIRE, tenant.getName());
-        }
+        tenantApplicationService.getAndValidateTenant(id);
     }
 
     @Override
-    @DSTransactional // 多数据源，使用 @DSTransactional 保证本地事务，以及数据源的切换
-    @DataPermission(enable = false) // 参见 https://gitee.com/zhijiantianya/ruoyi-vue-pro/pulls/1154 说明
+    @DSTransactional
+    @DataPermission(enable = false)
     public Long createTenant(TenantSaveReqVO createReqVO) {
-        // 校验租户名称是否重复
-        validTenantNameDuplicate(createReqVO.getName(), null);
-        // 校验租户域名是否重复
-        validTenantWebsiteDuplicate(createReqVO.getWebsites(), null);
-        // 校验套餐被禁用
-        TenantPackageDO tenantPackage = tenantPackageService.validTenantPackage(createReqVO.getPackageId());
-
-        // 创建租户
-        TenantDO tenant = BeanUtils.toBean(createReqVO, TenantDO.class);
-        tenantMapper.insert(tenant);
-        // 创建租户的管理员
-        TenantUtils.execute(tenant.getId(), () -> {
-            // 创建角色
-            Long roleId = createRole(tenantPackage);
-            // 创建用户，并分配角色
-            Long userId = createUser(roleId, createReqVO);
-            // 修改租户的管理员
-            tenantMapper.updateById(new TenantDO().setId(tenant.getId()).setContactUserId(userId));
-        });
-        return tenant.getId();
-    }
-
-    private Long createUser(Long roleId, TenantSaveReqVO createReqVO) {
-        // 创建用户
-        Long userId = userService.createUser(TenantConvert.INSTANCE.convert02(createReqVO));
-        // 分配角色
-        permissionService.assignUserRole(userId, singleton(roleId));
-        return userId;
-    }
-
-    private Long createRole(TenantPackageDO tenantPackage) {
-        // 创建角色
-        RoleSaveReqVO reqVO = new RoleSaveReqVO();
-        reqVO.setName(RoleCodeEnum.TENANT_ADMIN.getName()).setCode(RoleCodeEnum.TENANT_ADMIN.getCode())
-                .setSort(0).setRemark("系统自动生成");
-        Long roleId = roleService.createRole(reqVO, RoleTypeEnum.SYSTEM.getType());
-        // 分配权限
-        permissionService.assignRoleMenu(roleId, tenantPackage.getMenuIds());
-        return roleId;
+        return tenantApplicationService.createTenant(
+                createReqVO.getId(), createReqVO.getName(), createReqVO.getContactName(),
+                createReqVO.getContactMobile(), createReqVO.getStatus(),
+                createReqVO.getWebsites(), createReqVO.getPackageId(),
+                createReqVO.getExpireTime(), createReqVO.getAccountCount(),
+                createReqVO.getUsername(), createReqVO.getPassword());
     }
 
     @Override
-    @DSTransactional // 多数据源，使用 @DSTransactional 保证本地事务，以及数据源的切换
+    @DSTransactional
     public void updateTenant(TenantSaveReqVO updateReqVO) {
-        // 校验存在
-        TenantDO tenant = validateUpdateTenant(updateReqVO.getId());
-        // 校验租户名称是否重复
-        validTenantNameDuplicate(updateReqVO.getName(), updateReqVO.getId());
-        // 校验租户域名是否重复
-        validTenantWebsiteDuplicate(updateReqVO.getWebsites(), updateReqVO.getId());
-        // 校验套餐被禁用
-        TenantPackageDO tenantPackage = tenantPackageService.validTenantPackage(updateReqVO.getPackageId());
-
-        // 更新租户
-        TenantDO updateObj = BeanUtils.toBean(updateReqVO, TenantDO.class);
-        tenantMapper.updateById(updateObj);
-        // 如果套餐发生变化，则修改其角色的权限
-        if (ObjectUtil.notEqual(tenant.getPackageId(), updateReqVO.getPackageId())) {
-            updateTenantRoleMenu(tenant.getId(), tenantPackage.getMenuIds());
-        }
-    }
-
-    private void validTenantNameDuplicate(String name, Long id) {
-        TenantDO tenant = tenantMapper.selectByName(name);
-        if (tenant == null) {
-            return;
-        }
-        // 如果 id 为空，说明不用比较是否为相同名字的租户
-        if (id == null) {
-            throw exception(TENANT_NAME_DUPLICATE, name);
-        }
-        if (!tenant.getId().equals(id)) {
-            throw exception(TENANT_NAME_DUPLICATE, name);
-        }
-    }
-
-    private void validTenantWebsiteDuplicate(List<String> websites, Long excludeId) {
-        if (CollUtil.isEmpty(websites)) {
-            return;
-        }
-        websites.forEach(website -> {
-            List<TenantDO> tenants = tenantMapper.selectListByWebsite(website);
-            if (excludeId != null) {
-                tenants.removeIf(tenant -> tenant.getId().equals(excludeId));
-            }
-            if (CollUtil.isNotEmpty(tenants)) {
-                throw exception(TENANT_WEBSITE_DUPLICATE, website);
-            }
-        });
+        tenantApplicationService.updateTenant(
+                updateReqVO.getId(), updateReqVO.getName(), updateReqVO.getContactName(),
+                updateReqVO.getContactMobile(), updateReqVO.getStatus(),
+                updateReqVO.getWebsites(), updateReqVO.getPackageId(),
+                updateReqVO.getExpireTime(), updateReqVO.getAccountCount());
     }
 
     @Override
     @DSTransactional
     public void updateTenantRoleMenu(Long tenantId, Set<Long> menuIds) {
-        TenantUtils.execute(tenantId, () -> {
-            // 获得所有角色
-            List<RoleDO> roles = roleService.getRoleList();
-            roles.forEach(role -> Assert.isTrue(tenantId.equals(role.getTenantId()), "角色({}/{}) 租户不匹配",
-                    role.getId(), role.getTenantId(), tenantId)); // 兜底校验
-            // 重新分配每个角色的权限
-            roles.forEach(role -> {
-                // 如果是租户管理员，重新分配其权限为租户套餐的权限
-                if (Objects.equals(role.getCode(), RoleCodeEnum.TENANT_ADMIN.getCode())) {
-                    permissionService.assignRoleMenu(role.getId(), menuIds);
-                    log.info("[updateTenantRoleMenu][租户管理员({}/{}) 的权限修改为({})]", role.getId(), role.getTenantId(), menuIds);
-                    return;
-                }
-                // 如果是其他角色，则去掉超过套餐的权限
-                Set<Long> roleMenuIds = permissionService.getRoleMenuListByRoleId(role.getId());
-                roleMenuIds = CollUtil.intersectionDistinct(roleMenuIds, menuIds);
-                permissionService.assignRoleMenu(role.getId(), roleMenuIds);
-                log.info("[updateTenantRoleMenu][角色({}/{}) 的权限修改为({})]", role.getId(), role.getTenantId(), roleMenuIds);
-            });
-        });
+        tenantApplicationService.updateTenantRoleMenu(tenantId, menuIds);
     }
 
     @Override
     public void deleteTenant(Long id) {
-        // 校验存在
-        validateUpdateTenant(id);
-        // 删除
-        tenantMapper.deleteById(id);
+        tenantApplicationService.deleteTenant(id);
     }
 
     @Override
     public void deleteTenantList(List<Long> ids) {
-        // 1. 校验存在
-        ids.forEach(this::validateUpdateTenant);
-
-        // 2. 批量删除
-        tenantMapper.deleteByIds(ids);
-    }
-
-    private TenantDO validateUpdateTenant(Long id) {
-        TenantDO tenant = tenantMapper.selectById(id);
-        if (tenant == null) {
-            throw exception(TENANT_NOT_EXISTS);
-        }
-        // 内置租户，不允许删除
-        if (isSystemTenant(tenant)) {
-            throw exception(TENANT_CAN_NOT_UPDATE_SYSTEM);
-        }
-        return tenant;
+        tenantApplicationService.deleteTenantList(ids);
     }
 
     @Override
     public TenantDO getTenant(Long id) {
-        return tenantMapper.selectById(id);
+        return toDataObject(tenantApplicationService.getTenant(id));
     }
 
     @Override
     public PageResult<TenantDO> getTenantPage(TenantPageReqVO pageReqVO) {
-        return tenantMapper.selectPage(pageReqVO);
+        TenantPageQuery query = new TenantPageQuery(
+                pageReqVO.getName(), pageReqVO.getContactName(), pageReqVO.getContactMobile(),
+                pageReqVO.getStatus(), pageReqVO.getCreateTime(),
+                pageReqVO.getPageNo(), pageReqVO.getPageSize());
+        PageResult<Tenant> pageResult = tenantApplicationService.getTenantPage(query);
+        List<TenantDO> tenants = pageResult.getList().stream()
+                .map(this::toDataObject)
+                .collect(Collectors.toList());
+        return new PageResult<>(tenants, pageResult.getTotal());
     }
 
     @Override
     public TenantDO getTenantByName(String name) {
-        return tenantMapper.selectByName(name);
+        return toDataObject(tenantApplicationService.getTenantByName(name));
     }
 
     @Override
     public TenantDO getTenantByWebsite(String website) {
-        List<TenantDO> tenants = tenantMapper.selectListByWebsite(website);
-        return CollUtil.getFirst(tenants);
+        return toDataObject(tenantApplicationService.getTenantByWebsite(website));
     }
 
     @Override
     public Long getTenantCountByPackageId(Long packageId) {
-        return tenantMapper.selectCountByPackageId(packageId);
+        return tenantApplicationService.getTenantCountByPackageId(packageId);
     }
 
     @Override
     public List<TenantDO> getTenantListByPackageId(Long packageId) {
-        return tenantMapper.selectListByPackageId(packageId);
+        return tenantApplicationService.getTenantListByPackageId(packageId).stream()
+                .map(this::toDataObject)
+                .collect(Collectors.toList());
     }
 
     @Override
     public List<TenantDO> getTenantListByStatus(Integer status) {
-        return tenantMapper.selectListByStatus(status);
+        return tenantApplicationService.getTenantListByStatus(status).stream()
+                .map(this::toDataObject)
+                .collect(Collectors.toList());
     }
 
     @Override
     public void handleTenantInfo(TenantInfoHandler handler) {
-        // 如果禁用，则不执行逻辑
         if (isTenantDisable()) {
             return;
         }
-        // 获得租户
-        TenantDO tenant = getTenant(TenantContextHolder.getRequiredTenantId());
-        // 执行处理器
-        handler.handle(tenant);
+        handler.handle(getTenant(TenantContextHolder.getRequiredTenantId()));
     }
 
     @Override
     public void handleTenantMenu(TenantMenuHandler handler) {
-        // 如果禁用，则不执行逻辑
         if (isTenantDisable()) {
             return;
         }
-        // 获得租户，然后获得菜单
         TenantDO tenant = getTenant(TenantContextHolder.getRequiredTenantId());
         Set<Long> menuIds;
-        if (isSystemTenant(tenant)) { // 系统租户，菜单是全量的
+        if (isSystemTenant(tenant)) {
             menuIds = CollectionUtils.convertSet(menuService.getMenuList(), MenuDO::getId);
         } else {
             menuIds = tenantPackageService.getTenantPackage(tenant.getPackageId()).getMenuIds();
         }
-        // 执行处理器
         handler.handle(menuIds);
     }
 
@@ -317,4 +173,26 @@ public class TenantServiceImpl implements TenantService {
         return tenantProperties == null || Boolean.FALSE.equals(tenantProperties.getEnable());
     }
 
+    private TenantDO toDataObject(Tenant tenant) {
+        if (tenant == null) {
+            return null;
+        }
+        TenantDO tenantDO = new TenantDO()
+                .setId(tenant.id().value())
+                .setName(tenant.name().value())
+                .setContactUserId(tenant.contactUserId())
+                .setContactName(tenant.contactName())
+                .setContactMobile(tenant.contactMobile())
+                .setStatus(tenant.status().code())
+                .setWebsites(tenant.websites())
+                .setPackageId(tenant.packageRef().packageId())
+                .setExpireTime(tenant.expireTime().value())
+                .setAccountCount(tenant.accountCount());
+        tenantDO.setCreateTime(tenant.createTime());
+        tenantDO.setUpdateTime(tenant.updateTime());
+        tenantDO.setCreator(tenant.creator());
+        tenantDO.setUpdater(tenant.updater());
+        tenantDO.setDeleted(tenant.deleted());
+        return tenantDO;
+    }
 }

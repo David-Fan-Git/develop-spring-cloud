@@ -4,6 +4,8 @@ package com.develop.mvp.pk.module.system.application.permission.service;
 // DDD 角色：RBAC 权限编排服务，负责 Role/Menu CRUD 及关联操作
 
 import com.develop.mvp.pk.framework.common.pojo.PageResult;
+import com.develop.mvp.pk.module.system.application.permission.port.inbound.MenuUseCase;
+import com.develop.mvp.pk.module.system.application.permission.port.inbound.PermissionUseCase;
 import com.develop.mvp.pk.module.system.domain.permission.*;
 import com.develop.mvp.pk.module.system.domain.permission.repository.*;
 import com.develop.mvp.pk.module.system.domain.permission.valueobject.*;
@@ -23,7 +25,7 @@ import static com.develop.mvp.pk.framework.common.exception.util.ServiceExceptio
 import static com.develop.mvp.pk.module.system.enums.ErrorCodeConstants.*;
 
 @Service
-public class PermissionApplicationService {
+public class PermissionApplicationService implements MenuUseCase, PermissionUseCase {
 
     private final RoleRepository roleRepository;
     private final MenuRepository menuRepository;
@@ -157,7 +159,14 @@ public class PermissionApplicationService {
         userRoleRepository.assign(userId, roleIds);
     }
 
+    @Transactional
+    public void processUserDeleted(Long userId) {
+        userRoleRepository.deleteByUserId(userId);
+    }
+
     public Set<Long> getUserRoleIds(Long userId) { return userRoleRepository.findByUserId(userId); }
+
+    public Set<Long> getUserIdsByRoleIds(Collection<Long> roleIds) { return userRoleRepository.findByRoleIds(roleIds); }
 
     // ========== Role-Menu Assignment ==========
 
@@ -166,7 +175,22 @@ public class PermissionApplicationService {
         roleMenuRepository.assign(roleId, menuIds);
     }
 
+    @Transactional
+    public void processRoleDeleted(Long roleId) {
+        userRoleRepository.deleteByRoleId(roleId);
+        roleMenuRepository.deleteByRoleId(roleId);
+    }
+
+    @Transactional
+    public void processMenuDeleted(Long menuId) {
+        roleMenuRepository.deleteByMenuId(menuId);
+    }
+
     public Set<Long> getRoleMenuIds(Long roleId) { return roleMenuRepository.findByRoleId(roleId); }
+
+    public Set<Long> getRoleMenuIds(Collection<Long> roleIds) { return roleMenuRepository.findByRoleIds(roleIds); }
+
+    public Set<Long> getMenuRoleIds(Long menuId) { return roleMenuRepository.findByMenuId(menuId); }
 
     // ========== helpers ==========
 

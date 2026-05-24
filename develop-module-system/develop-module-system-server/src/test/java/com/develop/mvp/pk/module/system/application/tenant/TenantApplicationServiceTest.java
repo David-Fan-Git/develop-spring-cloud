@@ -1,4 +1,4 @@
-package com.develop.mvp.pk.module.system.application.tenant;
+package com.develop.mvp.pk.module.system.application.tenant.service;
 
 import com.develop.mvp.pk.framework.common.enums.CommonStatusEnum;
 import com.develop.mvp.pk.framework.test.core.ut.BaseDbUnitTest;
@@ -10,8 +10,8 @@ import com.develop.mvp.pk.module.system.domain.tenant.event.TenantCreatedEvent;
 import com.develop.mvp.pk.module.system.domain.user.event.DomainEventPublisher;
 import com.develop.mvp.pk.module.system.enums.permission.RoleCodeEnum;
 import com.develop.mvp.pk.module.system.enums.permission.RoleTypeEnum;
-import com.develop.mvp.pk.module.system.infrastructure.tenant.TenantRepositoryImpl;
-import com.develop.mvp.pk.module.system.infrastructure.tenant.TenantUniquenessCheckerImpl;
+import com.develop.mvp.pk.module.system.infrastructure.tenant.persistence.TenantRepositoryImpl;
+import com.develop.mvp.pk.module.system.infrastructure.tenant.persistence.TenantUniquenessCheckerImpl;
 import com.develop.mvp.pk.module.system.service.permission.PermissionService;
 import com.develop.mvp.pk.module.system.service.permission.RoleService;
 import com.develop.mvp.pk.module.system.service.tenant.TenantPackageService;

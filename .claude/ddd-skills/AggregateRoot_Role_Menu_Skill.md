@@ -72,7 +72,7 @@ Required production skill sections are:
 | Must Preserve | Controller URL/HTTP 方法/VO、RoleApi/PermissionApi、权限注解、缓存 key 与 allEntries 范围、LogRecord、事务边界、租户过滤、数据权限绕过、Excel 和分页语义 |
 | Allowed Changes | 为当前切片新增/修改标准骨架内的 application、domain、infrastructure、convert 和兼容 service facade；旧 service 可变薄，但外部接口必须保持兼容；迁移任一 Role/Menu/Permission 切片时必须创建标准目录和接口骨架 |
 | Forbidden Changes | 禁止把新核心业务继续写进 service/dal；禁止让 domain 依赖 Spring/MyBatis/Controller VO/Mapper/DO；禁止让 repository 为了复用 Mapper 构造 Controller VO；禁止以“当前为空”“只有一个实现”“避免空抽象”“最小切片”为由省略标准骨架 |
-| Dependency Rules | 写用例优先：Controller/旧 Service facade → Application inbound port → Application service → Domain Repository port / Application outbound port → Infrastructure adapter → Mapper/DO；关联清理由原有 PermissionService 或独立应用用例承担，不隐藏在 RoleRepository.delete 中 |
+| Dependency Rules | 写用例优先：Controller/旧 Service facade → Application inbound port → Application service → Domain Repository port / Application outbound port → Infrastructure adapter → Mapper/DO；RoleMenu/UserRole 分配、查询与清理应通过 `PermissionUseCase` → `PermissionApplicationService` → `RoleMenuRepository`/`UserRoleRepository`，旧 `PermissionServiceImpl` 仅保留事务、缓存和外部兼容注解；关联清理不隐藏在 RoleRepository.delete 中 |
 | Verification Gate | 每个切片至少跑对应旧 Service 回归测试、system-server compile、SystemArchitectureTest；修改 skill 时同步跑占位/结构检查 |
 | Stop Conditions | 需要改变外部契约、缓存范围、事务类型、错误码、SQL/表结构、跨多个 RBAC 子用例联动，或测试暴露旧行为与 DDD 模型冲突时必须停止扩大范围并先修订 skill |
 
@@ -134,9 +134,12 @@ These files are the current behavior source for rules, errors, cache, transactio
 - `develop-module-system/develop-module-system-server/src/main/java/com/develop/mvp/pk/module/system/domain/permission/repository/MenuRepository.java`
 - `develop-module-system/develop-module-system-server/src/main/java/com/develop/mvp/pk/module/system/application/permission/RoleApplicationService.java`
 - `develop-module-system/develop-module-system-server/src/main/java/com/develop/mvp/pk/module/system/application/permission/MenuApplicationService.java`
-- `develop-module-system/develop-module-system-server/src/main/java/com/develop/mvp/pk/module/system/application/permission/PermissionApplicationService.java`
-- `develop-module-system/develop-module-system-server/src/main/java/com/develop/mvp/pk/module/system/infrastructure/permission/RoleRepositoryImpl.java`
-- `develop-module-system/develop-module-system-server/src/main/java/com/develop/mvp/pk/module/system/infrastructure/permission/MenuRepositoryImpl.java`
+- `develop-module-system/develop-module-system-server/src/main/java/com/develop/mvp/pk/module/system/application/permission/service/PermissionApplicationService.java`
+- `develop-module-system/develop-module-system-server/src/main/java/com/develop/mvp/pk/module/system/application/permission/port/inbound/PermissionUseCase.java`
+- `develop-module-system/develop-module-system-server/src/main/java/com/develop/mvp/pk/module/system/infrastructure/permission/persistence/RoleRepositoryImpl.java`
+- `develop-module-system/develop-module-system-server/src/main/java/com/develop/mvp/pk/module/system/infrastructure/permission/persistence/MenuRepositoryImpl.java`
+- `develop-module-system/develop-module-system-server/src/main/java/com/develop/mvp/pk/module/system/infrastructure/permission/persistence/RoleMenuRepositoryImpl.java`
+- `develop-module-system/develop-module-system-server/src/main/java/com/develop/mvp/pk/module/system/infrastructure/permission/persistence/UserRoleRepositoryImpl.java`
 
 Current DDD draft is not authoritative when it conflicts with legacy service behavior.
 

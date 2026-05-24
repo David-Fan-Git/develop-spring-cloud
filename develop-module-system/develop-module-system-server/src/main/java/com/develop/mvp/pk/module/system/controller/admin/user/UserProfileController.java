@@ -6,7 +6,7 @@ package com.develop.mvp.pk.module.system.controller.admin.user;
 import cn.hutool.core.collection.CollUtil;
 import com.develop.mvp.pk.framework.common.pojo.CommonResult;
 import com.develop.mvp.pk.framework.datapermission.core.annotation.DataPermission;
-import com.develop.mvp.pk.module.system.application.user.UserApplicationService;
+import com.develop.mvp.pk.module.system.application.user.service.UserApplicationService;
 import com.develop.mvp.pk.module.system.controller.admin.user.vo.profile.UserProfileRespVO;
 import com.develop.mvp.pk.module.system.controller.admin.user.vo.profile.UserProfileUpdatePasswordReqVO;
 import com.develop.mvp.pk.module.system.controller.admin.user.vo.profile.UserProfileUpdateReqVO;

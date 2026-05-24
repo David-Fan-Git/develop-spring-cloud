@@ -11,7 +11,7 @@ import com.develop.mvp.pk.framework.common.pojo.PageResult;
 import com.develop.mvp.pk.framework.common.util.object.BeanUtils;
 import com.develop.mvp.pk.framework.excel.core.util.ExcelUtils;
 import com.develop.mvp.pk.framework.tenant.core.aop.TenantIgnore;
-import com.develop.mvp.pk.module.system.application.tenant.TenantApplicationService;
+import com.develop.mvp.pk.module.system.application.tenant.service.TenantApplicationService;
 import com.develop.mvp.pk.module.system.controller.admin.tenant.vo.tenant.TenantPageReqVO;
 import com.develop.mvp.pk.module.system.controller.admin.tenant.vo.tenant.TenantRespVO;
 import com.develop.mvp.pk.module.system.controller.admin.tenant.vo.tenant.TenantSaveReqVO;
@@ -172,6 +172,7 @@ public class TenantController {
         vo.setPackageId(tenant.packageRef().packageId());
         vo.setExpireTime(tenant.expireTime().value());
         vo.setAccountCount(tenant.accountCount());
+        vo.setCreateTime(tenant.createTime());
         return vo;
     }
 }

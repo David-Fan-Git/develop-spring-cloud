@@ -4,23 +4,13 @@ package com.develop.mvp.pk.module.system.domain.user.valueobject;
 // 不变式 I03：手机号在同一租户内不可重复（UserUniquenessChecker 保证）
 // 验收标准 AC04：final 字段，无 setter
 
-import com.develop.mvp.pk.framework.common.exception.ServiceException;
-
 import java.util.Objects;
-import java.util.regex.Pattern;
-
-import static com.develop.mvp.pk.module.system.enums.ErrorCodeConstants.USER_MOBILE_EXISTS;
 
 public final class Mobile {
-
-    private static final Pattern MOBILE_PATTERN = Pattern.compile("^1[3-9]\\d{9}$");
 
     private final String value;
 
     private Mobile(String value) {
-        if (value != null && !value.isBlank() && !MOBILE_PATTERN.matcher(value).matches()) {
-            throw new ServiceException(USER_MOBILE_EXISTS.getCode(), "手机号格式不正确");
-        }
         this.value = (value == null || value.isBlank()) ? null : value.trim();
     }
 

@@ -15,15 +15,19 @@ public final class RawPassword {
 
     private final String rawValue;
 
-    private RawPassword(String rawValue) {
-        if (rawValue == null || rawValue.length() < 6) {
+    private RawPassword(String rawValue, boolean validateLength) {
+        if (rawValue == null || (validateLength && rawValue.length() < 6)) {
             throw new ServiceException(USER_PASSWORD_FAILED.getCode(), "密码长度不能小于6位");
         }
         this.rawValue = rawValue;
     }
 
     public static RawPassword of(String rawValue) {
-        return new RawPassword(rawValue);
+        return new RawPassword(rawValue, true);
+    }
+
+    public static RawPassword forVerification(String rawValue) {
+        return new RawPassword(rawValue, false);
     }
 
     /** 仅 PasswordEncoder 实现类可读取明文值进行加密/比对 */

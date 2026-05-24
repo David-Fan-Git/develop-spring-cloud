@@ -33,13 +33,20 @@ public final class Tenant {
     private TenantPackageRef packageRef;
     private TenantExpireTime expireTime;
     private Integer accountCount;
+    private LocalDateTime createTime;
+    private LocalDateTime updateTime;
+    private String creator;
+    private String updater;
+    private Boolean deleted;
 
     // ── 领域事件收集 ──
     private final List<DomainEvent> events = new ArrayList<>();
 
     Tenant(TenantId id, TenantName name, Long contactUserId, String contactName,
            String contactMobile, TenantStatus status, List<String> websites,
-           TenantPackageRef packageRef, TenantExpireTime expireTime, Integer accountCount) {
+           TenantPackageRef packageRef, TenantExpireTime expireTime, Integer accountCount,
+           LocalDateTime createTime, LocalDateTime updateTime,
+           String creator, String updater, Boolean deleted) {
         this.id = Objects.requireNonNull(id, "tenantId 不能为空");
         this.name = Objects.requireNonNull(name, "tenantName 不能为空");
         this.contactUserId = contactUserId;
@@ -50,6 +57,11 @@ public final class Tenant {
         this.packageRef = Objects.requireNonNull(packageRef, "packageRef 不能为空");
         this.expireTime = Objects.requireNonNull(expireTime, "expireTime 不能为空");
         this.accountCount = accountCount != null ? accountCount : 0;
+        this.createTime = createTime;
+        this.updateTime = updateTime;
+        this.creator = creator;
+        this.updater = updater;
+        this.deleted = deleted;
     }
 
     // ── 业务方法 ──
@@ -147,6 +159,11 @@ public final class Tenant {
     public TenantPackageRef packageRef() { return packageRef; }
     public TenantExpireTime expireTime() { return expireTime; }
     public Integer accountCount() { return accountCount; }
+    public LocalDateTime createTime() { return createTime; }
+    public LocalDateTime updateTime() { return updateTime; }
+    public String creator() { return creator; }
+    public String updater() { return updater; }
+    public Boolean deleted() { return deleted; }
 
     public boolean isEnabled() { return status.isEnabled(); }
     public boolean isDisabled() { return status.isDisabled(); }

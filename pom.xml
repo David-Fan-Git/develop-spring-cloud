@@ -16,18 +16,18 @@
         <!--  各种 module 拓展 -->
         <module>develop-module-system</module>
         <module>develop-module-infra</module>
-        <module>develop-module-member</module>
-        <module>develop-module-bpm</module>
-        <module>develop-module-pay</module>
-        <module>develop-module-report</module>
-        <module>develop-module-mp</module>
-        <module>develop-module-mall</module>
-        <module>develop-module-crm</module>
-        <module>develop-module-erp</module>
-        <module>develop-module-iot</module>
-        <module>develop-module-mes</module>
-        <module>develop-module-wms</module>
-        <module>develop-module-ai</module>
+<!--        <module>develop-module-member</module>-->
+<!--        <module>develop-module-bpm</module>-->
+<!--        <module>develop-module-pay</module>-->
+<!--        <module>develop-module-report</module>-->
+<!--        <module>develop-module-mp</module>-->
+<!--        <module>develop-module-mall</module>-->
+<!--        <module>develop-module-crm</module>-->
+<!--        <module>develop-module-erp</module>-->
+<!--        <module>develop-module-iot</module>-->
+<!--        <module>develop-module-mes</module>-->
+<!--        <module>develop-module-wms</module>-->
+<!--        <module>develop-module-ai</module>-->
     </modules>
 
     <name>${project.artifactId}</name>

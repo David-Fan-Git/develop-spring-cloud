@@ -13,6 +13,7 @@ import com.develop.mvp.pk.framework.common.util.object.BeanUtils;
 import com.develop.mvp.pk.framework.common.util.validation.ValidationUtils;
 import com.develop.mvp.pk.framework.datapermission.core.util.DataPermissionUtils;
 import com.develop.mvp.pk.module.infra.api.config.ConfigApi;
+import com.develop.mvp.pk.module.system.application.user.service.UserApplicationService;
 import com.develop.mvp.pk.module.system.controller.admin.auth.vo.AuthRegisterReqVO;
 import com.develop.mvp.pk.module.system.controller.admin.user.vo.profile.UserProfileUpdatePasswordReqVO;
 import com.develop.mvp.pk.module.system.controller.admin.user.vo.profile.UserProfileUpdateReqVO;
@@ -66,6 +67,8 @@ public class AdminUserServiceImpl implements AdminUserService {
 
     @Resource
     private AdminUserMapper userMapper;
+    @Resource
+    private UserApplicationService userApplicationService;
 
     @Resource
     private DeptService deptService;
@@ -183,58 +186,33 @@ public class AdminUserServiceImpl implements AdminUserService {
 
     @Override
     public void updateUserLogin(Long id, String loginIp) {
-        userMapper.updateById(new AdminUserDO().setId(id).setLoginIp(loginIp).setLoginDate(LocalDateTime.now()));
+        userApplicationService.recordLogin(id, loginIp);
     }
 
     @Override
     public void updateUserProfile(Long id, UserProfileUpdateReqVO reqVO) {
-        // 校验正确性
-        validateUserExists(id);
-        validateEmailUnique(id, reqVO.getEmail());
-        validateMobileUnique(id, reqVO.getMobile());
-        // 执行更新
-        userMapper.updateById(BeanUtils.toBean(reqVO, AdminUserDO.class).setId(id));
+        userApplicationService.updateProfile(id, reqVO.getEmail(), reqVO.getMobile(),
+                reqVO.getNickname(), reqVO.getAvatar(), reqVO.getSex(), null);
     }
 
     @Override
     public void updateUserPassword(Long id, UserProfileUpdatePasswordReqVO reqVO) {
-        // 校验旧密码密码
-        validateOldPassword(id, reqVO.getOldPassword());
-        // 执行更新
-        AdminUserDO updateObj = new AdminUserDO().setId(id);
-        updateObj.setPassword(encodePassword(reqVO.getNewPassword())); // 加密密码
-        userMapper.updateById(updateObj);
+        userApplicationService.changePassword(id, reqVO.getOldPassword(), reqVO.getNewPassword());
     }
 
     @Override
     @LogRecord(type = SYSTEM_USER_TYPE, subType = SYSTEM_USER_UPDATE_PASSWORD_SUB_TYPE, bizNo = "{{#id}}",
             success = SYSTEM_USER_UPDATE_PASSWORD_SUCCESS)
     public void updateUserPassword(Long id, String password) {
-        // 1. 校验用户存在
         AdminUserDO user = validateUserExists(id);
-
-        // 2. 更新密码
-        AdminUserDO updateObj = new AdminUserDO();
-        updateObj.setId(id);
-        updateObj.setPassword(encodePassword(password)); // 加密密码
-        userMapper.updateById(updateObj);
-
-        // 3. 记录操作日志上下文
+        userApplicationService.resetPassword(id, password);
         LogRecordContext.putVariable("user", user);
-        LogRecordContext.putVariable("newPassword", updateObj.getPassword());
+        LogRecordContext.putVariable("newPassword", userMapper.selectById(id).getPassword());
     }
 
     @Override
     public void updateUserStatus(Long id, Integer status) {
-        // 校验用户存在
-        validateUserExists(id);
-        // 更新状态
-        AdminUserDO updateObj = new AdminUserDO();
-        updateObj.setId(id);
-        updateObj.setStatus(status);
-        userMapper.updateById(updateObj);
-
-        // 如果是禁用用户，则删除其 Token 信息
+        userApplicationService.updateUserStatus(id, status);
         if (CommonStatusEnum.isDisable(status)) {
             oauth2TokenService.removeAccessToken(id, UserTypeEnum.ADMIN.getValue());
         }
