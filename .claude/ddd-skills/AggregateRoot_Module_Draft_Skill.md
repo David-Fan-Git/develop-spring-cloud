@@ -13,15 +13,9 @@ description: Use when triaging placeholder DDD aggregate skills for modules that
 
 ## Applies To
 
-当前用于收敛以下重复占位文件：
+当前用于收敛 ERP、IOT、MES、MP、Report 等模块已删除的重复占位入口。
 
-- `AggregateRoot_Erp_Skill.md`
-- `AggregateRoot_Iot_Skill.md`
-- `AggregateRoot_Mes_Skill.md`
-- `AggregateRoot_Mp_Skill.md`
-- `AggregateRoot_Report_Skill.md`
-
-这些模块需要按实际业务边界分别升级为独立、可复现、可验证的生产级 DDD skill，而不是共享同一份通用模板。
+这些模块需要按实际业务边界分别创建独立、可复现、可验证的生产级 DDD skill，而不是共享同一份通用模板。
 
 ## Shared Draft Checklist
 

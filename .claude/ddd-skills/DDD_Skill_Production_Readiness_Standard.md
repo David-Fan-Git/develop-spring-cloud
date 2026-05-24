@@ -17,7 +17,7 @@ description: Use when auditing, writing, or upgrading DDD aggregate skills for p
 
 - `AggregateRoot_Tenant_Validation_Skill.md` 接近生产可用，可作为模板。
 - 其余大多数 DDD skill 缺少 frontmatter、事实源路径、字段映射、错误码、事务边界、测试路径、冲突处理、红旗清单，不能直接生产使用。
-- 极短模板类 skill，例如 ERP/IOT/MES/MP/Report/Mall 总览，必须先升级为本标准格式，否则禁止按其直接实现。
+- 极短模板类 skill 或已合并到 `AggregateRoot_Module_Draft_Skill.md` 的模块草稿，必须先升级为本标准格式，否则禁止按其直接实现。
 
 ## 3. Mandatory Sections
 
@@ -112,7 +112,7 @@ description: Use when auditing, writing, or upgrading DDD aggregate skills for p
 1. 高风险生产链路：Pay、MallTrade、MallPromotion、BPM。
 2. 基础设施链路：Infra、System User/Role/Menu。
 3. 已有较多规则的模块：MallProduct、MemberLevel、CRM、WMS、AI。
-4. 极短模板草稿：ERP、IOT、MES、MP、Report、Mall 总览、MemberUser。
+4. 极短模板草稿或统一草稿覆盖的模块：ERP、IOT、MES、MP、Report、Mall 总览、MemberUser。
 
 每次只升级一个聚合或一个小子域。不要一次批量改所有 skill。
 
