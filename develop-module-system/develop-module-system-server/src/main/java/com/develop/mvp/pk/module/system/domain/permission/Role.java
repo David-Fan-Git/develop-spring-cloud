@@ -12,12 +12,12 @@ import java.util.*;
 
 public final class Role {
     private final RoleId id;
-    private final RoleName name;
-    private final RoleCode code;
-    private final Integer sort;
-    private final RoleStatus status;
+    private RoleName name;
+    private RoleCode code;
+    private Integer sort;
+    private RoleStatus status;
     private final RoleType type;
-    private final String remark;
+    private String remark;
     private final Long tenantId;
     private DataScope dataScope;
     private final Set<Long> menuIds;
@@ -25,30 +25,32 @@ public final class Role {
 
     Role(RoleId id, RoleName name, RoleCode code, Integer sort, RoleStatus status,
          RoleType type, String remark, Long tenantId, DataScope dataScope, Set<Long> menuIds) {
-        this.id = Objects.requireNonNull(id);
+        this.id = id;
         this.name = Objects.requireNonNull(name);
         this.code = Objects.requireNonNull(code);
         this.sort = sort != null ? sort : 0;
         this.status = status != null ? status : RoleStatus.ENABLED;
         this.type = type != null ? type : RoleType.CUSTOM;
         this.remark = remark;
-        this.tenantId = Objects.requireNonNull(tenantId);
+        this.tenantId = tenantId;
         this.dataScope = dataScope != null ? dataScope : DataScope.all();
         this.menuIds = menuIds != null ? new HashSet<>(menuIds) : new HashSet<>();
     }
 
     // ── 业务方法 ──
 
-    /** 规则 RR01：更新角色基本信息，RR02/03：名称/编码唯一性由应用层校验 */
-    public void update(RoleName newName, RoleCode newCode, Integer sort, String remark) {
-        // name 和 code 的唯一性由应用层通过 RoleUniquenessChecker 校验
-        // 注意：name 和 code 设为可变以支持更新
+    public void changeBaseInfo(String name, String code, Integer sort, Integer status, String remark) {
+        this.name = RoleName.of(name);
+        this.code = RoleCode.of(code);
+        this.sort = sort != null ? sort : 0;
+        this.status = status != null ? RoleStatus.of(status) : RoleStatus.ENABLED;
+        this.remark = remark;
     }
 
     /** 规则 RR05：系统角色不可删除/修改 */
     public boolean isSystem() { return type.isSystem(); }
 
-    public void updateDataScope(DataScope newDataScope) {
+    public void changeDataScope(DataScope newDataScope) {
         this.dataScope = Objects.requireNonNull(newDataScope);
     }
 
@@ -75,9 +77,10 @@ public final class Role {
     public DataScope dataScope() { return dataScope; }
     public Set<Long> menuIds() { return Collections.unmodifiableSet(menuIds); }
     public boolean isEnabled() { return status.isEnabled(); }
+    public boolean hasId(Long otherId) { return id != null && id.value().equals(otherId); }
 
     public List<DomainEvent> pullEvents() { List<DomainEvent> r = new ArrayList<>(events); events.clear(); return r; }
 
-    @Override public boolean equals(Object o) { return o instanceof Role r && id.equals(r.id); }
+    @Override public boolean equals(Object o) { return o instanceof Role r && Objects.equals(id, r.id); }
     @Override public int hashCode() { return Objects.hash(id); }
 }

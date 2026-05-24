@@ -1,4 +1,4 @@
-package com.develop.mvp.pk.module.system.application.permission;
+package com.develop.mvp.pk.module.system.application.permission.service;
 
 // Skill: AggregateRoot_Role_Menu_Skill — 应用服务 PermissionApplicationService
 // DDD 角色：RBAC 权限编排服务，负责 Role/Menu CRUD 及关联操作
@@ -9,7 +9,9 @@ import com.develop.mvp.pk.module.system.domain.permission.repository.*;
 import com.develop.mvp.pk.module.system.domain.permission.valueobject.*;
 import com.develop.mvp.pk.module.system.domain.user.event.DomainEventPublisher;
 import com.develop.mvp.pk.module.system.domain.user.event.DomainEvent;
+import com.develop.mvp.pk.module.system.enums.permission.DataScopeEnum;
 import com.develop.mvp.pk.module.system.enums.permission.RoleCodeEnum;
+import com.develop.mvp.pk.module.system.enums.permission.RoleTypeEnum;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -48,8 +50,9 @@ public class PermissionApplicationService {
         if (RoleCodeEnum.isSuperAdmin(code)) throw exception(ROLE_ADMIN_CODE_ERROR, code);
         assertRoleNameUnique(name, null);
         assertRoleCodeUnique(code, null);
-        Role role = RoleFactory.create(null, name, code, sort, remark, tenantId,
-                dataScope != null ? dataScope : 1, dataScopeDeptIds);
+        Role role = RoleFactory.create(null, name, code, sort, status,
+                RoleTypeEnum.CUSTOM.getType(), remark, tenantId,
+                dataScope != null ? dataScope : DataScopeEnum.ALL.getScope(), dataScopeDeptIds);
         roleRepository.save(role);
         publishEvents(role);
         return role.id().value();

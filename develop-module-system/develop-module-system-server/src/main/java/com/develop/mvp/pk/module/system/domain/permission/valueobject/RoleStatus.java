@@ -13,6 +13,9 @@ public final class RoleStatus {
         if (CommonStatusEnum.DISABLE.getStatus().equals(code)) return DISABLED;
         throw new IllegalArgumentException("无效状态: " + code);
     }
+    public static RoleStatus fromPersisted(Integer code) {
+        return CommonStatusEnum.DISABLE.getStatus().equals(code) ? DISABLED : ENABLED;
+    }
     public boolean isEnabled() { return code.equals(CommonStatusEnum.ENABLE.getStatus()); }
     public boolean isDisabled() { return code.equals(CommonStatusEnum.DISABLE.getStatus()); }
     public Integer code() { return code; }

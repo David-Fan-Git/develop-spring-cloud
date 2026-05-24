@@ -13,6 +13,9 @@ public final class RoleType {
         if (RoleTypeEnum.CUSTOM.getType().equals(code)) return CUSTOM;
         throw new IllegalArgumentException("无效的角色类型: " + code);
     }
+    public static RoleType fromPersisted(Integer code) {
+        return RoleTypeEnum.SYSTEM.getType().equals(code) ? SYSTEM : CUSTOM;
+    }
     public boolean isSystem() { return code.equals(RoleTypeEnum.SYSTEM.getType()); }
     public Integer code() { return code; }
     @Override public boolean equals(Object o) { return o instanceof RoleType r && code.equals(r.code); }

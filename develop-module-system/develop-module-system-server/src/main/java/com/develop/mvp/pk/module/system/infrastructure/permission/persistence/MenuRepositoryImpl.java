@@ -1,4 +1,4 @@
-package com.develop.mvp.pk.module.system.infrastructure.permission;
+package com.develop.mvp.pk.module.system.infrastructure.permission.persistence;
 
 import cn.hutool.core.collection.CollUtil;
 import com.develop.mvp.pk.module.system.dal.dataobject.permission.MenuDO;

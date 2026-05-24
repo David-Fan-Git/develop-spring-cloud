@@ -4,10 +4,12 @@ import cn.hutool.extra.spring.SpringUtil;
 import com.develop.mvp.pk.framework.common.enums.CommonStatusEnum;
 import com.develop.mvp.pk.framework.common.pojo.PageResult;
 import com.develop.mvp.pk.framework.test.core.ut.BaseDbUnitTest;
+import com.develop.mvp.pk.module.system.application.permission.service.RoleApplicationService;
 import com.develop.mvp.pk.module.system.controller.admin.permission.vo.role.RolePageReqVO;
 import com.develop.mvp.pk.module.system.controller.admin.permission.vo.role.RoleSaveReqVO;
 import com.develop.mvp.pk.module.system.dal.dataobject.permission.RoleDO;
 import com.develop.mvp.pk.module.system.dal.mysql.permission.RoleMapper;
+import com.develop.mvp.pk.module.system.infrastructure.permission.persistence.RoleRepositoryImpl;
 import com.develop.mvp.pk.module.system.enums.permission.DataScopeEnum;
 import com.develop.mvp.pk.module.system.enums.permission.RoleTypeEnum;
 import jakarta.annotation.Resource;
@@ -35,7 +37,7 @@ import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.mockStatic;
 import static org.mockito.Mockito.verify;
 
-@Import(RoleServiceImpl.class)
+@Import({RoleServiceImpl.class, RoleApplicationService.class, RoleRepositoryImpl.class})
 public class RoleServiceImplTest extends BaseDbUnitTest {
 
     @Resource

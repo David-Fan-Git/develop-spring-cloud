@@ -2,21 +2,19 @@ package com.develop.mvp.pk.module.system.service.permission;
 
 import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.collection.CollectionUtil;
-import cn.hutool.core.util.ObjUtil;
-import cn.hutool.core.util.ObjectUtil;
 import cn.hutool.extra.spring.SpringUtil;
 import com.develop.mvp.pk.framework.common.enums.CommonStatusEnum;
 import com.develop.mvp.pk.framework.common.pojo.PageResult;
 import com.develop.mvp.pk.framework.common.util.collection.CollectionUtils;
 import com.develop.mvp.pk.framework.common.util.object.BeanUtils;
+import com.develop.mvp.pk.module.system.application.permission.service.RoleApplicationService;
 import com.develop.mvp.pk.module.system.controller.admin.permission.vo.role.RolePageReqVO;
 import com.develop.mvp.pk.module.system.controller.admin.permission.vo.role.RoleSaveReqVO;
 import com.develop.mvp.pk.module.system.dal.dataobject.permission.RoleDO;
 import com.develop.mvp.pk.module.system.dal.mysql.permission.RoleMapper;
+import com.develop.mvp.pk.module.system.domain.permission.Role;
 import com.develop.mvp.pk.module.system.dal.redis.RedisKeyConstants;
-import com.develop.mvp.pk.module.system.enums.permission.DataScopeEnum;
 import com.develop.mvp.pk.module.system.enums.permission.RoleCodeEnum;
-import com.develop.mvp.pk.module.system.enums.permission.RoleTypeEnum;
 import com.google.common.annotations.VisibleForTesting;
 import com.mzt.logapi.context.LogRecordContext;
 import com.mzt.logapi.service.impl.DiffParseFunction;
@@ -27,7 +25,6 @@ import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import org.springframework.util.StringUtils;
 
 import java.util.*;
 
@@ -49,6 +46,9 @@ public class RoleServiceImpl implements RoleService {
     private PermissionService permissionService;
 
     @Resource
+    private RoleApplicationService roleApplicationService;
+
+    @Resource
     private RoleMapper roleMapper;
 
     @Override
@@ -56,19 +56,11 @@ public class RoleServiceImpl implements RoleService {
     @LogRecord(type = SYSTEM_ROLE_TYPE, subType = SYSTEM_ROLE_CREATE_SUB_TYPE, bizNo = "{{#role.id}}",
             success = SYSTEM_ROLE_CREATE_SUCCESS)
     public Long createRole(RoleSaveReqVO createReqVO, Integer type) {
-        // 1. 校验角色
-        validateRoleDuplicate(createReqVO.getName(), createReqVO.getCode(), null);
-
-        // 2. 插入到数据库
-        RoleDO role = BeanUtils.toBean(createReqVO, RoleDO.class)
-                .setType(ObjectUtil.defaultIfNull(type, RoleTypeEnum.CUSTOM.getType()))
-                .setStatus(ObjUtil.defaultIfNull(createReqVO.getStatus(), CommonStatusEnum.ENABLE.getStatus()))
-                .setDataScope(DataScopeEnum.ALL.getScope()); // 默认可查看所有数据。原因是，可能一些项目不需要项目权限
-        roleMapper.insert(role);
-
-        // 3. 记录操作日志上下文
-        LogRecordContext.putVariable("role", role);
-        return role.getId();
+        Role role = roleApplicationService.createRole(createReqVO.getName(), createReqVO.getCode(),
+                createReqVO.getSort(), createReqVO.getStatus(), createReqVO.getRemark(), type);
+        RoleDO roleDO = toDataObject(role);
+        LogRecordContext.putVariable("role", roleDO);
+        return role.id().value();
     }
 
     @Override
@@ -76,32 +68,17 @@ public class RoleServiceImpl implements RoleService {
     @LogRecord(type = SYSTEM_ROLE_TYPE, subType = SYSTEM_ROLE_UPDATE_SUB_TYPE, bizNo = "{{#updateReqVO.id}}",
             success = SYSTEM_ROLE_UPDATE_SUCCESS)
     public void updateRole(RoleSaveReqVO updateReqVO) {
-        // 1.1 校验是否可以更新
-        RoleDO role = validateRoleForUpdate(updateReqVO.getId());
-        // 1.2 校验角色的唯一字段是否重复
-        validateRoleDuplicate(updateReqVO.getName(), updateReqVO.getCode(), updateReqVO.getId());
-
-        // 2. 更新到数据库
-        RoleDO updateObj = BeanUtils.toBean(updateReqVO, RoleDO.class);
-        roleMapper.updateById(updateObj);
-
-        // 3. 记录操作日志上下文
-        LogRecordContext.putVariable(DiffParseFunction.OLD_OBJECT, BeanUtils.toBean(role, RoleSaveReqVO.class));
-        LogRecordContext.putVariable("role", role);
+        RoleDO oldRole = toDataObject(roleApplicationService.validateRoleForUpdate(updateReqVO.getId()));
+        Role role = roleApplicationService.updateRole(updateReqVO.getId(), updateReqVO.getName(), updateReqVO.getCode(),
+                updateReqVO.getSort(), updateReqVO.getStatus(), updateReqVO.getRemark());
+        LogRecordContext.putVariable(DiffParseFunction.OLD_OBJECT, BeanUtils.toBean(oldRole, RoleSaveReqVO.class));
+        LogRecordContext.putVariable("role", toDataObject(role));
     }
 
     @Override
     @CacheEvict(value = RedisKeyConstants.ROLE, key = "#id")
     public void updateRoleDataScope(Long id, Integer dataScope, Set<Long> dataScopeDeptIds) {
-        // 校验是否可以更新
-        validateRoleForUpdate(id);
-
-        // 更新数据范围
-        RoleDO updateObject = new RoleDO();
-        updateObject.setId(id);
-        updateObject.setDataScope(dataScope);
-        updateObject.setDataScopeDeptIds(dataScopeDeptIds);
-        roleMapper.updateById(updateObject);
+        roleApplicationService.updateRoleDataScope(id, dataScope, dataScopeDeptIds);
     }
 
     @Override
@@ -110,28 +87,18 @@ public class RoleServiceImpl implements RoleService {
     @LogRecord(type = SYSTEM_ROLE_TYPE, subType = SYSTEM_ROLE_DELETE_SUB_TYPE, bizNo = "{{#id}}",
             success = SYSTEM_ROLE_DELETE_SUCCESS)
     public void deleteRole(Long id) {
-        // 1. 校验是否可以更新
-        RoleDO role = validateRoleForUpdate(id);
-
-        // 2.1 标记删除
-        roleMapper.deleteById(id);
-        // 2.2 删除相关数据
+        Role role = roleApplicationService.deleteRole(id);
         permissionService.processRoleDeleted(id);
-
-        // 3. 记录操作日志上下文
-        LogRecordContext.putVariable("role", role);
+        LogRecordContext.putVariable("role", toDataObject(role));
     }
 
     @Override
     @Transactional(rollbackFor = Exception.class)
     public void deleteRoleList(List<Long> ids) {
-        // 1. 校验是否可以删除
-        ids.forEach(this::validateRoleForUpdate);
-
-        // 2.1 标记删除
-        roleMapper.deleteByIds(ids);
-        // 2.2 删除相关数据
-        ids.forEach(id -> permissionService.processRoleDeleted(id));
+        ids.forEach(id -> {
+            roleApplicationService.deleteRole(id);
+            permissionService.processRoleDeleted(id);
+        });
     }
 
     /**
@@ -146,24 +113,7 @@ public class RoleServiceImpl implements RoleService {
      */
     @VisibleForTesting
     void validateRoleDuplicate(String name, String code, Long id) {
-        // 0. 超级管理员，不允许创建
-        if (RoleCodeEnum.isSuperAdmin(code)) {
-            throw exception(ROLE_ADMIN_CODE_ERROR, code);
-        }
-        // 1. 该 name 名字被其它角色所使用
-        RoleDO role = roleMapper.selectByName(name);
-        if (role != null && !role.getId().equals(id)) {
-            throw exception(ROLE_NAME_DUPLICATE, name);
-        }
-        // 2. 是否存在相同编码的角色
-        if (!StringUtils.hasText(code)) {
-            return;
-        }
-        // 该 code 编码被其它角色所使用
-        role = roleMapper.selectByCode(code);
-        if (role != null && !role.getId().equals(id)) {
-            throw exception(ROLE_CODE_DUPLICATE, code);
-        }
+        roleApplicationService.validateRoleDuplicate(name, code, id);
     }
 
     /**
@@ -173,15 +123,7 @@ public class RoleServiceImpl implements RoleService {
      */
     @VisibleForTesting
     RoleDO validateRoleForUpdate(Long id) {
-        RoleDO role = roleMapper.selectById(id);
-        if (role == null) {
-            throw exception(ROLE_NOT_EXISTS);
-        }
-        // 内置角色，不允许删除
-        if (RoleTypeEnum.SYSTEM.getType().equals(role.getType())) {
-            throw exception(ROLE_CAN_NOT_UPDATE_SYSTEM_TYPE_ROLE);
-        }
-        return role;
+        return toDataObject(roleApplicationService.validateRoleForUpdate(id));
     }
 
     @Override
@@ -269,6 +211,21 @@ public class RoleServiceImpl implements RoleService {
      */
     private RoleServiceImpl getSelf() {
         return SpringUtil.getBean(getClass());
+    }
+
+    private RoleDO toDataObject(Role role) {
+        RoleDO roleDO = new RoleDO();
+        roleDO.setId(role.id() != null ? role.id().value() : null);
+        roleDO.setName(role.name().value());
+        roleDO.setCode(role.code().value());
+        roleDO.setSort(role.sort());
+        roleDO.setStatus(role.status().code());
+        roleDO.setType(role.type().code());
+        roleDO.setRemark(role.remark());
+        roleDO.setTenantId(role.tenantId());
+        roleDO.setDataScope(role.dataScope().scope());
+        roleDO.setDataScopeDeptIds(role.dataScope().deptIds());
+        return roleDO;
     }
 
 }

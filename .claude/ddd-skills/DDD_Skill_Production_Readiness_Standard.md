@@ -29,7 +29,9 @@ description: Use when auditing, writing, or upgrading DDD aggregate skills for p
 | Overview | 一句话说明聚合业务意图和复现目标 |
 | When to Use / Not Use | 明确适用与不适用场景 |
 | Reproducibility Contract | 明确先读事实源、冲突时外部行为优先、禁止猜测 |
+| AI Execution Contract | 明确 AI 执行边界：任务 Scope、Must Read、Must Preserve、Allowed Changes、Forbidden Changes、Dependency Rules、Verification Gate、Stop Conditions |
 | Current Source Anchors | Controller、VO/DTO、DO、Mapper、Convert、Service/Application、Repository、ErrorCode、测试路径完整相对路径 |
+| Standard Skeleton Contract | 明确本聚合必须创建的标准目录和接口骨架：`domain/{aggregate}/model,valueobject,event,service,repository`、`application/{aggregate}/command,query,dto|result,port/inbound,port/outbound,service`、`infrastructure/{aggregate}/persistence,external,rpc,cache,messaging`；当前为空时用职责明确的接口骨架或 `package-info.java` 固定包边界 |
 | Fixed Data Model | DO/DTO/VO/Domain 字段表，包含类型、含义、nullable/default、映射关系 |
 | Method Signatures | 聚合、工厂、仓储、应用服务的必须签名 |
 | Business Rules | 编号规则，标明所属层和验证方式 |
@@ -70,20 +72,40 @@ description: Use when auditing, writing, or upgrading DDD aggregate skills for p
 
 禁止用 skill 文档覆盖现有生产行为。
 
-## 6. Minimal Pressure Tests
+## 6. AI Execution Contract
+
+每个生产级聚合 skill 必须包含 `AI Execution Contract`，用于约束无上下文 AI 的执行行为。该契约不是业务说明，而是执行边界。
+
+必须包含：
+
+| 项目 | 要求 |
+|---|---|
+| Scope | 本次 skill 允许处理的模块、聚合、用例或 API 契约集合；禁止跨多个无关聚合批量修改 |
+| Must Read | 写代码前必须读取的事实源文件，至少覆盖 Controller、VO/DTO、DO、Mapper、Convert、Service/Application、Repository、ErrorCode、测试 |
+| Must Preserve | 不得擅改的外部行为：HTTP API、CommonApi、DTO 字段、权限、租户、数据权限、错误码、MQ、Job、缓存、Excel、OpenAPI |
+| Allowed Changes | 允许新增或修改的目录和文件类型，必须与标准骨架职责一致：`domain/{aggregate}`、`application/{aggregate}`、`infrastructure/{aggregate}`、`convert/controller/job/mq/framework`；迁移聚合时必须创建标准目录和接口骨架 |
+| Forbidden Changes | 禁止修改的目录、契约、SQL、配置或无关模块；禁止把新核心业务写入 `service/dal`；禁止以“当前为空”“只有一个实现”“避免空抽象”为由省略标准骨架 |
+| Dependency Rules | 明确每层允许依赖和禁止依赖的包；领域层不得依赖 Spring、MyBatis、Feign、Controller VO、Mapper、基础设施实现 |
+| Verification Gate | 完成前必须执行的 Maven compile/test、ArchUnit、契约检查或无法执行时的说明 |
+| Stop Conditions | 出现事实源缺失、skill 与当前代码冲突、外部契约可能变化、验证失败、需要猜字段/错误码/事务时必须停止 |
+
+缺少 `AI Execution Contract` 的聚合 skill 只能作为草稿参考，不能用于生产级 AI coding。
+
+## 7. Minimal Pressure Tests
 
 升级任何 skill 前必须做 RED 阶段压力测试：
 
 | 场景 | 期望暴露的问题 |
 |---|---|
 | 赶时间直接写代码 | 是否会猜字段、签名、错误码、事务 |
-| 无上下文 AI 复现 | 是否缺事实源、映射、测试、验收 |
+| 无上下文 AI 复现 | 是否缺事实源、标准目录骨架、接口骨架、映射、测试、验收 |
+| 简单 CRUD 赶进度 | 是否会以“只有一个实现”“当前为空”“避免空抽象”为由省略 `port/inbound`、`port/outbound`、`infrastructure/*` 固定目录 |
 | 生产上线不能破坏 API | 是否缺外部契约、权限、租户、缓存、MQ、Job |
 | 代码与 skill 不一致 | 是否知道代码事实优先并先修 skill |
 
 测试失败点必须写入 skill 的 Baseline Failure Findings、Rationalization Table、Red Flags。
 
-## 7. Upgrade Order
+## 8. Upgrade Order
 
 优先级：
 
@@ -94,31 +116,34 @@ description: Use when auditing, writing, or upgrading DDD aggregate skills for p
 
 每次只升级一个聚合或一个小子域。不要一次批量改所有 skill。
 
-## 8. Quick Reference
+## 9. Quick Reference
 
 | 问题 | 判断 |
 |---|---|
 | 没有 YAML frontmatter | 非生产级 skill |
 | 没有 Current Source Anchors | 不能让无上下文 AI 复现 |
+| 没有 Standard Skeleton Contract | 会导致不同聚合目录、端口和适配器骨架不一致 |
 | 没有字段映射表 | 会导致 DO/DTO/Domain 偏差 |
 | 没有错误码契约 | 会导致前端/调用方错误处理回归 |
 | 没有事务边界 | 会导致跨聚合编排不一致 |
 | 没有测试路径和命令 | 不能证明生产可用 |
 | 没有冲突处理规则 | 容易用文档覆盖现有行为 |
+| 没有 AI Execution Contract | AI 不知道执行边界，容易跨范围修改或跳过验证 |
 | 没有 Red Flags | 压力下容易偷懒误改 |
 
-## 9. Red Flags
+## 10. Red Flags
 
 看到以下情况，必须把对应 skill 判为“草稿，不可直接生产使用”：
 
 - 只有“聚合根/值对象/仓储接口”通用描述。
+- 没有写清标准目录和接口骨架，或允许因为当前为空而省略 `port/inbound`、`port/outbound`、`infrastructure/{aggregate}/external|rpc|cache|messaging`。
 - 只写“编译通过”，没有业务测试和错误码验证。
 - 只写包名，不写完整文件路径。
 - 只写领域模型，不写 Controller/VO/CommonApi 外部契约。
 - 一个 skill 覆盖多个复杂聚合但没有拆分边界。
 - 没有说明缓存、MQ、Job、租户隔离、权限链路是否保持。
 
-## 10. Rollback Conditions
+## 11. Rollback Conditions
 
 升级后的 skill 如果仍出现以下问题，必须回滚或继续补强：
 

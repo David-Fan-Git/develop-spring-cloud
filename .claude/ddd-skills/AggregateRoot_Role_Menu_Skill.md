@@ -37,6 +37,7 @@ The previous version of this skill was not production-safe. A clean agent using 
 - Drop `processRoleDeleted`, `processMenuDeleted`, or `processUserDeleted` cleanup side effects.
 - Use current DDD draft `Role`/`Menu` constructors as-is even though they reject `null` IDs and require data not supplied by create VOs.
 - Convert domain exceptions such as `IllegalStateException` / `IllegalArgumentException` directly to API errors, losing existing `ErrorCodeConstants` contracts.
+- Omit `application/permission/port/inbound`, `application/permission/port/outbound`, `application/permission/service`, or `infrastructure/permission/persistence|external|rpc|cache|messaging` because the current Role/Menu slice is simple, has one implementation, or has temporarily empty directories.
 
 ## 2. Reproducibility Contract
 
@@ -45,6 +46,7 @@ Before changing code, verify this skill against current source. If source behavi
 Required production skill sections are:
 
 - Current Source Anchors
+- Standard Skeleton Contract
 - Fixed Data Model
 - Required Method Signatures
 - Business Rules
@@ -58,6 +60,21 @@ Required production skill sections are:
 - Red Flags
 - Rollback Conditions
 - AI Self-Check
+
+## 2.1 AI Execution Contract
+
+本 skill 必须在试点过程中持续修订：每当真实代码迁移暴露新的边界、旧行为兼容点、测试装配缺口或 AI 容易误判的地方，先把约束写回本文件，再继续扩大改造范围。
+
+| 项目 | Role/Menu/Permission 执行约束 |
+|---|---|
+| Scope | 每次只迁移一个最小闭环：Role 写用例、Role 查询、Menu 写用例、Menu 查询、RoleMenu 分配、UserRole 分配、权限判断或部门数据权限之一；禁止一次完成整个 RBAC 子域 |
+| Must Read | 先读本 skill、生产标准、模块结构标准、对应 Controller/VO、旧 ServiceImpl、DO/Mapper、现有 domain/application/infrastructure、ErrorCodeConstants 和目标测试类 |
+| Must Preserve | Controller URL/HTTP 方法/VO、RoleApi/PermissionApi、权限注解、缓存 key 与 allEntries 范围、LogRecord、事务边界、租户过滤、数据权限绕过、Excel 和分页语义 |
+| Allowed Changes | 为当前切片新增/修改标准骨架内的 application、domain、infrastructure、convert 和兼容 service facade；旧 service 可变薄，但外部接口必须保持兼容；迁移任一 Role/Menu/Permission 切片时必须创建标准目录和接口骨架 |
+| Forbidden Changes | 禁止把新核心业务继续写进 service/dal；禁止让 domain 依赖 Spring/MyBatis/Controller VO/Mapper/DO；禁止让 repository 为了复用 Mapper 构造 Controller VO；禁止以“当前为空”“只有一个实现”“避免空抽象”“最小切片”为由省略标准骨架 |
+| Dependency Rules | 写用例优先：Controller/旧 Service facade → Application inbound port → Application service → Domain Repository port / Application outbound port → Infrastructure adapter → Mapper/DO；关联清理由原有 PermissionService 或独立应用用例承担，不隐藏在 RoleRepository.delete 中 |
+| Verification Gate | 每个切片至少跑对应旧 Service 回归测试、system-server compile、SystemArchitectureTest；修改 skill 时同步跑占位/结构检查 |
+| Stop Conditions | 需要改变外部契约、缓存范围、事务类型、错误码、SQL/表结构、跨多个 RBAC 子用例联动，或测试暴露旧行为与 DDD 模型冲突时必须停止扩大范围并先修订 skill |
 
 ## 3. Current Source Anchors
 
@@ -123,7 +140,52 @@ These files are the current behavior source for rules, errors, cache, transactio
 
 Current DDD draft is not authoritative when it conflicts with legacy service behavior.
 
-### 3.5 Persistence source
+### 3.5 Standard Skeleton Contract
+
+Role/Menu/Permission refactoring uses the repository module-structure standard physically, and hexagonal architecture as dependency direction. The standard skeleton is mandatory and is not considered a meaningless empty abstraction.
+
+Required package skeleton under `develop-module-system/develop-module-system-server/src/main/java/com/develop/mvp/pk/module/system/`:
+
+```text
+domain/permission/
+  model/
+  valueobject/
+  event/
+  service/
+  repository/
+application/permission/
+  command/
+  query/
+  dto/ 或 result/
+  port/
+    inbound/
+    outbound/
+  service/
+infrastructure/permission/
+  persistence/
+  external/
+  rpc/
+  cache/
+  messaging/
+convert/permission/
+controller/admin/permission/
+job/
+mq/
+framework/
+```
+
+Mandatory interface and package rules:
+
+- `application/permission/port/inbound/` must define use-case entry interfaces for the migrated slice, such as `RoleUseCase`, `MenuUseCase`, `AssignRoleMenuUseCase`, `AssignUserRoleUseCase`, or narrower command/query use cases.
+- `application/permission/service/` must contain the inbound use-case implementation, such as `RoleApplicationService`, `MenuApplicationService`, or `PermissionApplicationService`, and implement the relevant inbound port.
+- `application/permission/port/outbound/` is the fixed location for application external-capability ports. Keep the package even when the current slice has no external provider.
+- `domain/permission/repository/` must contain domain repository ports such as `RoleRepository` and `MenuRepository`.
+- `infrastructure/permission/persistence/` must contain repository implementations and Mapper/DO collaboration adapters.
+- `infrastructure/permission/external/`, `rpc/`, `cache/`, and `messaging/` are fixed adapter locations. Keep them even when the current Role/Menu slice has no implementation.
+- If Java empty directories cannot be tracked by Git, use a clear package boundary file such as `package-info.java` or a real interface required by the slice. Do not create `Temp`, `Placeholder`, or `Dummy` classes.
+- Existing draft classes directly under `application/permission` or `infrastructure/permission` must be moved into the standard subpackages when that slice is migrated; until moved, treat them as migration debt, not the target shape.
+
+### 3.6 Persistence source
 
 - `develop-module-system/develop-module-system-server/src/main/java/com/develop/mvp/pk/module/system/dal/dataobject/permission/RoleDO.java`
 - `develop-module-system/develop-module-system-server/src/main/java/com/develop/mvp/pk/module/system/dal/dataobject/permission/MenuDO.java`
@@ -134,7 +196,7 @@ Current DDD draft is not authoritative when it conflicts with legacy service beh
 - `develop-module-system/develop-module-system-server/src/main/java/com/develop/mvp/pk/module/system/dal/mysql/permission/RoleMenuMapper.java`
 - `develop-module-system/develop-module-system-server/src/main/java/com/develop/mvp/pk/module/system/dal/mysql/permission/UserRoleMapper.java`
 
-### 3.6 Error and mapping anchors
+### 3.7 Error and mapping anchors
 
 - `develop-module-system/develop-module-system-api/src/main/java/com/develop/mvp/pk/module/system/enums/ErrorCodeConstants.java`
 - `develop-module-system/develop-module-system-server/src/main/java/com/develop/mvp/pk/module/system/controller/admin/permission/vo/role/RolePageReqVO.java`
@@ -152,7 +214,7 @@ Current DDD draft is not authoritative when it conflicts with legacy service beh
 
 There is no dedicated `convert/permission/*Convert.java` in the current source tree. Legacy Role/Menu/Permission mapping is performed through Controller/Service code, `BeanUtils`, mapper methods, and DO/VO/DTO classes. Do not assume a MapStruct permission convert exists; if one is introduced during refactoring, it must be covered by tests and preserve the VO/DTO fields above.
 
-### 3.7 Regression tests
+### 3.8 Regression tests
 
 - `develop-module-system/develop-module-system-server/src/test/java/com/develop/mvp/pk/module/system/service/permission/RoleServiceImplTest.java`
 - `develop-module-system/develop-module-system-server/src/test/java/com/develop/mvp/pk/module/system/service/permission/MenuServiceImplTest.java`
@@ -463,6 +525,8 @@ Do not introduce remote RPC calls inside domain classes. Remote/local integratio
 - Domain-to-DO conversion must preserve all persistence fields needed for update and response mapping.
 - Domain-to-VO conversion must preserve fields currently returned by Controller endpoints.
 - Role update must actually mutate or replace `name`, `code`, `sort`, `remark`, `status`, and `dataScope` where applicable.
+- Role create/update service facade may map domain back to `RoleDO` for existing LogRecord context, but that mapping must remain outside domain.
+- Infrastructure repository pagination must not construct Controller `RolePageReqVO`; use persistence query wrappers or an infrastructure-local query object.
 - Menu update must actually mutate or replace menu fields used by list/tree/route responses.
 - Avoid constructing Controller request VOs in repository implementations. If current draft does this, mark it as boundary debt and do not spread it.
 
@@ -470,9 +534,12 @@ Do not introduce remote RPC calls inside domain classes. Remote/local integratio
 
 Resolve these before production code migration:
 
-- Current `Role` constructor requires non-null `RoleId` and non-null `tenantId`, but create flows may supply neither before insert.
+- Role create migration must support database-generated IDs: `RoleFactory.create(...)` may receive `null` id before insert, and `RoleRepository.save(...)` must return a reconstituted domain object with generated id.
+- Role tenant id can be absent in current unit-test/create flows because `RoleDO` extends `TenantBaseDO`; Role reconstitution must preserve tenant id when present but not reject `null` during create tests.
 - Current `Menu` constructor requires non-null `MenuId` and `parentId`; create flows must verify whether generated IDs/root parent are compatible.
-- Current `Role#update(...)` appears to be a no-op because mutable fields are final or not assigned. Production refactor must make updates effective.
+- Role update must mutate or replace user-editable fields (`name`, `code`, `sort`, `status`, `remark`) before persistence; a no-op update is a blocker.
+- During migration, repository reconstitution from legacy/test `RoleDO` must tolerate unrelated invalid enum values when the legacy use case did not validate that field. Do not let a duplicate-name/code check fail because random test `type` or `status` cannot become a strict value object.
+- `RoleRepository.delete(...)` must delete only the role row. User-role and role-menu cleanup plus cache eviction belong to `PermissionService.processRoleDeleted(...)` or an explicit application use case, not a hidden repository side effect.
 - Current `Role#markDeleted()` throws `IllegalStateException`; public behavior must map to `ROLE_CAN_NOT_UPDATE_SYSTEM_TYPE_ROLE`.
 - Current `Menu#validateParentAgainst(...)` throws `IllegalArgumentException`; public behavior must map to `MENU_PARENT_*` errors.
 - Current `Menu` constructor clears only `component` and `componentName` for button menus; legacy behavior also clears `icon` and `path`.
@@ -485,8 +552,10 @@ Resolve these before production code migration:
 A Role/Menu/Permission DDD refactor is acceptable only when all items below are true:
 
 - Domain classes contain no Spring, MyBatis, web, Feign, cache, transaction, or persistence annotations.
+- Standard Role/Menu/Permission skeleton exists for migrated slices: `application/permission/port/inbound`, `application/permission/port/outbound`, `application/permission/service`, and `infrastructure/permission/persistence|external|rpc|cache|messaging` are present through real interfaces/classes or `package-info.java` package boundaries.
 - Domain repository interfaces live in `domain/permission/repository` and do not import infrastructure or DAL classes.
-- Infrastructure repository implementations are the only DDD layer that directly uses Mappers/DOs.
+- Application service implementations live in `application/permission/service` and implement inbound use-case ports from `application/permission/port/inbound`.
+- Infrastructure repository implementations live in `infrastructure/permission/persistence` and are the only DDD layer that directly uses Mappers/DOs.
 - Controller external behavior is unchanged.
 - `RoleApi` / `PermissionApi` external contracts are unchanged.
 - Existing service interfaces either remain behavior-compatible or become thin facades over application services.
@@ -508,9 +577,10 @@ A Role/Menu/Permission DDD refactor is acceptable only when all items below are 
 Run targeted checks after each small refactor batch:
 
 ```bash
-mvn test -pl develop-module-system/develop-module-system-server -Dtest=RoleServiceImplTest -DskipITs
-mvn test -pl develop-module-system/develop-module-system-server -Dtest=MenuServiceImplTest -DskipITs
-mvn test -pl develop-module-system/develop-module-system-server -Dtest=PermissionServiceTest -DskipITs
+mvn test -pl develop-module-system/develop-module-system-server -am -Dtest=RoleServiceImplTest -Dsurefire.failIfNoSpecifiedTests=false
+mvn test -pl develop-module-system/develop-module-system-server -am -Dtest=MenuServiceImplTest -Dsurefire.failIfNoSpecifiedTests=false
+mvn test -pl develop-module-system/develop-module-system-server -am -Dtest=PermissionServiceTest -Dsurefire.failIfNoSpecifiedTests=false
+mvn test -pl develop-module-system/develop-module-system-server -am -Dtest=SystemArchitectureTest -Dsurefire.failIfNoSpecifiedTests=false
 mvn compile -pl develop-module-system/develop-module-system-api -am -DskipTests
 mvn compile -pl develop-module-system/develop-module-system-server -am -DskipTests
 ```
@@ -519,8 +589,9 @@ If Controller behavior changes or API DTO mapping changes, also run affected con
 
 Before migrating Controller or legacy service calls to the DDD application path, regression coverage must exist for these named behaviors. If current tests do not contain equivalent methods, add them first and run them with `-Dtest=Class#method`:
 
-- `RoleServiceImplTest#testCreateRole_allowsDatabaseGeneratedId` or equivalent: create role path must not fail because domain `RoleId` is null before insert.
-- `RoleServiceImplTest#testUpdateRole_mutatesNameCodeSortRemark` or equivalent: role update must change persisted/returned fields and cannot be a no-op.
+- `RoleServiceImplTest#testCreateRole` or equivalent: create role path must not fail because domain `RoleId` is null before insert and must still persist generated ID, default custom type, and ALL data scope.
+- `RoleServiceImplTest#testUpdateRole` or equivalent: role update must change persisted/returned fields and cannot be a no-op.
+- `RoleServiceImplTest#testValidateRoleDuplicate_nameDuplicate` and `testValidateRoleDuplicate_codeDuplicate` or equivalent: duplicate checks must throw existing `ServiceException` error codes even when unrelated persisted enum fields contain legacy/test values.
 - `MenuServiceImplTest#testCreateOrUpdateButtonMenu_clearsDisplayFields` or equivalent: button menu normalization clears `component`, `componentName`, `icon`, and `path`.
 - `PermissionServiceTest#testHasAnyPermissions_unknownPermissionReturnsFalse` or equivalent: unknown permission string returns false.
 - `PermissionServiceTest#testHasAnyPermissions_superAdminFallback` or equivalent: super-admin role still grants permissions after strict menu matching rules are applied.
@@ -542,7 +613,9 @@ grep -n "^## " .claude/ddd-skills/AggregateRoot_Role_Menu_Skill.md
 - Forgetting recursive disabled-parent menu filtering.
 - Allowing unknown permission strings to pass permission checks.
 - Forgetting super-admin fallback.
-- Keeping current no-op `Role#update(...)` and assuming repository update fixed it.
+- Keeping current no-op Role update and assuming repository update fixed it.
+- Hiding role-menu/user-role cleanup inside `RoleRepository.delete(...)`, which bypasses existing cache eviction contracts.
+- Making value-object reconstruction too strict for fields that legacy tests or unchanged use cases do not validate.
 - Mapping domain exceptions directly to generic 500/400 responses instead of existing error codes.
 
 ## 16. Red Flags
@@ -557,6 +630,11 @@ Stop the refactor immediately if any of these appear:
 - Domain classes import Spring, MyBatis, Feign, Mapper, DO, Controller VO, or Cache APIs.
 - A create flow passes `null` into a value object that rejects null without an explicit ID allocation strategy.
 - Role update still does not modify the fields users can update.
+- Role repository imports or constructs Controller VO for persistence queries.
+- Role delete removes role-menu/user-role associations without going through the cache-evicting cleanup boundary.
+- A migrated slice leaves application classes directly under `application/permission` instead of `application/permission/service` and inbound ports.
+- A migrated slice leaves repository implementations directly under `infrastructure/permission` instead of `infrastructure/permission/persistence`.
+- `port/outbound`, `external`, `rpc`, `cache`, or `messaging` package boundaries are omitted because they are currently empty.
 
 ## 17. Rollback Conditions
 
@@ -573,6 +651,7 @@ Rollback the current batch if:
 Before reporting completion, answer yes to all:
 
 - Did I compare the DDD code against `RoleServiceImpl`, `MenuServiceImpl`, and `PermissionServiceImpl`?
+- Did I create or preserve the standard Role/Menu/Permission skeleton for the migrated slice, including inbound ports, outbound port boundary, application service package, persistence adapter package, and fixed external/rpc/cache/messaging package boundaries?
 - Did I preserve existing error codes instead of introducing generic exceptions?
 - Did I preserve cache eviction keys and `allEntries` breadth?
 - Did I preserve `@DSTransactional` where used by assignment operations?

@@ -1,8 +1,9 @@
-package com.develop.mvp.pk.module.system.infrastructure.permission;
+package com.develop.mvp.pk.module.system.infrastructure.permission.persistence;
 
 import cn.hutool.core.collection.CollUtil;
+import com.develop.mvp.pk.framework.common.pojo.PageParam;
 import com.develop.mvp.pk.framework.common.pojo.PageResult;
-import com.develop.mvp.pk.module.system.controller.admin.permission.vo.role.RolePageReqVO;
+import com.develop.mvp.pk.framework.mybatis.core.query.LambdaQueryWrapperX;
 import com.develop.mvp.pk.module.system.dal.dataobject.permission.RoleDO;
 import com.develop.mvp.pk.module.system.dal.mysql.permission.RoleMapper;
 import com.develop.mvp.pk.module.system.dal.mysql.permission.RoleMenuMapper;
@@ -35,19 +36,18 @@ public class RoleRepositoryImpl implements RoleRepository {
     @Transactional
     public Role save(Role role) {
         RoleDO roleDO = toDataObject(role);
-        if (roleMapper.selectById(role.id().value()) == null) {
+        if (role.id() == null) {
             roleMapper.insert(roleDO);
-        } else {
-            roleMapper.updateById(roleDO);
+            return toDomain(roleDO);
         }
-        return role;
+        roleMapper.updateById(roleDO);
+        return toDomain(roleDO);
     }
 
     @Override
     @Transactional
     public void delete(RoleId id) {
         roleMapper.deleteById(id.value());
-        roleMenuMapper.deleteListByRoleId(id.value());
     }
 
     @Override
@@ -76,10 +76,15 @@ public class RoleRepositoryImpl implements RoleRepository {
     @Override
     public PageResult<Role> findPage(String name, String code, Integer status,
                                       LocalDateTime[] createTime, Integer pageNo, Integer pageSize) {
-        RolePageReqVO reqVO = new RolePageReqVO();
-        reqVO.setName(name); reqVO.setCode(code); reqVO.setStatus(status);
-        reqVO.setCreateTime(createTime); reqVO.setPageNo(pageNo); reqVO.setPageSize(pageSize);
-        PageResult<RoleDO> doPage = roleMapper.selectPage(reqVO);
+        PageParam pageParam = new PageParam();
+        pageParam.setPageNo(pageNo);
+        pageParam.setPageSize(pageSize);
+        PageResult<RoleDO> doPage = roleMapper.selectPage(pageParam, new LambdaQueryWrapperX<RoleDO>()
+                .likeIfPresent(RoleDO::getName, name)
+                .likeIfPresent(RoleDO::getCode, code)
+                .eqIfPresent(RoleDO::getStatus, status)
+                .betweenIfPresent(RoleDO::getCreateTime, createTime)
+                .orderByAsc(RoleDO::getSort));
         return new PageResult<>(
                 doPage.getList().stream().map(this::toDomain).collect(Collectors.toList()),
                 doPage.getTotal());
@@ -97,7 +102,7 @@ public class RoleRepositoryImpl implements RoleRepository {
 
     private RoleDO toDataObject(Role role) {
         RoleDO d = new RoleDO();
-        d.setId(role.id().value()); d.setName(role.name().value()); d.setCode(role.code().value());
+        d.setId(role.id() != null ? role.id().value() : null); d.setName(role.name().value()); d.setCode(role.code().value());
         d.setSort(role.sort()); d.setStatus(role.status().code()); d.setType(role.type().code());
         d.setRemark(role.remark()); d.setTenantId(role.tenantId());
         d.setDataScope(role.dataScope().scope()); d.setDataScopeDeptIds(role.dataScope().deptIds());

@@ -108,8 +108,25 @@ api/
 
 ```text
 domain/{aggregate}/
+  model/
+  valueobject/
+  event/
+  service/
+  repository/
 application/{aggregate}/
+  command/
+  query/
+  dto/ 或 result/
+  port/
+    inbound/
+    outbound/
+  service/
 infrastructure/{aggregate}/
+  persistence/
+  external/
+  rpc/
+  cache/
+  messaging/
 convert/
 controller/
 job/
@@ -117,18 +134,36 @@ mq/
 framework/
 ```
 
+骨架创建规则：
+
+- 迁移或创建聚合时，必须创建上述标准目录骨架；即使当前目录暂无实现，也不能省略标准目录。
+- `application/{aggregate}/port/inbound/` 必须定义用例入口接口，例如 `CreateRoleUseCase`、`UpdateRoleUseCase` 或按业务粒度合并后的 `RoleUseCase`。
+- `application/{aggregate}/service/` 必须放入站用例实现，例如 `RoleApplicationService`，并实现 inbound port。
+- `application/{aggregate}/port/outbound/` 必须作为应用层外部能力端口位置；当前没有外部能力时仍保留目录，后续跨模块、通知、文件、第三方系统等能力必须先在此定义端口。
+- `domain/{aggregate}/repository/` 必须定义领域仓储接口；即使当前只有一个 MyBatis 实现，也不能让应用层或领域层依赖 Mapper/DO。
+- `infrastructure/{aggregate}/persistence/` 必须放仓储实现和 Mapper/DO 协作适配；`external/rpc/cache/messaging` 作为固定技术适配位置，当前为空也必须保留目录。
+- Java 空目录无法被 Git 稳定追踪时，优先用职责明确的接口骨架或 `package-info.java` 固定包边界；禁止使用无业务语义的 `Temp`、`Placeholder`、`Dummy` 类。
+
 职责边界：
 
 - `domain/{aggregate}/`：聚合根、值对象、领域事件、领域仓储接口、领域服务；封装业务规则和不变量，不依赖 Spring、MyBatis、远程客户端、Controller VO 或基础设施实现。
 - `application/{aggregate}/`：用例编排、事务边界、权限、租户、数据权限等应用级策略；协调聚合、仓储端口和外部端口，不沉淀领域规则。
+- `application/{aggregate}/port/inbound/`：入站用例契约，供 Controller、Job、MQ 或本地适配调用；不得包含 Spring Web、Mapper、DO 或基础设施实现。
+- `application/{aggregate}/port/outbound/`：应用编排需要的外部能力端口，例如跨模块查询、通知、文件、第三方系统、远程服务；不得放持久化实现。
+- `application/{aggregate}/service/`：入站用例实现和事务边界；可以依赖 domain 仓储接口、outbound 端口和 convert，不直接依赖 Mapper/DO。
 - `infrastructure/{aggregate}/`：仓储实现、MyBatis Mapper/DO 协作、缓存、外部系统适配、本地/远程技术适配；只实现技术细节，不反向定义业务规则。
+- `infrastructure/{aggregate}/persistence/`：实现 `domain/{aggregate}/repository/` 中的仓储接口，隔离 MyBatis、DO、Mapper 和查询实现。
+- `infrastructure/{aggregate}/external/`：第三方系统或外部平台适配实现。
+- `infrastructure/{aggregate}/rpc/`：Feign/RPC 远程调用适配实现。
+- `infrastructure/{aggregate}/cache/`：缓存读写、缓存键、缓存失效等技术实现。
+- `infrastructure/{aggregate}/messaging/`：消息发送、事件发布或消息基础设施适配实现。
 - `convert/`：DTO/VO/DO/domain 映射；只做对象转换，不写业务判断、权限判断或持久化访问。
 - `controller/`：Web 入口；只处理协议参数、认证上下文、权限注解和响应封装，不直接操作 DO/Mapper。
 - `job/`：定时任务入口；只触发应用用例，不复制业务流程。
 - `mq/`：消息入口；只完成消息解析、幂等入口和应用用例调用，不承载领域决策。
 - `framework/`：Spring 配置、自动装配、拦截器、模块技术配置；只放技术装配，不放业务逻辑。
 - `service/`：旧业务逻辑迁移源；迁移期可作为兼容壳或过渡入口，目标状态不再承载核心业务。
-- `dal/`：旧持久化技术位置；迁移期可保留 DO/Mapper，目标状态中业务仓储实现应进入 `infrastructure`，`dal` 不做业务决策。
+- `dal/`：旧持久化技术位置；迁移期可保留 DO/Mapper，目标状态中业务仓储实现应进入 `infrastructure/{aggregate}/persistence/`，`dal` 不做业务决策。
 
 ## 9. Design Pattern Guidance
 
@@ -152,7 +187,8 @@ framework/
 
 - 对支付渠道、通知渠道、审批规则、设备协议、外部服务供应商、导入导出格式、权限策略等明确变化点，通过接口、策略、适配器、领域服务或领域事件隔离变化。
 - 对稳定业务概念，优先沉淀为聚合、值对象、领域服务和领域事件，让业务语义集中表达。
-- 对不确定需求保持简单实现，不提前创建空接口、空抽象类、多级继承或只转发不增值的中间层。
+- 标准目录骨架和标准端口接口是统一结构的一部分，不视为无意义空抽象；迁移聚合时必须创建。
+- 对标准骨架之外的不确定需求保持简单实现，不提前创建空接口、空抽象类、多级继承或只转发不增值的中间层。
 - 包、类、方法命名必须反映业务语义和层级职责，便于后续快速定位入口、用例、领域规则、持久化实现和外部适配点。
 - 必要功能注释用于说明 API 契约用途、应用用例职责、领域不变量、外部适配约束、事务边界和回滚条件；不要用注释复述代码步骤。
 - 代码质量优化是结构统一的一部分：迁移时同步消除重复逻辑、模糊命名、过长方法、错误依赖方向、跨层穿透和无意义中转层。
@@ -187,7 +223,7 @@ framework/
 
 1. 先建立或读取统一结构标准：修改任何模块结构前，先确认本文件仍覆盖当前目标。
 2. 先做 API 契约统一：以 `system-api` 的本地/远程适配方向为样板，逐模块收敛 `CommonApi`、DTO、枚举、`local/remote` 适配器。
-3. 再做运行单元内部聚合迁移：每次只迁移一个模块或一个聚合根；必须先有对应聚合 skill，验证 skill 后再改代码。
+3. 再做运行单元内部聚合迁移：每次只迁移一个模块或一个聚合根；必须先有对应聚合 skill，验证 skill 后再改代码，并先创建标准目录与接口骨架。
 4. 迁移聚合时同步补齐必要功能注释，尤其是 API 契约用途、应用用例职责、领域不变量、外部适配约束和回滚条件。
 5. 迁移聚合时同步做代码质量优化：删除重复路径、收敛命名、拆分过长方法、修正错误依赖方向，确保高内聚低耦合。
 6. 迁移聚合时按单一职责原则审查类和方法；一个类同时承担入口、编排、领域规则和持久化适配时，必须拆分到对应层或标注迁移原因。
@@ -203,6 +239,7 @@ framework/
 - API 模块不包含应用编排、领域决策、仓储实现、Mapper、DO 或持久化逻辑。
 - `controller/job/mq/framework` 只承担入口或技术配置职责，不承载核心业务规则。
 - 核心业务进入 `domain/application/infrastructure/convert`，旧 `service/dal` 不再作为核心业务最终承载层。
+- 每个迁移后的聚合都具备标准目录与接口骨架：`domain` 的 `repository`，`application` 的 `port/inbound`、`port/outbound`、`service`，以及 `infrastructure` 的 `persistence/external/rpc/cache/messaging`。
 - 聚合、应用服务、基础设施适配、入口层责任边界清晰，依赖方向不反转，不出现跨层直接穿透调用。
 - 关键 API、用例、领域不变量、事务边界和外部适配点具备必要功能注释。
 - 改造后的代码具备高内聚低耦合，没有新增重复逻辑、模糊职责类、过长方法或无意义中转层。
@@ -255,7 +292,8 @@ mvn clean package -pl develop-server -am -Dmaven.test.skip=true
 - 应用层沉淀核心领域不变量，导致聚合根变成数据容器。
 - `service/dal` 被当作新业务最终落位，而不是迁移源。
 - `iot/mall` 被描述为“历史原因，长期保持例外”。
-- 为了使用设计模式创建空接口、空抽象类、多层转发或没有变化点的策略层。
+- 以“当前为空”“只有一个实现”“避免空抽象”为理由省略标准目录或标准端口接口骨架。
+- 在标准骨架之外，为了使用设计模式创建空接口、空抽象类、多层转发或没有变化点的策略层。
 - 一个类同时承担入口、编排、领域规则、持久化适配和对象转换。
 - 注释只解释代码步骤，缺少业务意图、约束或外部契约说明。
 - 无法给出最小 Maven compile/test 命令或无法说明不执行验证的原因。
@@ -273,9 +311,13 @@ mvn clean package -pl develop-server -am -Dmaven.test.skip=true
 | 定时任务入口 | `job/` 调用 application 用例 | Job 内复制业务流程 |
 | 消息入口 | `mq/` 调用 application 用例 | MQ 内写领域规则 |
 | 业务不变量 | `domain/{aggregate}/` | `controller/`、`convert/`、`dal/` |
-| 用例编排和事务 | `application/{aggregate}/` | `domain/` 或 `controller/` |
+| 用例编排和事务 | `application/{aggregate}/service/` | `domain/` 或 `controller/` |
+| 入站用例接口 | `application/{aggregate}/port/inbound/` | Controller 私有方法或无契约应用服务 |
+| 应用外部能力端口 | `application/{aggregate}/port/outbound/` | `controller/`、`domain/`、`infrastructure/` 反向定义 |
 | 仓储接口 | `domain/{aggregate}/repository/` | `infrastructure/` 反向定义业务端口 |
-| 仓储实现和外部适配 | `infrastructure/{aggregate}/` | `domain/` |
+| 仓储实现和持久化适配 | `infrastructure/{aggregate}/persistence/` | `domain/`、`application/port/outbound` |
+| 外部/RPC/缓存/消息适配 | `infrastructure/{aggregate}/external|rpc|cache|messaging/` | `domain/` 或 Controller 手写技术细节 |
+| 标准空目录固定 | 职责明确的接口骨架或 `package-info.java` | `Temp`、`Placeholder`、`Dummy` 类 |
 | 对象转换 | `convert/` | 应用服务中散落手写映射 |
 | Spring 技术配置 | `framework/` | `domain/` |
 | 旧业务迁移源 | `service/`、`dal/` | 新核心业务最终落位 |

@@ -51,6 +51,7 @@
         <podam.version>8.0.2.RELEASE</podam.version>
         <jedis-mock.version>1.1.12</jedis-mock.version>
         <mockito-inline.version>5.2.0</mockito-inline.version>
+        <archunit.version>1.4.2</archunit.version>
         <!-- Bpm 工作流相关 -->
         <flowable.version>7.2.0</flowable.version>
         <!-- 工具类相关 -->
@@ -450,6 +451,12 @@
                         <artifactId>mockito-core</artifactId>
                     </exclusion>
                 </exclusions>
+            </dependency>
+
+            <dependency>
+                <groupId>com.tngtech.archunit</groupId>
+                <artifactId>archunit-junit5</artifactId>
+                <version>${archunit.version}</version>
             </dependency>
 
             <dependency>
