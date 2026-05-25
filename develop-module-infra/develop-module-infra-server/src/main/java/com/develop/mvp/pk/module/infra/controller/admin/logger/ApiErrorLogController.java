@@ -6,7 +6,7 @@ import com.develop.mvp.pk.framework.common.pojo.PageParam;
 import com.develop.mvp.pk.framework.common.pojo.PageResult;
 import com.develop.mvp.pk.framework.common.util.object.BeanUtils;
 import com.develop.mvp.pk.framework.excel.core.util.ExcelUtils;
-import com.develop.mvp.pk.module.infra.application.logger.ApiErrorLogApplicationService;
+import com.develop.mvp.pk.module.infra.application.logger.port.inbound.ApiErrorLogUseCase;
 import com.develop.mvp.pk.module.infra.controller.admin.logger.vo.apierrorlog.ApiErrorLogPageReqVO;
 import com.develop.mvp.pk.module.infra.controller.admin.logger.vo.apierrorlog.ApiErrorLogRespVO;
 import com.develop.mvp.pk.module.infra.dal.dataobject.logger.ApiErrorLogDO;
@@ -37,7 +37,7 @@ import static com.develop.mvp.pk.framework.security.core.util.SecurityFrameworkU
 public class ApiErrorLogController {
 
     @Resource
-    private ApiErrorLogApplicationService apiErrorLogApplicationService;
+    private ApiErrorLogUseCase apiErrorLogApplicationService;
 
     @PutMapping("/update-status")
     @Operation(summary = "更新 API 错误日志的状态")

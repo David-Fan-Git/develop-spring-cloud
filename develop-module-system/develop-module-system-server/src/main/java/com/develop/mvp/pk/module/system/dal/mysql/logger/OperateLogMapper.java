@@ -3,9 +3,8 @@ package com.develop.mvp.pk.module.system.dal.mysql.logger;
 import com.develop.mvp.pk.framework.common.pojo.PageResult;
 import com.develop.mvp.pk.framework.mybatis.core.mapper.BaseMapperX;
 import com.develop.mvp.pk.framework.mybatis.core.query.LambdaQueryWrapperX;
-import com.develop.mvp.pk.module.system.api.logger.dto.OperateLogPageReqDTO;
-import com.develop.mvp.pk.module.system.controller.admin.logger.vo.operatelog.OperateLogPageReqVO;
 import com.develop.mvp.pk.module.system.dal.dataobject.logger.OperateLogDO;
+import com.develop.mvp.pk.module.system.domain.logger.repository.OperateLogPageCriteria;
 import org.apache.ibatis.annotations.Mapper;
 
 /**
@@ -15,34 +14,25 @@ import org.apache.ibatis.annotations.Mapper;
 public interface OperateLogMapper extends BaseMapperX<OperateLogDO> {
 
     /**
-     * 查询 select Page 对应的数据。
+     * 根据仓储查询条件分页查询操作日志。
      *
-     * @param pageReqDTO pageReqDTO 参数
-     * @return 处理结果
+     * @param criteria 操作日志分页查询条件
+     * @return 操作日志分页结果
      */
-    default PageResult<OperateLogDO> selectPage(OperateLogPageReqVO pageReqDTO) {
-        return selectPage(pageReqDTO, new LambdaQueryWrapperX<OperateLogDO>()
-                .eqIfPresent(OperateLogDO::getUserId, pageReqDTO.getUserId())
-                .eqIfPresent(OperateLogDO::getBizId, pageReqDTO.getBizId())
-                .likeIfPresent(OperateLogDO::getType, pageReqDTO.getType())
-                .likeIfPresent(OperateLogDO::getSubType, pageReqDTO.getSubType())
-                .likeIfPresent(OperateLogDO::getAction, pageReqDTO.getAction())
-                .betweenIfPresent(OperateLogDO::getCreateTime, pageReqDTO.getCreateTime())
-                .orderByDesc(OperateLogDO::getId));
-    }
-
-    /**
-     * 查询 select Page 对应的数据。
-     *
-     * @param pageReqDTO pageReqDTO 参数
-     * @return 处理结果
-     */
-    default PageResult<OperateLogDO> selectPage(OperateLogPageReqDTO pageReqDTO) {
-        return selectPage(pageReqDTO, new LambdaQueryWrapperX<OperateLogDO>()
-                .eqIfPresent(OperateLogDO::getType, pageReqDTO.getType())
-                .eqIfPresent(OperateLogDO::getBizId, pageReqDTO.getBizId())
-                .eqIfPresent(OperateLogDO::getUserId, pageReqDTO.getUserId())
-                .orderByDesc(OperateLogDO::getId));
+    default PageResult<OperateLogDO> selectPage(OperateLogPageCriteria criteria) {
+        LambdaQueryWrapperX<OperateLogDO> query = new LambdaQueryWrapperX<OperateLogDO>()
+                .eqIfPresent(OperateLogDO::getUserId, criteria.getUserId())
+                .eqIfPresent(OperateLogDO::getBizId, criteria.getBizId())
+                .likeIfPresent(OperateLogDO::getSubType, criteria.getSubType())
+                .likeIfPresent(OperateLogDO::getAction, criteria.getAction())
+                .betweenIfPresent(OperateLogDO::getCreateTime, criteria.getCreateTime())
+                .orderByDesc(OperateLogDO::getId);
+        if (criteria.isExactType()) {
+            query.eqIfPresent(OperateLogDO::getType, criteria.getType());
+        } else {
+            query.likeIfPresent(OperateLogDO::getType, criteria.getType());
+        }
+        return selectPage(criteria, query);
     }
 
 }

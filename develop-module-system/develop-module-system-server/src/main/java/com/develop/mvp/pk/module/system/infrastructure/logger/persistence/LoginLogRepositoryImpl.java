@@ -1,10 +1,10 @@
 package com.develop.mvp.pk.module.system.infrastructure.logger.persistence;
 
 import com.develop.mvp.pk.framework.common.pojo.PageResult;
-import com.develop.mvp.pk.module.system.controller.admin.logger.vo.loginlog.LoginLogPageReqVO;
 import com.develop.mvp.pk.module.system.dal.dataobject.logger.LoginLogDO;
 import com.develop.mvp.pk.module.system.dal.mysql.logger.LoginLogMapper;
 import com.develop.mvp.pk.module.system.domain.logger.LoginLog;
+import com.develop.mvp.pk.module.system.domain.logger.repository.LoginLogPageCriteria;
 import com.develop.mvp.pk.module.system.domain.logger.repository.LoginLogRepository;
 import org.springframework.stereotype.Repository;
 
@@ -36,25 +36,27 @@ public class LoginLogRepositoryImpl implements LoginLogRepository {
     }
 
     /**
-     * 查询 find Do By Id 对应的数据。
+     * 根据编号查询登录日志。
      *
-     * @param id id 参数
-     * @return 处理结果
+     * @param id 登录日志编号
+     * @return 登录日志领域对象，不存在时返回 null
      */
     @Override
-    public LoginLogDO findDoById(Long id) {
-        return loginLogMapper.selectById(id);
+    public LoginLog findById(Long id) {
+        LoginLogDO loginLogDO = loginLogMapper.selectById(id);
+        return loginLogDO != null ? toDomain(loginLogDO) : null;
     }
 
     /**
-     * 查询 find Page 对应的数据。
+     * 分页查询登录日志。
      *
-     * @param pageReqVO pageReqVO 参数
-     * @return 处理结果
+     * @param criteria 登录日志分页查询条件
+     * @return 登录日志分页结果
      */
     @Override
-    public PageResult<LoginLogDO> findPage(LoginLogPageReqVO pageReqVO) {
-        return loginLogMapper.selectPage(pageReqVO);
+    public PageResult<LoginLog> findPage(LoginLogPageCriteria criteria) {
+        PageResult<LoginLogDO> pageResult = loginLogMapper.selectPage(criteria);
+        return new PageResult<>(pageResult.getList().stream().map(this::toDomain).toList(), pageResult.getTotal());
     }
 
     /**
@@ -75,5 +77,26 @@ public class LoginLogRepositoryImpl implements LoginLogRepository {
         loginLogDO.setUserIp(log.userIp());
         loginLogDO.setUserAgent(log.userAgent());
         return loginLogDO;
+    }
+
+    /**
+     * 将登录日志持久化对象转换为领域对象。
+     *
+     * @param loginLogDO 登录日志持久化对象
+     * @return 登录日志领域对象
+     */
+    private LoginLog toDomain(LoginLogDO loginLogDO) {
+        return LoginLog.builder()
+                .id(loginLogDO.getId())
+                .logType(loginLogDO.getLogType())
+                .traceId(loginLogDO.getTraceId())
+                .userId(loginLogDO.getUserId())
+                .userType(loginLogDO.getUserType())
+                .username(loginLogDO.getUsername())
+                .result(loginLogDO.getResult())
+                .userIp(loginLogDO.getUserIp())
+                .userAgent(loginLogDO.getUserAgent())
+                .createTime(loginLogDO.getCreateTime())
+                .build();
     }
 }

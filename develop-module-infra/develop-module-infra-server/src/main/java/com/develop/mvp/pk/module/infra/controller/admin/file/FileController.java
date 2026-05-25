@@ -7,7 +7,7 @@ import com.develop.mvp.pk.framework.common.pojo.CommonResult;
 import com.develop.mvp.pk.framework.common.pojo.PageResult;
 import com.develop.mvp.pk.framework.common.util.object.BeanUtils;
 import com.develop.mvp.pk.framework.tenant.core.aop.TenantIgnore;
-import com.develop.mvp.pk.module.infra.application.file.FileApplicationService;
+import com.develop.mvp.pk.module.infra.application.file.port.inbound.FileUseCase;
 import com.develop.mvp.pk.module.infra.controller.admin.file.vo.file.*;
 import com.develop.mvp.pk.module.infra.domain.file.File;
 import com.develop.mvp.pk.module.infra.framework.file.core.client.FileClient;
@@ -44,7 +44,7 @@ import static com.develop.mvp.pk.module.infra.framework.file.core.utils.FileType
 public class FileController {
 
     @Resource
-    private FileApplicationService fileApplicationService;
+    private FileUseCase fileApplicationService;
     @Resource
     private FileConfigService fileConfigService; // 保留用于 FileClient 管理
 

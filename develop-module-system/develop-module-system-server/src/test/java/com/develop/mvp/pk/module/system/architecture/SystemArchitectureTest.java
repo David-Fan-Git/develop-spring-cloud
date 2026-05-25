@@ -26,6 +26,18 @@ class SystemArchitectureTest {
     }
 
     @Test
+    void migratedLoggerSubdomainShouldRespectLayerBoundaries() {
+        DevelopArchitectureRules.domainShouldStayPure()
+                .check(DevelopArchitectureRules.importPackages("com.develop.mvp.pk.module.system.domain.logger"));
+        DevelopArchitectureRules.applicationShouldNotDependOnEntryOrInfrastructure()
+                .check(DevelopArchitectureRules.importPackages("com.develop.mvp.pk.module.system.application.logger"));
+        DevelopArchitectureRules.adapterShouldNotDependOnEachOther()
+                .check(DevelopArchitectureRules.importPackages("com.develop.mvp.pk.module.system.infrastructure.logger"));
+        DevelopArchitectureRules.entryLayersShouldNotAccessPersistenceDirectly()
+                .check(DevelopArchitectureRules.importPackages("com.develop.mvp.pk.module.system.controller.admin.logger"));
+    }
+
+    @Test
     void migratedSystemSubdomainsShouldExposeStandardDddSkeleton() {
         Path sourceRoot = mainSourceRoot();
         List<String> migratedSubdomains = List.of("auth", "dept", "dict", "logger", "mail", "member", "notice", "notify", "oauth2", "permission", "sms", "social", "tenant", "user");

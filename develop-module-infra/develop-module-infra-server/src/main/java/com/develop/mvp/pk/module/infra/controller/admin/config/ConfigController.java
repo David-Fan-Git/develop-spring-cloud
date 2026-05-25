@@ -6,7 +6,7 @@ import com.develop.mvp.pk.framework.common.pojo.PageParam;
 import com.develop.mvp.pk.framework.common.pojo.PageResult;
 import com.develop.mvp.pk.framework.common.util.object.BeanUtils;
 import com.develop.mvp.pk.framework.excel.core.util.ExcelUtils;
-import com.develop.mvp.pk.module.infra.application.config.ConfigApplicationService;
+import com.develop.mvp.pk.module.infra.application.config.port.inbound.ConfigUseCase;
 import com.develop.mvp.pk.module.infra.controller.admin.config.vo.ConfigPageReqVO;
 import com.develop.mvp.pk.module.infra.controller.admin.config.vo.ConfigRespVO;
 import com.develop.mvp.pk.module.infra.controller.admin.config.vo.ConfigSaveReqVO;
@@ -38,7 +38,7 @@ import static com.develop.mvp.pk.framework.common.pojo.CommonResult.success;
 public class ConfigController {
 
     @Resource
-    private ConfigApplicationService configApplicationService;
+    private ConfigUseCase configApplicationService;
 
     @PostMapping("/create")
     @Operation(summary = "创建参数配置")

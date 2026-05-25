@@ -1,11 +1,15 @@
 package com.develop.mvp.pk.module.infra.application.file;
 
 import com.develop.mvp.pk.framework.common.pojo.PageResult;
+import com.develop.mvp.pk.module.infra.application.file.service.FileConfigApplicationService;
 import com.develop.mvp.pk.module.infra.domain.event.DomainEventPublisher;
 import com.develop.mvp.pk.module.infra.domain.file.FileConfig;
 import com.develop.mvp.pk.module.infra.domain.file.repository.FileConfigPageQuery;
 import com.develop.mvp.pk.module.infra.domain.file.repository.FileConfigRepository;
 import com.develop.mvp.pk.module.infra.domain.file.valueobject.FileConfigId;
+import com.develop.mvp.pk.module.infra.framework.file.core.client.FileClient;
+import com.develop.mvp.pk.module.infra.framework.file.core.client.FileClientFactory;
+import com.develop.mvp.pk.module.infra.framework.file.core.client.FileClientConfig;
 import com.develop.mvp.pk.module.infra.framework.file.core.client.local.LocalFileClientConfig;
 import com.develop.mvp.pk.module.infra.framework.file.core.enums.FileStorageEnum;
 import com.develop.mvp.pk.module.infra.infrastructure.file.FileConfigFactory;
@@ -22,18 +26,21 @@ import java.util.Map;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertInstanceOf;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 class FileConfigApplicationServiceTest {
 
     private InMemoryFileConfigRepository repository;
+    private RecordingFileClientFactory fileClientFactory;
     private FileConfigApplicationService applicationService;
 
     @BeforeEach
     void setUp() {
         repository = new InMemoryFileConfigRepository();
+        fileClientFactory = new RecordingFileClientFactory();
         DomainEventPublisher eventPublisher = event -> {};
         Validator validator = Validation.buildDefaultValidatorFactory().getValidator();
-        applicationService = new FileConfigApplicationService(repository, eventPublisher, validator);
+        applicationService = new FileConfigApplicationService(repository, eventPublisher, validator, fileClientFactory);
     }
 
     @Test
@@ -60,11 +67,71 @@ class FileConfigApplicationServiceTest {
         assertEquals("https://static.example.com", config.getDomain());
     }
 
+    @Test
+    void testFileConfig_uploadsSampleImageAndReturnsUrl() throws Exception {
+        Long id = applicationService.createFileConfig("本地存储", FileStorageEnum.LOCAL.getStorage(), false, localConfigMap(), "remark");
+
+        String url = applicationService.testFileConfig(id);
+
+        assertEquals("https://static.example.com/public/test.jpg", url);
+        assertEquals(id, fileClientFactory.createdConfigId);
+        assertEquals(FileStorageEnum.LOCAL.getStorage(), fileClientFactory.createdStorage);
+        assertEquals(id, fileClientFactory.requestedConfigId);
+        assertTrue(fileClientFactory.client.uploadedPath.startsWith("public/"));
+        assertTrue(fileClientFactory.client.uploadedPath.endsWith(".jpg"));
+        assertEquals("image/jpeg", fileClientFactory.client.uploadedType);
+    }
+
     private static Map<String, Object> localConfigMap() {
         Map<String, Object> config = new LinkedHashMap<>();
         config.put("basePath", "/tmp/uploads");
         config.put("domain", "https://static.example.com");
         return config;
+    }
+
+    private static final class RecordingFileClientFactory implements FileClientFactory {
+        private final RecordingFileClient client = new RecordingFileClient();
+        private Long createdConfigId;
+        private Integer createdStorage;
+        private Long requestedConfigId;
+
+        @Override
+        public FileClient getFileClient(Long configId) {
+            requestedConfigId = configId;
+            return client;
+        }
+
+        @Override
+        public <Config extends FileClientConfig> void createOrUpdateFileClient(Long configId, Integer storage, Config config) {
+            createdConfigId = configId;
+            createdStorage = storage;
+        }
+    }
+
+    private static final class RecordingFileClient implements FileClient {
+        private String uploadedPath;
+        private String uploadedType;
+
+        @Override
+        public Long getId() {
+            return 1L;
+        }
+
+        @Override
+        public String upload(byte[] content, String path, String type) {
+            uploadedPath = path;
+            uploadedType = type;
+            return "https://static.example.com/public/test.jpg";
+        }
+
+        @Override
+        public void delete(String path) {
+        }
+
+        @Override
+        public byte[] getContent(String path) {
+            return new byte[0];
+        }
     }
 
     private static final class InMemoryFileConfigRepository implements FileConfigRepository {

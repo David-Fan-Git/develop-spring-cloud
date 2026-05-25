@@ -1,4 +1,4 @@
-David http://www.iocoder.cn
+David fanhuidavid@gmail.com
 Application Version: ${develop.info.version}
 Spring Boot Version: ${spring-boot.version}
 

@@ -2,7 +2,7 @@ package com.develop.mvp.pk.module.infra.api.file;
 
 import com.develop.mvp.pk.framework.common.pojo.CommonResult;
 import com.develop.mvp.pk.module.infra.api.file.dto.FileCreateReqDTO;
-import com.develop.mvp.pk.module.infra.application.file.FileApplicationService;
+import com.develop.mvp.pk.module.infra.application.file.port.inbound.FileUseCase;
 import com.develop.mvp.pk.module.infra.framework.file.core.client.FileClient;
 import com.develop.mvp.pk.module.infra.service.file.FileConfigService;
 import jakarta.annotation.Resource;
@@ -16,7 +16,7 @@ import static com.develop.mvp.pk.framework.common.pojo.CommonResult.success;
 public class FileApiImpl implements FileApi {
 
     @Resource
-    private FileApplicationService fileApplicationService;
+    private FileUseCase fileApplicationService;
     @Resource
     private FileConfigService fileConfigService;
 

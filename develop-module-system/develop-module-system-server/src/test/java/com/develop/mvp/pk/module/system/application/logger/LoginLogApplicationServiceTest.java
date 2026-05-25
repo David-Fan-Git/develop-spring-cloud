@@ -3,8 +3,9 @@ package com.develop.mvp.pk.module.system.application.logger;
 import com.develop.mvp.pk.framework.common.pojo.PageResult;
 import com.develop.mvp.pk.framework.test.core.ut.BaseDbUnitTest;
 import com.develop.mvp.pk.module.system.api.logger.dto.LoginLogCreateReqDTO;
+import com.develop.mvp.pk.module.system.application.logger.dto.LoginLogDTO;
+import com.develop.mvp.pk.module.system.application.logger.query.LoginLogPageQuery;
 import com.develop.mvp.pk.module.system.application.logger.service.LoggerApplicationService;
-import com.develop.mvp.pk.module.system.controller.admin.logger.vo.loginlog.LoginLogPageReqVO;
 import com.develop.mvp.pk.module.system.dal.dataobject.logger.LoginLogDO;
 import com.develop.mvp.pk.module.system.dal.mysql.logger.LoginLogMapper;
 import com.develop.mvp.pk.module.system.infrastructure.logger.persistence.LoginLogRepositoryImpl;
@@ -44,13 +45,13 @@ class LoginLogApplicationServiceTest extends BaseDbUnitTest {
         loginLogMapper.insert(cloneIgnoreId(loginLogDO, o -> o.setUserIp("192.168.128.18")));
         loginLogMapper.insert(cloneIgnoreId(loginLogDO, o -> o.setUsername("yunai")));
         loginLogMapper.insert(cloneIgnoreId(loginLogDO, o -> o.setCreateTime(buildTime(2021, 2, 6))));
-        LoginLogPageReqVO reqVO = new LoginLogPageReqVO();
+        LoginLogPageQuery reqVO = new LoginLogPageQuery();
         reqVO.setUsername("wang");
         reqVO.setUserIp("192.168.199");
         reqVO.setStatus(true);
         reqVO.setCreateTime(buildBetweenTime(2021, 3, 5, 2021, 3, 7));
 
-        PageResult<LoginLogDO> pageResult = loggerApplicationService.getLoginLogPage(reqVO);
+        PageResult<LoginLogDTO> pageResult = loggerApplicationService.getLoginLogPage(reqVO);
 
         assertEquals(1, pageResult.getTotal());
         assertEquals(1, pageResult.getList().size());

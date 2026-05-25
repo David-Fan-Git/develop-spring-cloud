@@ -2,12 +2,12 @@ package com.develop.mvp.pk.module.system.api.logger;
 
 import com.develop.mvp.pk.framework.common.pojo.CommonResult;
 import com.develop.mvp.pk.framework.common.pojo.PageResult;
-import com.develop.mvp.pk.framework.common.util.object.BeanUtils;
 import com.develop.mvp.pk.framework.common.biz.system.logger.dto.OperateLogCreateReqDTO;
 import com.develop.mvp.pk.module.system.api.logger.dto.OperateLogPageReqDTO;
 import com.develop.mvp.pk.module.system.api.logger.dto.OperateLogRespDTO;
+import com.develop.mvp.pk.module.system.application.logger.dto.OperateLogDTO;
 import com.develop.mvp.pk.module.system.application.logger.port.inbound.LoggerUseCase;
-import com.develop.mvp.pk.module.system.dal.dataobject.logger.OperateLogDO;
+import com.develop.mvp.pk.module.system.convert.logger.LoggerConvert;
 import jakarta.annotation.Resource;
 import org.springframework.context.annotation.Primary;
 import org.springframework.validation.annotation.Validated;
@@ -46,8 +46,8 @@ public class OperateLogApiImpl implements OperateLogApi {
      */
     @Override
     public CommonResult<PageResult<OperateLogRespDTO>> getOperateLogPage(OperateLogPageReqDTO pageReqDTO) {
-        PageResult<OperateLogDO> operateLogPage = loggerUseCase.getOperateLogPage(pageReqDTO);
-        return success(BeanUtils.toBean(operateLogPage, OperateLogRespDTO.class));
+        PageResult<OperateLogDTO> operateLogPage = loggerUseCase.getOperateLogPage(LoggerConvert.INSTANCE.convert(pageReqDTO));
+        return success(LoggerConvert.INSTANCE.convertOperateLogApiPage(operateLogPage));
     }
 
 }

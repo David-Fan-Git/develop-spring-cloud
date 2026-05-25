@@ -28,7 +28,8 @@ public final class Config {
 
     public Config(ConfigId id, ConfigKey key, String value, String name, String category,
            ConfigType type, ConfigVisible visible, String remark) {
-        this.id = Objects.requireNonNull(id, "configId 不能为空");
+        // 新建配置在入库前还没有数据库编号；持久化重建后的配置必须带有 id。
+        this.id = id;
         this.key = Objects.requireNonNull(key, "configKey 不能为空");
         this.value = value;
         this.name = name;
@@ -96,11 +97,12 @@ public final class Config {
     public boolean equals(Object o) {
         if (this == o) return true;
         if (!(o instanceof Config that)) return false;
+        if (id == null || that.id == null) return false;
         return id.equals(that.id);
     }
 
     @Override
-    public int hashCode() { return Objects.hash(id); }
+    public int hashCode() { return id != null ? Objects.hash(id) : System.identityHashCode(this); }
 
     @Override
     public String toString() {

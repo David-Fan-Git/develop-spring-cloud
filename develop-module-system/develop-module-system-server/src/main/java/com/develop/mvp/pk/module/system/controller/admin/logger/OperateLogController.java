@@ -4,13 +4,13 @@ import com.develop.mvp.pk.framework.apilog.core.annotation.ApiAccessLog;
 import com.develop.mvp.pk.framework.common.pojo.CommonResult;
 import com.develop.mvp.pk.framework.common.pojo.PageParam;
 import com.develop.mvp.pk.framework.common.pojo.PageResult;
-import com.develop.mvp.pk.framework.common.util.object.BeanUtils;
 import com.develop.mvp.pk.framework.excel.core.util.ExcelUtils;
 import com.develop.mvp.pk.framework.translate.core.TranslateUtils;
+import com.develop.mvp.pk.module.system.application.logger.dto.OperateLogDTO;
+import com.develop.mvp.pk.module.system.application.logger.port.inbound.LoggerUseCase;
 import com.develop.mvp.pk.module.system.controller.admin.logger.vo.operatelog.OperateLogPageReqVO;
 import com.develop.mvp.pk.module.system.controller.admin.logger.vo.operatelog.OperateLogRespVO;
-import com.develop.mvp.pk.module.system.application.logger.port.inbound.LoggerUseCase;
-import com.develop.mvp.pk.module.system.dal.dataobject.logger.OperateLogDO;
+import com.develop.mvp.pk.module.system.convert.logger.LoggerConvert;
 import com.fhs.core.trans.anno.TransMethodResult;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
@@ -54,8 +54,8 @@ public class OperateLogController {
     @Parameter(name = "id", description = "编号", required = true, example = "1024")
     @PreAuthorize("@ss.hasPermission('system:operate-log:query')")
     public CommonResult<OperateLogRespVO> getOperateLog(@RequestParam("id") Long id) {
-        OperateLogDO operateLog = loggerUseCase.getOperateLog(id);
-        return success(BeanUtils.toBean(operateLog, OperateLogRespVO.class));
+        OperateLogDTO operateLog = loggerUseCase.getOperateLog(id);
+        return success(LoggerConvert.INSTANCE.convert(operateLog));
     }
 
     /**
@@ -69,8 +69,8 @@ public class OperateLogController {
     @PreAuthorize("@ss.hasPermission('system:operate-log:query')")
     @TransMethodResult
     public CommonResult<PageResult<OperateLogRespVO>> pageOperateLog(@Valid OperateLogPageReqVO pageReqVO) {
-        PageResult<OperateLogDO> pageResult = loggerUseCase.getOperateLogPage(pageReqVO);
-        return success(BeanUtils.toBean(pageResult, OperateLogRespVO.class));
+        PageResult<OperateLogDTO> pageResult = loggerUseCase.getOperateLogPage(LoggerConvert.INSTANCE.convert(pageReqVO));
+        return success(LoggerConvert.INSTANCE.convertOperateLogRespPage(pageResult));
     }
 
     /**
@@ -86,9 +86,9 @@ public class OperateLogController {
     @ApiAccessLog(operateType = EXPORT)
     public void exportOperateLog(HttpServletResponse response, @Valid OperateLogPageReqVO exportReqVO) throws IOException {
         exportReqVO.setPageSize(PageParam.PAGE_SIZE_NONE);
-        List<OperateLogDO> list = loggerUseCase.getOperateLogPage(exportReqVO).getList();
+        List<OperateLogDTO> list = loggerUseCase.getOperateLogPage(LoggerConvert.INSTANCE.convert(exportReqVO)).getList();
         ExcelUtils.write(response, "操作日志.xls", "数据列表", OperateLogRespVO.class,
-                TranslateUtils.translate(BeanUtils.toBean(list, OperateLogRespVO.class)));
+                TranslateUtils.translate(LoggerConvert.INSTANCE.convertOperateLogRespList(list)));
     }
 
 }

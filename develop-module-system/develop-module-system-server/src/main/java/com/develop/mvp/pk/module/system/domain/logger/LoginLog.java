@@ -1,5 +1,7 @@
 package com.develop.mvp.pk.module.system.domain.logger;
 
+import java.time.LocalDateTime;
+
 /**
  * Login Log 领域模型。
  */
@@ -14,6 +16,7 @@ public final class LoginLog {
     private final Integer result;
     private final String userIp;
     private final String userAgent;
+    private final LocalDateTime createTime;
 
     /**
      * 创建 LoginLog 实例。
@@ -30,6 +33,7 @@ public final class LoginLog {
         this.result = builder.result;
         this.userIp = builder.userIp;
         this.userAgent = builder.userAgent;
+        this.createTime = builder.createTime;
     }
 
     /**
@@ -123,6 +127,15 @@ public final class LoginLog {
     }
 
     /**
+     * 返回登录日志创建时间。
+     *
+     * @return 登录日志创建时间
+     */
+    public LocalDateTime createTime() {
+        return createTime;
+    }
+
+    /**
      * Builder 领域模型。
      */
     public static class Builder {
@@ -135,6 +148,7 @@ public final class LoginLog {
         private Integer result;
         private String userIp;
         private String userAgent;
+        private LocalDateTime createTime;
 
         /**
          * 执行 id 对应的业务操作。
@@ -232,6 +246,17 @@ public final class LoginLog {
          */
         public Builder userAgent(String userAgent) {
             this.userAgent = userAgent;
+            return this;
+        }
+
+        /**
+         * 设置登录日志创建时间。
+         *
+         * @param createTime 登录日志创建时间
+         * @return 当前构建器
+         */
+        public Builder createTime(LocalDateTime createTime) {
+            this.createTime = createTime;
             return this;
         }
 

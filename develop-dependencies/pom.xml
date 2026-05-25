@@ -13,17 +13,23 @@
     <description>基础 bom 文件，管理整个项目的依赖版本</description>
     <url>https://github.com/YunaiV/ruoyi-vue-pro</url>
 
+    <!--
+        BOM 治理边界：本模块只负责“版本与依赖管理”，不承载业务代码、不声明运行时启动入口。
+        所有业务模块、框架 starter、server/gateway 应通过父级依赖管理继承这里的版本，避免在子模块重复硬编码版本。
+        调整原则：先确认 Spring Boot、Spring Cloud、Spring Cloud Alibaba 三条主版本兼容矩阵，再同步校验数据库、观测、测试和安全相关依赖。
+    -->
     <properties>
+        <!-- 当前仓库内部 Maven 模块统一版本；flatten 插件会在发布/打包时把 ${revision} 展平为确定版本。 -->
         <revision>2026.04-SNAPSHOT</revision>
         <flatten-maven-plugin.version>1.7.2</flatten-maven-plugin.version>
-        <!-- 统一依赖管理 -->
+        <!-- 平台基线：三者共同决定 Spring 生态依赖上限，升级时必须作为一个兼容组合验证。 -->
         <spring.boot.version>3.5.14</spring.boot.version>
         <spring.cloud.version>2025.0.1</spring.cloud.version>
         <spring.cloud.alibaba.version>2025.0.0.0</spring.cloud.alibaba.version>
-        <!-- Web 相关 -->
+        <!-- Web/API 文档：治理 MVC/OpenAPI/Knife4j 版本，供 web starter、server 与 gateway 统一生成接口文档。 -->
         <springdoc.version>2.8.17</springdoc.version>
         <knife4j.version>4.5.0</knife4j.version>
-        <!-- DB 相关 -->
+        <!-- 数据访问与缓存：治理连接池、ORM、多数据源、数据翻译、Redis/Redisson 以及国产数据库驱动。 -->
         <druid.version>1.2.28</druid.version>
         <mybatis.version>3.5.19</mybatis.version>
         <mybatis-plus.version>3.5.16</mybatis-plus.version>
@@ -35,26 +41,26 @@
         <kingbase.jdbc.version>9.0.1.jre7</kingbase.jdbc.version>
         <opengauss.jdbc.version>7.0.0-RC3-og</opengauss.jdbc.version>
         <taos.version>3.8.3</taos.version>
-        <!-- 消息队列 -->
+        <!-- 消息队列：治理 MQ starter 外部实现版本；内部 develop-spring-boot-starter-mq 版本跟随 revision。 -->
         <rocketmq-spring.version>2.3.5</rocketmq-spring.version>
-        <!-- RPC 相关 -->
-        <!-- Config 配置中心相关 -->
-        <!-- Job 定时任务相关 -->
+        <!-- RPC：远程调用 starter 当前只治理内部模块版本，外部 Feign/Spring Cloud 版本由 Spring Cloud BOM 接管。 -->
+        <!-- Config/Registry：Nacos 等注册配置中心依赖由 Spring Cloud Alibaba BOM 接管，避免重复指定版本。 -->
+        <!-- Job：治理 XXL-Job 核心依赖版本，内部定时任务 starter 版本跟随 revision。 -->
         <xxl-job.version>2.4.0</xxl-job.version>
-        <!-- 服务保障相关 -->
+        <!-- 服务保障：治理限流熔断、分布式锁等可靠性组件版本，避免与 Redis/Redisson 版本漂移。 -->
         <lock4j.version>2.2.7</lock4j.version>
-        <!-- 监控相关 -->
+        <!-- 可观测性：治理链路追踪、日志埋点和 Spring Boot Admin 版本，升级时需验证 actuator/日志栈兼容性。 -->
         <skywalking.version>9.6.0</skywalking.version>
         <spring-boot-admin.version>3.5.8</spring-boot-admin.version>
         <opentracing.version>0.33.0</opentracing.version>
-        <!-- Test 测试相关 -->
+        <!-- 测试体系：治理单元测试、架构约束测试、Mock 与测试数据生成工具版本。 -->
         <podam.version>8.0.2.RELEASE</podam.version>
         <jedis-mock.version>1.1.12</jedis-mock.version>
         <mockito-inline.version>5.2.0</mockito-inline.version>
         <archunit.version>1.4.2</archunit.version>
-        <!-- Bpm 工作流相关 -->
+        <!-- BPM/工作流：治理 Flowable 引擎与 actuator 集成版本，升级时需验证流程定义、任务执行和监控端点兼容性。 -->
         <flowable.version>7.2.0</flowable.version>
-        <!-- 工具类相关 -->
+        <!-- 通用工具与协议栈：治理验证码、HTML 解析、编译期工具、对象映射、Excel、模板、安全修复、网络协议和 IoT 通信依赖。 -->
         <anji-plus-captcha.version>1.4.0</anji-plus-captcha.version>
         <jsoup.version>1.22.2</jsoup.version>
         <lombok.version>1.18.46</lombok.version>
@@ -79,7 +85,7 @@
         <okhttp.version>4.12.0</okhttp.version>
         <californium.version>3.14.0</californium.version>
         <j2mod.version>3.3.0</j2mod.version>
-        <!-- 三方云服务相关 -->
+        <!-- 三方云服务与支付登录：治理对象存储、OAuth 登录、积木报表、微信生态与支付宝 SDK 版本。 -->
         <awssdk.version>2.44.0</awssdk.version>
         <justauth.version>1.16.7</justauth.version>
         <justauth-starter.version>1.4.0</justauth-starter.version>
@@ -91,7 +97,10 @@
 
     <dependencyManagement>
         <dependencies>
-            <!-- 统一依赖管理 -->
+            <!--
+                上游 BOM 导入顺序：先导入底层 Netty，再导入 Spring Boot、Spring Cloud、Spring Cloud Alibaba。
+                子模块不应绕过这些 BOM 单独声明 Spring/Cloud/Alibaba 生态依赖版本；确需覆盖时必须在这里集中治理并说明原因。
+            -->
             <dependency>
                 <groupId>io.netty</groupId>
                 <artifactId>netty-bom</artifactId>
@@ -121,13 +130,16 @@
                 <scope>import</scope>
             </dependency>
 
-            <!-- 业务组件 -->
+            <!--
+                业务公共能力：治理多租户、数据权限、IP 归属地、业务日志等跨模块能力。
+                内部 starter 使用 ${revision}，保证 develop-framework 与业务模块在同一仓库版本线上演进。
+            -->
             <dependency>
                 <groupId>io.github.mouzt</groupId>
                 <artifactId>bizlog-sdk</artifactId>
                 <version>${bizlog-sdk.version}</version>
                 <exclusions>
-                    <exclusion> <!-- 排除掉springboot依赖使用项目的 -->
+                    <exclusion> <!-- 排除 bizlog 自带 Spring Boot starter，统一使用本项目 Spring Boot BOM 管理的版本。 -->
                         <groupId>org.springframework.boot</groupId>
                         <artifactId>spring-boot-starter</artifactId>
                     </exclusion>
@@ -149,7 +161,7 @@
                 <version>${revision}</version>
             </dependency>
 
-            <!-- Spring 核心 -->
+            <!-- Spring 核心：治理配置元数据生成器与环境 starter；业务模块只消费 starter，不在本地重复声明版本。 -->
             <dependency>
                 <!-- 用于生成自定义的 Spring @ConfigurationProperties 配置类的说明文件 -->
                 <groupId>org.springframework.boot</groupId>
@@ -163,7 +175,7 @@
                 <version>${revision}</version>
             </dependency>
 
-            <!-- Web 相关 -->
+            <!-- Web/API 文档：治理 MVC/OpenAPI/Knife4j 版本，供 web starter、server 与 gateway 统一生成接口文档。 -->
             <dependency>
                 <groupId>com.develop.mvp</groupId>
                 <artifactId>develop-spring-boot-starter-web</artifactId>
@@ -188,6 +200,7 @@
                 <version>${knife4j.version}</version>
                 <exclusions>
                     <exclusion>
+                        <!-- Springdoc UI 版本由下方单独锁定，避免 Knife4j 传递版本与平台 Spring Boot 版本不匹配。 -->
                         <groupId>org.springdoc</groupId>
                         <artifactId>springdoc-openapi-starter-webmvc-ui</artifactId>
                     </exclusion>
@@ -204,7 +217,7 @@
                 <version>${knife4j.version}</version>
             </dependency>
 
-            <!-- DB 相关 -->
+            <!-- 数据访问与缓存：治理连接池、ORM、多数据源、数据翻译、Redis/Redisson 以及国产数据库驱动。 -->
             <dependency>
                 <groupId>com.develop.mvp</groupId>
                 <artifactId>develop-spring-boot-starter-mybatis</artifactId>
@@ -254,10 +267,12 @@
                 <version>${easy-trans.version}</version>
                 <exclusions>
                     <exclusion>
+                        <!-- Spring Framework 版本由 Spring Boot BOM 统一治理，避免 easy-trans 传递版本覆盖。 -->
                         <groupId>org.springframework</groupId>
                         <artifactId>spring-context</artifactId>
                     </exclusion>
                     <exclusion>
+                        <!-- Spring Cloud 公共包版本由 Spring Cloud BOM 统一治理，避免数据翻译组件带入旧版本。 -->
                         <groupId>org.springframework.cloud</groupId>
                         <artifactId>spring-cloud-commons</artifactId>
                     </exclusion>
@@ -310,18 +325,18 @@
                 <version>${taos.version}</version>
             </dependency>
 
-            <!-- RPC 远程调用相关 -->
+            <!-- RPC：治理远程调用 starter；Feign、负载均衡等外部版本由 Spring Cloud BOM 统一接管。 -->
             <dependency>
                 <groupId>com.develop.mvp</groupId>
                 <artifactId>develop-spring-boot-starter-rpc</artifactId>
                 <version>${revision}</version>
             </dependency>
 
-            <!-- Registry 注册中心相关 -->
+            <!-- Registry：注册中心依赖当前由 Spring Cloud Alibaba BOM 管理，本 BOM 暂不额外覆盖具体坐标。 -->
 
-            <!-- Config 配置中心相关 -->
+            <!-- Config：配置中心依赖当前由 Spring Cloud Alibaba BOM 管理，本 BOM 暂不额外覆盖具体坐标。 -->
 
-            <!-- Job 定时任务相关 -->
+            <!-- Job：治理 XXL-Job 执行器核心包与项目定时任务 starter，业务模块通过 starter 接入任务调度。 -->
             <dependency>
                 <groupId>com.xuxueli</groupId>
                 <artifactId>xxl-job-core</artifactId>
@@ -333,7 +348,7 @@
                 <version>${revision}</version>
             </dependency>
 
-            <!-- 消息队列相关 -->
+            <!-- 消息队列：治理项目 MQ starter 与 RocketMQ Spring Boot starter，其他 MQ 实现如由 starter 间接引入则在对应 starter 内隔离。 -->
             <dependency>
                 <groupId>com.develop.mvp</groupId>
                 <artifactId>develop-spring-boot-starter-mq</artifactId>
@@ -345,7 +360,7 @@
                 <version>${rocketmq-spring.version}</version>
             </dependency>
 
-            <!-- 服务保障相关 -->
+            <!-- 服务保障：治理限流熔断、分布式锁等可靠性组件版本，避免与 Redis/Redisson 版本漂移。 -->
             <dependency>
                 <groupId>com.develop.mvp</groupId>
                 <artifactId>develop-spring-boot-starter-protection</artifactId>
@@ -358,13 +373,14 @@
                 <version>${lock4j.version}</version>
                 <exclusions>
                     <exclusion>
+                        <!-- Redisson 版本由上方 redisson-spring-boot-starter 统一锁定，避免 lock4j 传递版本覆盖。 -->
                         <artifactId>redisson-spring-boot-starter</artifactId>
                         <groupId>org.redisson</groupId>
                     </exclusion>
                 </exclusions>
             </dependency>
 
-            <!-- 监控相关 -->
+            <!-- 可观测性：治理链路追踪、日志埋点和 Spring Boot Admin 版本，升级时需验证 actuator/日志栈兼容性。 -->
             <dependency>
                 <groupId>com.develop.mvp</groupId>
                 <artifactId>develop-spring-boot-starter-monitor</artifactId>
@@ -419,11 +435,11 @@
             </dependency>
             <dependency>
                 <groupId>de.codecentric</groupId>
-                <artifactId>spring-boot-admin-starter-client</artifactId> <!-- 实现 Spring Boot Admin Server 服务端 -->
+                <artifactId>spring-boot-admin-starter-client</artifactId> <!-- 实现 Spring Boot Admin Client 客户端上报 -->
                 <version>${spring-boot-admin.version}</version>
             </dependency>
 
-            <!-- Test 测试相关 -->
+            <!-- 测试体系：治理单元测试、架构约束测试、Mock 与测试数据生成工具版本。 -->
             <dependency>
                 <groupId>com.develop.mvp</groupId>
                 <artifactId>develop-spring-boot-starter-test</artifactId>
@@ -443,10 +459,12 @@
                 <version>${spring.boot.version}</version>
                 <exclusions>
                     <exclusion>
+                        <!-- ASM 由 JUnit/ArchUnit 等测试链路按兼容版本引入，避免 starter-test 传递版本造成冲突。 -->
                         <artifactId>asm</artifactId>
                         <groupId>org.ow2.asm</groupId>
                     </exclusion>
                     <exclusion>
+                        <!-- 使用 mockito-inline 统一支持 final/static mock，排除默认 mockito-core 防止双版本并存。 -->
                         <groupId>org.mockito</groupId>
                         <artifactId>mockito-core</artifactId>
                     </exclusion>
@@ -471,7 +489,7 @@
                 <version>${podam.version}</version>
             </dependency>
 
-            <!-- 工作流相关 -->
+            <!-- BPM/工作流：治理 Flowable 流程引擎与 actuator 集成，避免流程模块和监控模块各自漂移版本。 -->
             <dependency>
                 <groupId>org.flowable</groupId>
                 <artifactId>flowable-spring-boot-starter-process</artifactId>
@@ -482,9 +500,12 @@
                 <artifactId>flowable-spring-boot-starter-actuator</artifactId>
                 <version>${flowable.version}</version>
             </dependency>
-            <!-- 工作流相关结束 -->
+            <!-- BPM/工作流结束：新增 Flowable 相关依赖时应放在此段并共用 flowable.version。 -->
 
-            <!-- 工具类相关 -->
+            <!--
+                通用工具与协议栈：治理 develop-common、Excel starter、编译期注解处理、集合/模板/文件识别、安全修复、网络客户端与 IoT 协议依赖。
+                业务模块优先依赖 develop-common 或对应 starter；只有明确需要第三方能力时才直接声明下方依赖。
+            -->
             <dependency>
                 <groupId>com.develop.mvp</groupId>
                 <artifactId>develop-common</artifactId>
@@ -607,7 +628,7 @@
                 <version>${reflections.version}</version>
             </dependency>
 
-            <!-- Vert.x -->
+            <!-- Vert.x：IoT/异步网络场景使用的响应式协议栈，core/web/mqtt 必须保持同一版本。 -->
             <dependency>
                 <groupId>io.vertx</groupId>
                 <artifactId>vertx-core</artifactId>
@@ -624,14 +645,14 @@
                 <version>${vertx.version}</version>
             </dependency>
 
-            <!-- MQTT -->
+            <!-- MQTT：Paho 客户端用于轻量消息协议接入，版本需与 IoT 模块连接管理能力一起验证。 -->
             <dependency>
                 <groupId>org.eclipse.paho</groupId>
                 <artifactId>org.eclipse.paho.client.mqttv3</artifactId>
                 <version>${mqtt.version}</version>
             </dependency>
 
-            <!-- OkHttp -->
+            <!-- OkHttp：统一 HTTP 客户端与 MockWebServer 测试版本，避免测试依赖和运行时客户端版本不一致；MockWebServer 只用于 test scope。 -->
             <dependency>
                 <groupId>com.squareup.okhttp3</groupId>
                 <artifactId>okhttp</artifactId>
@@ -644,14 +665,14 @@
                 <scope>test</scope>
             </dependency>
 
-            <!-- CoAP - Eclipse Californium -->
+            <!-- CoAP：Eclipse Californium 用于受限设备协议通信，升级时需验证 IoT 设备接入与消息编解码。 -->
             <dependency>
                 <groupId>org.eclipse.californium</groupId>
                 <artifactId>californium-core</artifactId>
                 <version>${californium.version}</version>
             </dependency>
 
-            <!-- Modbus 相关 -->
+            <!-- Modbus：j2mod 用于工业设备协议通信，升级时需验证串口/TCP 采集链路。 -->
             <dependency>
                 <groupId>com.ghgande</groupId>
                 <artifactId>j2mod</artifactId>
@@ -659,7 +680,10 @@
             </dependency>
 
 
-            <!-- 三方云服务相关 -->
+            <!--
+                三方云服务与支付登录：治理 S3、OAuth、支付宝、微信支付/公众号/小程序、积木报表 BI 依赖。
+                这些 SDK 经常携带旧版加密、JSON、Hutool 或 SQL 解析器依赖；如发生冲突，应在这里集中排除并说明原因。
+            -->
             <dependency>
                 <groupId>software.amazon.awssdk</groupId>
                 <artifactId>s3</artifactId>
@@ -676,7 +700,7 @@
                 <artifactId>justauth-spring-boot-starter</artifactId>
                 <version>${justauth-starter.version}</version>
                 <exclusions>
-                    <!-- 移除，避免和项目里的 hutool-all 冲突 -->
+                    <!-- 移除 starter 传递的 hutool-core，统一使用本 BOM 中声明的 hutool-all/hutool-extra 组合。 -->
                     <exclusion>
                         <groupId>cn.hutool</groupId>
                         <artifactId>hutool-core</artifactId>
@@ -690,6 +714,7 @@
                 <version>${alipay-sdk-java.version}</version>
                 <exclusions>
                     <exclusion>
+                        <!-- 排除旧 JDK 线的 BouncyCastle 传递依赖，避免和 Java 17 兼容的安全加密依赖策略冲突。 -->
                         <groupId>org.bouncycastle</groupId>
                         <artifactId>bcprov-jdk15on</artifactId>
                     </exclusion>
@@ -712,7 +737,7 @@
                 <version>${weixin-java.version}</version>
             </dependency>
 
-            <!-- 积木报表-->
+            <!-- 积木报表/BI：报表服务与 BI starter 共用版本，需注意其传递 SQL 解析器与 Hutool 版本冲突。 -->
             <dependency>
                 <groupId>org.jeecgframework.jimureport</groupId>
                 <artifactId>jimureport-spring-boot3-starter</artifactId>
@@ -724,10 +749,12 @@
                 <version>${jimubi.version}</version>
                 <exclusions>
                     <exclusion>
+                        <!-- SQL 解析器版本由 MyBatis Plus/JSqlParser 链路统一治理，避免 BI starter 传递版本覆盖。 -->
                         <groupId>com.github.jsqlparser</groupId>
                         <artifactId>jsqlparser</artifactId>
                     </exclusion>
                     <exclusion>
+                        <!-- Hutool 版本由本 BOM 的 hutool-all/hutool-extra 组合统一治理。 -->
                         <groupId>cn.hutool</groupId>
                         <artifactId>hutool-core</artifactId>
                     </exclusion>

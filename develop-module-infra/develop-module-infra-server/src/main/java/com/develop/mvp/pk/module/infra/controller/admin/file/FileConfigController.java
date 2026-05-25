@@ -3,7 +3,7 @@ package com.develop.mvp.pk.module.infra.controller.admin.file;
 import com.develop.mvp.pk.framework.common.pojo.CommonResult;
 import com.develop.mvp.pk.framework.common.pojo.PageResult;
 import com.develop.mvp.pk.framework.common.util.object.BeanUtils;
-import com.develop.mvp.pk.module.infra.application.file.FileConfigApplicationService;
+import com.develop.mvp.pk.module.infra.application.file.port.inbound.FileConfigUseCase;
 import com.develop.mvp.pk.module.infra.controller.admin.file.vo.config.FileConfigPageReqVO;
 import com.develop.mvp.pk.module.infra.controller.admin.file.vo.config.FileConfigRespVO;
 import com.develop.mvp.pk.module.infra.controller.admin.file.vo.config.FileConfigSaveReqVO;
@@ -29,7 +29,7 @@ import static com.develop.mvp.pk.framework.common.pojo.CommonResult.success;
 public class FileConfigController {
 
     @Resource
-    private FileConfigApplicationService fileConfigApplicationService;
+    private FileConfigUseCase fileConfigApplicationService;
 
     @PostMapping("/create")
     @Operation(summary = "创建文件配置")

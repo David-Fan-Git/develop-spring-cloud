@@ -1,11 +1,10 @@
 package com.develop.mvp.pk.module.system.infrastructure.logger.persistence;
 
 import com.develop.mvp.pk.framework.common.pojo.PageResult;
-import com.develop.mvp.pk.module.system.api.logger.dto.OperateLogPageReqDTO;
-import com.develop.mvp.pk.module.system.controller.admin.logger.vo.operatelog.OperateLogPageReqVO;
 import com.develop.mvp.pk.module.system.dal.dataobject.logger.OperateLogDO;
 import com.develop.mvp.pk.module.system.dal.mysql.logger.OperateLogMapper;
 import com.develop.mvp.pk.module.system.domain.logger.OperateLog;
+import com.develop.mvp.pk.module.system.domain.logger.repository.OperateLogPageCriteria;
 import com.develop.mvp.pk.module.system.domain.logger.repository.OperateLogRepository;
 import org.springframework.stereotype.Repository;
 
@@ -37,36 +36,27 @@ public class OperateLogRepositoryImpl implements OperateLogRepository {
     }
 
     /**
-     * 查询 find Do By Id 对应的数据。
+     * 根据编号查询操作日志。
      *
-     * @param id id 参数
-     * @return 处理结果
+     * @param id 操作日志编号
+     * @return 操作日志领域对象，不存在时返回 null
      */
     @Override
-    public OperateLogDO findDoById(Long id) {
-        return operateLogMapper.selectById(id);
+    public OperateLog findById(Long id) {
+        OperateLogDO operateLogDO = operateLogMapper.selectById(id);
+        return operateLogDO != null ? toDomain(operateLogDO) : null;
     }
 
     /**
-     * 查询 find Page 对应的数据。
+     * 分页查询操作日志。
      *
-     * @param pageReqVO pageReqVO 参数
-     * @return 处理结果
+     * @param criteria 操作日志分页查询条件
+     * @return 操作日志分页结果
      */
     @Override
-    public PageResult<OperateLogDO> findPage(OperateLogPageReqVO pageReqVO) {
-        return operateLogMapper.selectPage(pageReqVO);
-    }
-
-    /**
-     * 查询 find Page 对应的数据。
-     *
-     * @param pageReqVO pageReqVO 参数
-     * @return 处理结果
-     */
-    @Override
-    public PageResult<OperateLogDO> findPage(OperateLogPageReqDTO pageReqVO) {
-        return operateLogMapper.selectPage(pageReqVO);
+    public PageResult<OperateLog> findPage(OperateLogPageCriteria criteria) {
+        PageResult<OperateLogDO> pageResult = operateLogMapper.selectPage(criteria);
+        return new PageResult<>(pageResult.getList().stream().map(this::toDomain).toList(), pageResult.getTotal());
     }
 
     /**
@@ -91,5 +81,30 @@ public class OperateLogRepositoryImpl implements OperateLogRepository {
         operateLogDO.setUserIp(log.userIp());
         operateLogDO.setUserAgent(log.userAgent());
         return operateLogDO;
+    }
+
+    /**
+     * 将操作日志持久化对象转换为领域对象。
+     *
+     * @param operateLogDO 操作日志持久化对象
+     * @return 操作日志领域对象
+     */
+    private OperateLog toDomain(OperateLogDO operateLogDO) {
+        return OperateLog.builder()
+                .id(operateLogDO.getId())
+                .traceId(operateLogDO.getTraceId())
+                .userId(operateLogDO.getUserId())
+                .userType(operateLogDO.getUserType())
+                .type(operateLogDO.getType())
+                .subType(operateLogDO.getSubType())
+                .bizId(operateLogDO.getBizId())
+                .action(operateLogDO.getAction())
+                .extra(operateLogDO.getExtra())
+                .requestMethod(operateLogDO.getRequestMethod())
+                .requestUrl(operateLogDO.getRequestUrl())
+                .userIp(operateLogDO.getUserIp())
+                .userAgent(operateLogDO.getUserAgent())
+                .createTime(operateLogDO.getCreateTime())
+                .build();
     }
 }

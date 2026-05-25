@@ -1,5 +1,7 @@
 package com.develop.mvp.pk.module.system.domain.logger;
 
+import java.time.LocalDateTime;
+
 /**
  * Operate Log 领域模型。
  */
@@ -18,6 +20,7 @@ public final class OperateLog {
     private final String requestUrl;
     private final String userIp;
     private final String userAgent;
+    private final LocalDateTime createTime;
 
     /**
      * 创建 OperateLog 实例。
@@ -38,6 +41,7 @@ public final class OperateLog {
         this.requestUrl = builder.requestUrl;
         this.userIp = builder.userIp;
         this.userAgent = builder.userAgent;
+        this.createTime = builder.createTime;
     }
 
     /**
@@ -167,6 +171,15 @@ public final class OperateLog {
     }
 
     /**
+     * 返回操作日志创建时间。
+     *
+     * @return 操作日志创建时间
+     */
+    public LocalDateTime createTime() {
+        return createTime;
+    }
+
+    /**
      * Builder 领域模型。
      */
     public static class Builder {
@@ -183,6 +196,7 @@ public final class OperateLog {
         private String requestUrl;
         private String userIp;
         private String userAgent;
+        private LocalDateTime createTime;
 
         /**
          * 执行 id 对应的业务操作。
@@ -324,6 +338,17 @@ public final class OperateLog {
          */
         public Builder userAgent(String userAgent) {
             this.userAgent = userAgent;
+            return this;
+        }
+
+        /**
+         * 设置操作日志创建时间。
+         *
+         * @param createTime 操作日志创建时间
+         * @return 当前构建器
+         */
+        public Builder createTime(LocalDateTime createTime) {
+            this.createTime = createTime;
             return this;
         }
 

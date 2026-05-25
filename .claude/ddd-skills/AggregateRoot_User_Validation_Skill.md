@@ -1,13 +1,36 @@
 ---
 name: aggregate-root-user-validation-skill
-description: Use when modifying or reviewing the system AdminUser/User aggregate in this repository, including requests such as “重构系统用户”, “迁移 AdminUserService 到 DDD”, “修改 AdminUserApi”, “修复后台用户密码/状态/分页/导入/租户/权限”, or changes to system user domain, application, repository, API, DTO, mapper, controller, or legacy service behavior.
+description: Use when modifying or reviewing the system AdminUser/User aggregate, user API, auth/profile/import collaboration, tenant quota, permission cleanup, or DDD migration boundaries.
 type: ddd-aggregate-skill
-module: system-user
 status: production-ready
-last_verified: 2026-05-24
 ---
 
 # AggregateRoot User Validation Skill
+
+## AI Execution Contract
+
+- **Scope:** 每次只处理本文件声明的一个聚合、一个子域或一个最小闭环；多聚合文件必须先拆分到目标子聚合后再实现。
+- **Must Read:** 修改前读取本 skill 的 Current Source Anchors，以及对应 Controller、VO/DTO、DO、Mapper、Convert、Service/Application、Repository、ErrorCode、测试文件。
+- **Must Preserve:** Controller 路径、HTTP 方法、VO/DTO 字段、CommonApi/Feign/RPC 契约、权限、租户、数据权限、错误码、分页、Excel、MQ、Job、缓存、第三方回调和 OpenAPI 可见行为。
+- **Allowed Changes:** 只在目标聚合的 `domain`、`application`、`infrastructure`、`convert`、入口适配和对应测试内做最小必要修改，并按标准骨架补齐端口或 package 边界。
+- **Forbidden Changes:** 禁止批量改无关聚合；禁止把新核心业务写入旧 `service/dal`；禁止让 domain 依赖 Spring、MyBatis、Feign、Mapper、DO、Controller VO、RPC client 或基础设施实现。
+- **Dependency Rules:** domain 只依赖领域对象和值对象；application 编排用例、事务和端口；infrastructure 适配 Mapper/DO/外部系统；controller/job/mq 只做入口。
+- **Verification Gate:** 完成前运行本 skill 的 Verification Commands；无法运行时写明命令、阻塞原因和未验证风险。
+- **Stop Conditions:** 事实源缺失、skill 与当前代码冲突、外部契约可能变化、字段/错误码/事务需要猜测、验证失败时停止并先修订 skill 或缩小范围。
+
+## Standard Skeleton Contract
+
+目标聚合必须固定以下职责边界；Java 空目录用职责明确的接口或 `package-info.java` 固定，禁止 `Temp`/`Placeholder`/`Dummy`：
+
+```text
+domain/{aggregate}/model,valueobject,event,service,repository
+application/{aggregate}/command,query,dto|result,port/inbound,port/outbound,service
+infrastructure/{aggregate}/persistence,external,rpc,cache,messaging
+convert/
+controller/ job/ mq/ framework/
+```
+
+旧 `service/dal` 是迁移源，不是新核心业务最终落位。
 
 ## Overview
 

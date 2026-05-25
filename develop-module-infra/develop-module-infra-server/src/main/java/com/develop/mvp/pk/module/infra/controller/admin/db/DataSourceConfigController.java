@@ -2,7 +2,7 @@ package com.develop.mvp.pk.module.infra.controller.admin.db;
 
 import com.develop.mvp.pk.framework.common.pojo.CommonResult;
 import com.develop.mvp.pk.framework.common.util.object.BeanUtils;
-import com.develop.mvp.pk.module.infra.application.db.DataSourceConfigApplicationService;
+import com.develop.mvp.pk.module.infra.application.db.port.inbound.DataSourceConfigUseCase;
 import com.develop.mvp.pk.module.infra.controller.admin.db.vo.DataSourceConfigRespVO;
 import com.develop.mvp.pk.module.infra.controller.admin.db.vo.DataSourceConfigSaveReqVO;
 import com.develop.mvp.pk.module.infra.domain.db.DataSourceConfig;
@@ -27,7 +27,7 @@ import static com.develop.mvp.pk.framework.common.pojo.CommonResult.success;
 public class DataSourceConfigController {
 
     @Resource
-    private DataSourceConfigApplicationService dataSourceConfigApplicationService;
+    private DataSourceConfigUseCase dataSourceConfigApplicationService;
 
     @PostMapping("/create")
     @Operation(summary = "创建数据源配置")

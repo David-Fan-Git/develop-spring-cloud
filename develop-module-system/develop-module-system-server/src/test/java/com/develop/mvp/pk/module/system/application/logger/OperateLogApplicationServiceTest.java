@@ -4,9 +4,9 @@ import com.develop.mvp.pk.framework.common.biz.system.logger.dto.OperateLogCreat
 import com.develop.mvp.pk.framework.common.pojo.PageResult;
 import com.develop.mvp.pk.framework.test.core.ut.BaseDbUnitTest;
 import com.develop.mvp.pk.framework.test.core.util.RandomUtils;
-import com.develop.mvp.pk.module.system.api.logger.dto.OperateLogPageReqDTO;
+import com.develop.mvp.pk.module.system.application.logger.dto.OperateLogDTO;
+import com.develop.mvp.pk.module.system.application.logger.query.OperateLogPageQuery;
 import com.develop.mvp.pk.module.system.application.logger.service.LoggerApplicationService;
-import com.develop.mvp.pk.module.system.controller.admin.logger.vo.operatelog.OperateLogPageReqVO;
 import com.develop.mvp.pk.module.system.dal.dataobject.logger.OperateLogDO;
 import com.develop.mvp.pk.module.system.dal.mysql.logger.OperateLogMapper;
 import com.develop.mvp.pk.module.system.infrastructure.logger.persistence.LoginLogRepositoryImpl;
@@ -57,7 +57,7 @@ class OperateLogApplicationServiceTest extends BaseDbUnitTest {
         operateLogMapper.insert(cloneIgnoreId(operateLogDO, o -> o.setSubType("创建退款")));
         operateLogMapper.insert(cloneIgnoreId(operateLogDO, o -> o.setAction("修改编号为 1 退款信息")));
         operateLogMapper.insert(cloneIgnoreId(operateLogDO, o -> o.setCreateTime(buildTime(2021, 2, 6))));
-        OperateLogPageReqVO reqVO = new OperateLogPageReqVO();
+        OperateLogPageQuery reqVO = new OperateLogPageQuery();
         reqVO.setUserId(2048L);
         reqVO.setBizId(999L);
         reqVO.setType("订");
@@ -65,7 +65,7 @@ class OperateLogApplicationServiceTest extends BaseDbUnitTest {
         reqVO.setAction("用户信息");
         reqVO.setCreateTime(buildBetweenTime(2021, 3, 5, 2021, 3, 7));
 
-        PageResult<OperateLogDO> pageResult = loggerApplicationService.getOperateLogPage(reqVO);
+        PageResult<OperateLogDTO> pageResult = loggerApplicationService.getOperateLogPage(reqVO);
 
         assertEquals(1, pageResult.getTotal());
         assertEquals(1, pageResult.getList().size());
@@ -83,12 +83,13 @@ class OperateLogApplicationServiceTest extends BaseDbUnitTest {
         operateLogMapper.insert(cloneIgnoreId(operateLogDO, o -> o.setUserId(1024L)));
         operateLogMapper.insert(cloneIgnoreId(operateLogDO, o -> o.setBizId(888L)));
         operateLogMapper.insert(cloneIgnoreId(operateLogDO, o -> o.setType("退款")));
-        OperateLogPageReqDTO reqDTO = new OperateLogPageReqDTO();
+        OperateLogPageQuery reqDTO = new OperateLogPageQuery();
         reqDTO.setUserId(2048L);
         reqDTO.setBizId(999L);
         reqDTO.setType("订单");
+        reqDTO.setExactType(true);
 
-        PageResult<OperateLogDO> pageResult = loggerApplicationService.getOperateLogPage(reqDTO);
+        PageResult<OperateLogDTO> pageResult = loggerApplicationService.getOperateLogPage(reqDTO);
 
         assertEquals(1, pageResult.getTotal());
         assertEquals(1, pageResult.getList().size());

@@ -1,9 +1,6 @@
 package com.develop.mvp.pk.module.system.domain.logger.repository;
 
 import com.develop.mvp.pk.framework.common.pojo.PageResult;
-import com.develop.mvp.pk.module.system.api.logger.dto.OperateLogPageReqDTO;
-import com.develop.mvp.pk.module.system.controller.admin.logger.vo.operatelog.OperateLogPageReqVO;
-import com.develop.mvp.pk.module.system.dal.dataobject.logger.OperateLogDO;
 import com.develop.mvp.pk.module.system.domain.logger.OperateLog;
 
 /**
@@ -12,34 +9,26 @@ import com.develop.mvp.pk.module.system.domain.logger.OperateLog;
 public interface OperateLogRepository {
 
     /**
-     * 创建 save 对应的数据。
+     * 保存操作日志领域对象。
      *
-     * @param log log 参数
+     * @param log 操作日志领域对象
      */
     void save(OperateLog log);
 
     /**
-     * 查询 find Do By Id 对应的数据。
+     * 根据编号查询操作日志。
      *
-     * @param id id 参数
-     * @return 处理结果
+     * @param id 操作日志编号
+     * @return 操作日志领域对象，不存在时返回 null
      */
-    OperateLogDO findDoById(Long id);
+    OperateLog findById(Long id);
 
     /**
-     * 查询 find Page 对应的数据。
+     * 分页查询操作日志。
      *
-     * @param pageReqVO pageReqVO 参数
-     * @return 处理结果
+     * @param criteria 操作日志分页查询条件
+     * @return 操作日志分页结果
      */
-    PageResult<OperateLogDO> findPage(OperateLogPageReqVO pageReqVO);
-
-    /**
-     * 查询 find Page 对应的数据。
-     *
-     * @param pageReqVO pageReqVO 参数
-     * @return 处理结果
-     */
-    PageResult<OperateLogDO> findPage(OperateLogPageReqDTO pageReqVO);
+    PageResult<OperateLog> findPage(OperateLogPageCriteria criteria);
 
 }

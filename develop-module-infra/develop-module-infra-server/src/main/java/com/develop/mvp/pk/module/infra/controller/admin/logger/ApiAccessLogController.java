@@ -5,7 +5,7 @@ import com.develop.mvp.pk.framework.common.pojo.PageParam;
 import com.develop.mvp.pk.framework.common.pojo.PageResult;
 import com.develop.mvp.pk.framework.common.util.object.BeanUtils;
 import com.develop.mvp.pk.framework.excel.core.util.ExcelUtils;
-import com.develop.mvp.pk.module.infra.application.logger.ApiAccessLogApplicationService;
+import com.develop.mvp.pk.module.infra.application.logger.port.inbound.ApiAccessLogUseCase;
 import com.develop.mvp.pk.module.infra.controller.admin.logger.vo.apiaccesslog.ApiAccessLogPageReqVO;
 import com.develop.mvp.pk.module.infra.controller.admin.logger.vo.apiaccesslog.ApiAccessLogRespVO;
 import com.develop.mvp.pk.module.infra.dal.dataobject.logger.ApiAccessLogDO;
@@ -37,7 +37,7 @@ import static com.develop.mvp.pk.framework.common.pojo.CommonResult.success;
 public class ApiAccessLogController {
 
     @Resource
-    private ApiAccessLogApplicationService apiAccessLogApplicationService;
+    private ApiAccessLogUseCase apiAccessLogApplicationService;
 
     @GetMapping("/get")
     @Operation(summary = "获得 API 访问日志")

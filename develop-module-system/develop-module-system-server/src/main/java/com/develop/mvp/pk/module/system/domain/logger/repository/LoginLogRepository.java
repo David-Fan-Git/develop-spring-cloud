@@ -1,8 +1,6 @@
 package com.develop.mvp.pk.module.system.domain.logger.repository;
 
 import com.develop.mvp.pk.framework.common.pojo.PageResult;
-import com.develop.mvp.pk.module.system.controller.admin.logger.vo.loginlog.LoginLogPageReqVO;
-import com.develop.mvp.pk.module.system.dal.dataobject.logger.LoginLogDO;
 import com.develop.mvp.pk.module.system.domain.logger.LoginLog;
 
 /**
@@ -11,26 +9,26 @@ import com.develop.mvp.pk.module.system.domain.logger.LoginLog;
 public interface LoginLogRepository {
 
     /**
-     * 创建 save 对应的数据。
+     * 保存登录日志领域对象。
      *
-     * @param log log 参数
+     * @param log 登录日志领域对象
      */
     void save(LoginLog log);
 
     /**
-     * 查询 find Do By Id 对应的数据。
+     * 根据编号查询登录日志。
      *
-     * @param id id 参数
-     * @return 处理结果
+     * @param id 登录日志编号
+     * @return 登录日志领域对象，不存在时返回 null
      */
-    LoginLogDO findDoById(Long id);
+    LoginLog findById(Long id);
 
     /**
-     * 查询 find Page 对应的数据。
+     * 分页查询登录日志。
      *
-     * @param pageReqVO pageReqVO 参数
-     * @return 处理结果
+     * @param criteria 登录日志分页查询条件
+     * @return 登录日志分页结果
      */
-    PageResult<LoginLogDO> findPage(LoginLogPageReqVO pageReqVO);
+    PageResult<LoginLog> findPage(LoginLogPageCriteria criteria);
 
 }

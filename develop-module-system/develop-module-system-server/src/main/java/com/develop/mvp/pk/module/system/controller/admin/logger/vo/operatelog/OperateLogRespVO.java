@@ -1,9 +1,9 @@
 package com.develop.mvp.pk.module.system.controller.admin.logger.vo.operatelog;
 
 import com.develop.mvp.pk.framework.excel.core.annotations.DictFormat;
-import com.develop.mvp.pk.module.system.dal.dataobject.user.AdminUserDO;
 import cn.idev.excel.annotation.ExcelIgnoreUnannotated;
 import cn.idev.excel.annotation.ExcelProperty;
+import com.develop.mvp.pk.module.system.api.user.AdminUserApi;
 import com.develop.mvp.pk.module.system.enums.DictTypeConstants;
 import com.fhs.core.trans.anno.Trans;
 import com.fhs.core.trans.constant.TransType;
@@ -30,7 +30,7 @@ public class OperateLogRespVO implements VO {
     private String traceId;
 
     @Schema(description = "用户编号", requiredMode = Schema.RequiredMode.REQUIRED, example = "1024")
-    @Trans(type = TransType.SIMPLE, target = AdminUserDO.class, fields = "nickname", ref = "userName")
+    @Trans(type = TransType.AUTO_TRANS, key = AdminUserApi.PREFIX, fields = "nickname", ref = "userName")
     private Long userId;
     @Schema(description = "用户昵称", requiredMode = Schema.RequiredMode.REQUIRED, example = "David")
     @ExcelProperty("操作人")
