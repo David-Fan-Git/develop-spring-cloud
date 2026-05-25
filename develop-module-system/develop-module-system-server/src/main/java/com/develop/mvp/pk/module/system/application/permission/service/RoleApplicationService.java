@@ -40,6 +40,9 @@ import static com.develop.mvp.pk.framework.common.util.collection.CollectionUtil
 import static com.develop.mvp.pk.module.system.enums.ErrorCodeConstants.*;
 import static com.develop.mvp.pk.module.system.enums.LogRecordConstants.*;
 
+/**
+ * Role Application Service 应用服务。
+ */
 @Slf4j
 public class RoleApplicationService implements RoleUseCase {
 
@@ -47,6 +50,13 @@ public class RoleApplicationService implements RoleUseCase {
     private final RoleMapper roleMapper;
     private final PermissionUseCase permissionService;
 
+    /**
+     * 创建 RoleApplicationService 实例。
+     *
+     * @param roleRepository roleRepository 参数
+     * @param roleMapper roleMapper 参数
+     * @param permissionService permissionService 参数
+     */
     public RoleApplicationService(RoleRepository roleRepository,
                                   RoleMapper roleMapper,
                                   @Lazy PermissionUseCase permissionService) {
@@ -57,16 +67,46 @@ public class RoleApplicationService implements RoleUseCase {
 
     // ========== RoleUseCase domain-returning methods ==========
 
+    /**
+     * 创建 create Role 对应的数据。
+     *
+     * @param name name 参数
+     * @param code code 参数
+     * @param sort sort 参数
+     * @param status status 参数
+     * @param remark remark 参数
+     * @param type type 参数
+     * @return 处理结果
+     */
     @Override
     public Role createRole(String name, String code, Integer sort, Integer status, String remark, Integer type) {
         return createRoleDomain(name, code, sort, status, remark, type);
     }
 
+    /**
+     * 更新 update Role 对应的数据。
+     *
+     * @param id id 参数
+     * @param name name 参数
+     * @param code code 参数
+     * @param sort sort 参数
+     * @param status status 参数
+     * @param remark remark 参数
+     * @return 处理结果
+     */
     @Override
     public Role updateRole(Long id, String name, String code, Integer sort, Integer status, String remark) {
         return updateRoleDomain(id, name, code, sort, status, remark);
     }
 
+    /**
+     * 更新 update Role Data Scope 对应的数据。
+     *
+     * @param id id 参数
+     * @param dataScope dataScope 参数
+     * @param dataScopeDeptIds dataScopeDeptIds 参数
+     * @return 处理结果
+     */
     @Override
     @CacheEvict(value = RedisKeyConstants.ROLE, key = "#id")
     public Role updateRoleDataScope(Long id, Integer dataScope, Set<Long> dataScopeDeptIds) {
@@ -80,6 +120,12 @@ public class RoleApplicationService implements RoleUseCase {
     @CacheEvict(value = RedisKeyConstants.ROLE, key = "#id")
     @LogRecord(type = SYSTEM_ROLE_TYPE, subType = SYSTEM_ROLE_DELETE_SUB_TYPE, bizNo = "{{#id}}",
             success = SYSTEM_ROLE_DELETE_SUCCESS)
+    /**
+     * 删除 delete Role 对应的数据。
+     *
+     * @param id id 参数
+     * @return 处理结果
+     */
     public Role deleteRole(Long id) {
         Role role = deleteRoleDomain(id);
         permissionService.processRoleDeleted(id);
@@ -87,6 +133,12 @@ public class RoleApplicationService implements RoleUseCase {
         return role;
     }
 
+    /**
+     * 查询 get Role 对应的数据。
+     *
+     * @param id id 参数
+     * @return 处理结果
+     */
     @Override
     public Role getRole(Long id) {
         Role role = roleRepository.findById(RoleId.of(id));
@@ -101,6 +153,13 @@ public class RoleApplicationService implements RoleUseCase {
     @Transactional(rollbackFor = Exception.class)
     @LogRecord(type = SYSTEM_ROLE_TYPE, subType = SYSTEM_ROLE_CREATE_SUB_TYPE, bizNo = "{{#role.id}}",
             success = SYSTEM_ROLE_CREATE_SUCCESS)
+    /**
+     * 创建 create Role 对应的数据。
+     *
+     * @param createReqVO createReqVO 参数
+     * @param type type 参数
+     * @return 处理结果
+     */
     public Long createRole(RoleSaveReqVO createReqVO, Integer type) {
         Role role = createRoleDomain(createReqVO.getName(), createReqVO.getCode(), createReqVO.getSort(),
                 createReqVO.getStatus(), createReqVO.getRemark(), type);
@@ -112,6 +171,11 @@ public class RoleApplicationService implements RoleUseCase {
     @CacheEvict(value = RedisKeyConstants.ROLE, key = "#updateReqVO.id")
     @LogRecord(type = SYSTEM_ROLE_TYPE, subType = SYSTEM_ROLE_UPDATE_SUB_TYPE, bizNo = "{{#updateReqVO.id}}",
             success = SYSTEM_ROLE_UPDATE_SUCCESS)
+    /**
+     * 更新 update Role 对应的数据。
+     *
+     * @param updateReqVO updateReqVO 参数
+     */
     public void updateRole(RoleSaveReqVO updateReqVO) {
         RoleDO oldRole = toDataObject(validateRoleForUpdate(updateReqVO.getId()));
         Role role = updateRoleDomain(updateReqVO.getId(), updateReqVO.getName(), updateReqVO.getCode(),
@@ -120,6 +184,11 @@ public class RoleApplicationService implements RoleUseCase {
         LogRecordContext.putVariable("role", toDataObject(role));
     }
 
+    /**
+     * 删除 delete Role List 对应的数据。
+     *
+     * @param ids ids 参数
+     */
     @Transactional(rollbackFor = Exception.class)
     public void deleteRoleList(List<Long> ids) {
         ids.forEach(id -> {
@@ -128,24 +197,53 @@ public class RoleApplicationService implements RoleUseCase {
         });
     }
 
+    /**
+     * 查询 get Role DO 对应的数据。
+     *
+     * @param id id 参数
+     * @return 处理结果
+     */
     @Override
     public RoleDO getRoleDO(Long id) {
         return roleMapper.selectById(id);
     }
 
+    /**
+     * 查询 get Role From Cache 对应的数据。
+     *
+     * @param id id 参数
+     * @return 处理结果
+     */
     @Cacheable(value = RedisKeyConstants.ROLE, key = "#id", unless = "#result == null")
     public RoleDO getRoleFromCache(Long id) {
         return roleMapper.selectById(id);
     }
 
+    /**
+     * 查询 get Role List By Status 对应的数据。
+     *
+     * @param statuses statuses 参数
+     * @return 处理结果
+     */
     public List<RoleDO> getRoleListByStatus(Collection<Integer> statuses) {
         return roleMapper.selectListByStatus(statuses);
     }
 
+    /**
+     * 查询 get Role List 对应的数据。
+     *
+     * @return 处理结果
+     */
     public List<RoleDO> getRoleList() {
         return roleMapper.selectList();
     }
 
+    /**
+     * 查询 get Role List 对应的数据。
+     *
+     * @param ids ids 参数
+     * @return 处理结果
+     */
     public List<RoleDO> getRoleList(Collection<Long> ids) {
         if (CollectionUtil.isEmpty(ids)) {
             return Collections.emptyList();
@@ -153,6 +251,12 @@ public class RoleApplicationService implements RoleUseCase {
         return roleMapper.selectByIds(ids);
     }
 
+    /**
+     * 查询 get Role List From Cache 对应的数据。
+     *
+     * @param ids ids 参数
+     * @return 处理结果
+     */
     public List<RoleDO> getRoleListFromCache(Collection<Long> ids) {
         if (CollectionUtil.isEmpty(ids)) {
             return Collections.emptyList();
@@ -161,10 +265,22 @@ public class RoleApplicationService implements RoleUseCase {
         return CollectionUtils.convertList(ids, self::getRoleFromCache);
     }
 
+    /**
+     * 查询 get Role Page 对应的数据。
+     *
+     * @param reqVO reqVO 参数
+     * @return 处理结果
+     */
     public PageResult<RoleDO> getRolePage(RolePageReqVO reqVO) {
         return roleMapper.selectPage(reqVO);
     }
 
+    /**
+     * 判断 has Any Super Admin 对应的条件是否成立。
+     *
+     * @param ids ids 参数
+     * @return 处理结果
+     */
     public boolean hasAnySuperAdmin(Collection<Long> ids) {
         if (CollectionUtil.isEmpty(ids)) {
             return false;
@@ -176,6 +292,11 @@ public class RoleApplicationService implements RoleUseCase {
         });
     }
 
+    /**
+     * 校验 validate Role List 对应的业务规则。
+     *
+     * @param ids ids 参数
+     */
     public void validateRoleList(Collection<Long> ids) {
         if (CollUtil.isEmpty(ids)) {
             return;
@@ -195,6 +316,17 @@ public class RoleApplicationService implements RoleUseCase {
 
     // ========== Domain helpers ==========
 
+    /**
+     * 创建 create Role Domain 对应的数据。
+     *
+     * @param name name 参数
+     * @param code code 参数
+     * @param sort sort 参数
+     * @param status status 参数
+     * @param remark remark 参数
+     * @param type type 参数
+     * @return 处理结果
+     */
     private Role createRoleDomain(String name, String code, Integer sort, Integer status, String remark, Integer type) {
         validateRoleDuplicate(name, code, null);
         Role role = RoleFactory.create(null, name, code, sort,
@@ -204,6 +336,17 @@ public class RoleApplicationService implements RoleUseCase {
         return roleRepository.save(role);
     }
 
+    /**
+     * 更新 update Role Domain 对应的数据。
+     *
+     * @param id id 参数
+     * @param name name 参数
+     * @param code code 参数
+     * @param sort sort 参数
+     * @param status status 参数
+     * @param remark remark 参数
+     * @return 处理结果
+     */
     private Role updateRoleDomain(Long id, String name, String code, Integer sort, Integer status, String remark) {
         Role role = validateRoleForUpdate(id);
         validateRoleDuplicate(name, code, id);
@@ -211,6 +354,12 @@ public class RoleApplicationService implements RoleUseCase {
         return roleRepository.save(role);
     }
 
+    /**
+     * 删除 delete Role Domain 对应的数据。
+     *
+     * @param id id 参数
+     * @return 处理结果
+     */
     private Role deleteRoleDomain(Long id) {
         Role role = validateRoleForUpdate(id);
         role.markDeleted();
@@ -218,6 +367,13 @@ public class RoleApplicationService implements RoleUseCase {
         return role;
     }
 
+    /**
+     * 校验 validate Role Duplicate 对应的业务规则。
+     *
+     * @param name name 参数
+     * @param code code 参数
+     * @param id id 参数
+     */
     @VisibleForTesting
     public void validateRoleDuplicate(String name, String code, Long id) {
         if (RoleCodeEnum.isSuperAdmin(code)) {
@@ -238,6 +394,12 @@ public class RoleApplicationService implements RoleUseCase {
         });
     }
 
+    /**
+     * 校验 validate Role For Update 对应的业务规则。
+     *
+     * @param id id 参数
+     * @return 处理结果
+     */
     @VisibleForTesting
     public Role validateRoleForUpdate(Long id) {
         Role role = roleRepository.findById(RoleId.of(id));
@@ -252,10 +414,21 @@ public class RoleApplicationService implements RoleUseCase {
 
     // ========== Private helpers ==========
 
+    /**
+     * 查询 get Self 对应的数据。
+     *
+     * @return 处理结果
+     */
     private RoleApplicationService getSelf() {
         return SpringUtil.getBean(getClass());
     }
 
+    /**
+     * 执行 to Data Object 对应的业务操作。
+     *
+     * @param role role 参数
+     * @return 处理结果
+     */
     private RoleDO toDataObject(Role role) {
         RoleDO roleDO = new RoleDO();
         roleDO.setId(role.id() != null ? role.id().value() : null);

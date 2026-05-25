@@ -5,6 +5,9 @@ import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 
+/**
+ * OAuth2 Access Token Page Req VO 接口视图对象。
+ */
 @Schema(description = "管理后台 - 访问令牌分页 Request VO")
 @Data
 @EqualsAndHashCode(callSuper = true)

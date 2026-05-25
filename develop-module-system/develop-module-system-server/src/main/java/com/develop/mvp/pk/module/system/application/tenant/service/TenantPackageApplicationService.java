@@ -22,18 +22,33 @@ import java.util.List;
 import static com.develop.mvp.pk.framework.common.exception.util.ServiceExceptionUtil.exception;
 import static com.develop.mvp.pk.module.system.enums.ErrorCodeConstants.*;
 
+/**
+ * Tenant Package Application Service 应用服务。
+ */
 @Validated
 public class TenantPackageApplicationService implements TenantPackageUseCase {
 
     private final TenantPackageMapper tenantPackageMapper;
     private final TenantUseCase tenantUseCase;
 
+    /**
+     * 创建 TenantPackageApplicationService 实例。
+     *
+     * @param tenantPackageMapper tenantPackageMapper 参数
+     * @param tenantUseCase tenantUseCase 参数
+     */
     public TenantPackageApplicationService(TenantPackageMapper tenantPackageMapper,
                                            @Lazy TenantUseCase tenantUseCase) {
         this.tenantPackageMapper = tenantPackageMapper;
         this.tenantUseCase = tenantUseCase;
     }
 
+    /**
+     * 创建 create Tenant Package 对应的数据。
+     *
+     * @param createReqVO createReqVO 参数
+     * @return 处理结果
+     */
     public Long createTenantPackage(TenantPackageSaveReqVO createReqVO) {
         validateTenantPackageNameUnique(null, createReqVO.getName());
         TenantPackageDO tenantPackage = BeanUtils.toBean(createReqVO, TenantPackageDO.class);
@@ -41,6 +56,11 @@ public class TenantPackageApplicationService implements TenantPackageUseCase {
         return tenantPackage.getId();
     }
 
+    /**
+     * 更新 update Tenant Package 对应的数据。
+     *
+     * @param updateReqVO updateReqVO 参数
+     */
     @DSTransactional
     public void updateTenantPackage(TenantPackageSaveReqVO updateReqVO) {
         TenantPackageDO tenantPackage = validateTenantPackageExists(updateReqVO.getId());
@@ -53,12 +73,22 @@ public class TenantPackageApplicationService implements TenantPackageUseCase {
         }
     }
 
+    /**
+     * 删除 delete Tenant Package 对应的数据。
+     *
+     * @param id id 参数
+     */
     public void deleteTenantPackage(Long id) {
         validateTenantPackageExists(id);
         validateTenantUsed(id);
         tenantPackageMapper.deleteById(id);
     }
 
+    /**
+     * 删除 delete Tenant Package List 对应的数据。
+     *
+     * @param ids ids 参数
+     */
     public void deleteTenantPackageList(List<Long> ids) {
         for (Long id : ids) {
             if (tenantUseCase.getTenantCountByPackageId(id) > 0) {
@@ -68,14 +98,32 @@ public class TenantPackageApplicationService implements TenantPackageUseCase {
         tenantPackageMapper.deleteByIds(ids);
     }
 
+    /**
+     * 查询 get Tenant Package 对应的数据。
+     *
+     * @param id id 参数
+     * @return 处理结果
+     */
     public TenantPackageDO getTenantPackage(Long id) {
         return tenantPackageMapper.selectById(id);
     }
 
+    /**
+     * 查询 get Tenant Package Page 对应的数据。
+     *
+     * @param pageReqVO pageReqVO 参数
+     * @return 处理结果
+     */
     public PageResult<TenantPackageDO> getTenantPackagePage(TenantPackagePageReqVO pageReqVO) {
         return tenantPackageMapper.selectPage(pageReqVO);
     }
 
+    /**
+     * 执行 valid Tenant Package 对应的业务操作。
+     *
+     * @param id id 参数
+     * @return 处理结果
+     */
     public TenantPackageDO validTenantPackage(Long id) {
         TenantPackageDO tenantPackage = tenantPackageMapper.selectById(id);
         if (tenantPackage == null) {
@@ -87,10 +135,22 @@ public class TenantPackageApplicationService implements TenantPackageUseCase {
         return tenantPackage;
     }
 
+    /**
+     * 查询 get Tenant Package List By Status 对应的数据。
+     *
+     * @param status status 参数
+     * @return 处理结果
+     */
     public List<TenantPackageDO> getTenantPackageListByStatus(Integer status) {
         return tenantPackageMapper.selectListByStatus(status);
     }
 
+    /**
+     * 校验 validate Tenant Package Exists 对应的业务规则。
+     *
+     * @param id id 参数
+     * @return 处理结果
+     */
     private TenantPackageDO validateTenantPackageExists(Long id) {
         TenantPackageDO tenantPackage = tenantPackageMapper.selectById(id);
         if (tenantPackage == null) {
@@ -99,12 +159,23 @@ public class TenantPackageApplicationService implements TenantPackageUseCase {
         return tenantPackage;
     }
 
+    /**
+     * 校验 validate Tenant Used 对应的业务规则。
+     *
+     * @param id id 参数
+     */
     private void validateTenantUsed(Long id) {
         if (tenantUseCase.getTenantCountByPackageId(id) > 0) {
             throw exception(TENANT_PACKAGE_USED);
         }
     }
 
+    /**
+     * 校验 validate Tenant Package Name Unique 对应的业务规则。
+     *
+     * @param id id 参数
+     * @param name name 参数
+     */
     @VisibleForTesting
     public void validateTenantPackageNameUnique(Long id, String name) {
         if (StrUtil.isBlank(name)) {

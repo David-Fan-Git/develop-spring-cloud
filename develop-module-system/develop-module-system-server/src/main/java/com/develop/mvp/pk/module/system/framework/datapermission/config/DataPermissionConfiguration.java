@@ -14,6 +14,11 @@ import org.springframework.context.annotation.Configuration;
 @Configuration(proxyBeanMethods = false)
 public class DataPermissionConfiguration {
 
+    /**
+     * 执行 sys Dept Data Permission Rule Customizer 对应的业务操作。
+     *
+     * @return 处理结果
+     */
     @Bean
     public DeptDataPermissionRuleCustomizer sysDeptDataPermissionRuleCustomizer() {
         return rule -> {

@@ -20,6 +20,9 @@ import org.mapstruct.factory.Mappers;
 import java.util.List;
 import java.util.Map;
 
+/**
+ * User Convert 对象转换器。
+ */
 @Mapper
 public interface UserConvert {
 
@@ -27,10 +30,24 @@ public interface UserConvert {
 
     // ── 旧 API：基于 AdminUserDO（保持兼容） ──
 
+    /**
+     * 转换 convert List 对应的数据对象。
+     *
+     * @param list list 参数
+     * @param deptMap deptMap 参数
+     * @return 处理结果
+     */
     default List<UserRespVO> convertList(List<AdminUserDO> list, Map<Long, DeptDO> deptMap) {
         return CollectionUtils.convertList(list, user -> convert(user, deptMap.get(user.getDeptId())));
     }
 
+    /**
+     * 转换 convert 对应的数据对象。
+     *
+     * @param user user 参数
+     * @param dept dept 参数
+     * @return 处理结果
+     */
     default UserRespVO convert(AdminUserDO user, DeptDO dept) {
         UserRespVO userVO = BeanUtils.toBean(user, UserRespVO.class);
         if (dept != null) {
@@ -39,6 +56,13 @@ public interface UserConvert {
         return userVO;
     }
 
+    /**
+     * 转换 convert Simple List 对应的数据对象。
+     *
+     * @param list list 参数
+     * @param deptMap deptMap 参数
+     * @return 处理结果
+     */
     default List<UserSimpleRespVO> convertSimpleList(List<AdminUserDO> list, Map<Long, DeptDO> deptMap) {
         return CollectionUtils.convertList(list, user -> {
             UserSimpleRespVO userVO = BeanUtils.toBean(user, UserSimpleRespVO.class);
@@ -47,6 +71,15 @@ public interface UserConvert {
         });
     }
 
+    /**
+     * 转换 convert 对应的数据对象。
+     *
+     * @param user user 参数
+     * @param userRoles userRoles 参数
+     * @param dept dept 参数
+     * @param posts posts 参数
+     * @return 处理结果
+     */
     default UserProfileRespVO convert(AdminUserDO user, List<RoleDO> userRoles,
                                       DeptDO dept, List<PostDO> posts) {
         UserProfileRespVO userVO = BeanUtils.toBean(user, UserProfileRespVO.class);

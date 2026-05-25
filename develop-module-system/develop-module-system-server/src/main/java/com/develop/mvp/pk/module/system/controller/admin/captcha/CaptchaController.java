@@ -16,6 +16,9 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+/**
+ * Captcha Controller 控制器。
+ */
 @Tag(name = "管理后台 - 验证码")
 @RestController("adminCaptchaController")
 @RequestMapping("/system/captcha")
@@ -24,6 +27,13 @@ public class CaptchaController {
     @Resource
     private CaptchaService captchaService;
 
+    /**
+     * 查询 get 对应的数据。
+     *
+     * @param data data 参数
+     * @param request request 参数
+     * @return 处理结果
+     */
     @PostMapping({"/get"})
     @Operation(summary = "获得验证码")
     @PermitAll
@@ -34,6 +44,13 @@ public class CaptchaController {
         return captchaService.get(data);
     }
 
+    /**
+     * 校验 check 对应的业务规则。
+     *
+     * @param data data 参数
+     * @param request request 参数
+     * @return 处理结果
+     */
     @PostMapping("/check")
     @Operation(summary = "校验验证码")
     @PermitAll
@@ -43,6 +60,12 @@ public class CaptchaController {
         return captchaService.check(data);
     }
 
+    /**
+     * 查询 get Remote Id 对应的数据。
+     *
+     * @param request request 参数
+     * @return 处理结果
+     */
     public static String getRemoteId(HttpServletRequest request) {
         String ip = ServletUtils.getClientIP(request);
         String ua = request.getHeader("user-agent");

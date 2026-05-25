@@ -7,6 +7,9 @@ import jakarta.validation.constraints.NotNull;
 import java.util.Collections;
 import java.util.Set;
 
+/**
+ * Permission Assign Role Menu Req VO 接口视图对象。
+ */
 @Schema(description = "管理后台 - 赋予角色菜单 Request VO")
 @Data
 public class PermissionAssignRoleMenuReqVO {

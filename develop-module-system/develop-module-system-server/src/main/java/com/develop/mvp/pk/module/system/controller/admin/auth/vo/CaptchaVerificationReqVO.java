@@ -4,6 +4,9 @@ import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.constraints.NotEmpty;
 import lombok.Data;
 
+/**
+ * Captcha Verification Req VO 接口视图对象。
+ */
 @Schema(description = "管理后台 - 验证码 Request VO")
 @Data
 public class CaptchaVerificationReqVO {

@@ -7,6 +7,9 @@ import org.hibernate.validator.constraints.URL;
 import jakarta.validation.constraints.NotNull;
 import java.time.LocalDateTime;
 
+/**
+ * Sms Channel Resp VO 接口视图对象。
+ */
 @Schema(description = "管理后台 - 短信渠道 Response VO")
 @Data
 public class SmsChannelRespVO {

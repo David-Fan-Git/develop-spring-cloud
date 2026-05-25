@@ -15,9 +15,28 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.data.redis.core.StringRedisTemplate;
 
+/**
+ * Social Application Service Configuration 配置类。
+ */
 @Configuration
 public class SocialApplicationServiceConfiguration {
 
+    /**
+     * 执行 social Application Service 对应的业务操作。
+     *
+     * @param authRequestFactory authRequestFactory 参数
+     * @param wxMpService wxMpService 参数
+     * @param wxMpProperties wxMpProperties 参数
+     * @param stringRedisTemplate stringRedisTemplate 参数
+     * @param wxMaService wxMaService 参数
+     * @param wxMaProperties wxMaProperties 参数
+     * @param socialClientMapper socialClientMapper 参数
+     * @param socialUserBindMapper socialUserBindMapper 参数
+     * @param socialUserMapper socialUserMapper 参数
+     * @param envVersion envVersion 参数
+     * @param miniprogramState miniprogramState 参数
+     * @return 处理结果
+     */
     @Bean
     public SocialApplicationService socialApplicationService(
             @Autowired(required = false) AuthRequestFactory authRequestFactory,

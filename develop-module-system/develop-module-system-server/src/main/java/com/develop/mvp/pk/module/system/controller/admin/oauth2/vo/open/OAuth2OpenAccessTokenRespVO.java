@@ -6,6 +6,9 @@ import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+/**
+ * OAuth2 Open Access Token Resp VO 接口视图对象。
+ */
 @Schema(description = "管理后台 - 【开放接口】访问令牌 Response VO")
 @Data
 @NoArgsConstructor

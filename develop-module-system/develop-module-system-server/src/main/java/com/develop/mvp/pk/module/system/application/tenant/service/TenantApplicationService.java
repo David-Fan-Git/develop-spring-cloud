@@ -44,6 +44,9 @@ import static com.develop.mvp.pk.framework.common.exception.util.ServiceExceptio
 import static com.develop.mvp.pk.module.system.enums.ErrorCodeConstants.*;
 import static java.util.Collections.singleton;
 
+/**
+ * Tenant Application Service 应用服务。
+ */
 public class TenantApplicationService implements TenantUseCase {
 
     private final TenantRepository tenantRepository;
@@ -58,10 +61,27 @@ public class TenantApplicationService implements TenantUseCase {
     @Autowired(required = false)
     private TenantProperties tenantProperties;
 
+    /**
+     * 设置 set Tenant Properties 对应的数据。
+     *
+     * @param tenantProperties tenantProperties 参数
+     */
     public void setTenantProperties(TenantProperties tenantProperties) {
         this.tenantProperties = tenantProperties;
     }
 
+    /**
+     * 创建 TenantApplicationService 实例。
+     *
+     * @param tenantRepository tenantRepository 参数
+     * @param uniquenessChecker uniquenessChecker 参数
+     * @param eventPublisher eventPublisher 参数
+     * @param tenantPackageService tenantPackageService 参数
+     * @param adminUserService adminUserService 参数
+     * @param roleService roleService 参数
+     * @param permissionService permissionService 参数
+     * @param menuService menuService 参数
+     */
     public TenantApplicationService(TenantRepository tenantRepository,
                                      TenantUniquenessChecker uniquenessChecker,
                                      DomainEventPublisher eventPublisher,
@@ -181,6 +201,12 @@ public class TenantApplicationService implements TenantUseCase {
 
     // ── 查询 ──
 
+    /**
+     * 创建 create Tenant 对应的数据。
+     *
+     * @param createReqVO createReqVO 参数
+     * @return 处理结果
+     */
     public Long createTenant(TenantSaveReqVO createReqVO) {
         return createTenant(
                 createReqVO.getId(), createReqVO.getName(), createReqVO.getContactName(),
@@ -189,6 +215,11 @@ public class TenantApplicationService implements TenantUseCase {
                 createReqVO.getUsername(), createReqVO.getPassword());
     }
 
+    /**
+     * 更新 update Tenant 对应的数据。
+     *
+     * @param updateReqVO updateReqVO 参数
+     */
     public void updateTenant(TenantSaveReqVO updateReqVO) {
         updateTenant(
                 updateReqVO.getId(), updateReqVO.getName(), updateReqVO.getContactName(),
@@ -196,10 +227,22 @@ public class TenantApplicationService implements TenantUseCase {
                 updateReqVO.getPackageId(), updateReqVO.getExpireTime(), updateReqVO.getAccountCount());
     }
 
+    /**
+     * 查询 get Tenant 对应的数据。
+     *
+     * @param id id 参数
+     * @return 处理结果
+     */
     public Tenant getTenant(Long id) {
         return tenantRepository.findById(TenantId.of(id));
     }
 
+    /**
+     * 查询 get Tenant Do 对应的数据。
+     *
+     * @param id id 参数
+     * @return 处理结果
+     */
     public TenantDO getTenantDo(Long id) {
         return toDataObject(getTenant(id));
     }
@@ -216,27 +259,63 @@ public class TenantApplicationService implements TenantUseCase {
         return tenant;
     }
 
+    /**
+     * 查询 get Tenant By Name 对应的数据。
+     *
+     * @param name name 参数
+     * @return 处理结果
+     */
     public Tenant getTenantByName(String name) {
         return tenantRepository.findByName(TenantName.of(name)).orElse(null);
     }
 
+    /**
+     * 查询 get Tenant Do By Name 对应的数据。
+     *
+     * @param name name 参数
+     * @return 处理结果
+     */
     public TenantDO getTenantDoByName(String name) {
         return toDataObject(getTenantByName(name));
     }
 
+    /**
+     * 查询 get Tenant By Website 对应的数据。
+     *
+     * @param website website 参数
+     * @return 处理结果
+     */
     public Tenant getTenantByWebsite(String website) {
         List<Tenant> tenants = tenantRepository.findByWebsite(website);
         return tenants.isEmpty() ? null : tenants.get(0);
     }
 
+    /**
+     * 查询 get Tenant Do By Website 对应的数据。
+     *
+     * @param website website 参数
+     * @return 处理结果
+     */
     public TenantDO getTenantDoByWebsite(String website) {
         return toDataObject(getTenantByWebsite(website));
     }
 
+    /**
+     * 查询 get Tenant Page 对应的数据。
+     *
+     * @param query query 参数
+     * @return 处理结果
+     */
     public PageResult<Tenant> getTenantPage(TenantPageQuery query) {
         return tenantRepository.findPage(query);
     }
 
+    /**
+     * 查询 get Tenant Page 对应的数据。
+     *
+     * @param pageReqVO pageReqVO 参数
+     * @return 处理结果
+     */
     public PageResult<TenantDO> getTenantPage(TenantPageReqVO pageReqVO) {
         TenantPageQuery query = new TenantPageQuery(
                 pageReqVO.getName(), pageReqVO.getContactName(), pageReqVO.getContactMobile(),
@@ -246,37 +325,82 @@ public class TenantApplicationService implements TenantUseCase {
                 .map(this::toDataObject).collect(Collectors.toList()), pageResult.getTotal());
     }
 
+    /**
+     * 查询 get Tenant Domain List By Status 对应的数据。
+     *
+     * @param statusCode statusCode 参数
+     * @return 处理结果
+     */
     public List<Tenant> getTenantDomainListByStatus(Integer statusCode) {
         return tenantRepository.findByStatus(TenantStatus.of(statusCode));
     }
 
+    /**
+     * 查询 get Tenant List By Status 对应的数据。
+     *
+     * @param statusCode statusCode 参数
+     * @return 处理结果
+     */
     public List<TenantDO> getTenantListByStatus(Integer statusCode) {
         return getTenantDomainListByStatus(statusCode).stream()
                 .map(this::toDataObject).collect(Collectors.toList());
     }
 
+    /**
+     * 查询 get Tenant Count By Package Id 对应的数据。
+     *
+     * @param packageId packageId 参数
+     * @return 处理结果
+     */
     public Long getTenantCountByPackageId(Long packageId) {
         return tenantRepository.countByPackageId(TenantPackageRef.of(packageId));
     }
 
+    /**
+     * 查询 get Tenant Domain List By Package Id 对应的数据。
+     *
+     * @param packageId packageId 参数
+     * @return 处理结果
+     */
     public List<Tenant> getTenantDomainListByPackageId(Long packageId) {
         return tenantRepository.findByPackageId(TenantPackageRef.of(packageId));
     }
 
+    /**
+     * 查询 get Tenant List By Package Id 对应的数据。
+     *
+     * @param packageId packageId 参数
+     * @return 处理结果
+     */
     public List<TenantDO> getTenantListByPackageId(Long packageId) {
         return getTenantDomainListByPackageId(packageId).stream()
                 .map(this::toDataObject).collect(Collectors.toList());
     }
 
+    /**
+     * 查询 get Tenant Id List 对应的数据。
+     *
+     * @return 处理结果
+     */
     public List<Long> getTenantIdList() {
         return tenantRepository.findAll().stream()
                 .map(t -> t.id().value()).collect(Collectors.toList());
     }
 
+    /**
+     * 执行 valid Tenant 对应的业务操作。
+     *
+     * @param id id 参数
+     */
     public void validTenant(Long id) {
         getAndValidateTenant(id);
     }
 
+    /**
+     * 处理 handle Tenant Info 对应的业务逻辑。
+     *
+     * @param handler handler 参数
+     */
     public void handleTenantInfo(TenantInfoHandler handler) {
         if (isTenantDisable()) {
             return;
@@ -284,6 +408,11 @@ public class TenantApplicationService implements TenantUseCase {
         handler.handle(getTenantDo(TenantContextHolder.getRequiredTenantId()));
     }
 
+    /**
+     * 处理 handle Tenant Menu 对应的业务逻辑。
+     *
+     * @param handler handler 参数
+     */
     public void handleTenantMenu(TenantMenuHandler handler) {
         if (isTenantDisable()) {
             return;
@@ -300,20 +429,43 @@ public class TenantApplicationService implements TenantUseCase {
 
     // ── 私有方法 ──
 
+    /**
+     * 查询 find Existing Tenant 对应的数据。
+     *
+     * @param id id 参数
+     * @return 处理结果
+     */
     private Tenant findExistingTenant(TenantId id) {
         Tenant tenant = tenantRepository.findById(id);
         if (tenant == null) throw exception(TENANT_NOT_EXISTS);
         return tenant;
     }
 
+    /**
+     * 判断 is System Tenant 对应的条件是否成立。
+     *
+     * @param tenant tenant 参数
+     * @return 处理结果
+     */
     private static boolean isSystemTenant(TenantDO tenant) {
         return Objects.equals(tenant.getPackageId(), TenantDO.PACKAGE_ID_SYSTEM);
     }
 
+    /**
+     * 判断 is Tenant Disable 对应的条件是否成立。
+     *
+     * @return 处理结果
+     */
     private boolean isTenantDisable() {
         return tenantProperties == null || Boolean.FALSE.equals(tenantProperties.getEnable());
     }
 
+    /**
+     * 执行 to Data Object 对应的业务操作。
+     *
+     * @param tenant tenant 参数
+     * @return 处理结果
+     */
     private TenantDO toDataObject(Tenant tenant) {
         if (tenant == null) {
             return null;
@@ -337,16 +489,33 @@ public class TenantApplicationService implements TenantUseCase {
         return tenantDO;
     }
 
+    /**
+     * 执行 assert Not System Tenant 对应的业务操作。
+     *
+     * @param tenant tenant 参数
+     */
     private void assertNotSystemTenant(Tenant tenant) {
         if (tenant.isSystem()) throw exception(TENANT_CAN_NOT_UPDATE_SYSTEM);
     }
 
+    /**
+     * 执行 assert Name Unique 对应的业务操作。
+     *
+     * @param name name 参数
+     * @param excludeId excludeId 参数
+     */
     private void assertNameUnique(TenantName name, TenantId excludeId) {
         if (!uniquenessChecker.isNameUnique(name, excludeId)) {
             throw exception(TENANT_NAME_DUPLICATE, name.value());
         }
     }
 
+    /**
+     * 执行 assert Website Unique 对应的业务操作。
+     *
+     * @param website website 参数
+     * @param excludeId excludeId 参数
+     */
     private void assertWebsiteUnique(String website, TenantId excludeId) {
         if (!uniquenessChecker.isWebsiteUnique(website, excludeId)) {
             throw exception(TENANT_WEBSITE_DUPLICATE, website);
@@ -355,6 +524,12 @@ public class TenantApplicationService implements TenantUseCase {
 
     // ── 跨聚合编排：角色+用户创建（后续 Role/User 完成 DDD 重构后可替换为 ApplicationService 调用） ──
 
+    /**
+     * 创建 create Tenant Admin Role 对应的数据。
+     *
+     * @param tenantPackage tenantPackage 参数
+     * @return 处理结果
+     */
     private Long createTenantAdminRole(TenantPackageDO tenantPackage) {
         RoleSaveReqVO reqVO = new RoleSaveReqVO();
         reqVO.setName(RoleCodeEnum.TENANT_ADMIN.getName())
@@ -365,6 +540,16 @@ public class TenantApplicationService implements TenantUseCase {
         return roleId;
     }
 
+    /**
+     * 创建 create Admin User 对应的数据。
+     *
+     * @param roleId roleId 参数
+     * @param username username 参数
+     * @param password password 参数
+     * @param contactName contactName 参数
+     * @param contactMobile contactMobile 参数
+     * @return 处理结果
+     */
     private Long createAdminUser(Long roleId, String username, String password,
                                   String contactName, String contactMobile) {
         Long userId = adminUserService.createUser(
@@ -383,6 +568,12 @@ public class TenantApplicationService implements TenantUseCase {
         return reqVO;
     }
 
+    /**
+     * 更新 update Tenant Role Menu 对应的数据。
+     *
+     * @param tenantId tenantId 参数
+     * @param menuIds menuIds 参数
+     */
     @Transactional
     public void updateTenantRoleMenu(Long tenantId, Set<Long> menuIds) {
         TenantUtils.execute(tenantId, () -> {
@@ -398,6 +589,11 @@ public class TenantApplicationService implements TenantUseCase {
         });
     }
 
+    /**
+     * 发送 publish Events 对应的消息。
+     *
+     * @param tenant tenant 参数
+     */
     private void publishEvents(Tenant tenant) {
         for (DomainEvent event : tenant.pullEvents()) {
             eventPublisher.publish(event);

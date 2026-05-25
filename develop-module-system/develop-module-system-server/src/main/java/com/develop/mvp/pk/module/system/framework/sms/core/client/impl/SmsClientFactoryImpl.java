@@ -36,6 +36,9 @@ public class SmsClientFactoryImpl implements SmsClientFactory {
      */
     private final ConcurrentMap<String, AbstractSmsClient> channelCodeClients = new ConcurrentHashMap<>();
 
+    /**
+     * 创建 SmsClientFactoryImpl 实例。
+     */
     public SmsClientFactoryImpl() {
         // 初始化 channelCodeClients 集合
         Arrays.stream(SmsChannelEnum.values()).forEach(channel -> {
@@ -48,16 +51,34 @@ public class SmsClientFactoryImpl implements SmsClientFactory {
         });
     }
 
+    /**
+     * 查询 get Sms Client 对应的数据。
+     *
+     * @param channelId channelId 参数
+     * @return 处理结果
+     */
     @Override
     public SmsClient getSmsClient(Long channelId) {
         return channelIdClients.get(channelId);
     }
 
+    /**
+     * 查询 get Sms Client 对应的数据。
+     *
+     * @param channelCode channelCode 参数
+     * @return 处理结果
+     */
     @Override
     public SmsClient getSmsClient(String channelCode) {
         return channelCodeClients.get(channelCode);
     }
 
+    /**
+     * 创建 create Or Update Sms Client 对应的数据。
+     *
+     * @param properties properties 参数
+     * @return 处理结果
+     */
     @Override
     public SmsClient createOrUpdateSmsClient(SmsChannelProperties properties) {
         AbstractSmsClient client = channelIdClients.get(properties.getId());
@@ -71,6 +92,12 @@ public class SmsClientFactoryImpl implements SmsClientFactory {
         return client;
     }
 
+    /**
+     * 创建 create Sms Client 对应的数据。
+     *
+     * @param properties properties 参数
+     * @return 处理结果
+     */
     private AbstractSmsClient createSmsClient(SmsChannelProperties properties) {
         SmsChannelEnum channelEnum = SmsChannelEnum.getByCode(properties.getCode());
         Assert.notNull(channelEnum, String.format("渠道类型(%s) 为空", channelEnum));

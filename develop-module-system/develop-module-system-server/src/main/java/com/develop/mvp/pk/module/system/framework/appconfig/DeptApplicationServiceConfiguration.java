@@ -9,9 +9,21 @@ import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
+/**
+ * Dept Application Service Configuration 配置类。
+ */
 @Configuration
 public class DeptApplicationServiceConfiguration {
 
+    /**
+     * 执行 dept Application Service 对应的业务操作。
+     *
+     * @param deptRepository deptRepository 参数
+     * @param eventPublisher eventPublisher 参数
+     * @param deptMapper deptMapper 参数
+     * @param postMapper postMapper 参数
+     * @return 处理结果
+     */
     @Bean
     public DeptApplicationService deptApplicationService(
             @Autowired(required = false) DeptRepository deptRepository,

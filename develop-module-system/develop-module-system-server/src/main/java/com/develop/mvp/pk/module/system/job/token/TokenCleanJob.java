@@ -30,6 +30,9 @@ public class TokenCleanJob {
      */
     private static final Integer DELETE_LIMIT = 100;
 
+    /**
+     * 执行 execute 对应的业务操作。
+     */
     @XxlJob("tokenCleanJob")
     @TenantIgnore
     public void execute() {

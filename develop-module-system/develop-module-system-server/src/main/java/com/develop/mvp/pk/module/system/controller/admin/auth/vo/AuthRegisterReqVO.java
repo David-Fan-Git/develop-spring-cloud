@@ -9,6 +9,9 @@ import jakarta.validation.constraints.Size;
 import lombok.Data;
 import org.hibernate.validator.constraints.Length;
 
+/**
+ * Auth Register Req VO 接口视图对象。
+ */
 @Schema(description = "管理后台 - Register Request VO")
 @Data
 public class AuthRegisterReqVO extends CaptchaVerificationReqVO {

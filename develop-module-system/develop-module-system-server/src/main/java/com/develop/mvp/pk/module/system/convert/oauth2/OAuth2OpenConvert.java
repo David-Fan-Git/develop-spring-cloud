@@ -20,11 +20,20 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
+/**
+ * OAuth2 Open Convert 对象转换器。
+ */
 @Mapper
 public interface OAuth2OpenConvert {
 
     OAuth2OpenConvert INSTANCE = Mappers.getMapper(OAuth2OpenConvert.class);
 
+    /**
+     * 转换 convert 对应的数据对象。
+     *
+     * @param bean bean 参数
+     * @return 处理结果
+     */
     default OAuth2OpenAccessTokenRespVO convert(OAuth2AccessTokenDO bean) {
         OAuth2OpenAccessTokenRespVO respVO = BeanUtils.toBean(bean, OAuth2OpenAccessTokenRespVO.class);
         respVO.setTokenType(SecurityFrameworkUtils.AUTHORIZATION_BEARER.toLowerCase());
@@ -33,6 +42,12 @@ public interface OAuth2OpenConvert {
         return respVO;
     }
 
+    /**
+     * 转换 convert2 对应的数据对象。
+     *
+     * @param bean bean 参数
+     * @return 处理结果
+     */
     default OAuth2OpenCheckTokenRespVO convert2(OAuth2AccessTokenDO bean) {
         OAuth2OpenCheckTokenRespVO respVO = BeanUtils.toBean(bean, OAuth2OpenCheckTokenRespVO.class);
         respVO.setExp(LocalDateTimeUtil.toEpochMilli(bean.getExpiresTime()) / 1000L);
@@ -40,6 +55,13 @@ public interface OAuth2OpenConvert {
         return respVO;
     }
 
+    /**
+     * 转换 convert 对应的数据对象。
+     *
+     * @param client client 参数
+     * @param approves approves 参数
+     * @return 处理结果
+     */
     default OAuth2OpenAuthorizeInfoRespVO convert(OAuth2ClientDO client, List<OAuth2ApproveDO> approves) {
         // 构建 scopes
         List<KeyValue<String, Boolean>> scopes = new ArrayList<>(client.getScopes().size());

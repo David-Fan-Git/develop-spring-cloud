@@ -11,15 +11,28 @@ import com.develop.mvp.pk.module.system.domain.user.event.UserDisabledEvent;
 import org.springframework.context.event.EventListener;
 import org.springframework.stereotype.Component;
 
+/**
+ * User Disabled Token Cleaner 类。
+ */
 @Component
 public class UserDisabledTokenCleaner {
 
     private final OAuth2UseCase oauth2TokenService;
 
+    /**
+     * 创建 UserDisabledTokenCleaner 实例。
+     *
+     * @param oauth2TokenService oauth2TokenService 参数
+     */
     public UserDisabledTokenCleaner(OAuth2UseCase oauth2TokenService) {
         this.oauth2TokenService = oauth2TokenService;
     }
 
+    /**
+     * 处理 on User Disabled 对应的业务逻辑。
+     *
+     * @param event event 参数
+     */
     @EventListener
     public void onUserDisabled(UserDisabledEvent event) {
         oauth2TokenService.removeAccessToken(event.userId(), UserTypeEnum.ADMIN.getValue());

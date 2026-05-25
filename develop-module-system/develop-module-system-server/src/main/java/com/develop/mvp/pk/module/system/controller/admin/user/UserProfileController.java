@@ -31,6 +31,9 @@ import java.util.List;
 import static com.develop.mvp.pk.framework.common.pojo.CommonResult.success;
 import static com.develop.mvp.pk.framework.security.core.util.SecurityFrameworkUtils.getLoginUserId;
 
+/**
+ * User Profile Controller 控制器。
+ */
 @Tag(name = "管理后台 - 用户个人中心")
 @RestController
 @RequestMapping("/system/user/profile")
@@ -49,6 +52,11 @@ public class UserProfileController {
     @Resource
     private RoleUseCase roleService;
 
+    /**
+     * 查询 get User Profile 对应的数据。
+     *
+     * @return 处理结果
+     */
     @GetMapping("/get")
     @Operation(summary = "获得登录用户信息")
     @DataPermission(enable = false)
@@ -62,6 +70,12 @@ public class UserProfileController {
         return success(UserConvert.INSTANCE.convertUser(user, userRoles, dept, posts));
     }
 
+    /**
+     * 更新 update User Profile 对应的数据。
+     *
+     * @param reqVO reqVO 参数
+     * @return 处理结果
+     */
     @PutMapping("/update")
     @Operation(summary = "修改用户个人信息")
     public CommonResult<Boolean> updateUserProfile(@Valid @RequestBody UserProfileUpdateReqVO reqVO) {
@@ -71,6 +85,12 @@ public class UserProfileController {
         return success(true);
     }
 
+    /**
+     * 更新 update User Profile Password 对应的数据。
+     *
+     * @param reqVO reqVO 参数
+     * @return 处理结果
+     */
     @PutMapping("/update-password")
     @Operation(summary = "修改用户个人密码")
     public CommonResult<Boolean> updateUserProfilePassword(

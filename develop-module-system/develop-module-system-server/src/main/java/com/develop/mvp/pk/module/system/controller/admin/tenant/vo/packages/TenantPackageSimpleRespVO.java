@@ -5,6 +5,9 @@ import lombok.Data;
 
 import jakarta.validation.constraints.NotNull;
 
+/**
+ * Tenant Package Simple Resp VO 接口视图对象。
+ */
 @Schema(description = "管理后台 - 租户套餐精简 Response VO")
 @Data
 public class TenantPackageSimpleRespVO {

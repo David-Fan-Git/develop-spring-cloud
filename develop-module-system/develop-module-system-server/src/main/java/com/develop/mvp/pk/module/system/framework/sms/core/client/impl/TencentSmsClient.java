@@ -51,6 +51,11 @@ public class TencentSmsClient extends AbstractSmsClient {
      */
     private static final long INTERNATIONAL_CHINA = 0L;
 
+    /**
+     * 创建 TencentSmsClient 实例。
+     *
+     * @param properties properties 参数
+     */
     public TencentSmsClient(SmsChannelProperties properties) {
         super(properties);
         Assert.notEmpty(properties.getApiSecret(), "apiSecret 不能为空");
@@ -73,14 +78,33 @@ public class TencentSmsClient extends AbstractSmsClient {
         Assert.isTrue(keys.length == 2, "腾讯云短信 apiKey 配置格式错误，请配置 为[secretId sdkAppId]");
     }
 
+    /**
+     * 查询 get Sdk App Id 对应的数据。
+     *
+     * @return 处理结果
+     */
     private String getSdkAppId() {
         return StrUtil.subAfter(properties.getApiKey(), " ", true);
     }
 
+    /**
+     * 查询 get Api Key 对应的数据。
+     *
+     * @return 处理结果
+     */
     private String getApiKey() {
         return StrUtil.subBefore(properties.getApiKey(), " ", true);
     }
 
+    /**
+     * 发送 send Sms 对应的消息。
+     *
+     * @param sendLogId sendLogId 参数
+     * @param mobile mobile 参数
+     * @param apiTemplateId apiTemplateId 参数
+     * @param templateParams templateParams 参数
+     * @return 处理结果
+     */
     @Override
     public SmsSendRespDTO sendSms(Long sendLogId, String mobile,
                                   String apiTemplateId, List<KeyValue<String, Object>> templateParams) throws Throwable {
@@ -110,6 +134,12 @@ public class TencentSmsClient extends AbstractSmsClient {
                 .setApiMsg(sendResult.getStr("Message"));
     }
 
+    /**
+     * 执行 parse Sms Receive Status 对应的业务操作。
+     *
+     * @param text text 参数
+     * @return 处理结果
+     */
     @Override
     public List<SmsReceiveRespDTO> parseSmsReceiveStatus(String text) {
         JSONArray statuses = JSONUtil.parseArray(text);
@@ -126,6 +156,12 @@ public class TencentSmsClient extends AbstractSmsClient {
         });
     }
 
+    /**
+     * 查询 get Sms Template 对应的数据。
+     *
+     * @param apiTemplateId apiTemplateId 参数
+     * @return 处理结果
+     */
     @Override
     public SmsTemplateRespDTO getSmsTemplate(String apiTemplateId) throws Throwable {
         // 1. 构建请求
@@ -144,6 +180,12 @@ public class TencentSmsClient extends AbstractSmsClient {
                 .setAuditReason(statusResult.get("ReviewReply").toString());
     }
 
+    /**
+     * 转换 convert Sms Template Audit Status 对应的数据对象。
+     *
+     * @param templateStatus templateStatus 参数
+     * @return 处理结果
+     */
     @VisibleForTesting
     Integer convertSmsTemplateAuditStatus(int templateStatus) {
         switch (templateStatus) {
@@ -195,6 +237,13 @@ public class TencentSmsClient extends AbstractSmsClient {
         return JSONUtil.parseObj(responseBody);
     }
 
+    /**
+     * 执行 hmac256 对应的业务操作。
+     *
+     * @param key key 参数
+     * @param msg msg 参数
+     * @return 处理结果
+     */
     private static byte[] hmac256(byte[] key, String msg) {
         return DigestUtil.hmac(HmacAlgorithm.HmacSHA256, key).digest(msg);
     }

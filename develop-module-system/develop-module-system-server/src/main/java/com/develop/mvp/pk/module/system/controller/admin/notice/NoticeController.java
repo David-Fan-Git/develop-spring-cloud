@@ -24,6 +24,9 @@ import java.util.List;
 
 import static com.develop.mvp.pk.framework.common.pojo.CommonResult.success;
 
+/**
+ * Notice Controller 控制器。
+ */
 @Tag(name = "管理后台 - 通知公告")
 @RestController
 @RequestMapping("/system/notice")
@@ -36,6 +39,12 @@ public class NoticeController {
     @Resource
     private WebSocketSenderApi webSocketSenderApi;
 
+    /**
+     * 创建 create Notice 对应的数据。
+     *
+     * @param createReqVO createReqVO 参数
+     * @return 处理结果
+     */
     @PostMapping("/create")
     @Operation(summary = "创建通知公告")
     @PreAuthorize("@ss.hasPermission('system:notice:create')")
@@ -44,6 +53,12 @@ public class NoticeController {
         return success(noticeId);
     }
 
+    /**
+     * 更新 update Notice 对应的数据。
+     *
+     * @param updateReqVO updateReqVO 参数
+     * @return 处理结果
+     */
     @PutMapping("/update")
     @Operation(summary = "修改通知公告")
     @PreAuthorize("@ss.hasPermission('system:notice:update')")
@@ -52,6 +67,12 @@ public class NoticeController {
         return success(true);
     }
 
+    /**
+     * 删除 delete Notice 对应的数据。
+     *
+     * @param id id 参数
+     * @return 处理结果
+     */
     @DeleteMapping("/delete")
     @Operation(summary = "删除通知公告")
     @Parameter(name = "id", description = "编号", required = true, example = "1024")
@@ -61,6 +82,12 @@ public class NoticeController {
         return success(true);
     }
 
+    /**
+     * 删除 delete Notice List 对应的数据。
+     *
+     * @param ids ids 参数
+     * @return 处理结果
+     */
     @DeleteMapping("/delete-list")
     @Operation(summary = "批量删除通知公告")
     @Parameter(name = "ids", description = "编号列表", required = true)
@@ -70,6 +97,12 @@ public class NoticeController {
         return success(true);
     }
 
+    /**
+     * 查询 get Notice Page 对应的数据。
+     *
+     * @param pageReqVO pageReqVO 参数
+     * @return 处理结果
+     */
     @GetMapping("/page")
     @Operation(summary = "获取通知公告列表")
     @PreAuthorize("@ss.hasPermission('system:notice:query')")
@@ -78,6 +111,12 @@ public class NoticeController {
         return success(BeanUtils.toBean(pageResult, NoticeRespVO.class));
     }
 
+    /**
+     * 查询 get Notice 对应的数据。
+     *
+     * @param id id 参数
+     * @return 处理结果
+     */
     @GetMapping("/get")
     @Operation(summary = "获得通知公告")
     @Parameter(name = "id", description = "编号", required = true, example = "1024")
@@ -87,6 +126,12 @@ public class NoticeController {
         return success(BeanUtils.toBean(notice, NoticeRespVO.class));
     }
 
+    /**
+     * 执行 push 对应的业务操作。
+     *
+     * @param id id 参数
+     * @return 处理结果
+     */
     @PostMapping("/push")
     @Operation(summary = "推送通知公告", description = "只发送给 websocket 连接在线的用户")
     @Parameter(name = "id", description = "编号", required = true, example = "1024")

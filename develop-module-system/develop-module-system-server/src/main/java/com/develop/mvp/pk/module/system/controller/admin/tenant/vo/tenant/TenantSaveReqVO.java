@@ -13,6 +13,9 @@ import org.hibernate.validator.constraints.Length;
 import java.time.LocalDateTime;
 import java.util.List;
 
+/**
+ * Tenant Save Req VO 接口视图对象。
+ */
 @Schema(description = "管理后台 - 租户创建/修改 Request VO")
 @Data
 public class TenantSaveReqVO {
@@ -61,6 +64,11 @@ public class TenantSaveReqVO {
     @Length(min = 4, max = 16, message = "密码长度为 4-16 位")
     private String password;
 
+    /**
+     * 判断 is Username Valid 对应的条件是否成立。
+     *
+     * @return 处理结果
+     */
     @AssertTrue(message = "用户账号、密码不能为空")
     @JsonIgnore
     public boolean isUsernameValid() {

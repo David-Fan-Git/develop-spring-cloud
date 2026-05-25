@@ -30,12 +30,26 @@ import java.util.Objects;
  */
 public class DebugDingTalkSmsClient extends AbstractSmsClient {
 
+    /**
+     * 创建 DebugDingTalkSmsClient 实例。
+     *
+     * @param properties properties 参数
+     */
     public DebugDingTalkSmsClient(SmsChannelProperties properties) {
         super(properties);
         Assert.notEmpty(properties.getApiKey(), "apiKey 不能为空");
         Assert.notEmpty(properties.getApiSecret(), "apiSecret 不能为空");
     }
 
+    /**
+     * 发送 send Sms 对应的消息。
+     *
+     * @param sendLogId sendLogId 参数
+     * @param mobile mobile 参数
+     * @param apiTemplateId apiTemplateId 参数
+     * @param templateParams templateParams 参数
+     * @return 处理结果
+     */
     @Override
     public SmsSendRespDTO sendSms(Long sendLogId, String mobile,
                                   String apiTemplateId, List<KeyValue<String, Object>> templateParams) throws Throwable {
@@ -77,11 +91,23 @@ public class DebugDingTalkSmsClient extends AbstractSmsClient {
                 path, properties.getApiKey(), timestamp, sign);
     }
 
+    /**
+     * 执行 parse Sms Receive Status 对应的业务操作。
+     *
+     * @param text text 参数
+     * @return 处理结果
+     */
     @Override
     public List<SmsReceiveRespDTO> parseSmsReceiveStatus(String text) {
         throw new UnsupportedOperationException("模拟短信客户端，暂时无需解析回调");
     }
 
+    /**
+     * 查询 get Sms Template 对应的数据。
+     *
+     * @param apiTemplateId apiTemplateId 参数
+     * @return 处理结果
+     */
     @Override
     public SmsTemplateRespDTO getSmsTemplate(String apiTemplateId) {
         return new SmsTemplateRespDTO().setId(apiTemplateId).setContent("")

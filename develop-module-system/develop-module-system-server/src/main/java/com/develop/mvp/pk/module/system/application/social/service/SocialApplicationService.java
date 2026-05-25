@@ -93,6 +93,9 @@ import static com.develop.mvp.pk.framework.common.util.json.JsonUtils.toJsonStri
 import static com.develop.mvp.pk.module.system.enums.ErrorCodeConstants.*;
 import static java.util.Collections.singletonList;
 
+/**
+ * Social Application Service 应用服务。
+ */
 @Validated
 @Slf4j
 public class SocialApplicationService implements SocialUseCase {
@@ -117,6 +120,21 @@ public class SocialApplicationService implements SocialUseCase {
     private final LoadingCache<String, WxMpService> wxMpServiceCache;
     private final LoadingCache<String, WxMaService> wxMaServiceCache;
 
+    /**
+     * 创建 SocialApplicationService 实例。
+     *
+     * @param authRequestFactory authRequestFactory 参数
+     * @param wxMpService wxMpService 参数
+     * @param wxMpProperties wxMpProperties 参数
+     * @param stringRedisTemplate stringRedisTemplate 参数
+     * @param wxMaService wxMaService 参数
+     * @param wxMaProperties wxMaProperties 参数
+     * @param socialClientMapper socialClientMapper 参数
+     * @param socialUserBindMapper socialUserBindMapper 参数
+     * @param socialUserMapper socialUserMapper 参数
+     * @param envVersion envVersion 参数
+     * @param miniprogramState miniprogramState 参数
+     */
     public SocialApplicationService(
             @Autowired(required = false) AuthRequestFactory authRequestFactory,
             WxMpService wxMpService,
@@ -142,6 +160,12 @@ public class SocialApplicationService implements SocialUseCase {
         this.miniprogramState = miniprogramState;
         this.wxMpServiceCache = CacheUtils.buildAsyncReloadingCache(
                 Duration.ofSeconds(10L), new CacheLoader<>() {
+                    /**
+                     * 加载微信公众号服务实例。
+                     *
+                     * @param key 缓存键
+                     * @return 微信公众号服务实例
+                     */
                     @Override
                     public WxMpService load(String key) {
                         String[] keys = key.split(":");
@@ -150,6 +174,12 @@ public class SocialApplicationService implements SocialUseCase {
                 });
         this.wxMaServiceCache = CacheUtils.buildAsyncReloadingCache(
                 Duration.ofSeconds(10L), new CacheLoader<>() {
+                    /**
+                     * 加载微信小程序服务实例。
+                     *
+                     * @param key 缓存键
+                     * @return 微信小程序服务实例
+                     */
                     @Override
                     public WxMaService load(String key) {
                         String[] keys = key.split(":");
@@ -158,12 +188,29 @@ public class SocialApplicationService implements SocialUseCase {
                 });
     }
 
+    /**
+     * 查询 get Authorize Url 对应的数据。
+     *
+     * @param socialType socialType 参数
+     * @param userType userType 参数
+     * @param redirectUri redirectUri 参数
+     * @return 处理结果
+     */
     public String getAuthorizeUrl(Integer socialType, Integer userType, String redirectUri) {
         AuthRequest authRequest = buildAuthRequest(socialType, userType);
         String authorizeUri = authRequest.authorize(AuthStateUtils.createState());
         return HttpUtils.replaceUrlQuery(authorizeUri, "redirect_uri", redirectUri);
     }
 
+    /**
+     * 查询 get Auth User 对应的数据。
+     *
+     * @param socialType socialType 参数
+     * @param userType userType 参数
+     * @param code code 参数
+     * @param state state 参数
+     * @return 处理结果
+     */
     public AuthUser getAuthUser(Integer socialType, Integer userType, String code, String state) {
         AuthRequest authRequest = buildAuthRequest(socialType, userType);
         AuthCallback authCallback = AuthCallback.builder().code(code).auth_code(code).state(state).build();
@@ -176,6 +223,13 @@ public class SocialApplicationService implements SocialUseCase {
         return (AuthUser) authResponse.getData();
     }
 
+    /**
+     * 构建 build Auth Request 对应的数据对象。
+     *
+     * @param socialType socialType 参数
+     * @param userType userType 参数
+     * @return 处理结果
+     */
     @VisibleForTesting
     public AuthRequest buildAuthRequest(Integer socialType, Integer userType) {
         AuthRequest request = authRequestFactory.get(SocialTypeEnum.valueOfType(socialType).getSource());
@@ -198,11 +252,24 @@ public class SocialApplicationService implements SocialUseCase {
         return request;
     }
 
+    /**
+     * 创建 create Wx Mp Jsapi Signature 对应的数据。
+     *
+     * @param userType userType 参数
+     * @param url url 参数
+     * @return 处理结果
+     */
     @SneakyThrows
     public WxJsapiSignature createWxMpJsapiSignature(Integer userType, String url) {
         return getWxMpService(userType).createJsapiSignature(url);
     }
 
+    /**
+     * 查询 get Wx Mp Service 对应的数据。
+     *
+     * @param userType userType 参数
+     * @return 处理结果
+     */
     @VisibleForTesting
     WxMpService getWxMpService(Integer userType) {
         SocialClientDO client = socialClientMapper.selectBySocialTypeAndUserType(
@@ -213,6 +280,13 @@ public class SocialApplicationService implements SocialUseCase {
         return wxMpService;
     }
 
+    /**
+     * 构建 build Wx Mp Service 对应的数据对象。
+     *
+     * @param clientId clientId 参数
+     * @param clientSecret clientSecret 参数
+     * @return 处理结果
+     */
     public WxMpService buildWxMpService(String clientId, String clientSecret) {
         WxMpRedisConfigImpl configStorage = new WxMpRedisConfigImpl(
                 new RedisTemplateWxRedisOps(stringRedisTemplate), wxMpProperties.getConfigStorage().getKeyPrefix());
@@ -223,6 +297,13 @@ public class SocialApplicationService implements SocialUseCase {
         return service;
     }
 
+    /**
+     * 查询 get Wx Ma Phone Number Info 对应的数据。
+     *
+     * @param userType userType 参数
+     * @param phoneCode phoneCode 参数
+     * @return 处理结果
+     */
     public WxMaPhoneNumberInfo getWxMaPhoneNumberInfo(Integer userType, String phoneCode) {
         try {
             return getWxMaService(userType).getUserService().getPhoneNumber(phoneCode);
@@ -232,6 +313,12 @@ public class SocialApplicationService implements SocialUseCase {
         }
     }
 
+    /**
+     * 查询 get Wxa Qrcode 对应的数据。
+     *
+     * @param reqVO reqVO 参数
+     * @return 处理结果
+     */
     public byte[] getWxaQrcode(SocialWxQrcodeReqDTO reqVO) {
         try {
             return getWxMaService(UserTypeEnum.MEMBER.getValue()).getQrcodeService().createWxaCodeUnlimitBytes(
@@ -246,6 +333,12 @@ public class SocialApplicationService implements SocialUseCase {
         }
     }
 
+    /**
+     * 查询 get Subscribe Template List 对应的数据。
+     *
+     * @param userType userType 参数
+     * @return 处理结果
+     */
     @Cacheable(cacheNames = RedisKeyConstants.WXA_SUBSCRIBE_TEMPLATE, key = "#userType", unless = "#result == null")
     public List<TemplateInfo> getSubscribeTemplateList(Integer userType) {
         try {
@@ -257,6 +350,13 @@ public class SocialApplicationService implements SocialUseCase {
         }
     }
 
+    /**
+     * 发送 send Subscribe Message 对应的消息。
+     *
+     * @param reqDTO reqDTO 参数
+     * @param templateId templateId 参数
+     * @param openId openId 参数
+     */
     public void sendSubscribeMessage(SocialWxaSubscribeMessageSendReqDTO reqDTO, String templateId, String openId) {
         try {
             getWxMaService(reqDTO.getUserType()).getSubscribeService()
@@ -267,6 +367,14 @@ public class SocialApplicationService implements SocialUseCase {
         }
     }
 
+    /**
+     * 构建 build Message Send Req DTO 对应的数据对象。
+     *
+     * @param reqDTO reqDTO 参数
+     * @param templateId templateId 参数
+     * @param openId openId 参数
+     * @return 处理结果
+     */
     private WxMaSubscribeMessage buildMessageSendReqDTO(SocialWxaSubscribeMessageSendReqDTO reqDTO,
                                                         String templateId, String openId) {
         WxMaSubscribeMessage subscribeMessage = new WxMaSubscribeMessage().setLang(WxMaConstants.MiniProgramLang.ZH_CN)
@@ -279,6 +387,12 @@ public class SocialApplicationService implements SocialUseCase {
         return subscribeMessage;
     }
 
+    /**
+     * 执行 upload Wxa Order Shipping Info 对应的业务操作。
+     *
+     * @param userType userType 参数
+     * @param reqDTO reqDTO 参数
+     */
     public void uploadWxaOrderShippingInfo(Integer userType, SocialWxaOrderUploadShippingInfoReqDTO reqDTO) {
         WxMaService service = getWxMaService(userType);
         List<ShippingListBean> shippingList = Objects.equals(reqDTO.getLogisticsType(), SocialWxaOrderUploadShippingInfoReqDTO.LOGISTICS_TYPE_EXPRESS)
@@ -308,6 +422,12 @@ public class SocialApplicationService implements SocialUseCase {
         }
     }
 
+    /**
+     * 执行 notify Wxa Order Confirm Receive 对应的业务操作。
+     *
+     * @param userType userType 参数
+     * @param reqDTO reqDTO 参数
+     */
     public void notifyWxaOrderConfirmReceive(Integer userType, SocialWxaOrderNotifyConfirmReceiveReqDTO reqDTO) {
         WxMaOrderShippingInfoNotifyConfirmRequest request = WxMaOrderShippingInfoNotifyConfirmRequest.builder()
                 .transactionId(reqDTO.getTransactionId()).receivedTime(toEpochSecond(reqDTO.getReceivedTime())).build();
@@ -324,6 +444,12 @@ public class SocialApplicationService implements SocialUseCase {
         }
     }
 
+    /**
+     * 查询 get Wx Ma Service 对应的数据。
+     *
+     * @param userType userType 参数
+     * @return 处理结果
+     */
     @VisibleForTesting
     WxMaService getWxMaService(Integer userType) {
         SocialClientDO client = socialClientMapper.selectBySocialTypeAndUserType(
@@ -334,6 +460,13 @@ public class SocialApplicationService implements SocialUseCase {
         return wxMaService;
     }
 
+    /**
+     * 构建 build Wx Ma Service 对应的数据对象。
+     *
+     * @param clientId clientId 参数
+     * @param clientSecret clientSecret 参数
+     * @return 处理结果
+     */
     private WxMaService buildWxMaService(String clientId, String clientSecret) {
         WxMaRedisBetterConfigImpl configStorage = new WxMaRedisBetterConfigImpl(
                 new RedisTemplateWxRedisOps(stringRedisTemplate), wxMaProperties.getConfigStorage().getKeyPrefix());
@@ -344,6 +477,12 @@ public class SocialApplicationService implements SocialUseCase {
         return service;
     }
 
+    /**
+     * 创建 create Social Client 对应的数据。
+     *
+     * @param createReqVO createReqVO 参数
+     * @return 处理结果
+     */
     public Long createSocialClient(@Valid SocialClientSaveReqVO createReqVO) {
         validateSocialClientUnique(null, createReqVO.getUserType(), createReqVO.getSocialType());
         SocialClientDO client = BeanUtils.toBean(createReqVO, SocialClientDO.class);
@@ -351,27 +490,54 @@ public class SocialApplicationService implements SocialUseCase {
         return client.getId();
     }
 
+    /**
+     * 更新 update Social Client 对应的数据。
+     *
+     * @param updateReqVO updateReqVO 参数
+     */
     public void updateSocialClient(@Valid SocialClientSaveReqVO updateReqVO) {
         validateSocialClientExists(updateReqVO.getId());
         validateSocialClientUnique(updateReqVO.getId(), updateReqVO.getUserType(), updateReqVO.getSocialType());
         socialClientMapper.updateById(BeanUtils.toBean(updateReqVO, SocialClientDO.class));
     }
 
+    /**
+     * 删除 delete Social Client 对应的数据。
+     *
+     * @param id id 参数
+     */
     public void deleteSocialClient(Long id) {
         validateSocialClientExists(id);
         socialClientMapper.deleteById(id);
     }
 
+    /**
+     * 删除 delete Social Client List 对应的数据。
+     *
+     * @param ids ids 参数
+     */
     public void deleteSocialClientList(List<Long> ids) {
         socialClientMapper.deleteByIds(ids);
     }
 
+    /**
+     * 校验 validate Social Client Exists 对应的业务规则。
+     *
+     * @param id id 参数
+     */
     private void validateSocialClientExists(Long id) {
         if (socialClientMapper.selectById(id) == null) {
             throw exception(SOCIAL_CLIENT_NOT_EXISTS);
         }
     }
 
+    /**
+     * 校验 validate Social Client Unique 对应的业务规则。
+     *
+     * @param id id 参数
+     * @param userType userType 参数
+     * @param socialType socialType 参数
+     */
     private void validateSocialClientUnique(Long id, Integer userType, Integer socialType) {
         SocialClientDO client = socialClientMapper.selectBySocialTypeAndUserType(socialType, userType);
         if (client == null) {
@@ -382,14 +548,33 @@ public class SocialApplicationService implements SocialUseCase {
         }
     }
 
+    /**
+     * 查询 get Social Client 对应的数据。
+     *
+     * @param id id 参数
+     * @return 处理结果
+     */
     public SocialClientDO getSocialClient(Long id) {
         return socialClientMapper.selectById(id);
     }
 
+    /**
+     * 查询 get Social Client Page 对应的数据。
+     *
+     * @param pageReqVO pageReqVO 参数
+     * @return 处理结果
+     */
     public PageResult<SocialClientDO> getSocialClientPage(SocialClientPageReqVO pageReqVO) {
         return socialClientMapper.selectPage(pageReqVO);
     }
 
+    /**
+     * 查询 get Social User List 对应的数据。
+     *
+     * @param userId userId 参数
+     * @param userType userType 参数
+     * @return 处理结果
+     */
     public List<SocialUserDO> getSocialUserList(Long userId, Integer userType) {
         List<SocialUserBindDO> socialUserBinds = socialUserBindMapper.selectListByUserIdAndUserType(userId, userType);
         if (CollUtil.isEmpty(socialUserBinds)) {
@@ -398,6 +583,12 @@ public class SocialApplicationService implements SocialUseCase {
         return socialUserMapper.selectByIds(convertSet(socialUserBinds, SocialUserBindDO::getSocialUserId));
     }
 
+    /**
+     * 执行 bind Social User 对应的业务操作。
+     *
+     * @param reqDTO reqDTO 参数
+     * @return 处理结果
+     */
     @Transactional(rollbackFor = Exception.class)
     public String bindSocialUser(@Valid SocialUserBindReqDTO reqDTO) {
         SocialUserDO socialUser = authSocialUser(reqDTO.getSocialType(), reqDTO.getUserType(), reqDTO.getCode(), reqDTO.getState());
@@ -411,6 +602,14 @@ public class SocialApplicationService implements SocialUseCase {
         return socialUser.getOpenid();
     }
 
+    /**
+     * 执行 unbind Social User 对应的业务操作。
+     *
+     * @param userId userId 参数
+     * @param userType userType 参数
+     * @param socialType socialType 参数
+     * @param openid openid 参数
+     */
     public void unbindSocialUser(Long userId, Integer userType, Integer socialType, String openid) {
         SocialUserDO socialUser = socialUserMapper.selectByTypeAndOpenid(socialType, openid);
         if (socialUser == null) {
@@ -419,6 +618,14 @@ public class SocialApplicationService implements SocialUseCase {
         socialUserBindMapper.deleteByUserTypeAndUserIdAndSocialType(userType, userId, socialUser.getType());
     }
 
+    /**
+     * 查询 get Social User By User Id 对应的数据。
+     *
+     * @param userType userType 参数
+     * @param userId userId 参数
+     * @param socialType socialType 参数
+     * @return 处理结果
+     */
     public SocialUserRespDTO getSocialUserByUserId(Integer userType, Long userId, Integer socialType) {
         SocialUserBindDO socialUserBind = socialUserBindMapper.selectByUserIdAndUserTypeAndSocialType(userId, userType, socialType);
         if (socialUserBind == null) {
@@ -429,6 +636,15 @@ public class SocialApplicationService implements SocialUseCase {
         return new SocialUserRespDTO(socialUser.getOpenid(), socialUser.getNickname(), socialUser.getAvatar(), socialUserBind.getUserId());
     }
 
+    /**
+     * 查询 get Social User By Code 对应的数据。
+     *
+     * @param userType userType 参数
+     * @param socialType socialType 参数
+     * @param code code 参数
+     * @param state state 参数
+     * @return 处理结果
+     */
     public SocialUserRespDTO getSocialUserByCode(Integer userType, Integer socialType, String code, String state) {
         SocialUserDO socialUser = authSocialUser(socialType, userType, code, state);
         Assert.notNull(socialUser, "社交用户不能为空");
@@ -437,6 +653,15 @@ public class SocialApplicationService implements SocialUseCase {
                 socialUserBind != null ? socialUserBind.getUserId() : null);
     }
 
+    /**
+     * 处理 auth Social User 对应的认证流程。
+     *
+     * @param socialType socialType 参数
+     * @param userType userType 参数
+     * @param code code 参数
+     * @param state state 参数
+     * @return 处理结果
+     */
     @NotNull
     public SocialUserDO authSocialUser(Integer socialType, Integer userType, String code, String state) {
         SocialUserDO socialUser = socialUserMapper.selectByTypeAndCodeAnState(socialType, code, state);
@@ -461,10 +686,22 @@ public class SocialApplicationService implements SocialUseCase {
         return socialUser;
     }
 
+    /**
+     * 查询 get Social User 对应的数据。
+     *
+     * @param id id 参数
+     * @return 处理结果
+     */
     public SocialUserDO getSocialUser(Long id) {
         return socialUserMapper.selectById(id);
     }
 
+    /**
+     * 查询 get Social User Page 对应的数据。
+     *
+     * @param pageReqVO pageReqVO 参数
+     * @return 处理结果
+     */
     public PageResult<SocialUserDO> getSocialUserPage(SocialUserPageReqVO pageReqVO) {
         return socialUserMapper.selectPage(pageReqVO);
     }

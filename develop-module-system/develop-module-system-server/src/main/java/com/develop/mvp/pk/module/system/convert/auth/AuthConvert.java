@@ -24,11 +24,22 @@ import static com.develop.mvp.pk.framework.common.util.collection.CollectionUtil
 import static com.develop.mvp.pk.framework.common.util.collection.CollectionUtils.filterList;
 import static com.develop.mvp.pk.module.system.dal.dataobject.permission.MenuDO.ID_ROOT;
 
+/**
+ * Auth Convert 对象转换器。
+ */
 @Mapper
 public interface AuthConvert {
 
     AuthConvert INSTANCE = Mappers.getMapper(AuthConvert.class);
 
+    /**
+     * 转换 convert 对应的数据对象。
+     *
+     * @param user user 参数
+     * @param roleList roleList 参数
+     * @param menuList menuList 参数
+     * @return 处理结果
+     */
     default AuthPermissionInfoRespVO convert(AdminUserDO user, List<RoleDO> roleList, List<MenuDO> menuList) {
         return AuthPermissionInfoRespVO.builder()
                 .user(BeanUtils.toBean(user, AuthPermissionInfoRespVO.UserVO.class))
@@ -79,10 +90,32 @@ public interface AuthConvert {
         return filterList(treeNodeMap.values(), node -> ID_ROOT.equals(node.getParentId()));
     }
 
+    /**
+     * 转换 convert 对应的数据对象。
+     *
+     * @param userId userId 参数
+     * @param userType userType 参数
+     * @param reqVO reqVO 参数
+     * @return 处理结果
+     */
     SocialUserBindReqDTO convert(Long userId, Integer userType, AuthSocialLoginReqVO reqVO);
 
+    /**
+     * 转换 convert 对应的数据对象。
+     *
+     * @param reqVO reqVO 参数
+     * @return 处理结果
+     */
     SmsCodeSendReqDTO convert(AuthSmsSendReqVO reqVO);
 
+    /**
+     * 转换 convert 对应的数据对象。
+     *
+     * @param reqVO reqVO 参数
+     * @param scene scene 参数
+     * @param usedIp usedIp 参数
+     * @return 处理结果
+     */
     SmsCodeUseReqDTO convert(AuthSmsLoginReqVO reqVO, Integer scene, String usedIp);
 
 }

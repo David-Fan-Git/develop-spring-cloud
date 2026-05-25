@@ -16,6 +16,12 @@ import org.apache.ibatis.annotations.Mapper;
 @Mapper
 public interface OAuth2ClientMapper extends BaseMapperX<OAuth2ClientDO> {
 
+    /**
+     * 查询 select Page 对应的数据。
+     *
+     * @param reqVO reqVO 参数
+     * @return 处理结果
+     */
     default PageResult<OAuth2ClientDO> selectPage(OAuth2ClientPageReqVO reqVO) {
         return selectPage(reqVO, new LambdaQueryWrapperX<OAuth2ClientDO>()
                 .likeIfPresent(OAuth2ClientDO::getName, reqVO.getName())
@@ -23,6 +29,12 @@ public interface OAuth2ClientMapper extends BaseMapperX<OAuth2ClientDO> {
                 .orderByDesc(OAuth2ClientDO::getId));
     }
 
+    /**
+     * 查询 select By Client Id 对应的数据。
+     *
+     * @param clientId clientId 参数
+     * @return 处理结果
+     */
     default OAuth2ClientDO selectByClientId(String clientId) {
         return selectOne(OAuth2ClientDO::getClientId, clientId);
     }

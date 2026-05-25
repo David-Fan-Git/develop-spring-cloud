@@ -7,9 +7,19 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Lazy;
 
+/**
+ * Tenant Package Application Service Configuration 配置类。
+ */
 @Configuration
 public class TenantPackageApplicationServiceConfiguration {
 
+    /**
+     * 执行 tenant Package Application Service 对应的业务操作。
+     *
+     * @param tenantPackageMapper tenantPackageMapper 参数
+     * @param tenantUseCase tenantUseCase 参数
+     * @return 处理结果
+     */
     @Bean
     public TenantPackageApplicationService tenantPackageApplicationService(
             TenantPackageMapper tenantPackageMapper,

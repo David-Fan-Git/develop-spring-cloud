@@ -11,10 +11,19 @@ import java.util.Objects;
 
 import static com.develop.mvp.pk.module.system.enums.ErrorCodeConstants.USER_PASSWORD_FAILED;
 
+/**
+ * Raw Password 值对象。
+ */
 public final class RawPassword {
 
     private final String rawValue;
 
+    /**
+     * 创建 RawPassword 实例。
+     *
+     * @param rawValue rawValue 参数
+     * @param validateLength validateLength 参数
+     */
     private RawPassword(String rawValue, boolean validateLength) {
         if (rawValue == null || (validateLength && rawValue.length() < 6)) {
             throw new ServiceException(USER_PASSWORD_FAILED.getCode(), "密码长度不能小于6位");
@@ -22,10 +31,22 @@ public final class RawPassword {
         this.rawValue = rawValue;
     }
 
+    /**
+     * 执行 of 对应的业务操作。
+     *
+     * @param rawValue rawValue 参数
+     * @return 处理结果
+     */
     public static RawPassword of(String rawValue) {
         return new RawPassword(rawValue, true);
     }
 
+    /**
+     * 执行 for Verification 对应的业务操作。
+     *
+     * @param rawValue rawValue 参数
+     * @return 处理结果
+     */
     public static RawPassword forVerification(String rawValue) {
         return new RawPassword(rawValue, false);
     }
@@ -35,6 +56,12 @@ public final class RawPassword {
         return rawValue;
     }
 
+    /**
+     * 执行 equals 对应的业务操作。
+     *
+     * @param o o 参数
+     * @return 处理结果
+     */
     @Override
     public boolean equals(Object o) {
         if (this == o) return true;
@@ -42,6 +69,11 @@ public final class RawPassword {
         return rawValue.equals(that.rawValue);
     }
 
+    /**
+     * 判断 hash Code 对应的条件是否成立。
+     *
+     * @return 处理结果
+     */
     @Override
     public int hashCode() {
         return Objects.hash(rawValue);

@@ -27,6 +27,9 @@ import java.util.List;
 import static com.develop.mvp.pk.framework.apilog.core.enums.OperateTypeEnum.EXPORT;
 import static com.develop.mvp.pk.framework.common.pojo.CommonResult.success;
 
+/**
+ * Sms Template Controller 控制器。
+ */
 @Tag(name = "管理后台 - 短信模板")
 @RestController
 @RequestMapping("/system/sms-template")
@@ -37,6 +40,12 @@ public class SmsTemplateController {
     @Resource
     private SmsUseCase smsSendService;
 
+    /**
+     * 创建 create Sms Template 对应的数据。
+     *
+     * @param createReqVO createReqVO 参数
+     * @return 处理结果
+     */
     @PostMapping("/create")
     @Operation(summary = "创建短信模板")
     @PreAuthorize("@ss.hasPermission('system:sms-template:create')")
@@ -44,6 +53,12 @@ public class SmsTemplateController {
         return success(smsTemplateService.createSmsTemplate(createReqVO));
     }
 
+    /**
+     * 更新 update Sms Template 对应的数据。
+     *
+     * @param updateReqVO updateReqVO 参数
+     * @return 处理结果
+     */
     @PutMapping("/update")
     @Operation(summary = "更新短信模板")
     @PreAuthorize("@ss.hasPermission('system:sms-template:update')")
@@ -52,6 +67,12 @@ public class SmsTemplateController {
         return success(true);
     }
 
+    /**
+     * 删除 delete Sms Template 对应的数据。
+     *
+     * @param id id 参数
+     * @return 处理结果
+     */
     @DeleteMapping("/delete")
     @Operation(summary = "删除短信模板")
     @Parameter(name = "id", description = "编号", required = true)
@@ -61,6 +82,12 @@ public class SmsTemplateController {
         return success(true);
     }
 
+    /**
+     * 删除 delete Sms Template List 对应的数据。
+     *
+     * @param ids ids 参数
+     * @return 处理结果
+     */
     @DeleteMapping("/delete-list")
     @Parameter(name = "ids", description = "编号列表", required = true)
     @Operation(summary = "批量删除短信模板")
@@ -70,6 +97,12 @@ public class SmsTemplateController {
         return success(true);
     }
 
+    /**
+     * 查询 get Sms Template 对应的数据。
+     *
+     * @param id id 参数
+     * @return 处理结果
+     */
     @GetMapping("/get")
     @Operation(summary = "获得短信模板")
     @Parameter(name = "id", description = "编号", required = true, example = "1024")
@@ -79,6 +112,12 @@ public class SmsTemplateController {
         return success(BeanUtils.toBean(template, SmsTemplateRespVO.class));
     }
 
+    /**
+     * 查询 get Sms Template Page 对应的数据。
+     *
+     * @param pageVO pageVO 参数
+     * @return 处理结果
+     */
     @GetMapping("/page")
     @Operation(summary = "获得短信模板分页")
     @PreAuthorize("@ss.hasPermission('system:sms-template:query')")
@@ -87,6 +126,12 @@ public class SmsTemplateController {
         return success(BeanUtils.toBean(pageResult, SmsTemplateRespVO.class));
     }
 
+    /**
+     * 执行 export Sms Template Excel 对应的业务操作。
+     *
+     * @param exportReqVO exportReqVO 参数
+     * @param response response 参数
+     */
     @GetMapping("/export-excel")
     @Operation(summary = "导出短信模板 Excel")
     @PreAuthorize("@ss.hasPermission('system:sms-template:export')")
@@ -100,6 +145,12 @@ public class SmsTemplateController {
                 BeanUtils.toBean(list, SmsTemplateRespVO.class));
     }
 
+    /**
+     * 发送 send Sms 对应的消息。
+     *
+     * @param sendReqVO sendReqVO 参数
+     * @return 处理结果
+     */
     @PostMapping("/send-sms")
     @Operation(summary = "发送短信")
     @PreAuthorize("@ss.hasPermission('system:sms-template:send-sms')")

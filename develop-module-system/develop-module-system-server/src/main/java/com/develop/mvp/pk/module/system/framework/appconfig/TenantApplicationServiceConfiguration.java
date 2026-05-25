@@ -14,9 +14,26 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
+/**
+ * Tenant Application Service Configuration 配置类。
+ */
 @Configuration
 public class TenantApplicationServiceConfiguration {
 
+    /**
+     * 执行 tenant Application Service 对应的业务操作。
+     *
+     * @param tenantRepository tenantRepository 参数
+     * @param uniquenessChecker uniquenessChecker 参数
+     * @param eventPublisher eventPublisher 参数
+     * @param tenantPackageService tenantPackageService 参数
+     * @param adminUserService adminUserService 参数
+     * @param roleService roleService 参数
+     * @param permissionService permissionService 参数
+     * @param menuService menuService 参数
+     * @param tenantProperties tenantProperties 参数
+     * @return 处理结果
+     */
     @Bean
     public TenantApplicationService tenantApplicationService(
             TenantRepository tenantRepository,

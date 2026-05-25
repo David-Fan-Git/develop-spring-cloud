@@ -3,6 +3,9 @@ package com.develop.mvp.pk.module.system.controller.admin.permission.vo.menu;
 import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.Data;
 
+/**
+ * Menu Simple Resp VO 接口视图对象。
+ */
 @Schema(description = "管理后台 - 菜单精简信息 Response VO")
 @Data
 public class MenuSimpleRespVO {

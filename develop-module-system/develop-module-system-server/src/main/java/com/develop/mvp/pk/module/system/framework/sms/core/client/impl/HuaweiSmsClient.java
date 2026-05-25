@@ -42,6 +42,11 @@ public class HuaweiSmsClient extends AbstractSmsClient {
 
     private static final String RESPONSE_CODE_SUCCESS = "000000";
 
+    /**
+     * 创建 HuaweiSmsClient 实例。
+     *
+     * @param properties properties 参数
+     */
     public HuaweiSmsClient(SmsChannelProperties properties) {
         super(properties);
         Assert.notEmpty(properties.getApiKey(), "apiKey 不能为空");
@@ -65,14 +70,33 @@ public class HuaweiSmsClient extends AbstractSmsClient {
         Assert.isTrue(keys.length == 2, "华为云短信 apiKey 配置格式错误，请配置 为[accessKeyId sender]");
     }
 
+    /**
+     * 查询 get Access Key 对应的数据。
+     *
+     * @return 处理结果
+     */
     private String getAccessKey() {
         return StrUtil.subBefore(properties.getApiKey(), " ", true);
     }
 
+    /**
+     * 查询 get Sender 对应的数据。
+     *
+     * @return 处理结果
+     */
     private String getSender() {
         return StrUtil.subAfter(properties.getApiKey(), " ", true);
     }
 
+    /**
+     * 发送 send Sms 对应的消息。
+     *
+     * @param sendLogId sendLogId 参数
+     * @param mobile mobile 参数
+     * @param apiTemplateId apiTemplateId 参数
+     * @param templateParams templateParams 参数
+     * @return 处理结果
+     */
     @Override
     public SmsSendRespDTO sendSms(Long sendLogId, String mobile, String apiTemplateId,
                                   List<KeyValue<String, Object>> templateParams) throws Throwable {
@@ -130,6 +154,12 @@ public class HuaweiSmsClient extends AbstractSmsClient {
         return JSONUtil.parseObj(responseBody);
     }
 
+    /**
+     * 执行 parse Sms Receive Status 对应的业务操作。
+     *
+     * @param requestBody requestBody 参数
+     * @return 处理结果
+     */
     @Override
     public List<SmsReceiveRespDTO> parseSmsReceiveStatus(String requestBody) {
         Map<String, String> params = HttpUtil.decodeParamMap(requestBody, StandardCharsets.UTF_8);
@@ -144,6 +174,12 @@ public class HuaweiSmsClient extends AbstractSmsClient {
                 .setLogId(Long.valueOf(params.get("extend")))); // 用户序列号
     }
 
+    /**
+     * 查询 get Sms Template 对应的数据。
+     *
+     * @param apiTemplateId apiTemplateId 参数
+     * @return 处理结果
+     */
     @Override
     public SmsTemplateRespDTO getSmsTemplate(String apiTemplateId) throws Throwable {
         // 华为短信模板查询和发送短信，是不同的两套 key 和 secret，与阿里、腾讯的区别较大，这里模板查询校验暂不实现
@@ -153,6 +189,13 @@ public class HuaweiSmsClient extends AbstractSmsClient {
                 .setAuditStatus(SmsTemplateAuditStatusEnum.SUCCESS.getStatus()).setAuditReason(null);
     }
 
+    /**
+     * 执行 append To Body 对应的业务操作。
+     *
+     * @param body body 参数
+     * @param key key 参数
+     * @param value value 参数
+     */
     private static void appendToBody(StringBuilder body, String key, String value) {
         if (StrUtil.isNotEmpty(value)) {
             body.append(key).append(HttpUtils.encodeUtf8(value));

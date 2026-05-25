@@ -16,9 +16,26 @@ import org.springframework.context.annotation.Lazy;
 
 import java.util.Optional;
 
+/**
+ * OAuth2 Application Service Configuration 配置类。
+ */
 @Configuration
 public class OAuth2ApplicationServiceConfiguration {
 
+    /**
+     * 执行 o Auth2 Application Service 对应的业务操作。
+     *
+     * @param oauth2ClientMapper oauth2ClientMapper 参数
+     * @param oauth2AccessTokenMapper oauth2AccessTokenMapper 参数
+     * @param oauth2RefreshTokenMapper oauth2RefreshTokenMapper 参数
+     * @param oauth2AccessTokenRedisDAO oauth2AccessTokenRedisDAO 参数
+     * @param oauth2CodeMapper oauth2CodeMapper 参数
+     * @param oauth2ApproveMapper oauth2ApproveMapper 参数
+     * @param adminUserService adminUserService 参数
+     * @param adminAuthService adminAuthService 参数
+     * @param tokenRepoOpt tokenRepoOpt 参数
+     * @return 处理结果
+     */
     @Bean
     public OAuth2ApplicationService oAuth2ApplicationService(
             OAuth2ClientMapper oauth2ClientMapper,

@@ -24,6 +24,9 @@ import java.util.stream.Collectors;
 import static com.develop.mvp.pk.framework.common.exception.util.ServiceExceptionUtil.exception;
 import static com.develop.mvp.pk.module.system.enums.ErrorCodeConstants.*;
 
+/**
+ * User Application Service 应用服务。
+ */
 public class UserApplicationService implements UserUseCase {
 
     private final UserRepository userRepository;
@@ -33,6 +36,16 @@ public class UserApplicationService implements UserUseCase {
     private final DeptUseCase deptUseCase;
     private final DeptUseCase postUseCase;
 
+    /**
+     * 创建 UserApplicationService 实例。
+     *
+     * @param userRepository userRepository 参数
+     * @param passwordEncoder passwordEncoder 参数
+     * @param uniquenessChecker uniquenessChecker 参数
+     * @param eventPublisher eventPublisher 参数
+     * @param deptUseCase deptUseCase 参数
+     * @param postUseCase postUseCase 参数
+     */
     public UserApplicationService(UserRepository userRepository, PasswordEncoder passwordEncoder,
                                    UserUniquenessChecker uniquenessChecker,
                                    DomainEventPublisher eventPublisher,
@@ -45,6 +58,23 @@ public class UserApplicationService implements UserUseCase {
         this.postUseCase = postUseCase;
     }
 
+    /**
+     * 创建 create User 对应的数据。
+     *
+     * @param id id 参数
+     * @param username username 参数
+     * @param rawPassword rawPassword 参数
+     * @param tenantId tenantId 参数
+     * @param deptId deptId 参数
+     * @param email email 参数
+     * @param mobile mobile 参数
+     * @param nickname nickname 参数
+     * @param avatar avatar 参数
+     * @param sex sex 参数
+     * @param remark remark 参数
+     * @param postIds postIds 参数
+     * @return 处理结果
+     */
     @Transactional
     public Long createUser(Long id, String username, String rawPassword, Long tenantId,
                             Long deptId, String email, String mobile,
@@ -69,6 +99,20 @@ public class UserApplicationService implements UserUseCase {
         return user.id().value();
     }
 
+    /**
+     * 更新 update User 对应的数据。
+     *
+     * @param id id 参数
+     * @param username username 参数
+     * @param email email 参数
+     * @param mobile mobile 参数
+     * @param nickname nickname 参数
+     * @param avatar avatar 参数
+     * @param sex sex 参数
+     * @param remark remark 参数
+     * @param deptId deptId 参数
+     * @param postIds postIds 参数
+     */
     @Transactional
     public void updateUser(Long id, String username, String email, String mobile,
                             String nickname, String avatar, Integer sex, String remark,
@@ -88,6 +132,12 @@ public class UserApplicationService implements UserUseCase {
         publishEvents(user);
     }
 
+    /**
+     * 更新 update User Status 对应的数据。
+     *
+     * @param id id 参数
+     * @param statusCode statusCode 参数
+     */
     @Transactional
     public void updateUserStatus(Long id, Integer statusCode) {
         User user = findExistingUser(id);
@@ -101,6 +151,13 @@ public class UserApplicationService implements UserUseCase {
         publishEvents(user);
     }
 
+    /**
+     * 更新 change Password 对应的数据。
+     *
+     * @param id id 参数
+     * @param oldRawPassword oldRawPassword 参数
+     * @param newRawPassword newRawPassword 参数
+     */
     @Transactional
     public void changePassword(Long id, String oldRawPassword, String newRawPassword) {
         User user = findExistingUser(id);
@@ -110,6 +167,12 @@ public class UserApplicationService implements UserUseCase {
         publishEvents(user);
     }
 
+    /**
+     * 更新 reset Password 对应的数据。
+     *
+     * @param id id 参数
+     * @param newRawPassword newRawPassword 参数
+     */
     @Transactional
     public void resetPassword(Long id, String newRawPassword) {
         User user = findExistingUser(id);
@@ -118,6 +181,17 @@ public class UserApplicationService implements UserUseCase {
         publishEvents(user);
     }
 
+    /**
+     * 更新 update Profile 对应的数据。
+     *
+     * @param id id 参数
+     * @param email email 参数
+     * @param mobile mobile 参数
+     * @param nickname nickname 参数
+     * @param avatar avatar 参数
+     * @param sex sex 参数
+     * @param remark remark 参数
+     */
     @Transactional
     public void updateProfile(Long id, String email, String mobile,
                                String nickname, String avatar, Integer sex, String remark) {
@@ -130,6 +204,12 @@ public class UserApplicationService implements UserUseCase {
         publishEvents(user);
     }
 
+    /**
+     * 执行 record Login 对应的业务操作。
+     *
+     * @param id id 参数
+     * @param loginIp loginIp 参数
+     */
     @Transactional
     public void recordLogin(Long id, String loginIp) {
         User user = findExistingUser(id);
@@ -138,6 +218,11 @@ public class UserApplicationService implements UserUseCase {
         publishEvents(user);
     }
 
+    /**
+     * 删除 delete User 对应的数据。
+     *
+     * @param id id 参数
+     */
     @Transactional
     public void deleteUser(Long id) {
         User user = findExistingUser(id);
@@ -146,6 +231,11 @@ public class UserApplicationService implements UserUseCase {
         publishEvents(user);
     }
 
+    /**
+     * 删除 delete User List 对应的数据。
+     *
+     * @param ids ids 参数
+     */
     @Transactional
     public void deleteUserList(List<Long> ids) {
         for (Long id : ids) {
@@ -158,38 +248,91 @@ public class UserApplicationService implements UserUseCase {
 
     // ── 查询 ──
 
+    /**
+     * 查询 get User 对应的数据。
+     *
+     * @param id id 参数
+     * @return 处理结果
+     */
     public User getUser(Long id) {
         return userRepository.findById(UserId.of(id));
     }
 
+    /**
+     * 查询 get User By Username 对应的数据。
+     *
+     * @param username username 参数
+     * @return 处理结果
+     */
     public User getUserByUsername(String username) {
         return userRepository.findByUsername(Username.of(username)).orElse(null);
     }
 
+    /**
+     * 查询 get User Page 对应的数据。
+     *
+     * @param query query 参数
+     * @return 处理结果
+     */
     public PageResult<User> getUserPage(UserPageQuery query) {
         return userRepository.findPage(query);
     }
 
+    /**
+     * 查询 get User List 对应的数据。
+     *
+     * @param ids ids 参数
+     * @return 处理结果
+     */
     public List<User> getUserList(Collection<Long> ids) {
         return userRepository.findByIds(ids.stream().map(UserId::of).collect(Collectors.toList()));
     }
 
+    /**
+     * 查询 get User List By Dept Ids 对应的数据。
+     *
+     * @param deptIds deptIds 参数
+     * @return 处理结果
+     */
     public List<User> getUserListByDeptIds(Collection<Long> deptIds) {
         return userRepository.findByDeptIds(deptIds);
     }
 
+    /**
+     * 查询 get User List By Post Ids 对应的数据。
+     *
+     * @param postIds postIds 参数
+     * @return 处理结果
+     */
     public List<User> getUserListByPostIds(Collection<Long> postIds) {
         return userRepository.findByPostIds(postIds);
     }
 
+    /**
+     * 查询 get User List By Status 对应的数据。
+     *
+     * @param status status 参数
+     * @return 处理结果
+     */
     public List<User> getUserListByStatus(Integer status) {
         return userRepository.findByStatus(UserStatus.of(status));
     }
 
+    /**
+     * 查询 get User List By Nickname 对应的数据。
+     *
+     * @param nickname nickname 参数
+     * @return 处理结果
+     */
     public List<User> getUserListByNickname(String nickname) {
         return userRepository.findByNickname(nickname);
     }
 
+    /**
+     * 校验 validate User List 对应的业务规则。
+     *
+     * @param ids ids 参数
+     */
     public void validateUserList(Collection<Long> ids) {
         List<User> users = userRepository.findByIds(
                 ids.stream().map(UserId::of).collect(Collectors.toList()));
@@ -211,17 +354,35 @@ public class UserApplicationService implements UserUseCase {
         return deptIds;
     }
 
+    /**
+     * 查询 find Existing User 对应的数据。
+     *
+     * @param id id 参数
+     * @return 处理结果
+     */
     private User findExistingUser(Long id) {
         User user = userRepository.findById(UserId.of(id));
         if (user == null) throw exception(USER_NOT_EXISTS);
         return user;
     }
 
+    /**
+     * 校验 validate Dept And Posts 对应的业务规则。
+     *
+     * @param deptId deptId 参数
+     * @param postIds postIds 参数
+     */
     private void validateDeptAndPosts(Long deptId, Set<Long> postIds) {
         deptUseCase.validateDeptList(CollectionUtils.singleton(deptId));
         postUseCase.validatePostList(postIds);
     }
 
+    /**
+     * 执行 assert Username Unique 对应的业务操作。
+     *
+     * @param username username 参数
+     * @param excludeId excludeId 参数
+     */
     private void assertUsernameUnique(Username username, UserId excludeId) {
         Optional<User> existing = userRepository.findByUsername(username);
         if (existing.isPresent() && (excludeId == null || !existing.get().id().equals(excludeId))) {
@@ -229,6 +390,12 @@ public class UserApplicationService implements UserUseCase {
         }
     }
 
+    /**
+     * 执行 assert Email Unique 对应的业务操作。
+     *
+     * @param email email 参数
+     * @param excludeId excludeId 参数
+     */
     private void assertEmailUnique(Email email, UserId excludeId) {
         if (!email.isPresent()) return;
         Optional<User> existing = userRepository.findByEmail(email);
@@ -237,6 +404,12 @@ public class UserApplicationService implements UserUseCase {
         }
     }
 
+    /**
+     * 执行 assert Mobile Unique 对应的业务操作。
+     *
+     * @param mobile mobile 参数
+     * @param excludeId excludeId 参数
+     */
     private void assertMobileUnique(Mobile mobile, UserId excludeId) {
         if (!mobile.isPresent()) return;
         Optional<User> existing = userRepository.findByMobile(mobile);
@@ -245,6 +418,11 @@ public class UserApplicationService implements UserUseCase {
         }
     }
 
+    /**
+     * 发送 publish Events 对应的消息。
+     *
+     * @param user user 参数
+     */
     private void publishEvents(User user) {
         for (DomainEvent event : user.pullEvents()) {
             eventPublisher.publish(event);

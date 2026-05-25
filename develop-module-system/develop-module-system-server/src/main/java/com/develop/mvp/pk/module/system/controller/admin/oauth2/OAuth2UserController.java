@@ -47,6 +47,11 @@ public class OAuth2UserController {
     @Resource
     private DeptUseCase postUseCase;
 
+    /**
+     * 查询 get User Info 对应的数据。
+     *
+     * @return 处理结果
+     */
     @GetMapping("/get")
     @Operation(summary = "获得用户基本信息")
     @PreAuthorize("@ss.hasScope('user.read')") //
@@ -67,6 +72,12 @@ public class OAuth2UserController {
         return success(resp);
     }
 
+    /**
+     * 更新 update User Info 对应的数据。
+     *
+     * @param reqVO reqVO 参数
+     * @return 处理结果
+     */
     @PutMapping("/update")
     @Operation(summary = "更新用户基本信息")
     @PreAuthorize("@ss.hasScope('user.write')")

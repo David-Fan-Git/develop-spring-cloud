@@ -7,6 +7,9 @@ import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Map;
 
+/**
+ * Mail Log Resp VO 接口视图对象。
+ */
 @Schema(description = "管理后台 - 邮件日志 Response VO")
 @Data
 public class MailLogRespVO {

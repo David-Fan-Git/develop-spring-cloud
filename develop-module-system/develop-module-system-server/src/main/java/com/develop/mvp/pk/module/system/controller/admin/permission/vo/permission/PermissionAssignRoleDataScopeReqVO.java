@@ -9,6 +9,9 @@ import jakarta.validation.constraints.NotNull;
 import java.util.Collections;
 import java.util.Set;
 
+/**
+ * Permission Assign Role Data Scope Req VO 接口视图对象。
+ */
 @Schema(description = "管理后台 - 赋予角色数据权限 Request VO")
 @Data
 public class PermissionAssignRoleDataScopeReqVO {

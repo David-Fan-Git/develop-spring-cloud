@@ -6,7 +6,16 @@ package com.develop.mvp.pk.module.system.domain.user.event;
 
 import java.time.LocalDateTime;
 
+/**
+ * User Deleted Event 领域事件。
+ */
 public record UserDeletedEvent(Long userId, String username, LocalDateTime occurredAt) implements DomainEvent {
+    /**
+     * 创建 UserDeletedEvent 实例。
+     *
+     * @param userId userId 参数
+     * @param username username 参数
+     */
     public UserDeletedEvent(Long userId, String username) {
         this(userId, username, LocalDateTime.now());
     }

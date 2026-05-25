@@ -23,11 +23,22 @@ public class AdminUserParseFunction implements IParseFunction {
     @Resource
     private AdminUserUseCase adminUserService;
 
+    /**
+     * 执行 function Name 对应的业务操作。
+     *
+     * @return 处理结果
+     */
     @Override
     public String functionName() {
         return NAME;
     }
 
+    /**
+     * 执行 apply 对应的业务操作。
+     *
+     * @param value value 参数
+     * @return 处理结果
+     */
     @Override
     public String apply(Object value) {
         if (StrUtil.isEmptyIfStr(value)) {

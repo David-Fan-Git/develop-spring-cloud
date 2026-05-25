@@ -10,6 +10,9 @@ import lombok.Data;
 
 import java.time.LocalDateTime;
 
+/**
+ * Post Resp VO 接口视图对象。
+ */
 @Schema(description = "管理后台 - 岗位信息 Response VO")
 @Data
 @ExcelIgnoreUnannotated

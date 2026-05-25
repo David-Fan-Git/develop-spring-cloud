@@ -15,6 +15,11 @@ import org.springframework.context.annotation.Configuration;
 @EnableConfigurationProperties(SmsCodeProperties.class)
 public class SmsConfiguration {
 
+    /**
+     * 执行 sms Client Factory 对应的业务操作。
+     *
+     * @return 处理结果
+     */
     @Bean
     public SmsClientFactory smsClientFactory() {
         return new SmsClientFactoryImpl();

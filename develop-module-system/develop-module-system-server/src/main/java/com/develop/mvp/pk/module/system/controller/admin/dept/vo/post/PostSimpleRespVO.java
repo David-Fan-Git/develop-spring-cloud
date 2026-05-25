@@ -4,6 +4,9 @@ import cn.idev.excel.annotation.ExcelProperty;
 import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.Data;
 
+/**
+ * Post Simple Resp VO 接口视图对象。
+ */
 @Schema(description = "管理后台 - 岗位信息的精简 Response VO")
 @Data
 public class PostSimpleRespVO {

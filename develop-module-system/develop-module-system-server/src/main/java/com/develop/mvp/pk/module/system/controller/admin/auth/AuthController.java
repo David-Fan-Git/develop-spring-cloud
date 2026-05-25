@@ -40,6 +40,9 @@ import static com.develop.mvp.pk.framework.common.pojo.CommonResult.success;
 import static com.develop.mvp.pk.framework.common.util.collection.CollectionUtils.convertSet;
 import static com.develop.mvp.pk.framework.security.core.util.SecurityFrameworkUtils.getLoginUserId;
 
+/**
+ * Auth Controller 控制器。
+ */
 @Tag(name = "管理后台 - 认证")
 @RestController
 @RequestMapping("/system/auth")
@@ -63,6 +66,12 @@ public class AuthController {
     @Resource
     private SecurityProperties securityProperties;
 
+    /**
+     * 处理 login 对应的认证流程。
+     *
+     * @param reqVO reqVO 参数
+     * @return 处理结果
+     */
     @PostMapping("/login")
     @PermitAll
     @Operation(summary = "使用账号密码登录")
@@ -70,6 +79,12 @@ public class AuthController {
         return success(authService.login(reqVO));
     }
 
+    /**
+     * 处理 logout 对应的认证流程。
+     *
+     * @param request request 参数
+     * @return 处理结果
+     */
     @PostMapping("/logout")
     @PermitAll
     @Operation(summary = "登出系统")
@@ -82,6 +97,12 @@ public class AuthController {
         return success(true);
     }
 
+    /**
+     * 执行 refresh Token 对应的业务操作。
+     *
+     * @param refreshToken refreshToken 参数
+     * @return 处理结果
+     */
     @PostMapping("/refresh-token")
     @PermitAll
     @Operation(summary = "刷新令牌")
@@ -90,6 +111,11 @@ public class AuthController {
         return success(authService.refreshToken(refreshToken));
     }
 
+    /**
+     * 查询 get Permission Info 对应的数据。
+     *
+     * @return 处理结果
+     */
     @GetMapping("/get-permission-info")
     @Operation(summary = "获取登录用户的权限信息")
     @DataPermission(enable = false) // 忽略数据权限，避免因为过滤，导致无法查询用户。类似：https://t.zsxq.com/LHnrp
@@ -117,6 +143,12 @@ public class AuthController {
         return success(AuthConvert.INSTANCE.convert(user, roles, menuList));
     }
 
+    /**
+     * 处理 register 对应的认证流程。
+     *
+     * @param registerReqVO registerReqVO 参数
+     * @return 处理结果
+     */
     @PostMapping("/register")
     @PermitAll
     @Operation(summary = "注册用户")
@@ -131,10 +163,22 @@ public class AuthController {
     @Operation(summary = "使用短信验证码登录")
     // 可按需开启限流：https://github.com/YunaiV/ruoyi-vue-pro/issues/851
     // @RateLimiter(time = 60, count = 6, keyResolver = ExpressionRateLimiterKeyResolver.class, keyArg = "#reqVO.mobile")
+    /**
+     * 执行 sms Login 对应的业务操作。
+     *
+     * @param reqVO reqVO 参数
+     * @return 处理结果
+     */
     public CommonResult<AuthLoginRespVO> smsLogin(@RequestBody @Valid AuthSmsLoginReqVO reqVO) {
         return success(authService.smsLogin(reqVO));
     }
 
+    /**
+     * 发送 send Login Sms Code 对应的消息。
+     *
+     * @param reqVO reqVO 参数
+     * @return 处理结果
+     */
     @PostMapping("/send-sms-code")
     @PermitAll
     @Operation(summary = "发送手机验证码")
@@ -143,6 +187,12 @@ public class AuthController {
         return success(true);
     }
 
+    /**
+     * 更新 reset Password 对应的数据。
+     *
+     * @param reqVO reqVO 参数
+     * @return 处理结果
+     */
     @PostMapping("/reset-password")
     @PermitAll
     @Operation(summary = "重置密码")
@@ -153,6 +203,13 @@ public class AuthController {
 
     // ========== 社交登录相关 ==========
 
+    /**
+     * 执行 social Login 对应的业务操作。
+     *
+     * @param type type 参数
+     * @param redirectUri redirectUri 参数
+     * @return 处理结果
+     */
     @GetMapping("/social-auth-redirect")
     @PermitAll
     @Operation(summary = "社交授权的跳转")
@@ -166,6 +223,12 @@ public class AuthController {
                 type, UserTypeEnum.ADMIN.getValue(), redirectUri));
     }
 
+    /**
+     * 执行 social Quick Login 对应的业务操作。
+     *
+     * @param reqVO reqVO 参数
+     * @return 处理结果
+     */
     @PostMapping("/social-login")
     @PermitAll
     @Operation(summary = "社交快捷登录，使用 code 授权码", description = "适合未登录的用户，但是社交账号已绑定用户")

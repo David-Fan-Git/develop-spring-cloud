@@ -11,6 +11,9 @@ import lombok.Data;
 import java.time.LocalDateTime;
 import java.util.Set;
 
+/**
+ * User Resp VO 接口视图对象。
+ */
 @Schema(description = "管理后台 - 用户信息 Response VO")
 @Data
 @ExcelIgnoreUnannotated

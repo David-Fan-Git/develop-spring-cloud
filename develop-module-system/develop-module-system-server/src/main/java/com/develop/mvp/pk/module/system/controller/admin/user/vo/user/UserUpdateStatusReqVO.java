@@ -8,6 +8,9 @@ import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.constraints.NotNull;
 import lombok.Data;
 
+/**
+ * User Update Status Req VO 接口视图对象。
+ */
 @Schema(description = "管理后台 - 用户更新状态 Request VO")
 @Data
 public class UserUpdateStatusReqVO {

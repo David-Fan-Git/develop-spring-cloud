@@ -29,6 +29,9 @@ import java.util.List;
 import static com.develop.mvp.pk.framework.apilog.core.enums.OperateTypeEnum.EXPORT;
 import static com.develop.mvp.pk.framework.common.pojo.CommonResult.success;
 
+/**
+ * Dict Data Controller 控制器。
+ */
 @Tag(name = "管理后台 - 字典数据")
 @RestController
 @RequestMapping("/system/dict-data")
@@ -38,6 +41,12 @@ public class DictDataController {
     @Resource
     private DictUseCase dictUseCase;
 
+    /**
+     * 创建 create Dict Data 对应的数据。
+     *
+     * @param createReqVO createReqVO 参数
+     * @return 处理结果
+     */
     @PostMapping("/create")
     @Operation(summary = "新增字典数据")
     @PreAuthorize("@ss.hasPermission('system:dict:create')")
@@ -46,6 +55,12 @@ public class DictDataController {
         return success(dictDataId);
     }
 
+    /**
+     * 更新 update Dict Data 对应的数据。
+     *
+     * @param updateReqVO updateReqVO 参数
+     * @return 处理结果
+     */
     @PutMapping("/update")
     @Operation(summary = "修改字典数据")
     @PreAuthorize("@ss.hasPermission('system:dict:update')")
@@ -54,6 +69,12 @@ public class DictDataController {
         return success(true);
     }
 
+    /**
+     * 删除 delete Dict Data 对应的数据。
+     *
+     * @param id id 参数
+     * @return 处理结果
+     */
     @DeleteMapping("/delete")
     @Operation(summary = "删除字典数据")
     @Parameter(name = "id", description = "编号", required = true, example = "1024")
@@ -63,6 +84,12 @@ public class DictDataController {
         return success(true);
     }
 
+    /**
+     * 删除 delete Dict Data List 对应的数据。
+     *
+     * @param ids ids 参数
+     * @return 处理结果
+     */
     @DeleteMapping("/delete-list")
     @Operation(summary = "批量删除字典数据")
     @Parameter(name = "ids", description = "编号列表", required = true)
@@ -75,12 +102,23 @@ public class DictDataController {
     @GetMapping(value = {"/list-all-simple", "simple-list"})
     @Operation(summary = "获得全部字典数据列表", description = "一般用于管理后台缓存字典数据在本地")
     // 无需添加权限认证，因为前端全局都需要
+    /**
+     * 查询 get Simple Dict Data List 对应的数据。
+     *
+     * @return 处理结果
+     */
     public CommonResult<List<DictDataSimpleRespVO>> getSimpleDictDataList() {
         List<DictDataDO> list = dictUseCase.getDictDataList(
                 CommonStatusEnum.ENABLE.getStatus(), null);
         return success(BeanUtils.toBean(list, DictDataSimpleRespVO.class));
     }
 
+    /**
+     * 查询 get Dict Type Page 对应的数据。
+     *
+     * @param pageReqVO pageReqVO 参数
+     * @return 处理结果
+     */
     @GetMapping("/page")
     @Operation(summary = "获得字典类型的分页")
     @PreAuthorize("@ss.hasPermission('system:dict:query')")
@@ -89,6 +127,12 @@ public class DictDataController {
         return success(BeanUtils.toBean(pageResult, DictDataRespVO.class));
     }
 
+    /**
+     * 查询 get Dict Data 对应的数据。
+     *
+     * @param id id 参数
+     * @return 处理结果
+     */
     @GetMapping(value = "/get")
     @Operation(summary = "/查询字典数据详细")
     @Parameter(name = "id", description = "编号", required = true, example = "1024")
@@ -98,6 +142,12 @@ public class DictDataController {
         return success(BeanUtils.toBean(dictData, DictDataRespVO.class));
     }
 
+    /**
+     * 执行 export 对应的业务操作。
+     *
+     * @param response response 参数
+     * @param exportReqVO exportReqVO 参数
+     */
     @GetMapping("/export-excel")
     @Operation(summary = "导出字典数据")
     @PreAuthorize("@ss.hasPermission('system:dict:export')")

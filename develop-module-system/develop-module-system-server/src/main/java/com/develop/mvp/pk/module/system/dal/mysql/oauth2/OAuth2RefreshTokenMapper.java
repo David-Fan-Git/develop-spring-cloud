@@ -10,14 +10,29 @@ import org.apache.ibatis.annotations.Param;
 
 import java.time.LocalDateTime;
 
+/**
+ * OAuth2 Refresh Token Mapper 持久化 Mapper。
+ */
 @Mapper
 public interface OAuth2RefreshTokenMapper extends BaseMapperX<OAuth2RefreshTokenDO> {
 
+    /**
+     * 删除 delete By Refresh Token 对应的数据。
+     *
+     * @param refreshToken refreshToken 参数
+     * @return 处理结果
+     */
     default int deleteByRefreshToken(String refreshToken) {
         return delete(new LambdaQueryWrapperX<OAuth2RefreshTokenDO>()
                 .eq(OAuth2RefreshTokenDO::getRefreshToken, refreshToken));
     }
 
+    /**
+     * 查询 select By Refresh Token 对应的数据。
+     *
+     * @param refreshToken refreshToken 参数
+     * @return 处理结果
+     */
     @TenantIgnore // 获取 token 的时候，需要忽略租户编号。原因是：一些场景下，可能不会传递 tenant-id 请求头，例如说文件上传、积木报表等等
     default OAuth2RefreshTokenDO selectByRefreshToken(String refreshToken) {
         return selectOne(OAuth2RefreshTokenDO::getRefreshToken, refreshToken);

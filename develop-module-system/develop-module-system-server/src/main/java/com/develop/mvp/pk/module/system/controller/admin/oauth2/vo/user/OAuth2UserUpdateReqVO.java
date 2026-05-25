@@ -9,6 +9,9 @@ import org.hibernate.validator.constraints.Length;
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.Size;
 
+/**
+ * OAuth2 User Update Req VO 接口视图对象。
+ */
 @Schema(description = "管理后台 - OAuth2 更新用户基本信息 Request VO")
 @Data
 @NoArgsConstructor

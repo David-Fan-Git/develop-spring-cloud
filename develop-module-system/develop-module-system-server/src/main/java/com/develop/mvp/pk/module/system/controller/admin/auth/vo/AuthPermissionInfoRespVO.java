@@ -9,6 +9,9 @@ import lombok.NoArgsConstructor;
 import java.util.List;
 import java.util.Set;
 
+/**
+ * Auth Permission Info Resp VO 接口视图对象。
+ */
 @Schema(description = "管理后台 - 登录用户的权限信息 Response VO，额外包括用户信息和角色列表")
 @Data
 @NoArgsConstructor
@@ -28,6 +31,9 @@ public class AuthPermissionInfoRespVO {
     @Schema(description = "菜单树", requiredMode = Schema.RequiredMode.REQUIRED)
     private List<MenuVO> menus;
 
+    /**
+     * User VO 接口视图对象。
+     */
     @Schema(description = "用户信息 VO")
     @Data
     @NoArgsConstructor
@@ -55,6 +61,9 @@ public class AuthPermissionInfoRespVO {
 
     }
 
+    /**
+     * Menu VO 接口视图对象。
+     */
     @Schema(description = "管理后台 - 登录用户的菜单信息 Response VO")
     @Data
     @NoArgsConstructor

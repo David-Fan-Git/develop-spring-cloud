@@ -29,6 +29,9 @@ import java.util.List;
 import static com.develop.mvp.pk.framework.apilog.core.enums.OperateTypeEnum.EXPORT;
 import static com.develop.mvp.pk.framework.common.pojo.CommonResult.success;
 
+/**
+ * Sms Log Controller 控制器。
+ */
 @Tag(name = "管理后台 - 短信日志")
 @RestController
 @RequestMapping("/system/sms-log")
@@ -38,6 +41,12 @@ public class SmsLogController {
     @Resource
     private SmsUseCase smsLogService;
 
+    /**
+     * 查询 get Sms Log Page 对应的数据。
+     *
+     * @param pageReqVO pageReqVO 参数
+     * @return 处理结果
+     */
     @GetMapping("/page")
     @Operation(summary = "获得短信日志分页")
     @PreAuthorize("@ss.hasPermission('system:sms-log:query')")
@@ -46,6 +55,12 @@ public class SmsLogController {
         return success(BeanUtils.toBean(pageResult, SmsLogRespVO.class));
     }
 
+    /**
+     * 查询 get Sms Log 对应的数据。
+     *
+     * @param id id 参数
+     * @return 处理结果
+     */
     @GetMapping("/get")
     @Operation(summary = "获得短信日志")
     @Parameter(name = "id", description = "编号", required = true, example = "1024")
@@ -55,6 +70,12 @@ public class SmsLogController {
         return success(BeanUtils.toBean(smsLog, SmsLogRespVO.class));
     }
 
+    /**
+     * 执行 export Sms Log Excel 对应的业务操作。
+     *
+     * @param exportReqVO exportReqVO 参数
+     * @param response response 参数
+     */
     @GetMapping("/export-excel")
     @Operation(summary = "导出短信日志 Excel")
     @PreAuthorize("@ss.hasPermission('system:sms-log:export')")

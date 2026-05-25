@@ -22,6 +22,9 @@ import java.util.List;
 
 import static com.develop.mvp.pk.framework.common.pojo.CommonResult.success;
 
+/**
+ * Sms Channel Controller 控制器。
+ */
 @Tag(name = "管理后台 - 短信渠道")
 @RestController
 @RequestMapping("system/sms-channel")
@@ -30,6 +33,12 @@ public class SmsChannelController {
     @Resource
     private SmsUseCase smsChannelService;
 
+    /**
+     * 创建 create Sms Channel 对应的数据。
+     *
+     * @param createReqVO createReqVO 参数
+     * @return 处理结果
+     */
     @PostMapping("/create")
     @Operation(summary = "创建短信渠道")
     @PreAuthorize("@ss.hasPermission('system:sms-channel:create')")
@@ -37,6 +46,12 @@ public class SmsChannelController {
         return success(smsChannelService.createSmsChannel(createReqVO));
     }
 
+    /**
+     * 更新 update Sms Channel 对应的数据。
+     *
+     * @param updateReqVO updateReqVO 参数
+     * @return 处理结果
+     */
     @PutMapping("/update")
     @Operation(summary = "更新短信渠道")
     @PreAuthorize("@ss.hasPermission('system:sms-channel:update')")
@@ -45,6 +60,12 @@ public class SmsChannelController {
         return success(true);
     }
 
+    /**
+     * 删除 delete Sms Channel 对应的数据。
+     *
+     * @param id id 参数
+     * @return 处理结果
+     */
     @DeleteMapping("/delete")
     @Operation(summary = "删除短信渠道")
     @Parameter(name = "id", description = "编号", required = true)
@@ -54,6 +75,12 @@ public class SmsChannelController {
         return success(true);
     }
 
+    /**
+     * 删除 delete Sms Channel List 对应的数据。
+     *
+     * @param ids ids 参数
+     * @return 处理结果
+     */
     @DeleteMapping("/delete-list")
     @Parameter(name = "ids", description = "编号列表", required = true)
     @Operation(summary = "批量删除短信渠道")
@@ -63,6 +90,12 @@ public class SmsChannelController {
         return success(true);
     }
 
+    /**
+     * 查询 get Sms Channel 对应的数据。
+     *
+     * @param id id 参数
+     * @return 处理结果
+     */
     @GetMapping("/get")
     @Operation(summary = "获得短信渠道")
     @Parameter(name = "id", description = "编号", required = true, example = "1024")
@@ -72,6 +105,12 @@ public class SmsChannelController {
         return success(BeanUtils.toBean(channel, SmsChannelRespVO.class));
     }
 
+    /**
+     * 查询 get Sms Channel Page 对应的数据。
+     *
+     * @param pageVO pageVO 参数
+     * @return 处理结果
+     */
     @GetMapping("/page")
     @Operation(summary = "获得短信渠道分页")
     @PreAuthorize("@ss.hasPermission('system:sms-channel:query')")
@@ -80,6 +119,11 @@ public class SmsChannelController {
         return success(BeanUtils.toBean(pageResult, SmsChannelRespVO.class));
     }
 
+    /**
+     * 查询 get Simple Sms Channel List 对应的数据。
+     *
+     * @return 处理结果
+     */
     @GetMapping({"/list-all-simple", "/simple-list"})
     @Operation(summary = "获得短信渠道精简列表", description = "包含被禁用的短信渠道")
     public CommonResult<List<SmsChannelSimpleRespVO>> getSimpleSmsChannelList() {

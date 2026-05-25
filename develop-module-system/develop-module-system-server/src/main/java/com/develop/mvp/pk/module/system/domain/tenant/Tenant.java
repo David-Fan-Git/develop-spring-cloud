@@ -14,6 +14,9 @@ import com.develop.mvp.pk.module.system.domain.user.event.DomainEvent;
 import java.time.LocalDateTime;
 import java.util.*;
 
+/**
+ * Tenant 领域模型。
+ */
 public final class Tenant {
 
     // ── 聚合根标识 ──
@@ -42,6 +45,25 @@ public final class Tenant {
     // ── 领域事件收集 ──
     private final List<DomainEvent> events = new ArrayList<>();
 
+    /**
+     * 创建 Tenant 实例。
+     *
+     * @param id id 参数
+     * @param name name 参数
+     * @param contactUserId contactUserId 参数
+     * @param contactName contactName 参数
+     * @param contactMobile contactMobile 参数
+     * @param status status 参数
+     * @param websites websites 参数
+     * @param packageRef packageRef 参数
+     * @param expireTime expireTime 参数
+     * @param accountCount accountCount 参数
+     * @param createTime createTime 参数
+     * @param updateTime updateTime 参数
+     * @param creator creator 参数
+     * @param updater updater 参数
+     * @param deleted deleted 参数
+     */
     Tenant(TenantId id, TenantName name, Long contactUserId, String contactName,
            String contactMobile, TenantStatus status, List<String> websites,
            TenantPackageRef packageRef, TenantExpireTime expireTime, Integer accountCount,
@@ -66,6 +88,9 @@ public final class Tenant {
 
     // ── 业务方法 ──
 
+    /**
+     * 执行 record Created 对应的业务操作。
+     */
     void recordCreated() {
         events.add(new TenantCreatedEvent(this.id.value(), this.name.value()));
     }
@@ -149,32 +174,133 @@ public final class Tenant {
 
     // ── 查询方法 ──
 
+    /**
+     * 执行 id 对应的业务操作。
+     *
+     * @return 处理结果
+     */
     public TenantId id() { return id; }
+    /**
+     * 执行 name 对应的业务操作。
+     *
+     * @return 处理结果
+     */
     public TenantName name() { return name; }
+    /**
+     * 执行 contact User Id 对应的业务操作。
+     *
+     * @return 处理结果
+     */
     public Long contactUserId() { return contactUserId; }
+    /**
+     * 执行 contact Name 对应的业务操作。
+     *
+     * @return 处理结果
+     */
     public String contactName() { return contactName; }
+    /**
+     * 执行 contact Mobile 对应的业务操作。
+     *
+     * @return 处理结果
+     */
     public String contactMobile() { return contactMobile; }
+    /**
+     * 执行 status 对应的业务操作。
+     *
+     * @return 处理结果
+     */
     public TenantStatus status() { return status; }
+    /**
+     * 执行 websites 对应的业务操作。
+     *
+     * @return 处理结果
+     */
     public List<String> websites() { return Collections.unmodifiableList(websites); }
+    /**
+     * 执行 package Ref 对应的业务操作。
+     *
+     * @return 处理结果
+     */
     public TenantPackageRef packageRef() { return packageRef; }
+    /**
+     * 执行 expire Time 对应的业务操作。
+     *
+     * @return 处理结果
+     */
     public TenantExpireTime expireTime() { return expireTime; }
+    /**
+     * 执行 account Count 对应的业务操作。
+     *
+     * @return 处理结果
+     */
     public Integer accountCount() { return accountCount; }
+    /**
+     * 创建 create Time 对应的数据。
+     *
+     * @return 处理结果
+     */
     public LocalDateTime createTime() { return createTime; }
+    /**
+     * 更新 update Time 对应的数据。
+     *
+     * @return 处理结果
+     */
     public LocalDateTime updateTime() { return updateTime; }
+    /**
+     * 执行 creator 对应的业务操作。
+     *
+     * @return 处理结果
+     */
     public String creator() { return creator; }
+    /**
+     * 更新 updater 对应的数据。
+     *
+     * @return 处理结果
+     */
     public String updater() { return updater; }
+    /**
+     * 删除 deleted 对应的数据。
+     *
+     * @return 处理结果
+     */
     public Boolean deleted() { return deleted; }
 
+    /**
+     * 判断 is Enabled 对应的条件是否成立。
+     *
+     * @return 处理结果
+     */
     public boolean isEnabled() { return status.isEnabled(); }
+    /**
+     * 判断 is Disabled 对应的条件是否成立。
+     *
+     * @return 处理结果
+     */
     public boolean isDisabled() { return status.isDisabled(); }
+    /**
+     * 判断 is Expired 对应的条件是否成立。
+     *
+     * @return 处理结果
+     */
     public boolean isExpired() { return expireTime.isExpired(); }
 
+    /**
+     * 执行 pull Events 对应的业务操作。
+     *
+     * @return 处理结果
+     */
     public List<DomainEvent> pullEvents() {
         List<DomainEvent> result = new ArrayList<>(events);
         events.clear();
         return result;
     }
 
+    /**
+     * 执行 equals 对应的业务操作。
+     *
+     * @param o o 参数
+     * @return 处理结果
+     */
     @Override
     public boolean equals(Object o) {
         if (this == o) return true;
@@ -182,9 +308,19 @@ public final class Tenant {
         return id.equals(that.id);
     }
 
+    /**
+     * 判断 hash Code 对应的条件是否成立。
+     *
+     * @return 处理结果
+     */
     @Override
     public int hashCode() { return Objects.hash(id); }
 
+    /**
+     * 执行 to String 对应的业务操作。
+     *
+     * @return 处理结果
+     */
     @Override
     public String toString() {
         return "Tenant{id=" + id + ", name=" + name + '}';

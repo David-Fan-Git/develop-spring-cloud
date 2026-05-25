@@ -7,6 +7,9 @@ import com.develop.mvp.pk.module.system.application.member.port.outbound.MemberU
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
+/**
+ * Reflective Member User Gateway 类。
+ */
 @Component
 public class ReflectiveMemberUserGateway implements MemberUserGateway {
 
@@ -15,11 +18,22 @@ public class ReflectiveMemberUserGateway implements MemberUserGateway {
 
     private volatile Object memberUserApi;
 
+    /**
+     * 查询 get Member User 对应的数据。
+     *
+     * @param id id 参数
+     * @return 处理结果
+     */
     @Override
     public Object getMemberUser(Long id) {
         return ReflectUtil.invoke(getMemberUserApi(), "getUser", id);
     }
 
+    /**
+     * 查询 get Member User Api 对应的数据。
+     *
+     * @return 处理结果
+     */
     private Object getMemberUserApi() {
         if (memberUserApi == null) {
             memberUserApi = SpringUtil.getBean(ClassUtil.loadClass(String.format("%s.module.member.api.user.MemberUserApi", basePackage)));

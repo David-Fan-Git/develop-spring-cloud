@@ -8,9 +8,20 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Lazy;
 
+/**
+ * Menu Application Service Configuration 配置类。
+ */
 @Configuration
 public class MenuApplicationServiceConfiguration {
 
+    /**
+     * 执行 menu Application Service 对应的业务操作。
+     *
+     * @param menuMapper menuMapper 参数
+     * @param permissionUseCase permissionUseCase 参数
+     * @param tenantUseCase tenantUseCase 参数
+     * @return 处理结果
+     */
     @Bean
     public MenuApplicationService menuApplicationService(
             MenuMapper menuMapper,

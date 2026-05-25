@@ -13,10 +13,20 @@ import org.springframework.security.config.annotation.web.configurers.AuthorizeH
 @Configuration(proxyBeanMethods = false, value = "systemSecurityConfiguration")
 public class SecurityConfiguration {
 
+    /**
+     * 处理 authorize Requests Customizer 对应的认证流程。
+     *
+     * @return 处理结果
+     */
     @Bean("systemAuthorizeRequestsCustomizer")
     public AuthorizeRequestsCustomizer authorizeRequestsCustomizer() {
         return new AuthorizeRequestsCustomizer() {
 
+            /**
+             * 执行 customize 对应的业务操作。
+             *
+             * @param registry registry 参数
+             */
             @Override
             public void customize(AuthorizeHttpRequestsConfigurer<HttpSecurity>.AuthorizationManagerRequestMatcherRegistry registry) {
                 // TODO David：这个每个项目都需要重复配置，得捉摸有没通用的方案

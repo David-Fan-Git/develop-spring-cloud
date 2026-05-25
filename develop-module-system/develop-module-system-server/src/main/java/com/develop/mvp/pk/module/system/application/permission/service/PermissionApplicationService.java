@@ -35,6 +35,9 @@ import java.util.function.Supplier;
 import static com.develop.mvp.pk.framework.common.util.collection.CollectionUtils.convertSet;
 import static com.develop.mvp.pk.framework.common.util.json.JsonUtils.toJsonString;
 
+/**
+ * Permission Application Service 应用服务。
+ */
 @Slf4j
 public class PermissionApplicationService implements PermissionUseCase {
 
@@ -45,6 +48,16 @@ public class PermissionApplicationService implements PermissionUseCase {
     private final DeptUseCase deptUseCase;
     private final AdminUserUseCase userService;
 
+    /**
+     * 创建 PermissionApplicationService 实例。
+     *
+     * @param userRoleRepository userRoleRepository 参数
+     * @param roleMenuRepository roleMenuRepository 参数
+     * @param roleService roleService 参数
+     * @param menuService menuService 参数
+     * @param deptUseCase deptUseCase 参数
+     * @param userService userService 参数
+     */
     public PermissionApplicationService(UserRoleRepository userRoleRepository,
                                         RoleMenuRepository roleMenuRepository,
                                         @Lazy RoleUseCase roleService,
@@ -59,6 +72,13 @@ public class PermissionApplicationService implements PermissionUseCase {
         this.userService = userService;
     }
 
+    /**
+     * 判断 has Any Permissions 对应的条件是否成立。
+     *
+     * @param userId userId 参数
+     * @param permissions permissions 参数
+     * @return 处理结果
+     */
     @Override
     public boolean hasAnyPermissions(Long userId, String... permissions) {
         if (ArrayUtil.isEmpty(permissions)) {
@@ -76,6 +96,13 @@ public class PermissionApplicationService implements PermissionUseCase {
         return roleService.hasAnySuperAdmin(convertSet(roles, RoleDO::getId));
     }
 
+    /**
+     * 判断 has Any Permission 对应的条件是否成立。
+     *
+     * @param roles roles 参数
+     * @param permission permission 参数
+     * @return 处理结果
+     */
     private boolean hasAnyPermission(List<RoleDO> roles, String permission) {
         List<Long> menuIds = menuService.getMenuIdListByPermissionFromCache(permission);
         if (CollUtil.isEmpty(menuIds)) {
@@ -91,6 +118,13 @@ public class PermissionApplicationService implements PermissionUseCase {
         return false;
     }
 
+    /**
+     * 判断 has Any Roles 对应的条件是否成立。
+     *
+     * @param userId userId 参数
+     * @param roles roles 参数
+     * @return 处理结果
+     */
     @Override
     public boolean hasAnyRoles(Long userId, String... roles) {
         if (ArrayUtil.isEmpty(roles)) {
@@ -104,6 +138,12 @@ public class PermissionApplicationService implements PermissionUseCase {
         return CollUtil.containsAny(userRoles, Sets.newHashSet(roles));
     }
 
+    /**
+     * 执行 assign Role Menu 对应的业务操作。
+     *
+     * @param roleId roleId 参数
+     * @param menuIds menuIds 参数
+     */
     @Override
     @DSTransactional
     @Caching(evict = {
@@ -114,6 +154,11 @@ public class PermissionApplicationService implements PermissionUseCase {
         roleMenuRepository.assign(roleId, menuIds);
     }
 
+    /**
+     * 处理 process Role Deleted 对应的业务逻辑。
+     *
+     * @param roleId roleId 参数
+     */
     @Override
     @Transactional(rollbackFor = Exception.class)
     @Caching(evict = {
@@ -125,17 +170,34 @@ public class PermissionApplicationService implements PermissionUseCase {
         roleMenuRepository.deleteByRoleId(roleId);
     }
 
+    /**
+     * 处理 process Menu Deleted 对应的业务逻辑。
+     *
+     * @param menuId menuId 参数
+     */
     @Override
     @CacheEvict(value = RedisKeyConstants.MENU_ROLE_ID_LIST, key = "#menuId")
     public void processMenuDeleted(Long menuId) {
         roleMenuRepository.deleteByMenuId(menuId);
     }
 
+    /**
+     * 查询 get Role Menu List By Role Id 对应的数据。
+     *
+     * @param roleId roleId 参数
+     * @return 处理结果
+     */
     @Override
     public Set<Long> getRoleMenuListByRoleId(Long roleId) {
         return getRoleMenuListByRoleId(Collections.singleton(roleId));
     }
 
+    /**
+     * 查询 get Role Menu List By Role Id 对应的数据。
+     *
+     * @param roleIds roleIds 参数
+     * @return 处理结果
+     */
     @Override
     public Set<Long> getRoleMenuListByRoleId(Collection<Long> roleIds) {
         if (CollUtil.isEmpty(roleIds)) {
@@ -147,27 +209,57 @@ public class PermissionApplicationService implements PermissionUseCase {
         return getRoleMenuIds(roleIds);
     }
 
+    /**
+     * 查询 get Role Menu Ids 对应的数据。
+     *
+     * @param roleId roleId 参数
+     * @return 处理结果
+     */
     @Override
     public Set<Long> getRoleMenuIds(Long roleId) {
         return roleMenuRepository.findByRoleId(roleId);
     }
 
+    /**
+     * 查询 get Role Menu Ids 对应的数据。
+     *
+     * @param roleIds roleIds 参数
+     * @return 处理结果
+     */
     @Override
     public Set<Long> getRoleMenuIds(Collection<Long> roleIds) {
         return roleMenuRepository.findByRoleIds(roleIds);
     }
 
+    /**
+     * 查询 get Menu Role Id List By Menu Id From Cache 对应的数据。
+     *
+     * @param menuId menuId 参数
+     * @return 处理结果
+     */
     @Override
     @Cacheable(value = RedisKeyConstants.MENU_ROLE_ID_LIST, key = "#menuId")
     public Set<Long> getMenuRoleIdListByMenuIdFromCache(Long menuId) {
         return getMenuRoleIds(menuId);
     }
 
+    /**
+     * 查询 get Menu Role Ids 对应的数据。
+     *
+     * @param menuId menuId 参数
+     * @return 处理结果
+     */
     @Override
     public Set<Long> getMenuRoleIds(Long menuId) {
         return roleMenuRepository.findByMenuId(menuId);
     }
 
+    /**
+     * 执行 assign User Role 对应的业务操作。
+     *
+     * @param userId userId 参数
+     * @param roleIds roleIds 参数
+     */
     @Override
     @DSTransactional
     @CacheEvict(value = RedisKeyConstants.USER_ROLE_ID_LIST, key = "#userId")
@@ -175,38 +267,79 @@ public class PermissionApplicationService implements PermissionUseCase {
         userRoleRepository.assign(userId, roleIds);
     }
 
+    /**
+     * 处理 process User Deleted 对应的业务逻辑。
+     *
+     * @param userId userId 参数
+     */
     @Override
     @CacheEvict(value = RedisKeyConstants.USER_ROLE_ID_LIST, key = "#userId")
     public void processUserDeleted(Long userId) {
         userRoleRepository.deleteByUserId(userId);
     }
 
+    /**
+     * 查询 get User Role Id List By User Id 对应的数据。
+     *
+     * @param userId userId 参数
+     * @return 处理结果
+     */
     @Override
     public Set<Long> getUserRoleIdListByUserId(Long userId) {
         return getUserRoleIds(userId);
     }
 
+    /**
+     * 查询 get User Role Id List By User Id From Cache 对应的数据。
+     *
+     * @param userId userId 参数
+     * @return 处理结果
+     */
     @Override
     @Cacheable(value = RedisKeyConstants.USER_ROLE_ID_LIST, key = "#userId")
     public Set<Long> getUserRoleIdListByUserIdFromCache(Long userId) {
         return getUserRoleIdListByUserId(userId);
     }
 
+    /**
+     * 查询 get User Role Ids 对应的数据。
+     *
+     * @param userId userId 参数
+     * @return 处理结果
+     */
     @Override
     public Set<Long> getUserRoleIds(Long userId) {
         return userRoleRepository.findByUserId(userId);
     }
 
+    /**
+     * 查询 get User Role Id List By Role Id 对应的数据。
+     *
+     * @param roleIds roleIds 参数
+     * @return 处理结果
+     */
     @Override
     public Set<Long> getUserRoleIdListByRoleId(Collection<Long> roleIds) {
         return getUserIdsByRoleIds(roleIds);
     }
 
+    /**
+     * 查询 get User Ids By Role Ids 对应的数据。
+     *
+     * @param roleIds roleIds 参数
+     * @return 处理结果
+     */
     @Override
     public Set<Long> getUserIdsByRoleIds(Collection<Long> roleIds) {
         return userRoleRepository.findByRoleIds(roleIds);
     }
 
+    /**
+     * 查询 get Enable User Role List By User Id From Cache 对应的数据。
+     *
+     * @param userId userId 参数
+     * @return 处理结果
+     */
     @Override
     @VisibleForTesting
     public List<RoleDO> getEnableUserRoleListByUserIdFromCache(Long userId) {
@@ -216,11 +349,24 @@ public class PermissionApplicationService implements PermissionUseCase {
         return roles;
     }
 
+    /**
+     * 执行 assign Role Data Scope 对应的业务操作。
+     *
+     * @param roleId roleId 参数
+     * @param dataScope dataScope 参数
+     * @param dataScopeDeptIds dataScopeDeptIds 参数
+     */
     @Override
     public void assignRoleDataScope(Long roleId, Integer dataScope, Set<Long> dataScopeDeptIds) {
         roleService.updateRoleDataScope(roleId, dataScope, dataScopeDeptIds);
     }
 
+    /**
+     * 查询 get Dept Data Permission 对应的数据。
+     *
+     * @param userId userId 参数
+     * @return 处理结果
+     */
     @Override
     @DataPermission(enable = false)
     public DeptDataPermissionRespDTO getDeptDataPermission(Long userId) {
@@ -266,6 +412,11 @@ public class PermissionApplicationService implements PermissionUseCase {
         return result;
     }
 
+    /**
+     * 查询 get Self 对应的数据。
+     *
+     * @return 处理结果
+     */
     private PermissionApplicationService getSelf() {
         return SpringUtil.getBean(getClass());
     }

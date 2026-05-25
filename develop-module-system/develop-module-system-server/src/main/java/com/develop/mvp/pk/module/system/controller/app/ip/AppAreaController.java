@@ -18,12 +18,20 @@ import java.util.List;
 
 import static com.develop.mvp.pk.framework.common.pojo.CommonResult.success;
 
+/**
+ * App Area Controller 控制器。
+ */
 @Tag(name = "用户 App - 地区")
 @RestController
 @RequestMapping("/system/area")
 @Validated
 public class AppAreaController {
 
+    /**
+     * 查询 get Area Tree 对应的数据。
+     *
+     * @return 处理结果
+     */
     @GetMapping("/tree")
     @Operation(summary = "获得地区树")
     @PermitAll

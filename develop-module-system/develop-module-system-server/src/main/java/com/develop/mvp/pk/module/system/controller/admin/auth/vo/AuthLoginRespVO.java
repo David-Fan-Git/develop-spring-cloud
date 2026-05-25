@@ -8,6 +8,9 @@ import lombok.NoArgsConstructor;
 
 import java.time.LocalDateTime;
 
+/**
+ * Auth Login Resp VO 接口视图对象。
+ */
 @Schema(description = "管理后台 - 登录 Response VO")
 @Data
 @NoArgsConstructor

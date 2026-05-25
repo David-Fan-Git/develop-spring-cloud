@@ -27,6 +27,9 @@ import java.util.List;
 import static com.develop.mvp.pk.framework.apilog.core.enums.OperateTypeEnum.EXPORT;
 import static com.develop.mvp.pk.framework.common.pojo.CommonResult.success;
 
+/**
+ * Login Log Controller 控制器。
+ */
 @Tag(name = "管理后台 - 登录日志")
 @RestController
 @RequestMapping("/system/login-log")
@@ -36,6 +39,12 @@ public class LoginLogController {
     @Resource
     private LoggerUseCase loggerUseCase;
 
+    /**
+     * 查询 get Login Log 对应的数据。
+     *
+     * @param id id 参数
+     * @return 处理结果
+     */
     @GetMapping("/get")
     @Operation(summary = "获得登录日志")
     @PreAuthorize("@ss.hasPermission('system:login-log:query')")
@@ -44,6 +53,12 @@ public class LoginLogController {
         return success(BeanUtils.toBean(loginLog, LoginLogRespVO.class));
     }
 
+    /**
+     * 查询 get Login Log Page 对应的数据。
+     *
+     * @param pageReqVO pageReqVO 参数
+     * @return 处理结果
+     */
     @GetMapping("/page")
     @Operation(summary = "获得登录日志分页列表")
     @PreAuthorize("@ss.hasPermission('system:login-log:query')")
@@ -52,6 +67,12 @@ public class LoginLogController {
         return success(BeanUtils.toBean(pageResult, LoginLogRespVO.class));
     }
 
+    /**
+     * 执行 export Login Log 对应的业务操作。
+     *
+     * @param response response 参数
+     * @param exportReqVO exportReqVO 参数
+     */
     @GetMapping("/export-excel")
     @Operation(summary = "导出登录日志 Excel")
     @PreAuthorize("@ss.hasPermission('system:login-log:export')")

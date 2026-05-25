@@ -31,6 +31,9 @@ import java.util.List;
 import static com.develop.mvp.pk.framework.apilog.core.enums.OperateTypeEnum.EXPORT;
 import static com.develop.mvp.pk.framework.common.pojo.CommonResult.success;
 
+/**
+ * Operate Log Controller 控制器。
+ */
 @Tag(name = "管理后台 - 操作日志")
 @RestController
 @RequestMapping("/system/operate-log")
@@ -40,6 +43,12 @@ public class OperateLogController {
     @Resource
     private LoggerUseCase loggerUseCase;
 
+    /**
+     * 查询 get Operate Log 对应的数据。
+     *
+     * @param id id 参数
+     * @return 处理结果
+     */
     @GetMapping("/get")
     @Operation(summary = "查看操作日志")
     @Parameter(name = "id", description = "编号", required = true, example = "1024")
@@ -49,6 +58,12 @@ public class OperateLogController {
         return success(BeanUtils.toBean(operateLog, OperateLogRespVO.class));
     }
 
+    /**
+     * 查询 page Operate Log 对应的数据。
+     *
+     * @param pageReqVO pageReqVO 参数
+     * @return 处理结果
+     */
     @GetMapping("/page")
     @Operation(summary = "查看操作日志分页列表")
     @PreAuthorize("@ss.hasPermission('system:operate-log:query')")
@@ -58,6 +73,12 @@ public class OperateLogController {
         return success(BeanUtils.toBean(pageResult, OperateLogRespVO.class));
     }
 
+    /**
+     * 执行 export Operate Log 对应的业务操作。
+     *
+     * @param response response 参数
+     * @param exportReqVO exportReqVO 参数
+     */
     @Operation(summary = "导出操作日志")
     @GetMapping("/export-excel")
     @PreAuthorize("@ss.hasPermission('system:operate-log:export')")

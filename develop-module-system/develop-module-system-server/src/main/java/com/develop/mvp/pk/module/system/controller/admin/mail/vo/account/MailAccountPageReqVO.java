@@ -6,6 +6,9 @@ import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.ToString;
 
+/**
+ * Mail Account Page Req VO 接口视图对象。
+ */
 @Schema(description = "管理后台 - 邮箱账号分页 Request VO")
 @Data
 @EqualsAndHashCode(callSuper = true)

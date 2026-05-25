@@ -28,6 +28,9 @@ import java.util.List;
 import static com.develop.mvp.pk.framework.apilog.core.enums.OperateTypeEnum.EXPORT;
 import static com.develop.mvp.pk.framework.common.pojo.CommonResult.success;
 
+/**
+ * Dict Type Controller 控制器。
+ */
 @Tag(name = "管理后台 - 字典类型")
 @RestController
 @RequestMapping("/system/dict-type")
@@ -37,6 +40,12 @@ public class DictTypeController {
     @Resource
     private DictUseCase dictUseCase;
 
+    /**
+     * 创建 create Dict Type 对应的数据。
+     *
+     * @param createReqVO createReqVO 参数
+     * @return 处理结果
+     */
     @PostMapping("/create")
     @Operation(summary = "创建字典类型")
     @PreAuthorize("@ss.hasPermission('system:dict:create')")
@@ -45,6 +54,12 @@ public class DictTypeController {
         return success(dictTypeId);
     }
 
+    /**
+     * 更新 update Dict Type 对应的数据。
+     *
+     * @param updateReqVO updateReqVO 参数
+     * @return 处理结果
+     */
     @PutMapping("/update")
     @Operation(summary = "修改字典类型")
     @PreAuthorize("@ss.hasPermission('system:dict:update')")
@@ -53,6 +68,12 @@ public class DictTypeController {
         return success(true);
     }
 
+    /**
+     * 删除 delete Dict Type 对应的数据。
+     *
+     * @param id id 参数
+     * @return 处理结果
+     */
     @DeleteMapping("/delete")
     @Operation(summary = "删除字典类型")
     @Parameter(name = "id", description = "编号", required = true, example = "1024")
@@ -62,6 +83,12 @@ public class DictTypeController {
         return success(true);
     }
 
+    /**
+     * 删除 delete Dict Type List 对应的数据。
+     *
+     * @param ids ids 参数
+     * @return 处理结果
+     */
     @DeleteMapping("/delete-list")
     @Operation(summary = "批量删除字典类型")
     @Parameter(name = "ids", description = "编号列表", required = true)
@@ -71,6 +98,12 @@ public class DictTypeController {
         return success(true);
     }
 
+    /**
+     * 查询 page Dict Types 对应的数据。
+     *
+     * @param pageReqVO pageReqVO 参数
+     * @return 处理结果
+     */
     @GetMapping("/page")
     @Operation(summary = "获得字典类型的分页列表")
     @PreAuthorize("@ss.hasPermission('system:dict:query')")
@@ -79,6 +112,12 @@ public class DictTypeController {
         return success(BeanUtils.toBean(pageResult, DictTypeRespVO.class));
     }
 
+    /**
+     * 查询 get Dict Type 对应的数据。
+     *
+     * @param id id 参数
+     * @return 处理结果
+     */
     @Operation(summary = "/查询字典类型详细")
     @Parameter(name = "id", description = "编号", required = true, example = "1024")
     @GetMapping(value = "/get")
@@ -91,11 +130,22 @@ public class DictTypeController {
     @GetMapping(value = {"/list-all-simple", "simple-list"})
     @Operation(summary = "获得全部字典类型列表", description = "包括开启 + 禁用的字典类型，主要用于前端的下拉选项")
     // 无需添加权限认证，因为前端全局都需要
+    /**
+     * 查询 get Simple Dict Type List 对应的数据。
+     *
+     * @return 处理结果
+     */
     public CommonResult<List<DictTypeSimpleRespVO>> getSimpleDictTypeList() {
         List<DictTypeDO> list = dictUseCase.getDictTypeList();
         return success(BeanUtils.toBean(list, DictTypeSimpleRespVO.class));
     }
 
+    /**
+     * 执行 export 对应的业务操作。
+     *
+     * @param response response 参数
+     * @param exportReqVO exportReqVO 参数
+     */
     @Operation(summary = "导出数据类型")
     @GetMapping("/export-excel")
     @PreAuthorize("@ss.hasPermission('system:dict:query')")

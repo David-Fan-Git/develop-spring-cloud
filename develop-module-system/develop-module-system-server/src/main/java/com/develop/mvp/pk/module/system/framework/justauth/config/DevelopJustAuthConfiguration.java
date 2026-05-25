@@ -19,6 +19,13 @@ import org.springframework.data.redis.core.RedisTemplate;
 @EnableConfigurationProperties({JustAuthProperties.class})
 public class DevelopJustAuthConfiguration {
 
+    /**
+     * 处理 auth Request Factory 对应的认证流程。
+     *
+     * @param properties properties 参数
+     * @param authStateCache authStateCache 参数
+     * @return 处理结果
+     */
     @Bean
     @ConditionalOnProperty(
             prefix = "justauth",
@@ -30,6 +37,13 @@ public class DevelopJustAuthConfiguration {
         return new AuthRequestFactory(properties, authStateCache);
     }
 
+    /**
+     * 处理 auth State Cache 对应的认证流程。
+     *
+     * @param justAuthRedisCacheTemplate justAuthRedisCacheTemplate 参数
+     * @param justAuthProperties justAuthProperties 参数
+     * @return 处理结果
+     */
     @Bean
     public AuthStateCache authStateCache(RedisTemplate<String, String> justAuthRedisCacheTemplate,
                                          JustAuthProperties justAuthProperties) {

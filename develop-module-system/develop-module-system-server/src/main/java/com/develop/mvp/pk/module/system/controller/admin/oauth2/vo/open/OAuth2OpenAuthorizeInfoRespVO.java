@@ -8,6 +8,9 @@ import lombok.NoArgsConstructor;
 
 import java.util.List;
 
+/**
+ * OAuth2 Open Authorize Info Resp VO 接口视图对象。
+ */
 @Schema(description = "管理后台 - 授权页的信息 Response VO")
 @Data
 @NoArgsConstructor
@@ -22,6 +25,9 @@ public class OAuth2OpenAuthorizeInfoRespVO {
     @Schema(description = "scope 的选中信息,使用 List 保证有序性，Key 是 scope，Value 为是否选中", requiredMode = Schema.RequiredMode.REQUIRED)
     private List<KeyValue<String, Boolean>> scopes;
 
+    /**
+     * Client 类。
+     */
     @Data
     @NoArgsConstructor
     @AllArgsConstructor

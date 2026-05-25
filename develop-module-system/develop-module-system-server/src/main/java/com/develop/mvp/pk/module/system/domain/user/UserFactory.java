@@ -7,8 +7,14 @@ import com.develop.mvp.pk.module.system.domain.user.valueobject.*;
 
 import java.util.Set;
 
+/**
+ * User Factory 工厂。
+ */
 public final class UserFactory {
 
+    /**
+     * 创建 UserFactory 实例。
+     */
     private UserFactory() {}
 
     /** 创建新用户 */

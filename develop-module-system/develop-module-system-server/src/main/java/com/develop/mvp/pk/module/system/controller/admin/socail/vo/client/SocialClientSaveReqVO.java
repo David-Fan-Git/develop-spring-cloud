@@ -13,6 +13,9 @@ import jakarta.validation.constraints.AssertTrue;
 import jakarta.validation.constraints.NotNull;
 import java.util.Objects;
 
+/**
+ * Social Client Save Req VO 接口视图对象。
+ */
 @Schema(description = "管理后台 - 社交客户端创建/修改 Request VO")
 @Data
 public class SocialClientSaveReqVO {
@@ -53,6 +56,11 @@ public class SocialClientSaveReqVO {
     @InEnum(CommonStatusEnum.class)
     private Integer status;
 
+    /**
+     * 判断 is Agent Id Valid 对应的条件是否成立。
+     *
+     * @return 处理结果
+     */
     @AssertTrue(message = "agentId 不能为空")
     @JsonIgnore
     public boolean isAgentIdValid() {
@@ -61,6 +69,11 @@ public class SocialClientSaveReqVO {
                 || !StrUtil.isEmpty(agentId);
     }
 
+    /**
+     * 判断 is Public Key Valid 对应的条件是否成立。
+     *
+     * @return 处理结果
+     */
     @AssertTrue(message = "publicKey 不能为空")
     @JsonIgnore
     public boolean isPublicKeyValid() {

@@ -26,6 +26,9 @@ import static com.develop.mvp.pk.framework.common.pojo.CommonResult.success;
 import static com.develop.mvp.pk.framework.common.util.collection.CollectionUtils.convertList;
 import static com.develop.mvp.pk.framework.security.core.util.SecurityFrameworkUtils.getLoginUserId;
 
+/**
+ * Social User Controller 控制器。
+ */
 @Tag(name = "管理后台 - 社交用户")
 @RestController
 @RequestMapping("/system/social-user")
@@ -35,6 +38,12 @@ public class SocialUserController {
     @Resource
     private SocialUseCase socialUseCase;
 
+    /**
+     * 执行 social Bind 对应的业务操作。
+     *
+     * @param reqVO reqVO 参数
+     * @return 处理结果
+     */
     @PostMapping("/bind")
     @Operation(summary = "社交绑定，使用 code 授权码")
     public CommonResult<Boolean> socialBind(@RequestBody @Valid SocialUserBindReqVO reqVO) {
@@ -44,6 +53,12 @@ public class SocialUserController {
         return CommonResult.success(true);
     }
 
+    /**
+     * 执行 social Unbind 对应的业务操作。
+     *
+     * @param reqVO reqVO 参数
+     * @return 处理结果
+     */
     @DeleteMapping("/unbind")
     @Operation(summary = "取消社交绑定")
     public CommonResult<Boolean> socialUnbind(@RequestBody SocialUserUnbindReqVO reqVO) {
@@ -51,6 +66,11 @@ public class SocialUserController {
         return CommonResult.success(true);
     }
 
+    /**
+     * 查询 get Bind Social User List 对应的数据。
+     *
+     * @return 处理结果
+     */
     @GetMapping("/get-bind-list")
     @Operation(summary = "获得绑定社交用户列表")
     public CommonResult<List<SocialUserRespVO>> getBindSocialUserList() {
@@ -62,6 +82,12 @@ public class SocialUserController {
 
     // ==================== 社交用户 CRUD ====================
 
+    /**
+     * 查询 get Social User 对应的数据。
+     *
+     * @param id id 参数
+     * @return 处理结果
+     */
     @GetMapping("/get")
     @Operation(summary = "获得社交用户")
     @Parameter(name = "id", description = "编号", required = true, example = "1024")
@@ -71,6 +97,12 @@ public class SocialUserController {
         return success(BeanUtils.toBean(socialUser, SocialUserRespVO.class));
     }
 
+    /**
+     * 查询 get Social User Page 对应的数据。
+     *
+     * @param pageVO pageVO 参数
+     * @return 处理结果
+     */
     @GetMapping("/page")
     @Operation(summary = "获得社交用户分页")
     @PreAuthorize("@ss.hasPermission('system:social-user:query')")

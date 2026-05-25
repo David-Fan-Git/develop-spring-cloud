@@ -8,6 +8,9 @@ import lombok.NoArgsConstructor;
 
 import java.util.List;
 
+/**
+ * Auth Menu Resp VO 接口视图对象。
+ */
 @Schema(description = "管理后台 - 登录用户的菜单信息 Response VO")
 @Data
 @NoArgsConstructor

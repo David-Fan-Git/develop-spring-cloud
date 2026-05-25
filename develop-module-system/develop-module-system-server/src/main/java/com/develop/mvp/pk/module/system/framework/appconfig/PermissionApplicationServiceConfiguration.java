@@ -12,9 +12,23 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Lazy;
 
+/**
+ * Permission Application Service Configuration 配置类。
+ */
 @Configuration
 public class PermissionApplicationServiceConfiguration {
 
+    /**
+     * 执行 permission Application Service 对应的业务操作。
+     *
+     * @param userRoleRepository userRoleRepository 参数
+     * @param roleMenuRepository roleMenuRepository 参数
+     * @param roleUseCase roleUseCase 参数
+     * @param menuUseCase menuUseCase 参数
+     * @param deptUseCase deptUseCase 参数
+     * @param adminUserUseCase adminUserUseCase 参数
+     * @return 处理结果
+     */
     @Bean
     public PermissionApplicationService permissionApplicationService(
             UserRoleRepository userRoleRepository,

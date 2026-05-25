@@ -5,6 +5,9 @@ import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 
+/**
+ * Post Page Req VO 接口视图对象。
+ */
 @Schema(description = "管理后台 - 岗位分页 Request VO")
 @Data
 @EqualsAndHashCode(callSuper = true)

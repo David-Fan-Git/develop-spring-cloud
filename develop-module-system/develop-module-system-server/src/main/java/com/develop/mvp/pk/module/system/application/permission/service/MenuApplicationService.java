@@ -30,6 +30,9 @@ import static com.develop.mvp.pk.framework.common.util.collection.CollectionUtil
 import static com.develop.mvp.pk.module.system.dal.dataobject.permission.MenuDO.ID_ROOT;
 import static com.develop.mvp.pk.module.system.enums.ErrorCodeConstants.*;
 
+/**
+ * Menu Application Service 应用服务。
+ */
 @Slf4j
 public class MenuApplicationService implements MenuUseCase {
 
@@ -37,6 +40,13 @@ public class MenuApplicationService implements MenuUseCase {
     private final PermissionUseCase permissionService;
     private final TenantUseCase tenantService;
 
+    /**
+     * 创建 MenuApplicationService 实例。
+     *
+     * @param menuMapper menuMapper 参数
+     * @param permissionService permissionService 参数
+     * @param tenantService tenantService 参数
+     */
     public MenuApplicationService(MenuMapper menuMapper,
                                   @Lazy PermissionUseCase permissionService,
                                   @Lazy TenantUseCase tenantService) {
@@ -47,6 +57,12 @@ public class MenuApplicationService implements MenuUseCase {
 
     @CacheEvict(value = RedisKeyConstants.PERMISSION_MENU_ID_LIST, key = "#createReqVO.permission",
             condition = "#createReqVO.permission != null")
+    /**
+     * 创建 create Menu 对应的数据。
+     *
+     * @param createReqVO createReqVO 参数
+     * @return 处理结果
+     */
     public Long createMenu(MenuSaveVO createReqVO) {
         validateParentMenu(createReqVO.getParentId(), null);
         validateMenuName(createReqVO.getParentId(), createReqVO.getName(), null);
@@ -57,6 +73,11 @@ public class MenuApplicationService implements MenuUseCase {
         return menu.getId();
     }
 
+    /**
+     * 更新 update Menu 对应的数据。
+     *
+     * @param updateReqVO updateReqVO 参数
+     */
     @CacheEvict(value = RedisKeyConstants.PERMISSION_MENU_ID_LIST, allEntries = true)
     public void updateMenu(MenuSaveVO updateReqVO) {
         if (menuMapper.selectById(updateReqVO.getId()) == null) {
@@ -70,6 +91,11 @@ public class MenuApplicationService implements MenuUseCase {
         menuMapper.updateById(updateObj);
     }
 
+    /**
+     * 删除 delete Menu 对应的数据。
+     *
+     * @param id id 参数
+     */
     @Transactional(rollbackFor = Exception.class)
     @CacheEvict(value = RedisKeyConstants.PERMISSION_MENU_ID_LIST, allEntries = true)
     public void deleteMenu(Long id) {
@@ -83,6 +109,11 @@ public class MenuApplicationService implements MenuUseCase {
         permissionService.processMenuDeleted(id);
     }
 
+    /**
+     * 删除 delete Menu List 对应的数据。
+     *
+     * @param ids ids 参数
+     */
     @Transactional(rollbackFor = Exception.class)
     @CacheEvict(value = RedisKeyConstants.PERMISSION_MENU_ID_LIST, allEntries = true)
     public void deleteMenuList(List<Long> ids) {
@@ -95,16 +126,33 @@ public class MenuApplicationService implements MenuUseCase {
         ids.forEach(id -> permissionService.processMenuDeleted(id));
     }
 
+    /**
+     * 查询 get Menu List 对应的数据。
+     *
+     * @return 处理结果
+     */
     public List<MenuDO> getMenuList() {
         return menuMapper.selectList();
     }
 
+    /**
+     * 查询 get Menu List By Tenant 对应的数据。
+     *
+     * @param reqVO reqVO 参数
+     * @return 处理结果
+     */
     public List<MenuDO> getMenuListByTenant(MenuListReqVO reqVO) {
         List<MenuDO> menus = getMenuList(reqVO);
         tenantService.handleTenantMenu(menuIds -> menus.removeIf(menu -> !CollUtil.contains(menuIds, menu.getId())));
         return menus;
     }
 
+    /**
+     * 执行 filter Disable Menus 对应的业务操作。
+     *
+     * @param menuList menuList 参数
+     * @return 处理结果
+     */
     public List<MenuDO> filterDisableMenus(List<MenuDO> menuList) {
         if (CollUtil.isEmpty(menuList)) {
             return Collections.emptyList();
@@ -121,6 +169,14 @@ public class MenuApplicationService implements MenuUseCase {
         return enabledMenus;
     }
 
+    /**
+     * 判断 is Menu Disabled 对应的条件是否成立。
+     *
+     * @param node node 参数
+     * @param menuMap menuMap 参数
+     * @param disabledMenuCache disabledMenuCache 参数
+     * @return 处理结果
+     */
     private boolean isMenuDisabled(MenuDO node, Map<Long, MenuDO> menuMap, Set<Long> disabledMenuCache) {
         if (disabledMenuCache.contains(node.getId())) {
             return true;
@@ -141,20 +197,44 @@ public class MenuApplicationService implements MenuUseCase {
         return false;
     }
 
+    /**
+     * 查询 get Menu List 对应的数据。
+     *
+     * @param reqVO reqVO 参数
+     * @return 处理结果
+     */
     public List<MenuDO> getMenuList(MenuListReqVO reqVO) {
         return menuMapper.selectList(reqVO);
     }
 
+    /**
+     * 查询 get Menu Id List By Permission From Cache 对应的数据。
+     *
+     * @param permission permission 参数
+     * @return 处理结果
+     */
     @Cacheable(value = RedisKeyConstants.PERMISSION_MENU_ID_LIST, key = "#permission")
     public List<Long> getMenuIdListByPermissionFromCache(String permission) {
         List<MenuDO> menus = menuMapper.selectListByPermission(permission);
         return convertList(menus, MenuDO::getId);
     }
 
+    /**
+     * 查询 get Menu 对应的数据。
+     *
+     * @param id id 参数
+     * @return 处理结果
+     */
     public MenuDO getMenu(Long id) {
         return menuMapper.selectById(id);
     }
 
+    /**
+     * 查询 get Menu List 对应的数据。
+     *
+     * @param ids ids 参数
+     * @return 处理结果
+     */
     public List<MenuDO> getMenuList(Collection<Long> ids) {
         if (CollUtil.isEmpty(ids)) {
             return Lists.newArrayList();
@@ -162,6 +242,12 @@ public class MenuApplicationService implements MenuUseCase {
         return menuMapper.selectByIds(ids);
     }
 
+    /**
+     * 校验 validate Parent Menu 对应的业务规则。
+     *
+     * @param parentId parentId 参数
+     * @param childId childId 参数
+     */
     @VisibleForTesting
     public void validateParentMenu(Long parentId, Long childId) {
         if (parentId == null || ID_ROOT.equals(parentId)) {
@@ -180,6 +266,13 @@ public class MenuApplicationService implements MenuUseCase {
         }
     }
 
+    /**
+     * 校验 validate Menu Name 对应的业务规则。
+     *
+     * @param parentId parentId 参数
+     * @param name name 参数
+     * @param id id 参数
+     */
     @VisibleForTesting
     public void validateMenuName(Long parentId, String name, Long id) {
         MenuDO menu = menuMapper.selectByParentIdAndName(parentId, name);
@@ -191,6 +284,12 @@ public class MenuApplicationService implements MenuUseCase {
         }
     }
 
+    /**
+     * 校验 validate Menu Component Name 对应的业务规则。
+     *
+     * @param componentName componentName 参数
+     * @param id id 参数
+     */
     @VisibleForTesting
     public void validateMenuComponentName(String componentName, Long id) {
         if (StrUtil.isBlank(componentName)) {
@@ -205,6 +304,11 @@ public class MenuApplicationService implements MenuUseCase {
         }
     }
 
+    /**
+     * 执行 init Menu Property 对应的业务操作。
+     *
+     * @param menu menu 参数
+     */
     private void initMenuProperty(MenuDO menu) {
         if (MenuTypeEnum.BUTTON.getType().equals(menu.getType())) {
             menu.setComponent("");

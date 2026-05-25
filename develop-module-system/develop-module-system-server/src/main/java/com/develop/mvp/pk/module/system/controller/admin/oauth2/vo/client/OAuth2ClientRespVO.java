@@ -6,6 +6,9 @@ import lombok.Data;
 import java.time.LocalDateTime;
 import java.util.List;
 
+/**
+ * OAuth2 Client Resp VO 接口视图对象。
+ */
 @Schema(description = "管理后台 - OAuth2 客户端 Response VO")
 @Data
 public class OAuth2ClientRespVO {

@@ -20,6 +20,13 @@ import org.springframework.data.redis.core.StringRedisTemplate;
 @ImportAutoConfiguration(AjCaptchaAutoConfiguration.class) // 目的：解决 aj-captcha 针对 SpringBoot 3.X 自动配置不生效的问题
 public class DevelopCaptchaConfiguration {
 
+    /**
+     * 执行 captcha Cache Service 对应的业务操作。
+     *
+     * @param config config 参数
+     * @param stringRedisTemplate stringRedisTemplate 参数
+     * @return 处理结果
+     */
     @Bean(name = "AjCaptchaCacheService")
     @Primary
     public CaptchaCacheService captchaCacheService(AjCaptchaProperties config,

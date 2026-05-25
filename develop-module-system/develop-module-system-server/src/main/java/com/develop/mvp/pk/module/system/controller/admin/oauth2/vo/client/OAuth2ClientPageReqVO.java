@@ -6,6 +6,9 @@ import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.ToString;
 
+/**
+ * OAuth2 Client Page Req VO 接口视图对象。
+ */
 @Schema(description = "管理后台 - OAuth2 客户端分页 Request VO")
 @Data
 @EqualsAndHashCode(callSuper = true)

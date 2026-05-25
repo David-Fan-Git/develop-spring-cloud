@@ -18,6 +18,11 @@ public abstract class AbstractSmsClient implements SmsClient {
      */
     protected volatile SmsChannelProperties properties;
 
+    /**
+     * 创建 AbstractSmsClient 实例。
+     *
+     * @param properties properties 参数
+     */
     public AbstractSmsClient(SmsChannelProperties properties) {
         this.properties = properties;
     }
@@ -29,6 +34,11 @@ public abstract class AbstractSmsClient implements SmsClient {
         log.debug("[init][配置({}) 初始化完成]", properties);
     }
 
+    /**
+     * 执行 refresh 对应的业务操作。
+     *
+     * @param properties properties 参数
+     */
     public final void refresh(SmsChannelProperties properties) {
         // 判断是否更新
         if (properties.equals(this.properties)) {
@@ -40,6 +50,11 @@ public abstract class AbstractSmsClient implements SmsClient {
         this.init();
     }
 
+    /**
+     * 查询 get Id 对应的数据。
+     *
+     * @return 处理结果
+     */
     @Override
     public Long getId() {
         return properties.getId();

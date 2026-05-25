@@ -7,6 +7,9 @@ import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
 
+/**
+ * Dict Type Save Req VO 接口视图对象。
+ */
 @Schema(description = "管理后台 - 字典类型创建/修改 Request VO")
 @Data
 public class DictTypeSaveReqVO {

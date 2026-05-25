@@ -22,6 +22,9 @@ import java.util.List;
 
 import static com.develop.mvp.pk.framework.common.pojo.CommonResult.success;
 
+/**
+ * Mail Account Controller 控制器。
+ */
 @Tag(name = "管理后台 - 邮箱账号")
 @RestController
 @RequestMapping("/system/mail-account")
@@ -30,6 +33,12 @@ public class MailAccountController {
     @Resource
     private MailUseCase mailAccountService;
 
+    /**
+     * 创建 create Mail Account 对应的数据。
+     *
+     * @param createReqVO createReqVO 参数
+     * @return 处理结果
+     */
     @PostMapping("/create")
     @Operation(summary = "创建邮箱账号")
     @PreAuthorize("@ss.hasPermission('system:mail-account:create')")
@@ -37,6 +46,12 @@ public class MailAccountController {
         return success(mailAccountService.createMailAccount(createReqVO));
     }
 
+    /**
+     * 更新 update Mail Account 对应的数据。
+     *
+     * @param updateReqVO updateReqVO 参数
+     * @return 处理结果
+     */
     @PutMapping("/update")
     @Operation(summary = "修改邮箱账号")
     @PreAuthorize("@ss.hasPermission('system:mail-account:update')")
@@ -45,6 +60,12 @@ public class MailAccountController {
         return success(true);
     }
 
+    /**
+     * 删除 delete Mail Account 对应的数据。
+     *
+     * @param id id 参数
+     * @return 处理结果
+     */
     @DeleteMapping("/delete")
     @Operation(summary = "删除邮箱账号")
     @Parameter(name = "id", description = "编号", required = true)
@@ -54,6 +75,12 @@ public class MailAccountController {
         return success(true);
     }
 
+    /**
+     * 删除 delete Mail Account List 对应的数据。
+     *
+     * @param ids ids 参数
+     * @return 处理结果
+     */
     @DeleteMapping("/delete-list")
     @Operation(summary = "批量删除邮箱账号")
     @Parameter(name = "ids", description = "编号列表", required = true)
@@ -63,6 +90,12 @@ public class MailAccountController {
         return success(true);
     }
 
+    /**
+     * 查询 get Mail Account 对应的数据。
+     *
+     * @param id id 参数
+     * @return 处理结果
+     */
     @GetMapping("/get")
     @Operation(summary = "获得邮箱账号")
     @Parameter(name = "id", description = "编号", required = true, example = "1024")
@@ -72,6 +105,12 @@ public class MailAccountController {
         return success(BeanUtils.toBean(account, MailAccountRespVO.class));
     }
 
+    /**
+     * 查询 get Mail Account Page 对应的数据。
+     *
+     * @param pageReqVO pageReqVO 参数
+     * @return 处理结果
+     */
     @GetMapping("/page")
     @Operation(summary = "获得邮箱账号分页")
     @PreAuthorize("@ss.hasPermission('system:mail-account:query')")
@@ -80,6 +119,11 @@ public class MailAccountController {
         return success(BeanUtils.toBean(pageResult, MailAccountRespVO.class));
     }
 
+    /**
+     * 查询 get Simple Mail Account List 对应的数据。
+     *
+     * @return 处理结果
+     */
     @GetMapping({"/list-all-simple", "simple-list"})
     @Operation(summary = "获得邮箱账号精简列表")
     public CommonResult<List<MailAccountSimpleRespVO>> getSimpleMailAccountList() {

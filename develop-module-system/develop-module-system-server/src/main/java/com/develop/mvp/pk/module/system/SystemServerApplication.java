@@ -6,25 +6,26 @@ import org.springframework.boot.autoconfigure.SpringBootApplication;
 /**
  * 项目的启动类
  *
- * 如果你碰到启动的问题，请认真阅读 https://cloud.iocoder.cn/quick-start/ 文章
- * 如果你碰到启动的问题，请认真阅读 https://cloud.iocoder.cn/quick-start/ 文章
- * 如果你碰到启动的问题，请认真阅读 https://cloud.iocoder.cn/quick-start/ 文章
- *
  * @author David
  */
 @SpringBootApplication
 public class SystemServerApplication {
 
+    /**
+     * 启动 System 模块服务。
+     *
+     * @param args args 参数
+     */
     public static void main(String[] args) {
-        // 如果你碰到启动的问题，请认真阅读 https://cloud.iocoder.cn/quick-start/ 文章
-        // 如果你碰到 启动的问题，请认真阅读 https://cloud.iocoder.cn/quick-start/ 文章
-        // 如果你碰到启动的问题，请认真阅读 https://cloud.iocoder.cn/quick-start/ 文章
 
+        /**
+         * 执行 run 对应的业务操作。
+         *
+         * @param class class 参数
+         * @param args args 参数
+         * @return 处理结果
+         */
         SpringApplication.run(SystemServerApplication.class, args);
-
-        // 如果你碰到启动的问题，请认真阅读 https://cloud.iocoder.cn/quick-start/ 文章
-        // 如果你碰到启动的问题，请认真阅读 https://cloud.iocoder.cn/quick-start/ 文章
-        // 如果你碰到启动的问题，请认真阅读 https://cloud.iocoder.cn/quick-start/ 文章
     }
 
 }

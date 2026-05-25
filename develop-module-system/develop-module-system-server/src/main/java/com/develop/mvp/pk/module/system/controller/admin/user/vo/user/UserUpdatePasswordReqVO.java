@@ -7,6 +7,9 @@ import org.hibernate.validator.constraints.Length;
 import jakarta.validation.constraints.NotEmpty;
 import jakarta.validation.constraints.NotNull;
 
+/**
+ * User Update Password Req VO 接口视图对象。
+ */
 @Schema(description = "管理后台 - 用户更新密码 Request VO")
 @Data
 public class UserUpdatePasswordReqVO {

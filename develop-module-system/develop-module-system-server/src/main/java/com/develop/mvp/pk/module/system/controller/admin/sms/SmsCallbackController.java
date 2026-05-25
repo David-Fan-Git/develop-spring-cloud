@@ -15,6 +15,9 @@ import jakarta.servlet.http.HttpServletRequest;
 
 import static com.develop.mvp.pk.framework.common.pojo.CommonResult.success;
 
+/**
+ * Sms Callback Controller 控制器。
+ */
 @Tag(name = "管理后台 - 短信回调")
 @RestController
 @RequestMapping("/system/sms/callback")
@@ -23,6 +26,12 @@ public class SmsCallbackController {
     @Resource
     private SmsUseCase smsSendService;
 
+    /**
+     * 执行 receive Aliyun Sms Status 对应的业务操作。
+     *
+     * @param request request 参数
+     * @return 处理结果
+     */
     @PostMapping("/aliyun")
     @PermitAll
     @TenantIgnore
@@ -33,6 +42,12 @@ public class SmsCallbackController {
         return success(true);
     }
 
+    /**
+     * 执行 receive Tencent Sms Status 对应的业务操作。
+     *
+     * @param request request 参数
+     * @return 处理结果
+     */
     @PostMapping("/tencent")
     @PermitAll
     @TenantIgnore
@@ -44,6 +59,12 @@ public class SmsCallbackController {
     }
 
 
+    /**
+     * 执行 receive Huawei Sms Status 对应的业务操作。
+     *
+     * @param requestBody requestBody 参数
+     * @return 处理结果
+     */
     @PostMapping("/huawei")
     @PermitAll
     @TenantIgnore
@@ -53,6 +74,12 @@ public class SmsCallbackController {
         return success(true);
     }
 
+    /**
+     * 执行 receive Qiniu Sms Status 对应的业务操作。
+     *
+     * @param requestBody requestBody 参数
+     * @return 处理结果
+     */
     @PostMapping("/qiniu")
     @PermitAll
     @TenantIgnore

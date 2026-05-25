@@ -11,6 +11,9 @@ import lombok.Data;
 import java.time.LocalDateTime;
 import java.util.List;
 
+/**
+ * Tenant Resp VO 接口视图对象。
+ */
 @Schema(description = "管理后台 - 租户 Response VO")
 @Data
 @ExcelIgnoreUnannotated

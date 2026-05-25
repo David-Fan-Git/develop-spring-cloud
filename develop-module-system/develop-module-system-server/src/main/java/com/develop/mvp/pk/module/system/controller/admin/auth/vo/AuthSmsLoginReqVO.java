@@ -8,6 +8,9 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+/**
+ * Auth Sms Login Req VO 接口视图对象。
+ */
 @Schema(description = "管理后台 - 短信验证码的登录 Request VO")
 @Data
 @NoArgsConstructor

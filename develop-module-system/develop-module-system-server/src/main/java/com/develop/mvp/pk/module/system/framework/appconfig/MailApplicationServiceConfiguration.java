@@ -13,9 +13,25 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
+/**
+ * Mail Application Service Configuration 配置类。
+ */
 @Configuration
 public class MailApplicationServiceConfiguration {
 
+    /**
+     * 执行 mail Application Service 对应的业务操作。
+     *
+     * @param mailAccountMapper mailAccountMapper 参数
+     * @param mailTemplateMapper mailTemplateMapper 参数
+     * @param mailLogMapper mailLogMapper 参数
+     * @param adminUserService adminUserService 参数
+     * @param memberApplicationService memberApplicationService 参数
+     * @param mailProducer mailProducer 参数
+     * @param accountRepo accountRepo 参数
+     * @param templateRepo templateRepo 参数
+     * @return 处理结果
+     */
     @Bean
     public MailApplicationService mailApplicationService(
             MailAccountMapper mailAccountMapper,

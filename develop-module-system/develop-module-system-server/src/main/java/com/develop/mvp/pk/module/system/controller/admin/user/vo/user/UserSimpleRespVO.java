@@ -5,6 +5,9 @@ import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+/**
+ * User Simple Resp VO 接口视图对象。
+ */
 @Schema(description = "管理后台 - 用户精简信息 Response VO")
 @Data
 @NoArgsConstructor

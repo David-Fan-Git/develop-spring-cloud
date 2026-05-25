@@ -3,6 +3,9 @@ package com.develop.mvp.pk.module.system.controller.admin.permission.vo.role;
 import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.Data;
 
+/**
+ * Role Simple Resp VO 接口视图对象。
+ */
 @Schema(description = "管理后台 - 角色精简信息 Response VO")
 @Data
 public class RoleSimpleRespVO {

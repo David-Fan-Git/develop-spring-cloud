@@ -9,8 +9,14 @@ import com.develop.mvp.pk.module.system.domain.tenant.valueobject.*;
 import java.time.LocalDateTime;
 import java.util.List;
 
+/**
+ * Tenant Factory 工厂。
+ */
 public final class TenantFactory {
 
+    /**
+     * 创建 TenantFactory 实例。
+     */
     private TenantFactory() {}
 
     /** 创建新租户（规则 R01：默认状态 ENABLED） */
@@ -21,6 +27,21 @@ public final class TenantFactory {
                 websites, packageId, expireTime, accountCount);
     }
 
+    /**
+     * 创建 create 对应的数据。
+     *
+     * @param id id 参数
+     * @param name name 参数
+     * @param contactUserId contactUserId 参数
+     * @param contactName contactName 参数
+     * @param contactMobile contactMobile 参数
+     * @param status status 参数
+     * @param websites websites 参数
+     * @param packageId packageId 参数
+     * @param expireTime expireTime 参数
+     * @param accountCount accountCount 参数
+     * @return 处理结果
+     */
     public static Tenant create(Long id, String name, Long contactUserId, String contactName,
                                  String contactMobile, TenantStatus status, List<String> websites,
                                  Long packageId, LocalDateTime expireTime, Integer accountCount) {

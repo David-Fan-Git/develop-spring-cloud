@@ -3,6 +3,9 @@ package com.develop.mvp.pk.module.system.controller.admin.dict.vo.data;
 import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.Data;
 
+/**
+ * Dict Data Simple Resp VO 接口视图对象。
+ */
 @Schema(description = "管理后台 - 数据字典精简 Response VO")
 @Data
 public class DictDataSimpleRespVO {

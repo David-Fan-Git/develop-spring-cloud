@@ -11,6 +11,9 @@ import jakarta.validation.constraints.NotEmpty;
 import jakarta.validation.constraints.NotNull;
 import java.util.List;
 
+/**
+ * OAuth2 Client Save Req VO 接口视图对象。
+ */
 @Schema(description = "管理后台 - OAuth2 客户端创建/修改 Request VO")
 @Data
 public class OAuth2ClientSaveReqVO {
@@ -73,6 +76,11 @@ public class OAuth2ClientSaveReqVO {
     @Schema(description = "附加信息", example = "{yunai: true}")
     private String additionalInformation;
 
+    /**
+     * 判断 is Additional Information Json 对应的条件是否成立。
+     *
+     * @return 处理结果
+     */
     @AssertTrue(message = "附加信息必须是 JSON 格式")
     public boolean isAdditionalInformationJson() {
         return StrUtil.isEmpty(additionalInformation) || JsonUtils.isJson(additionalInformation);

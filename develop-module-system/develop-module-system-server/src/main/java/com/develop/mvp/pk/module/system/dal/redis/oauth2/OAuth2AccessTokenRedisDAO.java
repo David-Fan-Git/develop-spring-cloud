@@ -27,11 +27,22 @@ public class OAuth2AccessTokenRedisDAO {
     @Resource
     private StringRedisTemplate stringRedisTemplate;
 
+    /**
+     * 查询 get 对应的数据。
+     *
+     * @param accessToken accessToken 参数
+     * @return 处理结果
+     */
     public OAuth2AccessTokenDO get(String accessToken) {
         String redisKey = formatKey(accessToken);
         return JsonUtils.parseObject(stringRedisTemplate.opsForValue().get(redisKey), OAuth2AccessTokenDO.class);
     }
 
+    /**
+     * 设置 set 对应的数据。
+     *
+     * @param accessTokenDO accessTokenDO 参数
+     */
     public void set(OAuth2AccessTokenDO accessTokenDO) {
         String redisKey = formatKey(accessTokenDO.getAccessToken());
         // 清理多余字段，避免缓存
@@ -42,16 +53,32 @@ public class OAuth2AccessTokenRedisDAO {
         }
     }
 
+    /**
+     * 删除 delete 对应的数据。
+     *
+     * @param accessToken accessToken 参数
+     */
     public void delete(String accessToken) {
         String redisKey = formatKey(accessToken);
         stringRedisTemplate.delete(redisKey);
     }
 
+    /**
+     * 删除 delete List 对应的数据。
+     *
+     * @param accessTokens accessTokens 参数
+     */
     public void deleteList(Collection<String> accessTokens) {
         List<String> redisKeys = CollectionUtils.convertList(accessTokens, OAuth2AccessTokenRedisDAO::formatKey);
         stringRedisTemplate.delete(redisKeys);
     }
 
+    /**
+     * 执行 format Key 对应的业务操作。
+     *
+     * @param accessToken accessToken 参数
+     * @return 处理结果
+     */
     private static String formatKey(String accessToken) {
         return String.format(OAUTH2_ACCESS_TOKEN, accessToken);
     }

@@ -30,6 +30,12 @@ public enum SmsChannelEnum {
      */
     private final String name;
 
+    /**
+     * 查询 get By Code 对应的数据。
+     *
+     * @param code code 参数
+     * @return 处理结果
+     */
     public static SmsChannelEnum getByCode(String code) {
         return ArrayUtil.firstMatch(o -> o.getCode().equals(code), values());
     }

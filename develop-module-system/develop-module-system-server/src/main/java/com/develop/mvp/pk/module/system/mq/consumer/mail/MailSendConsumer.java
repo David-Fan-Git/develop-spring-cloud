@@ -21,6 +21,11 @@ public class MailSendConsumer {
     @Resource
     private MailUseCase mailSendService;
 
+    /**
+     * 处理 on Message 对应的业务逻辑。
+     *
+     * @param message message 参数
+     */
     @EventListener
     @Async // Spring Event 默认在 Producer 发送的线程，通过 @Async 实现异步
     public void onMessage(MailSendMessage message) {

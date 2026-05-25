@@ -21,6 +21,9 @@ import jakarta.validation.Valid;
 
 import static com.develop.mvp.pk.framework.common.pojo.CommonResult.success;
 
+/**
+ * Mail Log Controller 控制器。
+ */
 @Tag(name = "管理后台 - 邮件日志")
 @RestController
 @RequestMapping("/system/mail-log")
@@ -29,6 +32,12 @@ public class MailLogController {
     @Resource
     private MailUseCase mailLogService;
 
+    /**
+     * 查询 get Mail Log Page 对应的数据。
+     *
+     * @param pageVO pageVO 参数
+     * @return 处理结果
+     */
     @GetMapping("/page")
     @Operation(summary = "获得邮箱日志分页")
     @PreAuthorize("@ss.hasPermission('system:mail-log:query')")
@@ -37,6 +46,12 @@ public class MailLogController {
         return success(BeanUtils.toBean(pageResult, MailLogRespVO.class));
     }
 
+    /**
+     * 查询 get Mail Template 对应的数据。
+     *
+     * @param id id 参数
+     * @return 处理结果
+     */
     @GetMapping("/get")
     @Operation(summary = "获得邮箱日志")
     @Parameter(name = "id", description = "编号", required = true, example = "1024")

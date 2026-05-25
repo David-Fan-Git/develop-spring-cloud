@@ -5,6 +5,9 @@ import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotNull;
 import lombok.Data;
 
+/**
+ * Mail Account Save Req VO 接口视图对象。
+ */
 @Schema(description = "管理后台 - 邮箱账号创建/修改 Request VO")
 @Data
 public class MailAccountSaveReqVO {

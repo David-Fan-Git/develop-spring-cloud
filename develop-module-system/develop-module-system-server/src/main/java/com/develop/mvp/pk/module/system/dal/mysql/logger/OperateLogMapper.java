@@ -8,9 +8,18 @@ import com.develop.mvp.pk.module.system.controller.admin.logger.vo.operatelog.Op
 import com.develop.mvp.pk.module.system.dal.dataobject.logger.OperateLogDO;
 import org.apache.ibatis.annotations.Mapper;
 
+/**
+ * Operate Log Mapper 持久化 Mapper。
+ */
 @Mapper
 public interface OperateLogMapper extends BaseMapperX<OperateLogDO> {
 
+    /**
+     * 查询 select Page 对应的数据。
+     *
+     * @param pageReqDTO pageReqDTO 参数
+     * @return 处理结果
+     */
     default PageResult<OperateLogDO> selectPage(OperateLogPageReqVO pageReqDTO) {
         return selectPage(pageReqDTO, new LambdaQueryWrapperX<OperateLogDO>()
                 .eqIfPresent(OperateLogDO::getUserId, pageReqDTO.getUserId())
@@ -22,6 +31,12 @@ public interface OperateLogMapper extends BaseMapperX<OperateLogDO> {
                 .orderByDesc(OperateLogDO::getId));
     }
 
+    /**
+     * 查询 select Page 对应的数据。
+     *
+     * @param pageReqDTO pageReqDTO 参数
+     * @return 处理结果
+     */
     default PageResult<OperateLogDO> selectPage(OperateLogPageReqDTO pageReqDTO) {
         return selectPage(pageReqDTO, new LambdaQueryWrapperX<OperateLogDO>()
                 .eqIfPresent(OperateLogDO::getType, pageReqDTO.getType())

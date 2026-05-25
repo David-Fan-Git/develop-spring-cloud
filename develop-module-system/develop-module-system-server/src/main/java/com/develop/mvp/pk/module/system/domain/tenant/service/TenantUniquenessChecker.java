@@ -8,6 +8,9 @@ package com.develop.mvp.pk.module.system.domain.tenant.service;
 import com.develop.mvp.pk.module.system.domain.tenant.valueobject.TenantId;
 import com.develop.mvp.pk.module.system.domain.tenant.valueobject.TenantName;
 
+/**
+ * Tenant Uniqueness Checker 领域服务。
+ */
 public interface TenantUniquenessChecker {
     /** 规则 R02：检查租户名称在全局是否唯一（排除指定ID） */
     boolean isNameUnique(TenantName name, TenantId excludeId);

@@ -7,6 +7,9 @@ import org.springframework.validation.annotation.Validated;
 import jakarta.validation.constraints.NotNull;
 import java.time.Duration;
 
+/**
+ * Sms Code Properties 类。
+ */
 @ConfigurationProperties(prefix = "develop.sms-code")
 @Validated
 @Data

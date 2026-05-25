@@ -42,12 +42,26 @@ public class AliyunSmsClient extends AbstractSmsClient {
 
     private static final String RESPONSE_CODE_SUCCESS = "OK";
 
+    /**
+     * 创建 AliyunSmsClient 实例。
+     *
+     * @param properties properties 参数
+     */
     public AliyunSmsClient(SmsChannelProperties properties) {
         super(properties);
         Assert.notEmpty(properties.getApiKey(), "apiKey 不能为空");
         Assert.notEmpty(properties.getApiSecret(), "apiSecret 不能为空");
     }
 
+    /**
+     * 发送 send Sms 对应的消息。
+     *
+     * @param sendLogId sendLogId 参数
+     * @param mobile mobile 参数
+     * @param apiTemplateId apiTemplateId 参数
+     * @param templateParams templateParams 参数
+     * @return 处理结果
+     */
     @Override
     public SmsSendRespDTO sendSms(Long sendLogId, String mobile, String apiTemplateId,
                                   List<KeyValue<String, Object>> templateParams) throws Throwable {
@@ -71,6 +85,12 @@ public class AliyunSmsClient extends AbstractSmsClient {
                 .setApiMsg(response.getStr("Message"));
     }
 
+    /**
+     * 执行 parse Sms Receive Status 对应的业务操作。
+     *
+     * @param text text 参数
+     * @return 处理结果
+     */
     @Override
     public List<SmsReceiveRespDTO> parseSmsReceiveStatus(String text) {
         JSONArray statuses = JSONUtil.parseArray(text);
@@ -88,6 +108,12 @@ public class AliyunSmsClient extends AbstractSmsClient {
         });
     }
 
+    /**
+     * 查询 get Sms Template 对应的数据。
+     *
+     * @param apiTemplateId apiTemplateId 参数
+     * @return 处理结果
+     */
     @Override
     public SmsTemplateRespDTO getSmsTemplate(String apiTemplateId) throws Throwable {
         // 1. 执行请求
@@ -110,6 +136,12 @@ public class AliyunSmsClient extends AbstractSmsClient {
                 .setAuditReason(response.getStr("Reason"));
     }
 
+    /**
+     * 转换 convert Sms Template Audit Status 对应的数据对象。
+     *
+     * @param templateStatus templateStatus 参数
+     * @return 处理结果
+     */
     @VisibleForTesting
     @SuppressWarnings("EnhancedSwitchMigration")
     Integer convertSmsTemplateAuditStatus(Integer templateStatus) {

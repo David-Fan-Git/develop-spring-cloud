@@ -9,9 +9,23 @@ import com.develop.mvp.pk.module.system.domain.user.service.UserUniquenessChecke
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
+/**
+ * User Application Service Configuration 配置类。
+ */
 @Configuration
 public class UserApplicationServiceConfiguration {
 
+    /**
+     * 执行 user Application Service 对应的业务操作。
+     *
+     * @param userRepository userRepository 参数
+     * @param passwordEncoder passwordEncoder 参数
+     * @param uniquenessChecker uniquenessChecker 参数
+     * @param eventPublisher eventPublisher 参数
+     * @param deptUseCase deptUseCase 参数
+     * @param postUseCase postUseCase 参数
+     * @return 处理结果
+     */
     @Bean
     public UserApplicationService userApplicationService(
             UserRepository userRepository,

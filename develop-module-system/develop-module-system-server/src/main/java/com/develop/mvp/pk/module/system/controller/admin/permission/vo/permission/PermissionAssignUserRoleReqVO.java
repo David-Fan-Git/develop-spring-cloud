@@ -7,6 +7,9 @@ import jakarta.validation.constraints.NotNull;
 import java.util.Collections;
 import java.util.Set;
 
+/**
+ * Permission Assign User Role Req VO 接口视图对象。
+ */
 @Schema(description = "管理后台 - 赋予用户角色 Request VO")
 @Data
 public class PermissionAssignUserRoleReqVO {

@@ -7,9 +7,18 @@ import com.develop.mvp.pk.module.system.controller.admin.mail.vo.template.MailTe
 import com.develop.mvp.pk.module.system.dal.dataobject.mail.MailTemplateDO;
 import org.apache.ibatis.annotations.Mapper;
 
+/**
+ * Mail Template Mapper 持久化 Mapper。
+ */
 @Mapper
 public interface MailTemplateMapper extends BaseMapperX<MailTemplateDO> {
 
+    /**
+     * 查询 select Page 对应的数据。
+     *
+     * @param pageReqVO pageReqVO 参数
+     * @return 处理结果
+     */
     default PageResult<MailTemplateDO> selectPage(MailTemplatePageReqVO pageReqVO){
         return selectPage(pageReqVO , new LambdaQueryWrapperX<MailTemplateDO>()
                 .eqIfPresent(MailTemplateDO::getStatus, pageReqVO.getStatus())
@@ -20,10 +29,22 @@ public interface MailTemplateMapper extends BaseMapperX<MailTemplateDO> {
                 .orderByDesc(MailTemplateDO::getId));
     }
 
+    /**
+     * 查询 select Count By Account Id 对应的数据。
+     *
+     * @param accountId accountId 参数
+     * @return 处理结果
+     */
     default Long selectCountByAccountId(Long accountId) {
         return selectCount(MailTemplateDO::getAccountId, accountId);
     }
 
+    /**
+     * 查询 select By Code 对应的数据。
+     *
+     * @param code code 参数
+     * @return 处理结果
+     */
     default MailTemplateDO selectByCode(String code) {
         return selectOne(MailTemplateDO::getCode, code);
     }

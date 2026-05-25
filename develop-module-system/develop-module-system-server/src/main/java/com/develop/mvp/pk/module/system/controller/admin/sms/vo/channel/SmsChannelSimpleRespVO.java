@@ -3,6 +3,9 @@ package com.develop.mvp.pk.module.system.controller.admin.sms.vo.channel;
 import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.Data;
 
+/**
+ * Sms Channel Simple Resp VO 接口视图对象。
+ */
 @Schema(description = "管理后台 - 短信渠道精简 Response VO")
 @Data
 public class SmsChannelSimpleRespVO {

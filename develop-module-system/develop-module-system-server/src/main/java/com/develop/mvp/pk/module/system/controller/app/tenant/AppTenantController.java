@@ -19,6 +19,9 @@ import org.springframework.web.bind.annotation.RestController;
 
 import static com.develop.mvp.pk.framework.common.pojo.CommonResult.success;
 
+/**
+ * App Tenant Controller 控制器。
+ */
 @Tag(name = "用户 App - 租户")
 @RestController
 @RequestMapping("/system/tenant")
@@ -28,6 +31,12 @@ public class AppTenantController {
     @Resource
     private TenantUseCase tenantUseCase;
 
+    /**
+     * 查询 get Tenant By Website 对应的数据。
+     *
+     * @param website website 参数
+     * @return 处理结果
+     */
     @GetMapping("/get-by-website")
     @PermitAll
     @TenantIgnore

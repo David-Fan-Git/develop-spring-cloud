@@ -14,9 +14,27 @@ import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.security.crypto.password.PasswordEncoder;
 
+/**
+ * Admin User Application Service Configuration 配置类。
+ */
 @Configuration
 public class AdminUserApplicationServiceConfiguration {
 
+    /**
+     * 执行 admin User Application Service 对应的业务操作。
+     *
+     * @param userMapper userMapper 参数
+     * @param userApplicationService userApplicationService 参数
+     * @param deptUseCase deptUseCase 参数
+     * @param postUseCase postUseCase 参数
+     * @param permissionService permissionService 参数
+     * @param passwordEncoder passwordEncoder 参数
+     * @param tenantService tenantService 参数
+     * @param oauth2TokenService oauth2TokenService 参数
+     * @param userPostMapper userPostMapper 参数
+     * @param configApi configApi 参数
+     * @return 处理结果
+     */
     @Bean
     public AdminUserApplicationService adminUserApplicationService(
             AdminUserMapper userMapper,

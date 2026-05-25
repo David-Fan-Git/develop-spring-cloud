@@ -11,6 +11,9 @@ import lombok.Data;
 import java.time.LocalDateTime;
 import java.util.List;
 
+/**
+ * Sms Template Resp VO 接口视图对象。
+ */
 @Schema(description = "管理后台 - 短信模板 Response VO")
 @Data
 @ExcelIgnoreUnannotated

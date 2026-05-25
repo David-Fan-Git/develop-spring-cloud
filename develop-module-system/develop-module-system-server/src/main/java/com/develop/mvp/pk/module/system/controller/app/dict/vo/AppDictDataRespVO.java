@@ -5,6 +5,9 @@ import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+/**
+ * App Dict Data Resp VO 接口视图对象。
+ */
 @Schema(description = "用户 App - 字典数据信息 Response VO")
 @Data
 @NoArgsConstructor

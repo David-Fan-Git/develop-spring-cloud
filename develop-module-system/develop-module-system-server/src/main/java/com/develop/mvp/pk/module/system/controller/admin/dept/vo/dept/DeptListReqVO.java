@@ -3,6 +3,9 @@ package com.develop.mvp.pk.module.system.controller.admin.dept.vo.dept;
 import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.Data;
 
+/**
+ * Dept List Req VO 接口视图对象。
+ */
 @Schema(description = "管理后台 - 部门列表 Request VO")
 @Data
 public class DeptListReqVO {

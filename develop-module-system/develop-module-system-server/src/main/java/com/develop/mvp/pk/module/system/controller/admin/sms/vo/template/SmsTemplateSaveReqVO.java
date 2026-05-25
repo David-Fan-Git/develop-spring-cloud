@@ -5,6 +5,9 @@ import lombok.Data;
 
 import jakarta.validation.constraints.NotNull;
 
+/**
+ * Sms Template Save Req VO 接口视图对象。
+ */
 @Schema(description = "管理后台 - 短信模板创建/修改 Request VO")
 @Data
 public class SmsTemplateSaveReqVO {

@@ -39,6 +39,9 @@ import static com.develop.mvp.pk.framework.common.pojo.CommonResult.success;
 import static com.develop.mvp.pk.framework.common.util.collection.CollectionUtils.convertList;
 import static com.develop.mvp.pk.framework.common.util.collection.CollectionUtils.convertSet;
 
+/**
+ * User Controller 控制器。
+ */
 @Tag(name = "管理后台 - 用户")
 @RestController
 @RequestMapping("/system/user")
@@ -52,6 +55,12 @@ public class UserController {
     @Resource
     private DeptUseCase deptUseCase;
 
+    /**
+     * 创建 create User 对应的数据。
+     *
+     * @param reqVO reqVO 参数
+     * @return 处理结果
+     */
     @PostMapping("/create")
     @Operation(summary = "新增用户")
     @PreAuthorize("@ss.hasPermission('system:user:create')")
@@ -64,6 +73,12 @@ public class UserController {
         return success(id);
     }
 
+    /**
+     * 更新 update User 对应的数据。
+     *
+     * @param reqVO reqVO 参数
+     * @return 处理结果
+     */
     @PutMapping("update")
     @Operation(summary = "修改用户")
     @PreAuthorize("@ss.hasPermission('system:user:update')")
@@ -75,6 +90,12 @@ public class UserController {
         return success(true);
     }
 
+    /**
+     * 删除 delete User 对应的数据。
+     *
+     * @param id id 参数
+     * @return 处理结果
+     */
     @DeleteMapping("/delete")
     @Operation(summary = "删除用户")
     @Parameter(name = "id", description = "编号", required = true, example = "1024")
@@ -84,6 +105,12 @@ public class UserController {
         return success(true);
     }
 
+    /**
+     * 删除 delete User List 对应的数据。
+     *
+     * @param ids ids 参数
+     * @return 处理结果
+     */
     @DeleteMapping("/delete-list")
     @Parameter(name = "ids", description = "编号列表", required = true)
     @Operation(summary = "批量删除用户")
@@ -93,6 +120,12 @@ public class UserController {
         return success(true);
     }
 
+    /**
+     * 更新 update User Password 对应的数据。
+     *
+     * @param reqVO reqVO 参数
+     * @return 处理结果
+     */
     @PutMapping("/update-password")
     @Operation(summary = "重置用户密码")
     @PreAuthorize("@ss.hasPermission('system:user:update-password')")
@@ -101,6 +134,12 @@ public class UserController {
         return success(true);
     }
 
+    /**
+     * 更新 update User Status 对应的数据。
+     *
+     * @param reqVO reqVO 参数
+     * @return 处理结果
+     */
     @PutMapping("/update-status")
     @Operation(summary = "修改用户状态")
     @PreAuthorize("@ss.hasPermission('system:user:update')")
@@ -109,6 +148,12 @@ public class UserController {
         return success(true);
     }
 
+    /**
+     * 查询 get User Page 对应的数据。
+     *
+     * @param pageReqVO pageReqVO 参数
+     * @return 处理结果
+     */
     @GetMapping("/page")
     @Operation(summary = "获得用户分页列表")
     @PreAuthorize("@ss.hasPermission('system:user:query')")
@@ -130,6 +175,12 @@ public class UserController {
                 pageResult.getTotal()));
     }
 
+    /**
+     * 查询 get User List 对应的数据。
+     *
+     * @param ids ids 参数
+     * @return 处理结果
+     */
     @GetMapping("/list")
     @Operation(summary = "获得用户详情列表")
     @Parameter(name = "ids", description = "编号列表", required = true, example = "[1024]")
@@ -141,6 +192,11 @@ public class UserController {
         return success(UserConvert.INSTANCE.convertUserList(users, deptMap));
     }
 
+    /**
+     * 查询 get Simple User List 对应的数据。
+     *
+     * @return 处理结果
+     */
     @GetMapping({"/list-all-simple", "/simple-list"})
     @Operation(summary = "获取用户精简信息列表")
     public CommonResult<List<UserSimpleRespVO>> getSimpleUserList() {
@@ -150,6 +206,12 @@ public class UserController {
         return success(UserConvert.INSTANCE.convertUserSimpleList(users, deptMap));
     }
 
+    /**
+     * 查询 get User 对应的数据。
+     *
+     * @param id id 参数
+     * @return 处理结果
+     */
     @GetMapping("/get")
     @Operation(summary = "获得用户详情")
     @Parameter(name = "id", description = "编号", required = true, example = "1024")
@@ -161,6 +223,12 @@ public class UserController {
         return success(UserConvert.INSTANCE.convertUser(user, dept));
     }
 
+    /**
+     * 执行 export User List 对应的业务操作。
+     *
+     * @param exportReqVO exportReqVO 参数
+     * @param response response 参数
+     */
     @GetMapping("/export-excel")
     @Operation(summary = "导出用户")
     @PreAuthorize("@ss.hasPermission('system:user:export')")
@@ -181,6 +249,11 @@ public class UserController {
                 UserConvert.INSTANCE.convertUserList(pageResult.getList(), deptMap));
     }
 
+    /**
+     * 执行 import Template 对应的业务操作。
+     *
+     * @param response response 参数
+     */
     @GetMapping("/get-import-template")
     @Operation(summary = "获得导入用户模板")
     public void importTemplate(HttpServletResponse response) throws IOException {
@@ -194,6 +267,13 @@ public class UserController {
         ExcelUtils.write(response, "用户导入模板.xls", "用户列表", UserImportExcelVO.class, list);
     }
 
+    /**
+     * 执行 import Excel 对应的业务操作。
+     *
+     * @param file file 参数
+     * @param updateSupport updateSupport 参数
+     * @return 处理结果
+     */
     @PostMapping("/import")
     @Operation(summary = "导入用户")
     @Parameters({

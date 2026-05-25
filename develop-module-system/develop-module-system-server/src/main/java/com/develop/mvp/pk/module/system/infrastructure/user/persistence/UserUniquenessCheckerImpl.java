@@ -9,15 +9,30 @@ import com.develop.mvp.pk.module.system.domain.user.service.UserUniquenessChecke
 import com.develop.mvp.pk.module.system.domain.user.valueobject.*;
 import org.springframework.stereotype.Component;
 
+/**
+ * User Uniqueness Checker Impl 类。
+ */
 @Component
 public class UserUniquenessCheckerImpl implements UserUniquenessChecker {
 
     private final UserRepository userRepository;
 
+    /**
+     * 创建 UserUniquenessCheckerImpl 实例。
+     *
+     * @param userRepository userRepository 参数
+     */
     public UserUniquenessCheckerImpl(UserRepository userRepository) {
         this.userRepository = userRepository;
     }
 
+    /**
+     * 判断 is Username Unique 对应的条件是否成立。
+     *
+     * @param username username 参数
+     * @param excludeUserId excludeUserId 参数
+     * @return 处理结果
+     */
     @Override
     public boolean isUsernameUnique(Username username, UserId excludeUserId) {
         return userRepository.findByUsername(username)
@@ -25,6 +40,13 @@ public class UserUniquenessCheckerImpl implements UserUniquenessChecker {
                 .orElse(true);
     }
 
+    /**
+     * 判断 is Email Unique 对应的条件是否成立。
+     *
+     * @param email email 参数
+     * @param excludeUserId excludeUserId 参数
+     * @return 处理结果
+     */
     @Override
     public boolean isEmailUnique(Email email, UserId excludeUserId) {
         if (!email.isPresent()) return true;
@@ -33,6 +55,13 @@ public class UserUniquenessCheckerImpl implements UserUniquenessChecker {
                 .orElse(true);
     }
 
+    /**
+     * 判断 is Mobile Unique 对应的条件是否成立。
+     *
+     * @param mobile mobile 参数
+     * @param excludeUserId excludeUserId 参数
+     * @return 处理结果
+     */
     @Override
     public boolean isMobileUnique(Mobile mobile, UserId excludeUserId) {
         if (!mobile.isPresent()) return true;

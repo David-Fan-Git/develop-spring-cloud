@@ -71,6 +71,20 @@ public class AdminUserApplicationService implements AdminUserUseCase {
     private final UserPostMapper userPostMapper;
     private final ConfigApi configApi;
 
+    /**
+     * 创建 AdminUserApplicationService 实例。
+     *
+     * @param userMapper userMapper 参数
+     * @param userApplicationService userApplicationService 参数
+     * @param deptUseCase deptUseCase 参数
+     * @param postUseCase postUseCase 参数
+     * @param permissionService permissionService 参数
+     * @param passwordEncoder passwordEncoder 参数
+     * @param tenantService tenantService 参数
+     * @param oauth2TokenService oauth2TokenService 参数
+     * @param userPostMapper userPostMapper 参数
+     * @param configApi configApi 参数
+     */
     public AdminUserApplicationService(AdminUserMapper userMapper,
                                        UserUseCase userApplicationService,
                                        DeptUseCase deptUseCase,
@@ -96,6 +110,12 @@ public class AdminUserApplicationService implements AdminUserUseCase {
     @Transactional(rollbackFor = Exception.class)
     @LogRecord(type = SYSTEM_USER_TYPE, subType = SYSTEM_USER_CREATE_SUB_TYPE, bizNo = "{{#user.id}}",
             success = SYSTEM_USER_CREATE_SUCCESS)
+    /**
+     * 创建 create User 对应的数据。
+     *
+     * @param createReqVO createReqVO 参数
+     * @return 处理结果
+     */
     public Long createUser(UserSaveReqVO createReqVO) {
         // 1.1 校验账户配合
         tenantService.handleTenantInfo(tenant -> {
@@ -123,6 +143,12 @@ public class AdminUserApplicationService implements AdminUserUseCase {
         return user.getId();
     }
 
+    /**
+     * 处理 register User 对应的认证流程。
+     *
+     * @param registerReqVO registerReqVO 参数
+     * @return 处理结果
+     */
     public Long registerUser(AuthRegisterReqVO registerReqVO) {
         // 1.1 校验是否开启注册
         if (ObjUtil.notEqual(configApi.getConfigValueByKey(USER_REGISTER_ENABLED_KEY).getCheckedData(), "true")) {
@@ -149,6 +175,11 @@ public class AdminUserApplicationService implements AdminUserUseCase {
     @Transactional(rollbackFor = Exception.class)
     @LogRecord(type = SYSTEM_USER_TYPE, subType = SYSTEM_USER_UPDATE_SUB_TYPE, bizNo = "{{#updateReqVO.id}}",
             success = SYSTEM_USER_UPDATE_SUCCESS)
+    /**
+     * 更新 update User 对应的数据。
+     *
+     * @param updateReqVO updateReqVO 参数
+     */
     public void updateUser(UserSaveReqVO updateReqVO) {
         updateReqVO.setPassword(null); // 特殊：此处不更新密码
         // 1. 校验正确性
@@ -166,6 +197,12 @@ public class AdminUserApplicationService implements AdminUserUseCase {
         LogRecordContext.putVariable("user", oldUser);
     }
 
+    /**
+     * 更新 update User Post 对应的数据。
+     *
+     * @param reqVO reqVO 参数
+     * @param updateObj updateObj 参数
+     */
     private void updateUserPost(UserSaveReqVO reqVO, AdminUserDO updateObj) {
         Long userId = reqVO.getId();
         Set<Long> dbPostIds = convertSet(userPostMapper.selectListByUserId(userId), UserPostDO::getPostId);
@@ -183,21 +220,45 @@ public class AdminUserApplicationService implements AdminUserUseCase {
         }
     }
 
+    /**
+     * 更新 update User Login 对应的数据。
+     *
+     * @param id id 参数
+     * @param loginIp loginIp 参数
+     */
     public void updateUserLogin(Long id, String loginIp) {
         userApplicationService.recordLogin(id, loginIp);
     }
 
+    /**
+     * 更新 update User Profile 对应的数据。
+     *
+     * @param id id 参数
+     * @param reqVO reqVO 参数
+     */
     public void updateUserProfile(Long id, UserProfileUpdateReqVO reqVO) {
         userApplicationService.updateProfile(id, reqVO.getEmail(), reqVO.getMobile(),
                 reqVO.getNickname(), reqVO.getAvatar(), reqVO.getSex(), null);
     }
 
+    /**
+     * 更新 update User Password 对应的数据。
+     *
+     * @param id id 参数
+     * @param reqVO reqVO 参数
+     */
     public void updateUserPassword(Long id, UserProfileUpdatePasswordReqVO reqVO) {
         userApplicationService.changePassword(id, reqVO.getOldPassword(), reqVO.getNewPassword());
     }
 
     @LogRecord(type = SYSTEM_USER_TYPE, subType = SYSTEM_USER_UPDATE_PASSWORD_SUB_TYPE, bizNo = "{{#id}}",
             success = SYSTEM_USER_UPDATE_PASSWORD_SUCCESS)
+    /**
+     * 更新 update User Password 对应的数据。
+     *
+     * @param id id 参数
+     * @param password password 参数
+     */
     public void updateUserPassword(Long id, String password) {
         AdminUserDO user = validateUserExists(id);
         userApplicationService.resetPassword(id, password);
@@ -205,6 +266,12 @@ public class AdminUserApplicationService implements AdminUserUseCase {
         LogRecordContext.putVariable("newPassword", userMapper.selectById(id).getPassword());
     }
 
+    /**
+     * 更新 update User Status 对应的数据。
+     *
+     * @param id id 参数
+     * @param status status 参数
+     */
     public void updateUserStatus(Long id, Integer status) {
         userApplicationService.updateUserStatus(id, status);
         if (CommonStatusEnum.isDisable(status)) {
@@ -215,6 +282,11 @@ public class AdminUserApplicationService implements AdminUserUseCase {
     @Transactional(rollbackFor = Exception.class)
     @LogRecord(type = SYSTEM_USER_TYPE, subType = SYSTEM_USER_DELETE_SUB_TYPE, bizNo = "{{#id}}",
             success = SYSTEM_USER_DELETE_SUCCESS)
+    /**
+     * 删除 delete User 对应的数据。
+     *
+     * @param id id 参数
+     */
     public void deleteUser(Long id) {
         // 1. 校验用户存在
         AdminUserDO user = validateUserExists(id);
@@ -230,6 +302,11 @@ public class AdminUserApplicationService implements AdminUserUseCase {
         LogRecordContext.putVariable("user", user);
     }
 
+    /**
+     * 删除 delete User List 对应的数据。
+     *
+     * @param ids ids 参数
+     */
     @Transactional(rollbackFor = Exception.class)
     public void deleteUserList(List<Long> ids) {
         // 1. 批量删除用户
@@ -242,14 +319,32 @@ public class AdminUserApplicationService implements AdminUserUseCase {
         });
     }
 
+    /**
+     * 查询 get User By Username 对应的数据。
+     *
+     * @param username username 参数
+     * @return 处理结果
+     */
     public AdminUserDO getUserByUsername(String username) {
         return userMapper.selectByUsername(username);
     }
 
+    /**
+     * 查询 get User By Mobile 对应的数据。
+     *
+     * @param mobile mobile 参数
+     * @return 处理结果
+     */
     public AdminUserDO getUserByMobile(String mobile) {
         return userMapper.selectByMobile(mobile);
     }
 
+    /**
+     * 查询 get User Page 对应的数据。
+     *
+     * @param reqVO reqVO 参数
+     * @return 处理结果
+     */
     public PageResult<AdminUserDO> getUserPage(UserPageReqVO reqVO) {
         // 如果有角色编号，查询角色对应的用户编号
         Set<Long> userIds = null;
@@ -264,10 +359,22 @@ public class AdminUserApplicationService implements AdminUserUseCase {
         return userMapper.selectPage(reqVO, getDeptCondition(reqVO.getDeptId()), userIds);
     }
 
+    /**
+     * 查询 get User 对应的数据。
+     *
+     * @param id id 参数
+     * @return 处理结果
+     */
     public AdminUserDO getUser(Long id) {
         return userMapper.selectById(id);
     }
 
+    /**
+     * 查询 get User List By Dept Ids 对应的数据。
+     *
+     * @param deptIds deptIds 参数
+     * @return 处理结果
+     */
     public List<AdminUserDO> getUserListByDeptIds(Collection<Long> deptIds) {
         if (CollUtil.isEmpty(deptIds)) {
             return Collections.emptyList();
@@ -275,6 +382,12 @@ public class AdminUserApplicationService implements AdminUserUseCase {
         return userMapper.selectListByDeptIds(deptIds);
     }
 
+    /**
+     * 查询 get User List By Post Ids 对应的数据。
+     *
+     * @param postIds postIds 参数
+     * @return 处理结果
+     */
     public List<AdminUserDO> getUserListByPostIds(Collection<Long> postIds) {
         if (CollUtil.isEmpty(postIds)) {
             return Collections.emptyList();
@@ -286,6 +399,12 @@ public class AdminUserApplicationService implements AdminUserUseCase {
         return userMapper.selectByIds(userIds);
     }
 
+    /**
+     * 查询 get User List 对应的数据。
+     *
+     * @param ids ids 参数
+     * @return 处理结果
+     */
     public List<AdminUserDO> getUserList(Collection<Long> ids) {
         if (CollUtil.isEmpty(ids)) {
             return Collections.emptyList();
@@ -293,6 +412,12 @@ public class AdminUserApplicationService implements AdminUserUseCase {
         return userMapper.selectByIds(ids);
     }
 
+    /**
+     * 查询 get User Map 对应的数据。
+     *
+     * @param ids ids 参数
+     * @return 处理结果
+     */
     public Map<Long, AdminUserDO> getUserMap(Collection<Long> ids) {
         if (CollUtil.isEmpty(ids)) {
             return new HashMap<>();
@@ -300,6 +425,11 @@ public class AdminUserApplicationService implements AdminUserUseCase {
         return CollectionUtils.convertMap(getUserList(ids), AdminUserDO::getId);
     }
 
+    /**
+     * 校验 validate User List 对应的业务规则。
+     *
+     * @param ids ids 参数
+     */
     public void validateUserList(Collection<Long> ids) {
         if (CollUtil.isEmpty(ids)) {
             return;
@@ -319,6 +449,12 @@ public class AdminUserApplicationService implements AdminUserUseCase {
         });
     }
 
+    /**
+     * 查询 get User List By Nickname 对应的数据。
+     *
+     * @param nickname nickname 参数
+     * @return 处理结果
+     */
     public List<AdminUserDO> getUserListByNickname(String nickname) {
         return userMapper.selectListByNickname(nickname);
     }
@@ -338,6 +474,17 @@ public class AdminUserApplicationService implements AdminUserUseCase {
         return deptIds;
     }
 
+    /**
+     * 校验 validate User For Create Or Update 对应的业务规则。
+     *
+     * @param id id 参数
+     * @param username username 参数
+     * @param mobile mobile 参数
+     * @param email email 参数
+     * @param deptId deptId 参数
+     * @param postIds postIds 参数
+     * @return 处理结果
+     */
     private AdminUserDO validateUserForCreateOrUpdate(Long id, String username, String mobile, String email,
                                                Long deptId, Set<Long> postIds) {
         // 关闭数据权限，避免因为没有数据权限，查询不到数据，进而导致唯一校验不正确
@@ -358,6 +505,12 @@ public class AdminUserApplicationService implements AdminUserUseCase {
         });
     }
 
+    /**
+     * 校验 validate User Exists 对应的业务规则。
+     *
+     * @param id id 参数
+     * @return 处理结果
+     */
     @VisibleForTesting
     public AdminUserDO validateUserExists(Long id) {
         if (id == null) {
@@ -370,6 +523,12 @@ public class AdminUserApplicationService implements AdminUserUseCase {
         return user;
     }
 
+    /**
+     * 校验 validate Username Unique 对应的业务规则。
+     *
+     * @param id id 参数
+     * @param username username 参数
+     */
     @VisibleForTesting
     public void validateUsernameUnique(Long id, String username) {
         if (StrUtil.isBlank(username)) {
@@ -388,6 +547,12 @@ public class AdminUserApplicationService implements AdminUserUseCase {
         }
     }
 
+    /**
+     * 校验 validate Email Unique 对应的业务规则。
+     *
+     * @param id id 参数
+     * @param email email 参数
+     */
     @VisibleForTesting
     public void validateEmailUnique(Long id, String email) {
         if (StrUtil.isBlank(email)) {
@@ -406,6 +571,12 @@ public class AdminUserApplicationService implements AdminUserUseCase {
         }
     }
 
+    /**
+     * 校验 validate Mobile Unique 对应的业务规则。
+     *
+     * @param id id 参数
+     * @param mobile mobile 参数
+     */
     @VisibleForTesting
     public void validateMobileUnique(Long id, String mobile) {
         if (StrUtil.isBlank(mobile)) {
@@ -440,6 +611,13 @@ public class AdminUserApplicationService implements AdminUserUseCase {
         }
     }
 
+    /**
+     * 执行 import User List 对应的业务操作。
+     *
+     * @param importUsers importUsers 参数
+     * @param isUpdateSupport isUpdateSupport 参数
+     * @return 处理结果
+     */
     @Transactional(rollbackFor = Exception.class) // 添加事务，异常则回滚所有导入
     public UserImportRespVO importUserList(List<UserImportExcelVO> importUsers, boolean isUpdateSupport) {
         // 1.1 参数校验
@@ -496,10 +674,23 @@ public class AdminUserApplicationService implements AdminUserUseCase {
         return respVO;
     }
 
+    /**
+     * 查询 get User List By Status 对应的数据。
+     *
+     * @param status status 参数
+     * @return 处理结果
+     */
     public List<AdminUserDO> getUserListByStatus(Integer status) {
         return userMapper.selectListByStatus(status);
     }
 
+    /**
+     * 判断 is Password Match 对应的条件是否成立。
+     *
+     * @param rawPassword rawPassword 参数
+     * @param encodedPassword encodedPassword 参数
+     * @return 处理结果
+     */
     public boolean isPasswordMatch(String rawPassword, String encodedPassword) {
         return passwordEncoder.matches(rawPassword, encodedPassword);
     }

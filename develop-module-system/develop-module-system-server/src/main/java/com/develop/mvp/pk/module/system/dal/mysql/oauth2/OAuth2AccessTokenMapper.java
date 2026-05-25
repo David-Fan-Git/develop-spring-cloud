@@ -13,18 +13,39 @@ import org.apache.ibatis.annotations.Param;
 import java.time.LocalDateTime;
 import java.util.List;
 
+/**
+ * OAuth2 Access Token Mapper 持久化 Mapper。
+ */
 @Mapper
 public interface OAuth2AccessTokenMapper extends BaseMapperX<OAuth2AccessTokenDO> {
 
+    /**
+     * 查询 select By Access Token 对应的数据。
+     *
+     * @param accessToken accessToken 参数
+     * @return 处理结果
+     */
     @TenantIgnore // 获取 token 的时候，需要忽略租户编号。原因是：一些场景下，可能不会传递 tenant-id 请求头，例如说文件上传、积木报表等等
     default OAuth2AccessTokenDO selectByAccessToken(String accessToken) {
         return selectOne(OAuth2AccessTokenDO::getAccessToken, accessToken);
     }
 
+    /**
+     * 查询 select List By Refresh Token 对应的数据。
+     *
+     * @param refreshToken refreshToken 参数
+     * @return 处理结果
+     */
     default List<OAuth2AccessTokenDO> selectListByRefreshToken(String refreshToken) {
         return selectList(OAuth2AccessTokenDO::getRefreshToken, refreshToken);
     }
 
+    /**
+     * 查询 select Page 对应的数据。
+     *
+     * @param reqVO reqVO 参数
+     * @return 处理结果
+     */
     default PageResult<OAuth2AccessTokenDO> selectPage(OAuth2AccessTokenPageReqVO reqVO) {
         return selectPage(reqVO, new LambdaQueryWrapperX<OAuth2AccessTokenDO>()
                 .eqIfPresent(OAuth2AccessTokenDO::getUserId, reqVO.getUserId())
@@ -34,6 +55,13 @@ public interface OAuth2AccessTokenMapper extends BaseMapperX<OAuth2AccessTokenDO
                 .orderByDesc(OAuth2AccessTokenDO::getId));
     }
 
+    /**
+     * 查询 select List By User Id And User Type 对应的数据。
+     *
+     * @param userId userId 参数
+     * @param userType userType 参数
+     * @return 处理结果
+     */
     default List<OAuth2AccessTokenDO> selectListByUserIdAndUserType(Long userId, Integer userType) {
         return selectList(OAuth2AccessTokenDO::getUserId, userId,
                 OAuth2AccessTokenDO::getUserType, userType);

@@ -14,9 +14,27 @@ import com.develop.mvp.pk.module.system.mq.producer.sms.SmsProducer;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
+/**
+ * Sms Application Service Configuration 配置类。
+ */
 @Configuration
 public class SmsApplicationServiceConfiguration {
 
+    /**
+     * 执行 sms Application Service 对应的业务操作。
+     *
+     * @param channelRepo channelRepo 参数
+     * @param smsClientFactory smsClientFactory 参数
+     * @param smsChannelMapper smsChannelMapper 参数
+     * @param smsTemplateMapper smsTemplateMapper 参数
+     * @param smsLogMapper smsLogMapper 参数
+     * @param smsCodeMapper smsCodeMapper 参数
+     * @param smsCodeProperties smsCodeProperties 参数
+     * @param adminUserService adminUserService 参数
+     * @param memberApplicationService memberApplicationService 参数
+     * @param smsProducer smsProducer 参数
+     * @return 处理结果
+     */
     @Bean
     public SmsApplicationService smsApplicationService(
             SmsChannelRepository channelRepo,

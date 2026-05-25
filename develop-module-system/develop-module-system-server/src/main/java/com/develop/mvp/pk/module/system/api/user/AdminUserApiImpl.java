@@ -23,6 +23,9 @@ import java.util.stream.Collectors;
 import static com.develop.mvp.pk.framework.common.pojo.CommonResult.success;
 import static com.develop.mvp.pk.framework.common.util.collection.CollectionUtils.convertSet;
 
+/**
+ * Admin User Api Impl 模块 API 实现。
+ */
 @RestController
 @Validated
 public class AdminUserApiImpl implements AdminUserApi {
@@ -32,6 +35,12 @@ public class AdminUserApiImpl implements AdminUserApi {
     @Resource
     private DeptUseCase deptUseCase;
 
+    /**
+     * 查询 get User 对应的数据。
+     *
+     * @param id id 参数
+     * @return 处理结果
+     */
     @Override
     @DataPermission(enable = false)
     public CommonResult<AdminUserRespDTO> getUser(Long id) {
@@ -39,6 +48,12 @@ public class AdminUserApiImpl implements AdminUserApi {
         return success(toDTO(user));
     }
 
+    /**
+     * 查询 get User List By Subordinate 对应的数据。
+     *
+     * @param id id 参数
+     * @return 处理结果
+     */
     @Override
     public CommonResult<List<AdminUserRespDTO>> getUserListBySubordinate(Long id) {
         User user = userApplicationService.getUser(id);
@@ -57,6 +72,12 @@ public class AdminUserApiImpl implements AdminUserApi {
         return success(users.stream().map(this::toDTO).collect(Collectors.toList()));
     }
 
+    /**
+     * 查询 get User List 对应的数据。
+     *
+     * @param ids ids 参数
+     * @return 处理结果
+     */
     @Override
     public CommonResult<List<AdminUserRespDTO>> getUserList(Collection<Long> ids) {
         return DataPermissionUtils.executeIgnore(() -> {
@@ -65,18 +86,36 @@ public class AdminUserApiImpl implements AdminUserApi {
         });
     }
 
+    /**
+     * 查询 get User List By Dept Ids 对应的数据。
+     *
+     * @param deptIds deptIds 参数
+     * @return 处理结果
+     */
     @Override
     public CommonResult<List<AdminUserRespDTO>> getUserListByDeptIds(Collection<Long> deptIds) {
         List<User> users = userApplicationService.getUserListByDeptIds(deptIds);
         return success(users.stream().map(this::toDTO).collect(Collectors.toList()));
     }
 
+    /**
+     * 查询 get User List By Post Ids 对应的数据。
+     *
+     * @param postIds postIds 参数
+     * @return 处理结果
+     */
     @Override
     public CommonResult<List<AdminUserRespDTO>> getUserListByPostIds(Collection<Long> postIds) {
         List<User> users = userApplicationService.getUserListByPostIds(postIds);
         return success(users.stream().map(this::toDTO).collect(Collectors.toList()));
     }
 
+    /**
+     * 校验 validate User List 对应的业务规则。
+     *
+     * @param ids ids 参数
+     * @return 处理结果
+     */
     @Override
     public CommonResult<Boolean> validateUserList(Collection<Long> ids) {
         userApplicationService.validateUserList(ids);

@@ -35,6 +35,12 @@ public class PermissionController {
     @Resource
     private TenantUseCase tenantUseCase;
 
+    /**
+     * 查询 get Role Menu List 对应的数据。
+     *
+     * @param roleId roleId 参数
+     * @return 处理结果
+     */
     @Operation(summary = "获得角色拥有的菜单编号")
     @Parameter(name = "roleId", description = "角色编号", required = true)
     @GetMapping("/list-role-menus")
@@ -43,6 +49,12 @@ public class PermissionController {
         return success(permissionService.getRoleMenuListByRoleId(roleId));
     }
 
+    /**
+     * 执行 assign Role Menu 对应的业务操作。
+     *
+     * @param reqVO reqVO 参数
+     * @return 处理结果
+     */
     @PostMapping("/assign-role-menu")
     @Operation(summary = "赋予角色菜单")
     @PreAuthorize("@ss.hasPermission('system:permission:assign-role-menu')")
@@ -55,6 +67,12 @@ public class PermissionController {
         return success(true);
     }
 
+    /**
+     * 执行 assign Role Data Scope 对应的业务操作。
+     *
+     * @param reqVO reqVO 参数
+     * @return 处理结果
+     */
     @PostMapping("/assign-role-data-scope")
     @Operation(summary = "赋予角色数据权限")
     @PreAuthorize("@ss.hasPermission('system:permission:assign-role-data-scope')")
@@ -63,6 +81,12 @@ public class PermissionController {
         return success(true);
     }
 
+    /**
+     * 查询 list Admin Roles 对应的数据。
+     *
+     * @param userId userId 参数
+     * @return 处理结果
+     */
     @Operation(summary = "获得管理员拥有的角色编号列表")
     @Parameter(name = "userId", description = "用户编号", required = true)
     @GetMapping("/list-user-roles")
@@ -71,6 +95,12 @@ public class PermissionController {
         return success(permissionService.getUserRoleIdListByUserId(userId));
     }
 
+    /**
+     * 执行 assign User Role 对应的业务操作。
+     *
+     * @param reqVO reqVO 参数
+     * @return 处理结果
+     */
     @Operation(summary = "赋予用户角色")
     @PostMapping("/assign-user-role")
     @PreAuthorize("@ss.hasPermission('system:permission:assign-user-role')")

@@ -8,6 +8,9 @@ import lombok.NoArgsConstructor;
 
 import java.util.List;
 
+/**
+ * OAuth2 Open Check Token Resp VO 接口视图对象。
+ */
 @Schema(description = "管理后台 - 【开放接口】校验令牌 Response VO")
 @Data
 @NoArgsConstructor

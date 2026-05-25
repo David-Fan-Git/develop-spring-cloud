@@ -7,6 +7,9 @@ import jakarta.validation.constraints.NotEmpty;
 import jakarta.validation.constraints.NotNull;
 import java.util.Map;
 
+/**
+ * Notify Template Send Req VO 接口视图对象。
+ */
 @Schema(description = "管理后台 - 站内信模板的发送 Request VO")
 @Data
 public class NotifyTemplateSendReqVO {

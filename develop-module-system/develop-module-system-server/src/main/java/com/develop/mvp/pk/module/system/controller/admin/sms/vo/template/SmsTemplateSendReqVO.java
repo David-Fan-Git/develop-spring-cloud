@@ -6,6 +6,9 @@ import lombok.Data;
 import jakarta.validation.constraints.NotNull;
 import java.util.Map;
 
+/**
+ * Sms Template Send Req VO 接口视图对象。
+ */
 @Schema(description = "管理后台 - 短信模板的发送 Request VO")
 @Data
 public class SmsTemplateSendReqVO {

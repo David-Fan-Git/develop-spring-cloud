@@ -7,18 +7,37 @@ package com.develop.mvp.pk.module.system.domain.user.valueobject;
 
 import java.util.Objects;
 
+/**
+ * Encoded Password 值对象。
+ */
 public final class EncodedPassword {
 
     private final String encodedValue;
 
+    /**
+     * 创建 EncodedPassword 实例。
+     *
+     * @param encodedValue encodedValue 参数
+     */
     private EncodedPassword(String encodedValue) {
         this.encodedValue = Objects.requireNonNull(encodedValue, "加密密码不能为空");
     }
 
+    /**
+     * 执行 of 对应的业务操作。
+     *
+     * @param encodedValue encodedValue 参数
+     * @return 处理结果
+     */
     public static EncodedPassword of(String encodedValue) {
         return new EncodedPassword(encodedValue);
     }
 
+    /**
+     * 执行 encoded Value 对应的业务操作。
+     *
+     * @return 处理结果
+     */
     public String encodedValue() {
         return encodedValue;
     }
@@ -28,6 +47,12 @@ public final class EncodedPassword {
         return encodedValue;
     }
 
+    /**
+     * 执行 equals 对应的业务操作。
+     *
+     * @param o o 参数
+     * @return 处理结果
+     */
     @Override
     public boolean equals(Object o) {
         if (this == o) return true;
@@ -35,11 +60,21 @@ public final class EncodedPassword {
         return encodedValue.equals(that.encodedValue);
     }
 
+    /**
+     * 判断 hash Code 对应的条件是否成立。
+     *
+     * @return 处理结果
+     */
     @Override
     public int hashCode() {
         return Objects.hash(encodedValue);
     }
 
+    /**
+     * 执行 to String 对应的业务操作。
+     *
+     * @return 处理结果
+     */
     @Override
     public String toString() {
         return "[ENCRYPTED]";

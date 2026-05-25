@@ -9,11 +9,25 @@ import com.develop.mvp.pk.module.system.domain.mail.repository.MailTemplateRepos
 import org.springframework.stereotype.Repository;
 import java.util.*;
 
+/**
+ * Mail Template Repository Impl 领域仓储实现。
+ */
 @Repository
 public class MailTemplateRepositoryImpl implements MailTemplateRepository {
     private final MailTemplateMapper mapper;
+    /**
+     * 创建 MailTemplateRepositoryImpl 实例。
+     *
+     * @param mapper mapper 参数
+     */
     public MailTemplateRepositoryImpl(MailTemplateMapper mapper) { this.mapper = mapper; }
 
+    /**
+     * 创建 save 对应的数据。
+     *
+     * @param t t 参数
+     * @return 处理结果
+     */
     @Override
     public MailTemplate save(MailTemplate t) {
         MailTemplateDO d = new MailTemplateDO(); d.setId(t.id()); d.setCode(t.code()); d.setName(t.name());
@@ -28,6 +42,16 @@ public class MailTemplateRepositoryImpl implements MailTemplateRepository {
     @Override public Optional<MailTemplate> findByCode(String code) { return Optional.ofNullable(mapper.selectByCode(code)).map(this::toDomain); }
     @Override public List<MailTemplate> findAll() { return mapper.selectList().stream().map(this::toDomain).toList(); }
 
+    /**
+     * 查询 find Page 对应的数据。
+     *
+     * @param name name 参数
+     * @param code code 参数
+     * @param status status 参数
+     * @param pageNo pageNo 参数
+     * @param pageSize pageSize 参数
+     * @return 处理结果
+     */
     @Override
     public PageResult<MailTemplate> findPage(String name, String code, Integer status, Integer pageNo, Integer pageSize) {
         var reqVO = new MailTemplatePageReqVO(); reqVO.setName(name); reqVO.setCode(code); reqVO.setStatus(status); reqVO.setPageNo(pageNo); reqVO.setPageSize(pageSize);
@@ -36,6 +60,12 @@ public class MailTemplateRepositoryImpl implements MailTemplateRepository {
 
     @Override public long countByAccountId(Long accountId) { return mapper.selectCountByAccountId(accountId); }
 
+    /**
+     * 执行 to Domain 对应的业务操作。
+     *
+     * @param d d 参数
+     * @return 处理结果
+     */
     private MailTemplate toDomain(MailTemplateDO d) {
         return MailTemplate.of(d.getId(), d.getCode(), d.getName()).accountId(d.getAccountId())
                 .nickname(d.getNickname()).title(d.getTitle()).content(d.getContent()).status(d.getStatus()).remark(d.getRemark());

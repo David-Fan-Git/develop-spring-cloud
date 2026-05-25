@@ -67,6 +67,9 @@ import static com.develop.mvp.pk.framework.common.exception.util.ServiceExceptio
 import static com.develop.mvp.pk.framework.common.util.date.DateUtils.isToday;
 import static com.develop.mvp.pk.module.system.enums.ErrorCodeConstants.*;
 
+/**
+ * Sms Application Service 应用服务。
+ */
 @Slf4j
 public class SmsApplicationService implements SmsUseCase {
 
@@ -83,6 +86,20 @@ public class SmsApplicationService implements SmsUseCase {
     private final MemberApplicationService memberApplicationService;
     private final SmsProducer smsProducer;
 
+    /**
+     * 创建 SmsApplicationService 实例。
+     *
+     * @param channelRepo channelRepo 参数
+     * @param smsClientFactory smsClientFactory 参数
+     * @param smsChannelMapper smsChannelMapper 参数
+     * @param smsTemplateMapper smsTemplateMapper 参数
+     * @param smsLogMapper smsLogMapper 参数
+     * @param smsCodeMapper smsCodeMapper 参数
+     * @param smsCodeProperties smsCodeProperties 参数
+     * @param adminUserService adminUserService 参数
+     * @param memberApplicationService memberApplicationService 参数
+     * @param smsProducer smsProducer 参数
+     */
     public SmsApplicationService(SmsChannelRepository channelRepo,
                                   SmsClientFactory smsClientFactory,
                                   SmsChannelMapper smsChannelMapper,
@@ -105,6 +122,18 @@ public class SmsApplicationService implements SmsUseCase {
         this.smsProducer = smsProducer;
     }
 
+    /**
+     * 创建 create Channel 对应的数据。
+     *
+     * @param code code 参数
+     * @param signature signature 参数
+     * @param status status 参数
+     * @param apiKey apiKey 参数
+     * @param apiSecret apiSecret 参数
+     * @param callbackUrl callbackUrl 参数
+     * @param remark remark 参数
+     * @return 处理结果
+     */
     @Transactional
     public Long createChannel(String code, String signature, Integer status, String apiKey, String apiSecret, String callbackUrl, String remark) {
         SmsChannelDO channel = new SmsChannelDO().setCode(code).setSignature(signature).setStatus(status)
@@ -113,44 +142,103 @@ public class SmsApplicationService implements SmsUseCase {
         return channel.getId();
     }
 
+    /**
+     * 更新 update Channel 对应的数据。
+     *
+     * @param id id 参数
+     * @param code code 参数
+     * @param signature signature 参数
+     * @param status status 参数
+     * @param apiKey apiKey 参数
+     * @param apiSecret apiSecret 参数
+     * @param callbackUrl callbackUrl 参数
+     * @param remark remark 参数
+     */
     @Transactional
     public void updateChannel(Long id, String code, String signature, Integer status, String apiKey, String apiSecret, String callbackUrl, String remark) {
         channelRepo.save(SmsChannel.of(id, code, signature).status(status).apiKey(apiKey).apiSecret(apiSecret).callbackUrl(callbackUrl).remark(remark));
     }
 
+    /**
+     * 删除 delete Channel 对应的数据。
+     *
+     * @param id id 参数
+     */
     @Transactional
     public void deleteChannel(Long id) {
         channelRepo.delete(id);
     }
 
+    /**
+     * 查询 get Channel 对应的数据。
+     *
+     * @param id id 参数
+     * @return 处理结果
+     */
     public SmsChannel getChannel(Long id) {
         return channelRepo.findById(id);
     }
 
+    /**
+     * 查询 get Channel By Code 对应的数据。
+     *
+     * @param code code 参数
+     * @return 处理结果
+     */
     public SmsChannel getChannelByCode(String code) {
         return channelRepo.findByCode(code);
     }
 
+    /**
+     * 查询 get Channel List 对应的数据。
+     *
+     * @return 处理结果
+     */
     public List<SmsChannel> getChannelList() {
         return channelRepo.findAll();
     }
 
+    /**
+     * 查询 get Channel Page 对应的数据。
+     *
+     * @param signature signature 参数
+     * @param status status 参数
+     * @param pageNo pageNo 参数
+     * @param pageSize pageSize 参数
+     * @return 处理结果
+     */
     public PageResult<SmsChannel> getChannelPage(String signature, Integer status, Integer pageNo, Integer pageSize) {
         return channelRepo.findPage(signature, status, pageNo, pageSize);
     }
 
+    /**
+     * 创建 create Sms Channel 对应的数据。
+     *
+     * @param createReqVO createReqVO 参数
+     * @return 处理结果
+     */
     public Long createSmsChannel(SmsChannelSaveReqVO createReqVO) {
         SmsChannelDO channel = BeanUtils.toBean(createReqVO, SmsChannelDO.class);
         smsChannelMapper.insert(channel);
         return channel.getId();
     }
 
+    /**
+     * 更新 update Sms Channel 对应的数据。
+     *
+     * @param updateReqVO updateReqVO 参数
+     */
     public void updateSmsChannel(SmsChannelSaveReqVO updateReqVO) {
         validateSmsChannelExists(updateReqVO.getId());
         SmsChannelDO updateObj = BeanUtils.toBean(updateReqVO, SmsChannelDO.class);
         smsChannelMapper.updateById(updateObj);
     }
 
+    /**
+     * 删除 delete Sms Channel 对应的数据。
+     *
+     * @param id id 参数
+     */
     public void deleteSmsChannel(Long id) {
         validateSmsChannelExists(id);
         if (getSmsTemplateCountByChannelId(id) > 0) {
@@ -159,6 +247,11 @@ public class SmsApplicationService implements SmsUseCase {
         smsChannelMapper.deleteById(id);
     }
 
+    /**
+     * 删除 delete Sms Channel List 对应的数据。
+     *
+     * @param ids ids 参数
+     */
     public void deleteSmsChannelList(List<Long> ids) {
         ids.forEach(id -> {
             if (getSmsTemplateCountByChannelId(id) > 0) {
@@ -168,6 +261,12 @@ public class SmsApplicationService implements SmsUseCase {
         smsChannelMapper.deleteByIds(ids);
     }
 
+    /**
+     * 校验 validate Sms Channel Exists 对应的业务规则。
+     *
+     * @param id id 参数
+     * @return 处理结果
+     */
     private SmsChannelDO validateSmsChannelExists(Long id) {
         SmsChannelDO channel = smsChannelMapper.selectById(id);
         if (channel == null) {
@@ -176,28 +275,63 @@ public class SmsApplicationService implements SmsUseCase {
         return channel;
     }
 
+    /**
+     * 查询 get Sms Channel 对应的数据。
+     *
+     * @param id id 参数
+     * @return 处理结果
+     */
     public SmsChannelDO getSmsChannel(Long id) {
         return smsChannelMapper.selectById(id);
     }
 
+    /**
+     * 查询 get Sms Channel List 对应的数据。
+     *
+     * @return 处理结果
+     */
     public List<SmsChannelDO> getSmsChannelList() {
         return smsChannelMapper.selectList();
     }
 
+    /**
+     * 查询 get Sms Channel Page 对应的数据。
+     *
+     * @param pageReqVO pageReqVO 参数
+     * @return 处理结果
+     */
     public PageResult<SmsChannelDO> getSmsChannelPage(SmsChannelPageReqVO pageReqVO) {
         return smsChannelMapper.selectPage(pageReqVO);
     }
 
+    /**
+     * 查询 get Sms Client 对应的数据。
+     *
+     * @param id id 参数
+     * @return 处理结果
+     */
     public SmsClient getSmsClient(Long id) {
         SmsChannelDO channel = smsChannelMapper.selectById(id);
         SmsChannelProperties properties = BeanUtils.toBean(channel, SmsChannelProperties.class);
         return smsClientFactory.createOrUpdateSmsClient(properties);
     }
 
+    /**
+     * 查询 get Sms Client 对应的数据。
+     *
+     * @param code code 参数
+     * @return 处理结果
+     */
     public SmsClient getSmsClient(String code) {
         return smsClientFactory.getSmsClient(code);
     }
 
+    /**
+     * 创建 create Sms Template 对应的数据。
+     *
+     * @param createReqVO createReqVO 参数
+     * @return 处理结果
+     */
     public Long createSmsTemplate(SmsTemplateSaveReqVO createReqVO) {
         SmsChannelDO channelDO = validateSmsChannel(createReqVO.getChannelId());
         validateSmsTemplateCodeDuplicate(null, createReqVO.getCode());
@@ -209,6 +343,11 @@ public class SmsApplicationService implements SmsUseCase {
         return template.getId();
     }
 
+    /**
+     * 更新 update Sms Template 对应的数据。
+     *
+     * @param updateReqVO updateReqVO 参数
+     */
     @CacheEvict(cacheNames = RedisKeyConstants.SMS_TEMPLATE, allEntries = true)
     public void updateSmsTemplate(SmsTemplateSaveReqVO updateReqVO) {
         validateSmsTemplateExists(updateReqVO.getId());
@@ -221,40 +360,85 @@ public class SmsApplicationService implements SmsUseCase {
         smsTemplateMapper.updateById(updateObj);
     }
 
+    /**
+     * 删除 delete Sms Template 对应的数据。
+     *
+     * @param id id 参数
+     */
     @CacheEvict(cacheNames = RedisKeyConstants.SMS_TEMPLATE, allEntries = true)
     public void deleteSmsTemplate(Long id) {
         validateSmsTemplateExists(id);
         smsTemplateMapper.deleteById(id);
     }
 
+    /**
+     * 删除 delete Sms Template List 对应的数据。
+     *
+     * @param ids ids 参数
+     */
     @CacheEvict(cacheNames = RedisKeyConstants.SMS_TEMPLATE, allEntries = true)
     public void deleteSmsTemplateList(List<Long> ids) {
         smsTemplateMapper.deleteByIds(ids);
     }
 
+    /**
+     * 校验 validate Sms Template Exists 对应的业务规则。
+     *
+     * @param id id 参数
+     */
     private void validateSmsTemplateExists(Long id) {
         if (smsTemplateMapper.selectById(id) == null) {
             throw exception(SMS_TEMPLATE_NOT_EXISTS);
         }
     }
 
+    /**
+     * 查询 get Sms Template 对应的数据。
+     *
+     * @param id id 参数
+     * @return 处理结果
+     */
     public SmsTemplateDO getSmsTemplate(Long id) {
         return smsTemplateMapper.selectById(id);
     }
 
+    /**
+     * 查询 get Sms Template By Code From Cache 对应的数据。
+     *
+     * @param code code 参数
+     * @return 处理结果
+     */
     @Cacheable(cacheNames = RedisKeyConstants.SMS_TEMPLATE, key = "#code", unless = "#result == null")
     public SmsTemplateDO getSmsTemplateByCodeFromCache(String code) {
         return smsTemplateMapper.selectByCode(code);
     }
 
+    /**
+     * 查询 get Sms Template Page 对应的数据。
+     *
+     * @param pageReqVO pageReqVO 参数
+     * @return 处理结果
+     */
     public PageResult<SmsTemplateDO> getSmsTemplatePage(SmsTemplatePageReqVO pageReqVO) {
         return smsTemplateMapper.selectPage(pageReqVO);
     }
 
+    /**
+     * 查询 get Sms Template Count By Channel Id 对应的数据。
+     *
+     * @param channelId channelId 参数
+     * @return 处理结果
+     */
     public Long getSmsTemplateCountByChannelId(Long channelId) {
         return smsTemplateMapper.selectCountByChannelId(channelId);
     }
 
+    /**
+     * 校验 validate Sms Channel 对应的业务规则。
+     *
+     * @param channelId channelId 参数
+     * @return 处理结果
+     */
     @VisibleForTesting
     public SmsChannelDO validateSmsChannel(Long channelId) {
         SmsChannelDO channelDO = getSmsChannel(channelId);
@@ -267,6 +451,12 @@ public class SmsApplicationService implements SmsUseCase {
         return channelDO;
     }
 
+    /**
+     * 校验 validate Sms Template Code Duplicate 对应的业务规则。
+     *
+     * @param id id 参数
+     * @param code code 参数
+     */
     @VisibleForTesting
     public void validateSmsTemplateCodeDuplicate(Long id, String code) {
         SmsTemplateDO template = smsTemplateMapper.selectByCode(code);
@@ -281,6 +471,12 @@ public class SmsApplicationService implements SmsUseCase {
         }
     }
 
+    /**
+     * 校验 validate Api Template 对应的业务规则。
+     *
+     * @param channelId channelId 参数
+     * @param apiTemplateId apiTemplateId 参数
+     */
     @VisibleForTesting
     void validateApiTemplate(Long channelId, String apiTemplateId) {
         SmsClient smsClient = getSmsClient(channelId);
@@ -304,15 +500,40 @@ public class SmsApplicationService implements SmsUseCase {
                 String.format("短信模板(%s) 审核状态(%d) 不正确", apiTemplateId, template.getAuditStatus()));
     }
 
+    /**
+     * 执行 format Sms Template Content 对应的业务操作。
+     *
+     * @param content content 参数
+     * @param params params 参数
+     * @return 处理结果
+     */
     public String formatSmsTemplateContent(String content, Map<String, Object> params) {
         return StrUtil.format(content, params);
     }
 
+    /**
+     * 执行 parse Template Content Params 对应的业务操作。
+     *
+     * @param content content 参数
+     * @return 处理结果
+     */
     @VisibleForTesting
     public List<String> parseTemplateContentParams(String content) {
         return ReUtil.findAllGroup1(PATTERN_PARAMS, content);
     }
 
+    /**
+     * 创建 create Sms Log 对应的数据。
+     *
+     * @param mobile mobile 参数
+     * @param userId userId 参数
+     * @param userType userType 参数
+     * @param isSend isSend 参数
+     * @param template template 参数
+     * @param templateContent templateContent 参数
+     * @param templateParams templateParams 参数
+     * @return 处理结果
+     */
     public Long createSmsLog(String mobile, Long userId, Integer userType, Boolean isSend,
                              SmsTemplateDO template, String templateContent, Map<String, Object> templateParams) {
         SmsLogDO.SmsLogDOBuilder logBuilder = SmsLogDO.builder();
@@ -329,6 +550,16 @@ public class SmsApplicationService implements SmsUseCase {
         return logDO.getId();
     }
 
+    /**
+     * 更新 update Sms Send Result 对应的数据。
+     *
+     * @param id id 参数
+     * @param success success 参数
+     * @param apiSendCode apiSendCode 参数
+     * @param apiSendMsg apiSendMsg 参数
+     * @param apiRequestId apiRequestId 参数
+     * @param apiSerialNo apiSerialNo 参数
+     */
     public void updateSmsSendResult(Long id, Boolean success,
                                     String apiSendCode, String apiSendMsg,
                                     String apiRequestId, String apiSerialNo) {
@@ -339,6 +570,16 @@ public class SmsApplicationService implements SmsUseCase {
                 .apiRequestId(apiRequestId).apiSerialNo(apiSerialNo).build());
     }
 
+    /**
+     * 更新 update Sms Receive Result 对应的数据。
+     *
+     * @param id id 参数
+     * @param apiSerialNo apiSerialNo 参数
+     * @param success success 参数
+     * @param receiveTime receiveTime 参数
+     * @param apiReceiveCode apiReceiveCode 参数
+     * @param apiReceiveMsg apiReceiveMsg 参数
+     */
     public void updateSmsReceiveResult(Long id, String apiSerialNo, Boolean success, LocalDateTime receiveTime,
                                        String apiReceiveCode, String apiReceiveMsg) {
         SmsReceiveStatusEnum receiveStatus = Objects.equals(success, true) ?
@@ -354,14 +595,35 @@ public class SmsApplicationService implements SmsUseCase {
                 .receiveTime(receiveTime).apiReceiveCode(apiReceiveCode).apiReceiveMsg(apiReceiveMsg).build());
     }
 
+    /**
+     * 查询 get Sms Log 对应的数据。
+     *
+     * @param id id 参数
+     * @return 处理结果
+     */
     public SmsLogDO getSmsLog(Long id) {
         return smsLogMapper.selectById(id);
     }
 
+    /**
+     * 查询 get Sms Log Page 对应的数据。
+     *
+     * @param pageReqVO pageReqVO 参数
+     * @return 处理结果
+     */
     public PageResult<SmsLogDO> getSmsLogPage(SmsLogPageReqVO pageReqVO) {
         return smsLogMapper.selectPage(pageReqVO);
     }
 
+    /**
+     * 发送 send Single Sms To Admin 对应的消息。
+     *
+     * @param mobile mobile 参数
+     * @param userId userId 参数
+     * @param templateCode templateCode 参数
+     * @param templateParams templateParams 参数
+     * @return 处理结果
+     */
     @DataPermission(enable = false)
     public Long sendSingleSmsToAdmin(String mobile, Long userId, String templateCode, Map<String, Object> templateParams) {
         if (StrUtil.isEmpty(mobile)) {
@@ -373,6 +635,15 @@ public class SmsApplicationService implements SmsUseCase {
         return sendSingleSms(mobile, userId, UserTypeEnum.ADMIN.getValue(), templateCode, templateParams);
     }
 
+    /**
+     * 发送 send Single Sms To Member 对应的消息。
+     *
+     * @param mobile mobile 参数
+     * @param userId userId 参数
+     * @param templateCode templateCode 参数
+     * @param templateParams templateParams 参数
+     * @return 处理结果
+     */
     public Long sendSingleSmsToMember(String mobile, Long userId, String templateCode, Map<String, Object> templateParams) {
         if (StrUtil.isEmpty(mobile)) {
             mobile = memberApplicationService.getMemberUserMobile(userId);
@@ -380,6 +651,16 @@ public class SmsApplicationService implements SmsUseCase {
         return sendSingleSms(mobile, userId, UserTypeEnum.MEMBER.getValue(), templateCode, templateParams);
     }
 
+    /**
+     * 发送 send Single Sms 对应的消息。
+     *
+     * @param mobile mobile 参数
+     * @param userId userId 参数
+     * @param userType userType 参数
+     * @param templateCode templateCode 参数
+     * @param templateParams templateParams 参数
+     * @return 处理结果
+     */
     public Long sendSingleSms(String mobile, Long userId, Integer userType,
                               String templateCode, Map<String, Object> templateParams) {
         SmsTemplateDO template = validateSmsTemplate(templateCode);
@@ -397,6 +678,12 @@ public class SmsApplicationService implements SmsUseCase {
         return sendLogId;
     }
 
+    /**
+     * 校验 validate Sms Send Channel 对应的业务规则。
+     *
+     * @param channelId channelId 参数
+     * @return 处理结果
+     */
     @VisibleForTesting
     SmsChannelDO validateSmsSendChannel(Long channelId) {
         SmsChannelDO channelDO = getSmsChannel(channelId);
@@ -406,6 +693,12 @@ public class SmsApplicationService implements SmsUseCase {
         return channelDO;
     }
 
+    /**
+     * 校验 validate Sms Template 对应的业务规则。
+     *
+     * @param templateCode templateCode 参数
+     * @return 处理结果
+     */
     @VisibleForTesting
     public SmsTemplateDO validateSmsTemplate(String templateCode) {
         SmsTemplateDO template = getSmsTemplateByCodeFromCache(templateCode);
@@ -415,6 +708,13 @@ public class SmsApplicationService implements SmsUseCase {
         return template;
     }
 
+    /**
+     * 构建 build Template Params 对应的数据对象。
+     *
+     * @param template template 参数
+     * @param templateParams templateParams 参数
+     * @return 处理结果
+     */
     @VisibleForTesting
     public List<KeyValue<String, Object>> buildTemplateParams(SmsTemplateDO template, Map<String, Object> templateParams) {
         return template.getParams().stream().map(key -> {
@@ -426,6 +726,12 @@ public class SmsApplicationService implements SmsUseCase {
         }).collect(Collectors.toList());
     }
 
+    /**
+     * 校验 validate Mobile 对应的业务规则。
+     *
+     * @param mobile mobile 参数
+     * @return 处理结果
+     */
     @VisibleForTesting
     public String validateMobile(String mobile) {
         if (StrUtil.isEmpty(mobile)) {
@@ -434,11 +740,25 @@ public class SmsApplicationService implements SmsUseCase {
         return mobile;
     }
 
+    /**
+     * 发送 send Batch Sms 对应的消息。
+     *
+     * @param mobiles mobiles 参数
+     * @param userIds userIds 参数
+     * @param userType userType 参数
+     * @param templateCode templateCode 参数
+     * @param templateParams templateParams 参数
+     */
     public void sendBatchSms(List<String> mobiles, List<Long> userIds, Integer userType,
                              String templateCode, Map<String, Object> templateParams) {
         throw new UnsupportedOperationException("暂时不支持该操作，感兴趣可以实现该功能哟！");
     }
 
+    /**
+     * 执行 do Send Sms 对应的业务操作。
+     *
+     * @param message message 参数
+     */
     public void doSendSms(SmsSendMessage message) {
         SmsClient smsClient = getSmsClient(message.getChannelId());
         Assert.notNull(smsClient, "短信客户端({}) 不存在", message.getChannelId());
@@ -455,6 +775,12 @@ public class SmsApplicationService implements SmsUseCase {
         }
     }
 
+    /**
+     * 执行 receive Sms Status 对应的业务操作。
+     *
+     * @param channelCode channelCode 参数
+     * @param text text 参数
+     */
     public void receiveSmsStatus(String channelCode, String text) throws Throwable {
         SmsClient smsClient = getSmsClient(channelCode);
         Assert.notNull(smsClient, "短信客户端({}) 不存在", channelCode);
@@ -466,6 +792,11 @@ public class SmsApplicationService implements SmsUseCase {
                 result.getSuccess(), result.getReceiveTime(), result.getErrorCode(), result.getErrorMsg()));
     }
 
+    /**
+     * 发送 send Sms Code 对应的消息。
+     *
+     * @param reqDTO reqDTO 参数
+     */
     public void sendSmsCode(SmsCodeSendReqDTO reqDTO) {
         SmsSceneEnum sceneEnum = SmsSceneEnum.getCodeByScene(reqDTO.getScene());
         Assert.notNull(sceneEnum, "验证码场景({}) 查找不到配置", reqDTO.getScene());
@@ -473,6 +804,14 @@ public class SmsApplicationService implements SmsUseCase {
         sendSingleSms(reqDTO.getMobile(), null, null, sceneEnum.getTemplateCode(), MapUtil.of("code", code));
     }
 
+    /**
+     * 创建 create Sms Code 对应的数据。
+     *
+     * @param mobile mobile 参数
+     * @param scene scene 参数
+     * @param ip ip 参数
+     * @return 处理结果
+     */
     private String createSmsCode(String mobile, Integer scene, String ip) {
         SmsCodeDO lastSmsCode = smsCodeMapper.selectLastByMobile(mobile, null, null);
         if (lastSmsCode != null) {
@@ -494,16 +833,34 @@ public class SmsApplicationService implements SmsUseCase {
         return code;
     }
 
+    /**
+     * 执行 use Sms Code 对应的业务操作。
+     *
+     * @param reqDTO reqDTO 参数
+     */
     public void useSmsCode(SmsCodeUseReqDTO reqDTO) {
         SmsCodeDO lastSmsCode = validateSmsCode0(reqDTO.getMobile(), reqDTO.getCode(), reqDTO.getScene());
         smsCodeMapper.updateById(SmsCodeDO.builder().id(lastSmsCode.getId())
                 .used(true).usedTime(LocalDateTime.now()).usedIp(reqDTO.getUsedIp()).build());
     }
 
+    /**
+     * 校验 validate Sms Code 对应的业务规则。
+     *
+     * @param reqDTO reqDTO 参数
+     */
     public void validateSmsCode(SmsCodeValidateReqDTO reqDTO) {
         validateSmsCode0(reqDTO.getMobile(), reqDTO.getCode(), reqDTO.getScene());
     }
 
+    /**
+     * 校验 validate Sms Code0 对应的业务规则。
+     *
+     * @param mobile mobile 参数
+     * @param code code 参数
+     * @param scene scene 参数
+     * @return 处理结果
+     */
     private SmsCodeDO validateSmsCode0(String mobile, String code, Integer scene) {
         SmsCodeDO lastSmsCode = smsCodeMapper.selectLastByMobile(mobile, code, scene);
         if (lastSmsCode == null) {

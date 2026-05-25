@@ -9,6 +9,9 @@ import lombok.Data;
 import java.time.LocalDateTime;
 import java.util.List;
 
+/**
+ * User Profile Resp VO 接口视图对象。
+ */
 @Data
 @Schema(description = "管理后台 - 用户个人中心信息 Response VO")
 public class UserProfileRespVO {

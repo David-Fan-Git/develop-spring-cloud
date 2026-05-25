@@ -6,6 +6,9 @@ import lombok.Data;
 import java.time.LocalDateTime;
 import java.util.List;
 
+/**
+ * Mail Template Resp VO 接口视图对象。
+ */
 @Schema(description = "管理后台 - 邮件末班 Response VO")
 @Data
 public class MailTemplateRespVO {

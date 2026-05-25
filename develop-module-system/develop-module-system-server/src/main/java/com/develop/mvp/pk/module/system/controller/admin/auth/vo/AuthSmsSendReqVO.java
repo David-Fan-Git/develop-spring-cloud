@@ -11,6 +11,9 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+/**
+ * Auth Sms Send Req VO 接口视图对象。
+ */
 @Schema(description = "管理后台 - 发送手机验证码 Request VO")
 @Data
 @NoArgsConstructor

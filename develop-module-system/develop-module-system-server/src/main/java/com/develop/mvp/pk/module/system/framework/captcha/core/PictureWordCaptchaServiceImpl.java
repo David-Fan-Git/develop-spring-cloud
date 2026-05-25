@@ -37,21 +37,42 @@ public class PictureWordCaptchaServiceImpl extends AbstractCaptchaService {
     private static final int HEIGHT = 40;
     private static final int LINES = 10;
 
+    /**
+     * 执行 init 对应的业务操作。
+     *
+     * @param config config 参数
+     */
     @Override
     public void init(Properties config) {
         super.init(config);
     }
 
+    /**
+     * 执行 destroy 对应的业务操作。
+     *
+     * @param config config 参数
+     */
     @Override
     public void destroy(Properties config) {
         logger.info("start-clear-history-data-{}", captchaType());
     }
 
+    /**
+     * 执行 captcha Type 对应的业务操作。
+     *
+     * @return 处理结果
+     */
     @Override
     public String captchaType() {
         return "pictureWord";
     }
 
+    /**
+     * 查询 get 对应的数据。
+     *
+     * @param captchaVO captchaVO 参数
+     * @return 处理结果
+     */
     @Override
     public ResponseModel get(CaptchaVO captchaVO) {
         String text = generateRandomText(LENGTH);
@@ -61,6 +82,12 @@ public class PictureWordCaptchaServiceImpl extends AbstractCaptchaService {
         return ResponseModel.successData(imageData);
     }
 
+    /**
+     * 校验 check 对应的业务规则。
+     *
+     * @param captchaVO captchaVO 参数
+     * @return 处理结果
+     */
     @Override
     public ResponseModel check(CaptchaVO captchaVO) {
         ResponseModel r = super.check(captchaVO);
@@ -103,6 +130,12 @@ public class PictureWordCaptchaServiceImpl extends AbstractCaptchaService {
         return ResponseModel.successData(captchaVO);
     }
 
+    /**
+     * 执行 verification 对应的业务操作。
+     *
+     * @param captchaVO captchaVO 参数
+     * @return 处理结果
+     */
     @Override
     public ResponseModel verification(CaptchaVO captchaVO) {
         ResponseModel r = super.verification(captchaVO);
@@ -124,6 +157,12 @@ public class PictureWordCaptchaServiceImpl extends AbstractCaptchaService {
     }
 
 
+    /**
+     * 查询 get Image Data 对应的数据。
+     *
+     * @param text text 参数
+     * @return 处理结果
+     */
     private CaptchaVO getImageData(String text) {
         CaptchaVO dataVO = new CaptchaVO();
         BufferedImage image = new BufferedImage(WIDTH, HEIGHT, BufferedImage.TYPE_INT_RGB);
@@ -178,18 +217,44 @@ public class PictureWordCaptchaServiceImpl extends AbstractCaptchaService {
         return dataVO;
     }
 
+    /**
+     * 查询 get Code Value 对应的数据。
+     *
+     * @param text text 参数
+     * @param secretKey secretKey 参数
+     * @return 处理结果
+     */
     private String getCodeValue(String text, String secretKey) {
         return text + "," + secretKey;
     }
 
+    /**
+     * 查询 get Code By Code Value 对应的数据。
+     *
+     * @param codeValue codeValue 参数
+     * @return 处理结果
+     */
     private String getCodeByCodeValue(String codeValue) {
         return codeValue.split(",")[0];
     }
 
+    /**
+     * 查询 get Secret Key By Code Value 对应的数据。
+     *
+     * @param codeValue codeValue 参数
+     * @return 处理结果
+     */
     private String getSecretKeyByCodeValue(String codeValue) {
         return codeValue.split(",")[1];
     }
 
+    /**
+     * 查询 get Random Color 对应的数据。
+     *
+     * @param min min 参数
+     * @param max max 参数
+     * @return 处理结果
+     */
     private Color getRandomColor(int min, int max) {
         int minVal = Math.min(min, max);
         int maxVal = Math.max(min, max);

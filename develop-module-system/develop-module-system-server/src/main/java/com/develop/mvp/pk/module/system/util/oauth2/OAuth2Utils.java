@@ -77,6 +77,16 @@ public class OAuth2Utils {
         return HttpUtils.append(redirectUri, vars, keys, true);
     }
 
+    /**
+     * 构建 build Unsuccessful Redirect 对应的数据对象。
+     *
+     * @param redirectUri redirectUri 参数
+     * @param responseType responseType 参数
+     * @param state state 参数
+     * @param error error 参数
+     * @param description description 参数
+     * @return 处理结果
+     */
     public static String buildUnsuccessfulRedirect(String redirectUri, String responseType, String state,
                                                    String error, String description) {
         Map<String, String> query = new LinkedHashMap<String, String>();
@@ -88,14 +98,32 @@ public class OAuth2Utils {
         return HttpUtils.append(redirectUri, query, null, !responseType.contains("code"));
     }
 
+    /**
+     * 查询 get Expires In 对应的数据。
+     *
+     * @param expireTime expireTime 参数
+     * @return 处理结果
+     */
     public static long getExpiresIn(LocalDateTime expireTime) {
         return LocalDateTimeUtil.between(LocalDateTime.now(), expireTime, ChronoUnit.SECONDS);
     }
 
+    /**
+     * 构建 build Scope Str 对应的数据对象。
+     *
+     * @param scopes scopes 参数
+     * @return 处理结果
+     */
     public static String buildScopeStr(Collection<String> scopes) {
         return CollUtil.join(scopes, " ");
     }
 
+    /**
+     * 构建 build Scopes 对应的数据对象。
+     *
+     * @param scope scope 参数
+     * @return 处理结果
+     */
     public static List<String> buildScopes(String scope) {
         return StrUtil.split(scope, ' ');
     }

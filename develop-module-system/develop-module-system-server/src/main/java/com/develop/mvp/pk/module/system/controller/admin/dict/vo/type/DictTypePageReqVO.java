@@ -11,6 +11,9 @@ import java.time.LocalDateTime;
 
 import static com.develop.mvp.pk.framework.common.util.date.DateUtils.FORMAT_YEAR_MONTH_DAY_HOUR_MINUTE_SECOND;
 
+/**
+ * Dict Type Page Req VO 接口视图对象。
+ */
 @Schema(description = "管理后台 - 字典类型分页列表 Request VO")
 @Data
 @EqualsAndHashCode(callSuper = true)

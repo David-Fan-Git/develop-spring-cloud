@@ -6,6 +6,9 @@ import lombok.Data;
 import java.time.LocalDateTime;
 import java.util.Set;
 
+/**
+ * Tenant Package Resp VO 接口视图对象。
+ */
 @Schema(description = "管理后台 - 租户套餐 Response VO")
 @Data
 public class TenantPackageRespVO {

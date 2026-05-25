@@ -5,6 +5,9 @@ import lombok.Data;
 
 import java.util.List;
 
+/**
+ * App Area Node Resp VO 接口视图对象。
+ */
 @Schema(description = "用户 App - 地区节点 Response VO")
 @Data
 public class AppAreaNodeRespVO {

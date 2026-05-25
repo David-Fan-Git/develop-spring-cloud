@@ -9,6 +9,9 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 import org.hibernate.validator.constraints.Length;
 
+/**
+ * Auth Reset Password Req VO 接口视图对象。
+ */
 @Schema(description = "管理后台 - 短信重置账号密码 Request VO")
 @Data
 @NoArgsConstructor

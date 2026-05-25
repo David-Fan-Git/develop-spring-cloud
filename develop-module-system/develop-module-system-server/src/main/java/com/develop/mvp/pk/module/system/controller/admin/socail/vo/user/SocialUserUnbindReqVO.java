@@ -11,6 +11,9 @@ import lombok.NoArgsConstructor;
 import jakarta.validation.constraints.NotEmpty;
 import jakarta.validation.constraints.NotNull;
 
+/**
+ * Social User Unbind Req VO 接口视图对象。
+ */
 @Schema(description = "管理后台 - 取消社交绑定 Request VO")
 @Data
 @NoArgsConstructor

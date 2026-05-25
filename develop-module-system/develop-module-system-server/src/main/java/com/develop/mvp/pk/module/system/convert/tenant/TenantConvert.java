@@ -15,6 +15,12 @@ public interface TenantConvert {
 
     TenantConvert INSTANCE = Mappers.getMapper(TenantConvert.class);
 
+    /**
+     * 转换 convert02 对应的数据对象。
+     *
+     * @param bean bean 参数
+     * @return 处理结果
+     */
     default UserSaveReqVO convert02(TenantSaveReqVO bean) {
         UserSaveReqVO reqVO = new UserSaveReqVO();
         reqVO.setUsername(bean.getUsername());

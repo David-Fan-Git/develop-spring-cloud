@@ -35,12 +35,26 @@ public class QiniuSmsClient extends AbstractSmsClient {
 
     private static final String HOST = "sms.qiniuapi.com";
 
+    /**
+     * 创建 QiniuSmsClient 实例。
+     *
+     * @param properties properties 参数
+     */
     public QiniuSmsClient(SmsChannelProperties properties) {
         super(properties);
         Assert.notEmpty(properties.getApiKey(), "apiKey 不能为空");
         Assert.notEmpty(properties.getApiSecret(), "apiSecret 不能为空");
     }
 
+    /**
+     * 发送 send Sms 对应的消息。
+     *
+     * @param sendLogId sendLogId 参数
+     * @param mobile mobile 参数
+     * @param apiTemplateId apiTemplateId 参数
+     * @param templateParams templateParams 参数
+     * @return 处理结果
+     */
     public SmsSendRespDTO sendSms(Long sendLogId, String mobile, String apiTemplateId,
                                   List<KeyValue<String, Object>> templateParams) throws Throwable {
         // 1. 执行请求
@@ -92,6 +106,15 @@ public class QiniuSmsClient extends AbstractSmsClient {
         return JSONUtil.parseObj(responseBody);
     }
 
+    /**
+     * 查询 get Signature 对应的数据。
+     *
+     * @param method method 参数
+     * @param path path 参数
+     * @param body body 参数
+     * @param signDate signDate 参数
+     * @return 处理结果
+     */
     private String getSignature(String method, String path, String body, String signDate) {
         StringBuilder dataToSign = new StringBuilder();
         dataToSign.append(method.toUpperCase()).append(" ").append(path)
@@ -107,12 +130,24 @@ public class QiniuSmsClient extends AbstractSmsClient {
         return "Qiniu " + properties.getApiKey() + ":" + signature;
     }
 
+    /**
+     * 执行 parse Sms Receive Status 对应的业务操作。
+     *
+     * @param text text 参数
+     * @return 处理结果
+     */
     @Override
     public List<SmsReceiveRespDTO> parseSmsReceiveStatus(String text) {
         JSONObject status = JSONUtil.parseObj(text);
         // 字段参考 https://developer.qiniu.com/sms/5910/message-push
         return convertList(status.getJSONArray("items"), new Function<Object, SmsReceiveRespDTO>() {
 
+            /**
+             * 执行 apply 对应的业务操作。
+             *
+             * @param item item 参数
+             * @return 处理结果
+             */
             @Override
             public SmsReceiveRespDTO apply(Object item) {
                 JSONObject statusObj = (JSONObject) item;
@@ -128,6 +163,12 @@ public class QiniuSmsClient extends AbstractSmsClient {
         });
     }
 
+    /**
+     * 查询 get Sms Template 对应的数据。
+     *
+     * @param apiTemplateId apiTemplateId 参数
+     * @return 处理结果
+     */
     @Override
     public SmsTemplateRespDTO getSmsTemplate(String apiTemplateId) throws Throwable {
         // 1. 执行请求
@@ -142,6 +183,12 @@ public class QiniuSmsClient extends AbstractSmsClient {
                 .setAuditReason(response.getStr("reject_reason"));
     }
 
+    /**
+     * 转换 convert Sms Template Audit Status 对应的数据对象。
+     *
+     * @param templateStatus templateStatus 参数
+     * @return 处理结果
+     */
     @VisibleForTesting
     Integer convertSmsTemplateAuditStatus(String templateStatus) {
         switch (templateStatus) {

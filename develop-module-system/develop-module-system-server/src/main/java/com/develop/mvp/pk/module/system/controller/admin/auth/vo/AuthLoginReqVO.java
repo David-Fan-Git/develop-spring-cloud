@@ -14,6 +14,9 @@ import jakarta.validation.constraints.AssertTrue;
 import jakarta.validation.constraints.NotEmpty;
 import jakarta.validation.constraints.Pattern;
 
+/**
+ * Auth Login Req VO 接口视图对象。
+ */
 @Schema(description = "管理后台 - 账号密码登录 Request VO，如果登录并绑定社交用户，需要传递 social 开头的参数")
 @Data
 @NoArgsConstructor
@@ -44,11 +47,21 @@ public class AuthLoginReqVO extends CaptchaVerificationReqVO {
     @Schema(description = "state", requiredMode = Schema.RequiredMode.REQUIRED, example = "9b2ffbc1-7425-4155-9894-9d5c08541d62")
     private String socialState;
 
+    /**
+     * 判断 is Social Code Valid 对应的条件是否成立。
+     *
+     * @return 处理结果
+     */
     @AssertTrue(message = "授权码不能为空")
     public boolean isSocialCodeValid() {
         return socialType == null || StrUtil.isNotEmpty(socialCode);
     }
 
+    /**
+     * 判断 is Social State 对应的条件是否成立。
+     *
+     * @return 处理结果
+     */
     @AssertTrue(message = "授权 state 不能为空")
     public boolean isSocialState() {
         return socialType == null || StrUtil.isNotEmpty(socialState);

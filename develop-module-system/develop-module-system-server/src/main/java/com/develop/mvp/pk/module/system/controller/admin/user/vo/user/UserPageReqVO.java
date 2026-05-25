@@ -12,6 +12,9 @@ import java.time.LocalDateTime;
 
 import static com.develop.mvp.pk.framework.common.util.date.DateUtils.FORMAT_YEAR_MONTH_DAY_HOUR_MINUTE_SECOND;
 
+/**
+ * User Page Req VO 接口视图对象。
+ */
 @Schema(description = "管理后台 - 用户分页 Request VO")
 @Data
 @NoArgsConstructor

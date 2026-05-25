@@ -11,11 +11,25 @@ import java.util.*;
 
 import static com.develop.mvp.pk.framework.common.util.collection.CollectionUtils.convertSet;
 
+/**
+ * User Role Repository Impl 领域仓储实现。
+ */
 @Repository
 public class UserRoleRepositoryImpl implements UserRoleRepository {
     private final UserRoleMapper mapper;
+    /**
+     * 创建 UserRoleRepositoryImpl 实例。
+     *
+     * @param mapper mapper 参数
+     */
     public UserRoleRepositoryImpl(UserRoleMapper mapper) { this.mapper = mapper; }
 
+    /**
+     * 执行 assign 对应的业务操作。
+     *
+     * @param userId userId 参数
+     * @param roleIds roleIds 参数
+     */
     @Override
     public void assign(Long userId, Set<Long> roleIds) {
         Set<Long> db = convertSet(mapper.selectListByUserId(userId), UserRoleDO::getRoleId);
@@ -27,19 +41,41 @@ public class UserRoleRepositoryImpl implements UserRoleRepository {
         if (!delete.isEmpty()) mapper.deleteListByUserIdAndRoleIdIds(userId, delete);
     }
 
+    /**
+     * 查询 find By User Id 对应的数据。
+     *
+     * @param userId userId 参数
+     * @return 处理结果
+     */
     @Override
     public Set<Long> findByUserId(Long userId) {
         return convertSet(mapper.selectListByUserId(userId), UserRoleDO::getRoleId);
     }
 
+    /**
+     * 查询 find By Role Ids 对应的数据。
+     *
+     * @param roleIds roleIds 参数
+     * @return 处理结果
+     */
     @Override
     public Set<Long> findByRoleIds(Collection<Long> roleIds) {
         return convertSet(mapper.selectListByRoleIds(roleIds), UserRoleDO::getUserId);
     }
 
+    /**
+     * 删除 delete By User Id 对应的数据。
+     *
+     * @param userId userId 参数
+     */
     @Override
     public void deleteByUserId(Long userId) { mapper.deleteListByUserId(userId); }
 
+    /**
+     * 删除 delete By Role Id 对应的数据。
+     *
+     * @param roleId roleId 参数
+     */
     @Override
     public void deleteByRoleId(Long roleId) { mapper.deleteListByRoleId(roleId); }
 }

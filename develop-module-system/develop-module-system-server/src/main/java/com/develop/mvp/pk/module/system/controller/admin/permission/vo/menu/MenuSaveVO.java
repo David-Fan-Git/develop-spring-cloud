@@ -6,6 +6,9 @@ import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
 import lombok.Data;
 
+/**
+ * Menu Save VO 接口视图对象。
+ */
 @Schema(description = "管理后台 - 菜单创建/修改 Request VO")
 @Data
 public class MenuSaveVO {

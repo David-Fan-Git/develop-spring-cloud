@@ -13,6 +13,9 @@ import com.develop.mvp.pk.module.system.domain.user.valueobject.*;
 
 import java.util.*;
 
+/**
+ * User 领域模型。
+ */
 public final class User {
 
     // ── 聚合根标识 ──
@@ -39,6 +42,20 @@ public final class User {
     // ── 领域事件收集 ──
     private final List<DomainEvent> events = new ArrayList<>();
 
+    /**
+     * 创建 User 实例。
+     *
+     * @param id id 参数
+     * @param username username 参数
+     * @param password password 参数
+     * @param tenantId tenantId 参数
+     * @param deptId deptId 参数
+     * @param email email 参数
+     * @param mobile mobile 参数
+     * @param profile profile 参数
+     * @param status status 参数
+     * @param postIds postIds 参数
+     */
     User(UserId id, Username username, EncodedPassword password, Long tenantId,
          Long deptId, Email email, Mobile mobile, UserProfile profile,
          UserStatus status, Set<Long> postIds) {
@@ -55,20 +72,36 @@ public final class User {
         this.lastLogin = null;
     }
 
+    /**
+     * 执行 record Created 对应的业务操作。
+     */
     void recordCreated() {
         events.add(new UserCreatedEvent(this.id.value(), this.username.value(), this.tenantId));
     }
 
+    /**
+     * 更新 disable 对应的数据。
+     */
     public void disable() {
         if (this.status.isDisabled()) return;
         this.status = this.status.disable();
         events.add(new UserDisabledEvent(this.id.value()));
     }
 
+    /**
+     * 更新 enable 对应的数据。
+     */
     public void enable() {
         this.status = this.status.enable();
     }
 
+    /**
+     * 更新 change Password 对应的数据。
+     *
+     * @param oldPassword oldPassword 参数
+     * @param newPassword newPassword 参数
+     * @param encoder encoder 参数
+     */
     public void changePassword(RawPassword oldPassword, RawPassword newPassword,
                                 PasswordEncoder encoder) {
         if (!encoder.matches(oldPassword, this.password)) {
@@ -81,15 +114,33 @@ public final class User {
         events.add(new UserPasswordChangedEvent(this.id.value()));
     }
 
+    /**
+     * 更新 reset Password 对应的数据。
+     *
+     * @param newPassword newPassword 参数
+     * @param encoder encoder 参数
+     */
     public void resetPassword(RawPassword newPassword, PasswordEncoder encoder) {
         this.password = encoder.encode(newPassword); // R06
         events.add(new UserPasswordChangedEvent(this.id.value()));
     }
 
+    /**
+     * 更新 update Profile 对应的数据。
+     *
+     * @param newProfile newProfile 参数
+     */
     public void updateProfile(UserProfile newProfile) {
         this.profile = Objects.requireNonNull(newProfile, "profile 不能为空");
     }
 
+    /**
+     * 更新 update Contact 对应的数据。
+     *
+     * @param newEmail newEmail 参数
+     * @param newMobile newMobile 参数
+     * @param checker checker 参数
+     */
     public void updateContact(Email newEmail, Mobile newMobile,
                                UserUniquenessChecker checker) {
         if (newEmail != null && newEmail.isPresent()
@@ -104,12 +155,22 @@ public final class User {
         this.mobile = newMobile != null ? newMobile : this.mobile;
     }
 
+    /**
+     * 执行 record Login 对应的业务操作。
+     *
+     * @param loginRecord loginRecord 参数
+     */
     public void recordLogin(LoginRecord loginRecord) {
         this.lastLogin = Objects.requireNonNull(loginRecord);
         events.add(new UserLoggedInEvent(this.id.value(),
                 loginRecord.loginIp(), loginRecord.loginDate()));
     }
 
+    /**
+     * 执行 sync Posts 对应的业务操作。
+     *
+     * @param newPostIds newPostIds 参数
+     */
     public void syncPosts(Set<Long> newPostIds) {
         this.postIds.clear();
         if (newPostIds != null) {
@@ -117,32 +178,111 @@ public final class User {
         }
     }
 
+    /**
+     * 执行 mark Deleted 对应的业务操作。
+     */
     public void markDeleted() {
         events.add(new UserDeletedEvent(this.id.value(), this.username.value()));
     }
 
     // ── 查询方法 ──
+    /**
+     * 执行 id 对应的业务操作。
+     *
+     * @return 处理结果
+     */
     public UserId id() { return id; }
+    /**
+     * 执行 username 对应的业务操作。
+     *
+     * @return 处理结果
+     */
     public Username username() { return username; }
+    /**
+     * 执行 password 对应的业务操作。
+     *
+     * @return 处理结果
+     */
     public EncodedPassword password() { return password; }
+    /**
+     * 执行 tenant Id 对应的业务操作。
+     *
+     * @return 处理结果
+     */
     public Long tenantId() { return tenantId; }
+    /**
+     * 执行 dept Id 对应的业务操作。
+     *
+     * @return 处理结果
+     */
     public Long deptId() { return deptId; }
+    /**
+     * 执行 email 对应的业务操作。
+     *
+     * @return 处理结果
+     */
     public Email email() { return email; }
+    /**
+     * 执行 mobile 对应的业务操作。
+     *
+     * @return 处理结果
+     */
     public Mobile mobile() { return mobile; }
+    /**
+     * 执行 profile 对应的业务操作。
+     *
+     * @return 处理结果
+     */
     public UserProfile profile() { return profile; }
+    /**
+     * 执行 status 对应的业务操作。
+     *
+     * @return 处理结果
+     */
     public UserStatus status() { return status; }
+    /**
+     * 执行 last Login 对应的业务操作。
+     *
+     * @return 处理结果
+     */
     public LoginRecord lastLogin() { return lastLogin; }
+    /**
+     * 执行 post Ids 对应的业务操作。
+     *
+     * @return 处理结果
+     */
     public Set<Long> postIds() { return Collections.unmodifiableSet(postIds); }
 
+    /**
+     * 判断 is Enabled 对应的条件是否成立。
+     *
+     * @return 处理结果
+     */
     public boolean isEnabled() { return status.isEnabled(); }
+    /**
+     * 判断 is Disabled 对应的条件是否成立。
+     *
+     * @return 处理结果
+     */
     public boolean isDisabled() { return status.isDisabled(); }
 
+    /**
+     * 执行 pull Events 对应的业务操作。
+     *
+     * @return 处理结果
+     */
     public List<DomainEvent> pullEvents() {
         List<DomainEvent> result = new ArrayList<>(events);
         events.clear();
         return result;
     }
 
+    /**
+     * 执行 equals 对应的业务操作。
+     *
+     * @param o o 参数
+     * @return 处理结果
+     */
     @Override
     public boolean equals(Object o) {
         if (this == o) return true;
@@ -150,9 +290,19 @@ public final class User {
         return id.equals(that.id);
     }
 
+    /**
+     * 判断 hash Code 对应的条件是否成立。
+     *
+     * @return 处理结果
+     */
     @Override
     public int hashCode() { return Objects.hash(id); }
 
+    /**
+     * 执行 to String 对应的业务操作。
+     *
+     * @return 处理结果
+     */
     @Override
     public String toString() {
         return "User{id=" + id + ", username=" + username + '}';

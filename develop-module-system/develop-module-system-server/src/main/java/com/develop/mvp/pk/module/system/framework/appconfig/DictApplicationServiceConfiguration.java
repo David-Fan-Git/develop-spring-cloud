@@ -6,9 +6,19 @@ import com.develop.mvp.pk.module.system.domain.dict.repository.DictTypeRepositor
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
+/**
+ * Dict Application Service Configuration 配置类。
+ */
 @Configuration
 public class DictApplicationServiceConfiguration {
 
+    /**
+     * 执行 dict Application Service 对应的业务操作。
+     *
+     * @param dictTypeRepository dictTypeRepository 参数
+     * @param dictDataRepository dictDataRepository 参数
+     * @return 处理结果
+     */
     @Bean
     public DictApplicationService dictApplicationService(
             DictTypeRepository dictTypeRepository,

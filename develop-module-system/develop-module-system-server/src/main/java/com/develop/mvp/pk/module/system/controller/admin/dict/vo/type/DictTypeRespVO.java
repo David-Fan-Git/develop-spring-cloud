@@ -10,6 +10,9 @@ import lombok.Data;
 
 import java.time.LocalDateTime;
 
+/**
+ * Dict Type Resp VO 接口视图对象。
+ */
 @Schema(description = "管理后台 - 字典类型信息 Response VO")
 @Data
 @ExcelIgnoreUnannotated

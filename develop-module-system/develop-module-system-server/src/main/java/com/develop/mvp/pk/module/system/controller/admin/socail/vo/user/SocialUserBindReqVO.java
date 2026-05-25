@@ -11,6 +11,9 @@ import lombok.NoArgsConstructor;
 import jakarta.validation.constraints.NotEmpty;
 import jakarta.validation.constraints.NotNull;
 
+/**
+ * Social User Bind Req VO 接口视图对象。
+ */
 @Schema(description = "管理后台 - 社交绑定 Request VO，使用 code 授权码")
 @Data
 @NoArgsConstructor

@@ -9,6 +9,9 @@ import jakarta.validation.constraints.Size;
 import org.hibernate.validator.constraints.URL;
 
 
+/**
+ * User Profile Update Req VO 接口视图对象。
+ */
 @Schema(description = "管理后台 - 用户个人信息更新 Request VO")
 @Data
 public class UserProfileUpdateReqVO {

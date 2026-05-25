@@ -6,6 +6,9 @@ import lombok.Data;
 import jakarta.validation.constraints.NotEmpty;
 import jakarta.validation.constraints.NotNull;
 
+/**
+ * Mail Template Save Req VO 接口视图对象。
+ */
 @Schema(description = "管理后台 - 邮件模版创建/修改 Request VO")
 @Data
 public class MailTemplateSaveReqVO {

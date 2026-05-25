@@ -5,6 +5,9 @@ import com.develop.mvp.pk.framework.mybatis.core.query.QueryWrapperX;
 import com.develop.mvp.pk.module.system.dal.dataobject.sms.SmsCodeDO;
 import org.apache.ibatis.annotations.Mapper;
 
+/**
+ * Sms Code Mapper 持久化 Mapper。
+ */
 @Mapper
 public interface SmsCodeMapper extends BaseMapperX<SmsCodeDO> {
 

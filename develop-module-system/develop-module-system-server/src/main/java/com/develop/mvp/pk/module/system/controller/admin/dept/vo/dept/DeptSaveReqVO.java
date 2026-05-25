@@ -9,6 +9,9 @@ import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
 import lombok.Data;
 
+/**
+ * Dept Save Req VO 接口视图对象。
+ */
 @Schema(description = "管理后台 - 部门创建/修改 Request VO")
 @Data
 public class DeptSaveReqVO {

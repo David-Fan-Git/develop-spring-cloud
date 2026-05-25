@@ -20,12 +20,20 @@ import java.util.List;
 
 import static com.develop.mvp.pk.framework.common.pojo.CommonResult.success;
 
+/**
+ * Area Controller 控制器。
+ */
 @Tag(name = "管理后台 - 地区")
 @RestController
 @RequestMapping("/system/area")
 @Validated
 public class AreaController {
 
+    /**
+     * 查询 get Area Tree 对应的数据。
+     *
+     * @return 处理结果
+     */
     @GetMapping("/tree")
     @Operation(summary = "获得地区树")
     public CommonResult<List<AreaNodeRespVO>> getAreaTree() {
@@ -34,6 +42,12 @@ public class AreaController {
         return success(BeanUtils.toBean(area.getChildren(), AreaNodeRespVO.class));
     }
 
+    /**
+     * 查询 get Area By Ip 对应的数据。
+     *
+     * @param ip ip 参数
+     * @return 处理结果
+     */
     @GetMapping("/get-by-ip")
     @Operation(summary = "获得 IP 对应的地区名")
     @Parameter(name = "ip", description = "IP", required = true)

@@ -14,6 +14,9 @@ import org.hibernate.validator.constraints.Length;
 
 import java.util.Set;
 
+/**
+ * User Save Req VO 接口视图对象。
+ */
 @Schema(description = "管理后台 - 用户创建/修改 Request VO")
 @Data
 public class UserSaveReqVO {
@@ -70,6 +73,11 @@ public class UserSaveReqVO {
     @Length(min = 4, max = 16, message = "密码长度为 4-16 位")
     private String password;
 
+    /**
+     * 判断 is Password Valid 对应的条件是否成立。
+     *
+     * @return 处理结果
+     */
     @AssertTrue(message = "密码不能为空")
     @JsonIgnore
     public boolean isPasswordValid() {

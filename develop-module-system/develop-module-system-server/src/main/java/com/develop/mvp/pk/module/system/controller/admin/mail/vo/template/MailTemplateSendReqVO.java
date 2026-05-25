@@ -8,6 +8,9 @@ import jakarta.validation.constraints.NotNull;
 import java.util.List;
 import java.util.Map;
 
+/**
+ * Mail Template Send Req VO 接口视图对象。
+ */
 @Schema(description = "管理后台 - 邮件发送 Req VO")
 @Data
 public class MailTemplateSendReqVO {

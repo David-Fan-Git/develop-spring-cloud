@@ -7,6 +7,9 @@ import lombok.NoArgsConstructor;
 
 import java.util.List;
 
+/**
+ * OAuth2 User Info Resp VO 接口视图对象。
+ */
 @Schema(description = "管理后台 - OAuth2 获得用户基本信息 Response VO")
 @Data
 @NoArgsConstructor
@@ -43,6 +46,9 @@ public class OAuth2UserInfoRespVO {
      */
     private List<Post> posts;
 
+    /**
+     * Dept 类。
+     */
     @Schema(description = "部门")
     @Data
     public static class Dept {
@@ -55,6 +61,9 @@ public class OAuth2UserInfoRespVO {
 
     }
 
+    /**
+     * Post 类。
+     */
     @Schema(description = "岗位")
     @Data
     public static class Post {

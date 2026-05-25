@@ -138,6 +138,13 @@ public class OAuth2OpenController {
         return success(OAuth2OpenConvert.INSTANCE.convert(accessTokenDO));
     }
 
+    /**
+     * 执行 revoke Token 对应的业务操作。
+     *
+     * @param request request 参数
+     * @param token token 参数
+     * @return 处理结果
+     */
     @DeleteMapping("/token")
     @PermitAll
     @Operation(summary = "删除访问令牌")
@@ -250,6 +257,12 @@ public class OAuth2OpenController {
         return success(getImplicitGrantRedirect(getLoginUserId(), client, approveScopes, redirectUri, state));
     }
 
+    /**
+     * 查询 get Grant Type Enum 对应的数据。
+     *
+     * @param responseType responseType 参数
+     * @return 处理结果
+     */
     private static OAuth2GrantTypeEnum getGrantTypeEnum(String responseType) {
         if (StrUtil.equals(responseType, "code")) {
             return OAuth2GrantTypeEnum.AUTHORIZATION_CODE;
@@ -260,6 +273,16 @@ public class OAuth2OpenController {
         throw exception0(BAD_REQUEST.getCode(), "response_type 参数值只允许 code 和 token");
     }
 
+    /**
+     * 查询 get Implicit Grant Redirect 对应的数据。
+     *
+     * @param userId userId 参数
+     * @param client client 参数
+     * @param scopes scopes 参数
+     * @param redirectUri redirectUri 参数
+     * @param state state 参数
+     * @return 处理结果
+     */
     private String getImplicitGrantRedirect(Long userId, OAuth2ClientDO client,
                                             List<String> scopes, String redirectUri, String state) {
         // 1. 创建 access token 访问令牌
@@ -271,6 +294,16 @@ public class OAuth2OpenController {
                 scopes, JsonUtils.parseObject(client.getAdditionalInformation(), Map.class));
     }
 
+    /**
+     * 查询 get Authorization Code Redirect 对应的数据。
+     *
+     * @param userId userId 参数
+     * @param client client 参数
+     * @param scopes scopes 参数
+     * @param redirectUri redirectUri 参数
+     * @param state state 参数
+     * @return 处理结果
+     */
     private String getAuthorizationCodeRedirect(Long userId, OAuth2ClientDO client,
                                                 List<String> scopes, String redirectUri, String state) {
         // 1. 创建 code 授权码
@@ -280,10 +313,21 @@ public class OAuth2OpenController {
         return OAuth2Utils.buildAuthorizationCodeRedirectUri(redirectUri, authorizationCode, state);
     }
 
+    /**
+     * 查询 get User Type 对应的数据。
+     *
+     * @return 处理结果
+     */
     private Integer getUserType() {
         return UserTypeEnum.ADMIN.getValue();
     }
 
+    /**
+     * 执行 obtain Basic Authorization 对应的业务操作。
+     *
+     * @param request request 参数
+     * @return 处理结果
+     */
     private String[] obtainBasicAuthorization(HttpServletRequest request) {
         String[] clientIdAndSecret = HttpUtils.obtainBasicAuthorization(request);
         if (ArrayUtil.isEmpty(clientIdAndSecret) || clientIdAndSecret.length != 2) {

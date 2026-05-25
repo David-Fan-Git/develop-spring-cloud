@@ -13,9 +13,26 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
+/**
+ * Auth Application Service Configuration 配置类。
+ */
 @Configuration
 public class AuthApplicationServiceConfiguration {
 
+    /**
+     * 处理 auth Application Service 对应的认证流程。
+     *
+     * @param userService userService 参数
+     * @param loggerApplicationService loggerApplicationService 参数
+     * @param oauth2TokenService oauth2TokenService 参数
+     * @param socialUseCase socialUseCase 参数
+     * @param memberApplicationService memberApplicationService 参数
+     * @param validator validator 参数
+     * @param captchaService captchaService 参数
+     * @param smsCodeApi smsCodeApi 参数
+     * @param captchaEnable captchaEnable 参数
+     * @return 处理结果
+     */
     @Bean
     public AuthApplicationService authApplicationService(
             AdminUserUseCase userService,

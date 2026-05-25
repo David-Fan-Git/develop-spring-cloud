@@ -36,6 +36,9 @@ import java.util.stream.Collectors;
 import static com.develop.mvp.pk.framework.apilog.core.enums.OperateTypeEnum.EXPORT;
 import static com.develop.mvp.pk.framework.common.pojo.CommonResult.success;
 
+/**
+ * Tenant Controller 控制器。
+ */
 @Tag(name = "管理后台 - 租户")
 @RestController
 @RequestMapping("/system/tenant")
@@ -45,6 +48,12 @@ public class TenantController {
     @Resource
     private TenantUseCase tenantUseCase;
 
+    /**
+     * 查询 get Tenant Id By Name 对应的数据。
+     *
+     * @param name name 参数
+     * @return 处理结果
+     */
     @GetMapping("/get-id-by-name")
     @PermitAll
     @TenantIgnore
@@ -55,6 +64,11 @@ public class TenantController {
         return success(tenant != null ? tenant.id().value() : null);
     }
 
+    /**
+     * 查询 get Tenant Simple List 对应的数据。
+     *
+     * @return 处理结果
+     */
     @GetMapping("simple-list")
     @PermitAll
     @TenantIgnore
@@ -67,6 +81,12 @@ public class TenantController {
                 .collect(Collectors.toList()));
     }
 
+    /**
+     * 查询 get Tenant By Website 对应的数据。
+     *
+     * @param website website 参数
+     * @return 处理结果
+     */
     @GetMapping("/get-by-website")
     @PermitAll
     @TenantIgnore
@@ -81,6 +101,12 @@ public class TenantController {
         return success(new TenantRespVO().setId(tenant.id().value()).setName(tenant.name().value()));
     }
 
+    /**
+     * 创建 create Tenant 对应的数据。
+     *
+     * @param createReqVO createReqVO 参数
+     * @return 处理结果
+     */
     @PostMapping("/create")
     @Operation(summary = "创建租户")
     @PreAuthorize("@ss.hasPermission('system:tenant:create')")
@@ -94,6 +120,12 @@ public class TenantController {
                 createReqVO.getUsername(), createReqVO.getPassword()));
     }
 
+    /**
+     * 更新 update Tenant 对应的数据。
+     *
+     * @param updateReqVO updateReqVO 参数
+     * @return 处理结果
+     */
     @PutMapping("/update")
     @Operation(summary = "更新租户")
     @PreAuthorize("@ss.hasPermission('system:tenant:update')")
@@ -106,6 +138,12 @@ public class TenantController {
         return success(true);
     }
 
+    /**
+     * 删除 delete Tenant 对应的数据。
+     *
+     * @param id id 参数
+     * @return 处理结果
+     */
     @DeleteMapping("/delete")
     @Operation(summary = "删除租户")
     @Parameter(name = "id", description = "编号", required = true, example = "1024")
@@ -115,6 +153,12 @@ public class TenantController {
         return success(true);
     }
 
+    /**
+     * 删除 delete Tenant List 对应的数据。
+     *
+     * @param ids ids 参数
+     * @return 处理结果
+     */
     @DeleteMapping("/delete-list")
     @Parameter(name = "ids", description = "编号列表", required = true)
     @Operation(summary = "批量删除租户")
@@ -124,6 +168,12 @@ public class TenantController {
         return success(true);
     }
 
+    /**
+     * 查询 get Tenant 对应的数据。
+     *
+     * @param id id 参数
+     * @return 处理结果
+     */
     @GetMapping("/get")
     @Operation(summary = "获得租户")
     @Parameter(name = "id", description = "编号", required = true, example = "1024")
@@ -133,6 +183,12 @@ public class TenantController {
         return success(tenant != null ? toRespVO(tenant) : null);
     }
 
+    /**
+     * 查询 get Tenant Page 对应的数据。
+     *
+     * @param pageVO pageVO 参数
+     * @return 处理结果
+     */
     @GetMapping("/page")
     @Operation(summary = "获得租户分页")
     @PreAuthorize("@ss.hasPermission('system:tenant:query')")
@@ -147,6 +203,12 @@ public class TenantController {
         return success(new PageResult<>(voList, pageResult.getTotal()));
     }
 
+    /**
+     * 执行 export Tenant Excel 对应的业务操作。
+     *
+     * @param exportReqVO exportReqVO 参数
+     * @param response response 参数
+     */
     @GetMapping("/export-excel")
     @Operation(summary = "导出租户 Excel")
     @PreAuthorize("@ss.hasPermission('system:tenant:export')")
@@ -161,6 +223,12 @@ public class TenantController {
         ExcelUtils.write(response, "租户.xls", "数据", TenantRespVO.class, voList);
     }
 
+    /**
+     * 执行 to Resp VO 对应的业务操作。
+     *
+     * @param tenant tenant 参数
+     * @return 处理结果
+     */
     private TenantRespVO toRespVO(Tenant tenant) {
         TenantRespVO vo = new TenantRespVO();
         vo.setId(tenant.id().value());

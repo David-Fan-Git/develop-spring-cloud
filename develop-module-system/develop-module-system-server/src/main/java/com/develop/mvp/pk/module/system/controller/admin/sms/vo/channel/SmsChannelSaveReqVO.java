@@ -6,6 +6,9 @@ import org.hibernate.validator.constraints.URL;
 
 import jakarta.validation.constraints.NotNull;
 
+/**
+ * Sms Channel Save Req VO 接口视图对象。
+ */
 @Schema(description = "管理后台 - 短信渠道创建/修改 Request VO")
 @Data
 public class SmsChannelSaveReqVO {

@@ -10,16 +10,32 @@ import com.develop.mvp.pk.module.system.domain.user.valueobject.RawPassword;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Component;
 
+/**
+ * BCrypt Password Encoder Adapter 类。
+ */
 @Component
 public class BCryptPasswordEncoderAdapter implements PasswordEncoder {
 
     private final BCryptPasswordEncoder delegate = new BCryptPasswordEncoder();
 
+    /**
+     * 执行 encode 对应的业务操作。
+     *
+     * @param rawPassword rawPassword 参数
+     * @return 处理结果
+     */
     @Override
     public EncodedPassword encode(RawPassword rawPassword) {
         return EncodedPassword.of(delegate.encode(rawPassword.rawValue()));
     }
 
+    /**
+     * 执行 matches 对应的业务操作。
+     *
+     * @param rawPassword rawPassword 参数
+     * @param encodedPassword encodedPassword 参数
+     * @return 处理结果
+     */
     @Override
     public boolean matches(RawPassword rawPassword, EncodedPassword encodedPassword) {
         return delegate.matches(rawPassword.rawValue(), encodedPassword.encodedValue());

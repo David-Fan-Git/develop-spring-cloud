@@ -21,6 +21,9 @@ import java.util.List;
 
 import static com.develop.mvp.pk.framework.common.pojo.CommonResult.success;
 
+/**
+ * OAuth2 Client Controller 控制器。
+ */
 @Tag(name = "管理后台 - OAuth2 客户端")
 @RestController
 @RequestMapping("/system/oauth2-client")
@@ -30,6 +33,12 @@ public class OAuth2ClientController {
     @Resource
     private OAuth2UseCase oAuth2ClientService;
 
+    /**
+     * 创建 create OAuth2 Client 对应的数据。
+     *
+     * @param createReqVO createReqVO 参数
+     * @return 处理结果
+     */
     @PostMapping("/create")
     @Operation(summary = "创建 OAuth2 客户端")
     @PreAuthorize("@ss.hasPermission('system:oauth2-client:create')")
@@ -37,6 +46,12 @@ public class OAuth2ClientController {
         return success(oAuth2ClientService.createOAuth2Client(createReqVO));
     }
 
+    /**
+     * 更新 update OAuth2 Client 对应的数据。
+     *
+     * @param updateReqVO updateReqVO 参数
+     * @return 处理结果
+     */
     @PutMapping("/update")
     @Operation(summary = "更新 OAuth2 客户端")
     @PreAuthorize("@ss.hasPermission('system:oauth2-client:update')")
@@ -45,6 +60,12 @@ public class OAuth2ClientController {
         return success(true);
     }
 
+    /**
+     * 删除 delete OAuth2 Client 对应的数据。
+     *
+     * @param id id 参数
+     * @return 处理结果
+     */
     @DeleteMapping("/delete")
     @Operation(summary = "删除 OAuth2 客户端")
     @Parameter(name = "id", description = "编号", required = true)
@@ -54,6 +75,12 @@ public class OAuth2ClientController {
         return success(true);
     }
 
+    /**
+     * 删除 delete OAuth2 Client List 对应的数据。
+     *
+     * @param ids ids 参数
+     * @return 处理结果
+     */
     @DeleteMapping("/delete-list")
     @Parameter(name = "ids", description = "编号列表", required = true)
     @Operation(summary = "批量删除 OAuth2 客户端")
@@ -63,6 +90,12 @@ public class OAuth2ClientController {
         return success(true);
     }
 
+    /**
+     * 查询 get OAuth2 Client 对应的数据。
+     *
+     * @param id id 参数
+     * @return 处理结果
+     */
     @GetMapping("/get")
     @Operation(summary = "获得 OAuth2 客户端")
     @Parameter(name = "id", description = "编号", required = true, example = "1024")
@@ -72,6 +105,12 @@ public class OAuth2ClientController {
         return success(BeanUtils.toBean(client, OAuth2ClientRespVO.class));
     }
 
+    /**
+     * 查询 get OAuth2 Client Page 对应的数据。
+     *
+     * @param pageVO pageVO 参数
+     * @return 处理结果
+     */
     @GetMapping("/page")
     @Operation(summary = "获得 OAuth2 客户端分页")
     @PreAuthorize("@ss.hasPermission('system:oauth2-client:query')")

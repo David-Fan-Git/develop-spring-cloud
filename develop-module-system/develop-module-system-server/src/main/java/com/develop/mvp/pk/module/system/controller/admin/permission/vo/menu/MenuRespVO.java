@@ -8,6 +8,9 @@ import lombok.Data;
 
 import java.time.LocalDateTime;
 
+/**
+ * Menu Resp VO 接口视图对象。
+ */
 @Schema(description = "管理后台 - 菜单信息 Response VO")
 @Data
 public class MenuRespVO {

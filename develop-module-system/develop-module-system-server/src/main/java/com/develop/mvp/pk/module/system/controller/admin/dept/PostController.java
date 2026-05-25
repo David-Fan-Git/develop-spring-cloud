@@ -31,6 +31,9 @@ import java.util.List;
 import static com.develop.mvp.pk.framework.apilog.core.enums.OperateTypeEnum.EXPORT;
 import static com.develop.mvp.pk.framework.common.pojo.CommonResult.success;
 
+/**
+ * Post Controller 控制器。
+ */
 @Tag(name = "管理后台 - 岗位")
 @RestController
 @RequestMapping("/system/post")
@@ -40,6 +43,12 @@ public class PostController {
     @Resource
     private DeptUseCase postUseCase;
 
+    /**
+     * 创建 create Post 对应的数据。
+     *
+     * @param createReqVO createReqVO 参数
+     * @return 处理结果
+     */
     @PostMapping("/create")
     @Operation(summary = "创建岗位")
     @PreAuthorize("@ss.hasPermission('system:post:create')")
@@ -48,6 +57,12 @@ public class PostController {
         return success(postId);
     }
 
+    /**
+     * 更新 update Post 对应的数据。
+     *
+     * @param updateReqVO updateReqVO 参数
+     * @return 处理结果
+     */
     @PutMapping("/update")
     @Operation(summary = "修改岗位")
     @PreAuthorize("@ss.hasPermission('system:post:update')")
@@ -56,6 +71,12 @@ public class PostController {
         return success(true);
     }
 
+    /**
+     * 删除 delete Post 对应的数据。
+     *
+     * @param id id 参数
+     * @return 处理结果
+     */
     @DeleteMapping("/delete")
     @Operation(summary = "删除岗位")
     @PreAuthorize("@ss.hasPermission('system:post:delete')")
@@ -64,6 +85,12 @@ public class PostController {
         return success(true);
     }
 
+    /**
+     * 删除 delete Post List 对应的数据。
+     *
+     * @param ids ids 参数
+     * @return 处理结果
+     */
     @DeleteMapping("delete-list")
     @Operation(summary = "批量删除岗位")
     @PreAuthorize("@ss.hasPermission('system:post:delete')")
@@ -72,6 +99,12 @@ public class PostController {
         return success(true);
     }
 
+    /**
+     * 查询 get Post 对应的数据。
+     *
+     * @param id id 参数
+     * @return 处理结果
+     */
     @GetMapping(value = "/get")
     @Operation(summary = "获得岗位信息")
     @Parameter(name = "id", description = "岗位编号", required = true, example = "1024")
@@ -81,6 +114,11 @@ public class PostController {
         return success(BeanUtils.toBean(post, PostRespVO.class));
     }
 
+    /**
+     * 查询 get Simple Post List 对应的数据。
+     *
+     * @return 处理结果
+     */
     @GetMapping(value = {"/list-all-simple", "simple-list"})
     @Operation(summary = "获取岗位全列表", description = "只包含被开启的岗位，主要用于前端的下拉选项")
     public CommonResult<List<PostSimpleRespVO>> getSimplePostList() {
@@ -91,6 +129,12 @@ public class PostController {
         return success(BeanUtils.toBean(list, PostSimpleRespVO.class));
     }
 
+    /**
+     * 查询 get Post Page 对应的数据。
+     *
+     * @param pageReqVO pageReqVO 参数
+     * @return 处理结果
+     */
     @GetMapping("/page")
     @Operation(summary = "获得岗位分页列表")
     @PreAuthorize("@ss.hasPermission('system:post:query')")
@@ -99,6 +143,12 @@ public class PostController {
         return success(BeanUtils.toBean(pageResult, PostRespVO.class));
     }
 
+    /**
+     * 执行 export 对应的业务操作。
+     *
+     * @param response response 参数
+     * @param reqVO reqVO 参数
+     */
     @GetMapping("/export-excel")
     @Operation(summary = "岗位管理")
     @PreAuthorize("@ss.hasPermission('system:post:export')")

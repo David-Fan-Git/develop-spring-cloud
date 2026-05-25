@@ -11,18 +11,32 @@ import com.develop.mvp.pk.module.system.application.permission.port.inbound.Perm
 import org.springframework.context.event.EventListener;
 import org.springframework.stereotype.Component;
 
+/**
+ * User Deleted Permission Cleaner 类。
+ */
 @Component
 public class UserDeletedPermissionCleaner {
 
     private final PermissionUseCase permissionService;
     private final UserPostMapper userPostMapper;
 
+    /**
+     * 创建 UserDeletedPermissionCleaner 实例。
+     *
+     * @param permissionService permissionService 参数
+     * @param userPostMapper userPostMapper 参数
+     */
     public UserDeletedPermissionCleaner(PermissionUseCase permissionService,
                                          UserPostMapper userPostMapper) {
         this.permissionService = permissionService;
         this.userPostMapper = userPostMapper;
     }
 
+    /**
+     * 处理 on User Deleted 对应的业务逻辑。
+     *
+     * @param event event 参数
+     */
     @EventListener
     public void onUserDeleted(UserDeletedEvent event) {
         permissionService.processUserDeleted(event.userId());

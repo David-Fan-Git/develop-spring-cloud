@@ -12,15 +12,30 @@ import org.springframework.stereotype.Component;
 
 import java.util.List;
 
+/**
+ * Tenant Uniqueness Checker Impl 类。
+ */
 @Component
 public class TenantUniquenessCheckerImpl implements TenantUniquenessChecker {
 
     private final TenantRepository tenantRepository;
 
+    /**
+     * 创建 TenantUniquenessCheckerImpl 实例。
+     *
+     * @param tenantRepository tenantRepository 参数
+     */
     public TenantUniquenessCheckerImpl(TenantRepository tenantRepository) {
         this.tenantRepository = tenantRepository;
     }
 
+    /**
+     * 判断 is Name Unique 对应的条件是否成立。
+     *
+     * @param name name 参数
+     * @param excludeId excludeId 参数
+     * @return 处理结果
+     */
     @Override
     public boolean isNameUnique(TenantName name, TenantId excludeId) {
         return tenantRepository.findByName(name)
@@ -28,6 +43,13 @@ public class TenantUniquenessCheckerImpl implements TenantUniquenessChecker {
                 .orElse(true);
     }
 
+    /**
+     * 判断 is Website Unique 对应的条件是否成立。
+     *
+     * @param website website 参数
+     * @param excludeId excludeId 参数
+     * @return 处理结果
+     */
     @Override
     public boolean isWebsiteUnique(String website, TenantId excludeId) {
         List<com.develop.mvp.pk.module.system.domain.tenant.Tenant> tenants =

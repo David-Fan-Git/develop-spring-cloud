@@ -5,6 +5,9 @@ package com.develop.mvp.pk.module.system.domain.tenant.repository;
 
 import java.time.LocalDateTime;
 
+/**
+ * Tenant Page Query 查询条件对象。
+ */
 public record TenantPageQuery(
         String name,
         String contactName,

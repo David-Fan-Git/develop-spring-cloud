@@ -18,6 +18,11 @@ public final class Username {
 
     private final String value;
 
+    /**
+     * 创建 Username 实例。
+     *
+     * @param value value 参数
+     */
     private Username(String value) {
         // R02: 用户名不能为空
         if (value == null || value.isBlank()) {
@@ -26,14 +31,31 @@ public final class Username {
         this.value = value.trim();
     }
 
+    /**
+     * 执行 of 对应的业务操作。
+     *
+     * @param value value 参数
+     * @return 处理结果
+     */
     public static Username of(String value) {
         return new Username(value);
     }
 
+    /**
+     * 执行 value 对应的业务操作。
+     *
+     * @return 处理结果
+     */
     public String value() {
         return value;
     }
 
+    /**
+     * 执行 equals 对应的业务操作。
+     *
+     * @param o o 参数
+     * @return 处理结果
+     */
     @Override
     public boolean equals(Object o) {
         if (this == o) return true;
@@ -41,11 +63,21 @@ public final class Username {
         return value.equals(that.value);
     }
 
+    /**
+     * 判断 hash Code 对应的条件是否成立。
+     *
+     * @return 处理结果
+     */
     @Override
     public int hashCode() {
         return Objects.hash(value);
     }
 
+    /**
+     * 执行 to String 对应的业务操作。
+     *
+     * @return 处理结果
+     */
     @Override
     public String toString() {
         return value;

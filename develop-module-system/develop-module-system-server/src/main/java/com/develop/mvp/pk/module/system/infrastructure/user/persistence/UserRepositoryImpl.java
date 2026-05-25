@@ -19,17 +19,42 @@ import java.util.stream.Collectors;
 
 import static com.develop.mvp.pk.framework.common.util.collection.CollectionUtils.convertSet;
 
+/**
+ * User Repository Impl 领域仓储实现。
+ */
 @Repository
 public class UserRepositoryImpl implements UserRepository {
 
     private final AdminUserMapper userMapper;
     private final UserPostMapper userPostMapper;
 
+    /**
+     * 创建 UserRepositoryImpl 实例。
+     *
+     * @param userMapper userMapper 参数
+     * @param userPostMapper userPostMapper 参数
+     */
     public UserRepositoryImpl(AdminUserMapper userMapper, UserPostMapper userPostMapper) {
         this.userMapper = userMapper;
         this.userPostMapper = userPostMapper;
     }
 
+    /**
+     * 创建 create 对应的数据。
+     *
+     * @param username username 参数
+     * @param encodedPassword encodedPassword 参数
+     * @param tenantId tenantId 参数
+     * @param deptId deptId 参数
+     * @param email email 参数
+     * @param mobile mobile 参数
+     * @param nickname nickname 参数
+     * @param avatar avatar 参数
+     * @param sex sex 参数
+     * @param remark remark 参数
+     * @param postIds postIds 参数
+     * @return 处理结果
+     */
     @Override
     @Transactional
     public User create(String username, EncodedPassword encodedPassword, Long tenantId, Long deptId,
@@ -55,6 +80,11 @@ public class UserRepositoryImpl implements UserRepository {
         return user;
     }
 
+    /**
+     * 创建 save 对应的数据。
+     *
+     * @param user user 参数
+     */
     @Override
     @Transactional
     public void save(User user) {
@@ -67,6 +97,11 @@ public class UserRepositoryImpl implements UserRepository {
         syncUserPosts(user);
     }
 
+    /**
+     * 删除 delete 对应的数据。
+     *
+     * @param id id 参数
+     */
     @Override
     @Transactional
     public void delete(UserId id) {
@@ -74,6 +109,12 @@ public class UserRepositoryImpl implements UserRepository {
         userPostMapper.deleteByUserId(id.value());
     }
 
+    /**
+     * 查询 find By Id 对应的数据。
+     *
+     * @param id id 参数
+     * @return 处理结果
+     */
     @Override
     public User findById(UserId id) {
         AdminUserDO userDO = userMapper.selectById(id.value());
@@ -81,12 +122,24 @@ public class UserRepositoryImpl implements UserRepository {
         return toDomain(userDO);
     }
 
+    /**
+     * 查询 find By Username 对应的数据。
+     *
+     * @param username username 参数
+     * @return 处理结果
+     */
     @Override
     public Optional<User> findByUsername(Username username) {
         AdminUserDO userDO = userMapper.selectByUsername(username.value());
         return Optional.ofNullable(userDO).map(this::toDomain);
     }
 
+    /**
+     * 查询 find By Email 对应的数据。
+     *
+     * @param email email 参数
+     * @return 处理结果
+     */
     @Override
     public Optional<User> findByEmail(Email email) {
         if (!email.isPresent()) return Optional.empty();
@@ -94,6 +147,12 @@ public class UserRepositoryImpl implements UserRepository {
         return Optional.ofNullable(userDO).map(this::toDomain);
     }
 
+    /**
+     * 查询 find By Mobile 对应的数据。
+     *
+     * @param mobile mobile 参数
+     * @return 处理结果
+     */
     @Override
     public Optional<User> findByMobile(Mobile mobile) {
         if (!mobile.isPresent()) return Optional.empty();
@@ -101,6 +160,12 @@ public class UserRepositoryImpl implements UserRepository {
         return Optional.ofNullable(userDO).map(this::toDomain);
     }
 
+    /**
+     * 查询 find By Ids 对应的数据。
+     *
+     * @param ids ids 参数
+     * @return 处理结果
+     */
     @Override
     public List<User> findByIds(Collection<UserId> ids) {
         if (CollUtil.isEmpty(ids)) return Collections.emptyList();
@@ -108,12 +173,24 @@ public class UserRepositoryImpl implements UserRepository {
         return userMapper.selectByIds(rawIds).stream().map(this::toDomain).collect(Collectors.toList());
     }
 
+    /**
+     * 查询 find By Dept Ids 对应的数据。
+     *
+     * @param deptIds deptIds 参数
+     * @return 处理结果
+     */
     @Override
     public List<User> findByDeptIds(Collection<Long> deptIds) {
         if (CollUtil.isEmpty(deptIds)) return Collections.emptyList();
         return userMapper.selectListByDeptIds(deptIds).stream().map(this::toDomain).collect(Collectors.toList());
     }
 
+    /**
+     * 查询 find By Post Ids 对应的数据。
+     *
+     * @param postIds postIds 参数
+     * @return 处理结果
+     */
     @Override
     public List<User> findByPostIds(Collection<Long> postIds) {
         if (CollUtil.isEmpty(postIds)) return Collections.emptyList();
@@ -122,16 +199,34 @@ public class UserRepositoryImpl implements UserRepository {
         return userMapper.selectByIds(userIds).stream().map(this::toDomain).collect(Collectors.toList());
     }
 
+    /**
+     * 查询 find By Nickname 对应的数据。
+     *
+     * @param nickname nickname 参数
+     * @return 处理结果
+     */
     @Override
     public List<User> findByNickname(String nickname) {
         return userMapper.selectListByNickname(nickname).stream().map(this::toDomain).collect(Collectors.toList());
     }
 
+    /**
+     * 查询 find By Status 对应的数据。
+     *
+     * @param status status 参数
+     * @return 处理结果
+     */
     @Override
     public List<User> findByStatus(UserStatus status) {
         return userMapper.selectListByStatus(status.code()).stream().map(this::toDomain).collect(Collectors.toList());
     }
 
+    /**
+     * 查询 find Page 对应的数据。
+     *
+     * @param query query 参数
+     * @return 处理结果
+     */
     @Override
     public PageResult<User> findPage(UserPageQuery query) {
         var reqVO = new com.develop.mvp.pk.module.system.controller.admin.user.vo.user.UserPageReqVO();
@@ -146,26 +241,55 @@ public class UserRepositoryImpl implements UserRepository {
         return new PageResult<>(users, doPage.getTotal());
     }
 
+    /**
+     * 执行 exists By Username 对应的业务操作。
+     *
+     * @param username username 参数
+     * @return 处理结果
+     */
     @Override
     public boolean existsByUsername(Username username) {
         return userMapper.selectByUsername(username.value()) != null;
     }
 
+    /**
+     * 执行 exists By Email 对应的业务操作。
+     *
+     * @param email email 参数
+     * @return 处理结果
+     */
     @Override
     public boolean existsByEmail(Email email) {
         return email.isPresent() && userMapper.selectByEmail(email.value()) != null;
     }
 
+    /**
+     * 执行 exists By Mobile 对应的业务操作。
+     *
+     * @param mobile mobile 参数
+     * @return 处理结果
+     */
     @Override
     public boolean existsByMobile(Mobile mobile) {
         return mobile.isPresent() && userMapper.selectByMobile(mobile.value()) != null;
     }
 
+    /**
+     * 查询 count 对应的数据。
+     *
+     * @return 处理结果
+     */
     @Override
     public long count() {
         return userMapper.selectCount();
     }
 
+    /**
+     * 执行 to Data Object 对应的业务操作。
+     *
+     * @param user user 参数
+     * @return 处理结果
+     */
     private AdminUserDO toDataObject(User user) {
         AdminUserDO userDO = new AdminUserDO();
         userDO.setId(user.id().value());
@@ -188,6 +312,12 @@ public class UserRepositoryImpl implements UserRepository {
         return userDO;
     }
 
+    /**
+     * 执行 to Domain 对应的业务操作。
+     *
+     * @param userDO userDO 参数
+     * @return 处理结果
+     */
     private User toDomain(AdminUserDO userDO) {
         Set<Long> postIds = convertSet(
                 userPostMapper.selectListByUserId(userDO.getId()),
@@ -212,6 +342,11 @@ public class UserRepositoryImpl implements UserRepository {
         );
     }
 
+    /**
+     * 执行 sync User Posts 对应的业务操作。
+     *
+     * @param user user 参数
+     */
     private void syncUserPosts(User user) {
         Long userId = user.id().value();
         Set<Long> dbPostIds = convertSet(userPostMapper.selectListByUserId(userId), UserPostDO::getPostId);

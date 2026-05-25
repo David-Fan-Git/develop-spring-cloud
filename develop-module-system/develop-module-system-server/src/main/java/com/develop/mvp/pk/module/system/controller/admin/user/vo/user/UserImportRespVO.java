@@ -7,6 +7,9 @@ import lombok.Data;
 import java.util.List;
 import java.util.Map;
 
+/**
+ * User Import Resp VO 接口视图对象。
+ */
 @Schema(description = "管理后台 - 用户导入 Response VO")
 @Data
 @Builder

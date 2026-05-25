@@ -5,6 +5,9 @@ import lombok.Data;
 
 import java.time.LocalDateTime;
 
+/**
+ * Dept Resp VO 接口视图对象。
+ */
 @Schema(description = "管理后台 - 部门信息 Response VO")
 @Data
 public class DeptRespVO {

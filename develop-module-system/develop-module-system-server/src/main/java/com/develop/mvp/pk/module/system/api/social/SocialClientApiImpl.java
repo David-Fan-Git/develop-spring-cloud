@@ -38,34 +38,74 @@ public class SocialClientApiImpl implements SocialClientApi {
     @Resource
     private SocialUseCase socialUserUseCase;
 
+    /**
+     * 查询 get Authorize Url 对应的数据。
+     *
+     * @param socialType socialType 参数
+     * @param userType userType 参数
+     * @param redirectUri redirectUri 参数
+     * @return 处理结果
+     */
     @Override
     public CommonResult<String> getAuthorizeUrl(Integer socialType, Integer userType, String redirectUri) {
         return success(socialClientUseCase.getAuthorizeUrl(socialType, userType, redirectUri));
     }
 
+    /**
+     * 创建 create Wx Mp Jsapi Signature 对应的数据。
+     *
+     * @param userType userType 参数
+     * @param url url 参数
+     * @return 处理结果
+     */
     @Override
     public CommonResult<SocialWxJsapiSignatureRespDTO> createWxMpJsapiSignature(Integer userType, String url) {
         WxJsapiSignature signature = socialClientUseCase.createWxMpJsapiSignature(userType, url);
         return success(BeanUtils.toBean(signature, SocialWxJsapiSignatureRespDTO.class));
     }
 
+    /**
+     * 查询 get Wx Ma Phone Number Info 对应的数据。
+     *
+     * @param userType userType 参数
+     * @param phoneCode phoneCode 参数
+     * @return 处理结果
+     */
     @Override
     public CommonResult<SocialWxPhoneNumberInfoRespDTO> getWxMaPhoneNumberInfo(Integer userType, String phoneCode) {
         WxMaPhoneNumberInfo info = socialClientUseCase.getWxMaPhoneNumberInfo(userType, phoneCode);
         return success(BeanUtils.toBean(info, SocialWxPhoneNumberInfoRespDTO.class));
     }
 
+    /**
+     * 查询 get Wxa Qrcode 对应的数据。
+     *
+     * @param reqVO reqVO 参数
+     * @return 处理结果
+     */
     @Override
     public CommonResult<byte[]> getWxaQrcode(SocialWxQrcodeReqDTO reqVO) {
         return success(socialClientUseCase.getWxaQrcode(reqVO));
     }
 
+    /**
+     * 查询 get Wxa Subscribe Template List 对应的数据。
+     *
+     * @param userType userType 参数
+     * @return 处理结果
+     */
     @Override
     public CommonResult<List<SocialWxaSubscribeTemplateRespDTO>> getWxaSubscribeTemplateList(Integer userType) {
         List<TemplateInfo> list = socialClientUseCase.getSubscribeTemplateList(userType);
         return success(convertList(list, item -> BeanUtils.toBean(item, SocialWxaSubscribeTemplateRespDTO.class).setId(item.getPriTmplId())));
     }
 
+    /**
+     * 发送 send Wxa Subscribe Message 对应的消息。
+     *
+     * @param reqDTO reqDTO 参数
+     * @return 处理结果
+     */
     @Override
     public CommonResult<Boolean> sendWxaSubscribeMessage(SocialWxaSubscribeMessageSendReqDTO reqDTO) {
         // 1.1 获得订阅模版列表
@@ -95,12 +135,26 @@ public class SocialClientApiImpl implements SocialClientApi {
         return success(true);
     }
 
+    /**
+     * 执行 upload Wxa Order Shipping Info 对应的业务操作。
+     *
+     * @param userType userType 参数
+     * @param reqDTO reqDTO 参数
+     * @return 处理结果
+     */
     @Override
     public CommonResult<Boolean> uploadWxaOrderShippingInfo(Integer userType, SocialWxaOrderUploadShippingInfoReqDTO reqDTO) {
         socialClientUseCase.uploadWxaOrderShippingInfo(userType, reqDTO);
         return success(true);
     }
 
+    /**
+     * 执行 notify Wxa Order Confirm Receive 对应的业务操作。
+     *
+     * @param userType userType 参数
+     * @param reqDTO reqDTO 参数
+     * @return 处理结果
+     */
     @Override
     public CommonResult<Boolean> notifyWxaOrderConfirmReceive(Integer userType, SocialWxaOrderNotifyConfirmReceiveReqDTO reqDTO) {
         socialClientUseCase.notifyWxaOrderConfirmReceive(userType, reqDTO);
