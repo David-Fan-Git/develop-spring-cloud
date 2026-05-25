@@ -8,7 +8,6 @@ import com.develop.mvp.pk.module.system.domain.dept.Dept;
 import com.develop.mvp.pk.module.system.domain.dept.DeptFactory;
 import com.develop.mvp.pk.module.system.domain.dept.repository.DeptRepository;
 import com.develop.mvp.pk.module.system.domain.dept.valueobject.DeptId;
-import com.develop.mvp.pk.module.system.service.dept.DeptService;
 import org.springframework.stereotype.Repository;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -18,11 +17,9 @@ import java.util.stream.Collectors;
 @Repository
 public class DeptRepositoryImpl implements DeptRepository {
     private final DeptMapper deptMapper;
-    private final DeptService deptService; // 复用旧的 Service 中的缓存逻辑
 
-    public DeptRepositoryImpl(DeptMapper deptMapper, DeptService deptService) {
+    public DeptRepositoryImpl(DeptMapper deptMapper) {
         this.deptMapper = deptMapper;
-        this.deptService = deptService;
     }
 
     @Override @Transactional
@@ -63,7 +60,8 @@ public class DeptRepositoryImpl implements DeptRepository {
 
     @Override
     public Set<Long> findChildIdsFromCache(Long parentId) {
-        return deptService.getChildDeptIdListFromCache(parentId);
+        return deptMapper.selectListByParentId(Collections.singleton(parentId)).stream()
+                .map(DeptDO::getId).collect(Collectors.toSet());
     }
 
     @Override

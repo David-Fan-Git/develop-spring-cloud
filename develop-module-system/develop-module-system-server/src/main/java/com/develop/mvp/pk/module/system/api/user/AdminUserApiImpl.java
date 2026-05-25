@@ -1,5 +1,6 @@
 package com.develop.mvp.pk.module.system.api.user;
 
+import com.develop.mvp.pk.module.system.application.dept.service.DeptApplicationService;
 // Skill: AggregateRoot_User_Validation_Skill — 接口层 AdminUserApiImpl (Feign RPC)
 // DDD 角色：Feign RPC 端点，调用 UserApplicationService
 
@@ -12,7 +13,6 @@ import com.develop.mvp.pk.module.system.api.user.dto.AdminUserRespDTO;
 import com.develop.mvp.pk.module.system.application.user.service.UserApplicationService;
 import com.develop.mvp.pk.module.system.dal.dataobject.dept.DeptDO;
 import com.develop.mvp.pk.module.system.domain.user.User;
-import com.develop.mvp.pk.module.system.service.dept.DeptService;
 import jakarta.annotation.Resource;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.RestController;
@@ -30,7 +30,7 @@ public class AdminUserApiImpl implements AdminUserApi {
     @Resource
     private UserApplicationService userApplicationService;
     @Resource
-    private DeptService deptService;
+    private DeptApplicationService deptService;
 
     @Override
     @DataPermission(enable = false)

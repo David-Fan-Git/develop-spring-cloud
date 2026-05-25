@@ -5,8 +5,8 @@ import com.develop.mvp.pk.framework.common.pojo.PageResult;
 import com.develop.mvp.pk.framework.common.util.object.BeanUtils;
 import com.develop.mvp.pk.module.system.controller.admin.mail.vo.log.MailLogPageReqVO;
 import com.develop.mvp.pk.module.system.controller.admin.mail.vo.log.MailLogRespVO;
+import com.develop.mvp.pk.module.system.application.mail.service.MailApplicationService;
 import com.develop.mvp.pk.module.system.dal.dataobject.mail.MailLogDO;
-import com.develop.mvp.pk.module.system.service.mail.MailLogService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -27,7 +27,7 @@ import static com.develop.mvp.pk.framework.common.pojo.CommonResult.success;
 public class MailLogController {
 
     @Resource
-    private MailLogService mailLogService;
+    private MailApplicationService mailLogService;
 
     @GetMapping("/page")
     @Operation(summary = "获得邮箱日志分页")

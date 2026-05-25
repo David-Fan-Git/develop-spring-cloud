@@ -1,5 +1,6 @@
 package com.develop.mvp.pk.module.system.controller.admin.dept;
 
+import com.develop.mvp.pk.module.system.application.dept.service.DeptApplicationService;
 import com.develop.mvp.pk.framework.common.enums.CommonStatusEnum;
 import com.develop.mvp.pk.framework.common.pojo.CommonResult;
 import com.develop.mvp.pk.framework.common.util.object.BeanUtils;
@@ -8,7 +9,6 @@ import com.develop.mvp.pk.module.system.controller.admin.dept.vo.dept.DeptRespVO
 import com.develop.mvp.pk.module.system.controller.admin.dept.vo.dept.DeptSaveReqVO;
 import com.develop.mvp.pk.module.system.controller.admin.dept.vo.dept.DeptSimpleRespVO;
 import com.develop.mvp.pk.module.system.dal.dataobject.dept.DeptDO;
-import com.develop.mvp.pk.module.system.service.dept.DeptService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -29,7 +29,7 @@ import static com.develop.mvp.pk.framework.common.pojo.CommonResult.success;
 public class DeptController {
 
     @Resource
-    private DeptService deptService;
+    private DeptApplicationService deptService;
 
     @PostMapping("create")
     @Operation(summary = "创建部门")

@@ -10,7 +10,7 @@ import com.develop.mvp.pk.module.system.controller.admin.socail.vo.user.SocialUs
 import com.develop.mvp.pk.module.system.controller.admin.socail.vo.user.SocialUserRespVO;
 import com.develop.mvp.pk.module.system.controller.admin.socail.vo.user.SocialUserUnbindReqVO;
 import com.develop.mvp.pk.module.system.dal.dataobject.social.SocialUserDO;
-import com.develop.mvp.pk.module.system.service.social.SocialUserService;
+import com.develop.mvp.pk.module.system.application.social.service.SocialApplicationService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -33,7 +33,7 @@ import static com.develop.mvp.pk.framework.security.core.util.SecurityFrameworkU
 public class SocialUserController {
 
     @Resource
-    private SocialUserService socialUserService;
+    private SocialApplicationService socialUserService;
 
     @PostMapping("/bind")
     @Operation(summary = "社交绑定，使用 code 授权码")

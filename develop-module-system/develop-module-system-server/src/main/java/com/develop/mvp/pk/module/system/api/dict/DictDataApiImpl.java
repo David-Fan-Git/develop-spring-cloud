@@ -3,8 +3,8 @@ package com.develop.mvp.pk.module.system.api.dict;
 import com.develop.mvp.pk.framework.common.pojo.CommonResult;
 import com.develop.mvp.pk.framework.common.util.object.BeanUtils;
 import com.develop.mvp.pk.framework.common.biz.system.dict.dto.DictDataRespDTO;
+import com.develop.mvp.pk.module.system.application.dict.service.DictApplicationService;
 import com.develop.mvp.pk.module.system.dal.dataobject.dict.DictDataDO;
-import com.develop.mvp.pk.module.system.service.dict.DictDataService;
 import org.springframework.context.annotation.Primary;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.RestController;
@@ -21,17 +21,17 @@ import static com.develop.mvp.pk.framework.common.pojo.CommonResult.success;
 public class DictDataApiImpl implements DictDataApi {
 
     @Resource
-    private DictDataService dictDataService;
+    private DictApplicationService dictApplicationService;
 
     @Override
     public CommonResult<Boolean> validateDictDataList(String dictType, Collection<String> values) {
-        dictDataService.validateDictDataList(dictType, values);
+        dictApplicationService.validateDictDataList(dictType, values);
         return success(true);
     }
 
     @Override
     public CommonResult<List<DictDataRespDTO>> getDictDataList(String dictType) {
-        List<DictDataDO> list = dictDataService.getDictDataListByDictType(dictType);
+        List<DictDataDO> list = dictApplicationService.getDictDataListByDictType(dictType);
         return success(BeanUtils.toBean(list, DictDataRespDTO.class));
     }
 

@@ -17,10 +17,7 @@ import com.develop.mvp.pk.module.system.dal.dataobject.oauth2.OAuth2AccessTokenD
 import com.develop.mvp.pk.module.system.dal.dataobject.oauth2.OAuth2ApproveDO;
 import com.develop.mvp.pk.module.system.dal.dataobject.oauth2.OAuth2ClientDO;
 import com.develop.mvp.pk.module.system.enums.oauth2.OAuth2GrantTypeEnum;
-import com.develop.mvp.pk.module.system.service.oauth2.OAuth2ApproveService;
-import com.develop.mvp.pk.module.system.service.oauth2.OAuth2ClientService;
-import com.develop.mvp.pk.module.system.service.oauth2.OAuth2GrantService;
-import com.develop.mvp.pk.module.system.service.oauth2.OAuth2TokenService;
+import com.develop.mvp.pk.module.system.application.oauth2.service.OAuth2ApplicationService;
 import org.assertj.core.util.Lists;
 import org.junit.jupiter.api.Test;
 import org.mockito.InjectMocks;
@@ -59,13 +56,13 @@ public class OAuth2OpenControllerTest extends BaseMockitoUnitTest {
     private OAuth2OpenController oauth2OpenController;
 
     @Mock
-    private OAuth2GrantService oauth2GrantService;
+    private OAuth2ApplicationService oauth2GrantService;
     @Mock
-    private OAuth2ClientService oauth2ClientService;
+    private OAuth2ApplicationService oauth2ClientService;
     @Mock
-    private OAuth2ApproveService oauth2ApproveService;
+    private OAuth2ApplicationService oauth2ApproveService;
     @Mock
-    private OAuth2TokenService oauth2TokenService;
+    private OAuth2ApplicationService oauth2TokenService;
 
     @Test
     public void testPostAccessToken_authorizationCode() {

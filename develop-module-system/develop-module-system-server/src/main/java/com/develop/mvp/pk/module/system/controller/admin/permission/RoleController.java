@@ -11,7 +11,7 @@ import com.develop.mvp.pk.module.system.controller.admin.permission.vo.role.Role
 import com.develop.mvp.pk.module.system.controller.admin.permission.vo.role.RoleRespVO;
 import com.develop.mvp.pk.module.system.controller.admin.permission.vo.role.RoleSaveReqVO;
 import com.develop.mvp.pk.module.system.dal.dataobject.permission.RoleDO;
-import com.develop.mvp.pk.module.system.service.permission.RoleService;
+import com.develop.mvp.pk.module.system.application.permission.service.RoleApplicationService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -37,7 +37,7 @@ import static java.util.Collections.singleton;
 public class RoleController {
 
     @Resource
-    private RoleService roleService;
+    private RoleApplicationService roleService;
 
     @PostMapping("/create")
     @Operation(summary = "创建角色")

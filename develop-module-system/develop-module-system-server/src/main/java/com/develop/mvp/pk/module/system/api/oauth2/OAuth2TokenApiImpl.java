@@ -7,8 +7,8 @@ import com.develop.mvp.pk.framework.tenant.core.aop.TenantIgnore;
 import com.develop.mvp.pk.framework.common.biz.system.oauth2.dto.OAuth2AccessTokenCheckRespDTO;
 import com.develop.mvp.pk.framework.common.biz.system.oauth2.dto.OAuth2AccessTokenCreateReqDTO;
 import com.develop.mvp.pk.framework.common.biz.system.oauth2.dto.OAuth2AccessTokenRespDTO;
+import com.develop.mvp.pk.module.system.application.oauth2.service.OAuth2ApplicationService;
 import com.develop.mvp.pk.module.system.dal.dataobject.oauth2.OAuth2AccessTokenDO;
-import com.develop.mvp.pk.module.system.service.oauth2.OAuth2TokenService;
 import jakarta.annotation.Resource;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.RestController;
@@ -20,7 +20,7 @@ import static com.develop.mvp.pk.framework.common.pojo.CommonResult.success;
 public class OAuth2TokenApiImpl implements OAuth2TokenCommonApi {
 
     @Resource
-    private OAuth2TokenService oauth2TokenService;
+    private OAuth2ApplicationService oauth2TokenService;
 
     @Override
     public CommonResult<OAuth2AccessTokenRespDTO> createAccessToken(OAuth2AccessTokenCreateReqDTO reqDTO) {

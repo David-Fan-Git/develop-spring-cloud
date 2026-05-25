@@ -9,7 +9,7 @@ import com.develop.mvp.pk.module.system.controller.admin.socail.vo.client.Social
 import com.develop.mvp.pk.module.system.controller.admin.socail.vo.client.SocialClientRespVO;
 import com.develop.mvp.pk.module.system.controller.admin.socail.vo.client.SocialClientSaveReqVO;
 import com.develop.mvp.pk.module.system.dal.dataobject.social.SocialClientDO;
-import com.develop.mvp.pk.module.system.service.social.SocialClientService;
+import com.develop.mvp.pk.module.system.application.social.service.SocialApplicationService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -30,7 +30,7 @@ import static com.develop.mvp.pk.framework.common.pojo.CommonResult.success;
 public class SocialClientController {
 
     @Resource
-    private SocialClientService socialClientService;
+    private SocialApplicationService socialClientService;
     @Resource
     private SocialClientApi socialClientApi;
 

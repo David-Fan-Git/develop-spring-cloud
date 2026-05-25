@@ -2,7 +2,7 @@ package com.develop.mvp.pk.module.system.api.permission;
 
 import com.develop.mvp.pk.framework.common.pojo.CommonResult;
 import com.develop.mvp.pk.framework.common.biz.system.permission.dto.DeptDataPermissionRespDTO;
-import com.develop.mvp.pk.module.system.service.permission.PermissionService;
+import com.develop.mvp.pk.module.system.application.permission.service.PermissionApplicationService;
 import org.springframework.context.annotation.Primary;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.RestController;
@@ -19,7 +19,7 @@ import static com.develop.mvp.pk.framework.common.pojo.CommonResult.success;
 public class PermissionApiImpl implements PermissionApi {
 
     @Resource
-    private PermissionService permissionService;
+    private PermissionApplicationService permissionService;
 
     @Override
     public CommonResult<Set<Long>> getUserRoleIdListByRoleIds(Collection<Long> roleIds) {

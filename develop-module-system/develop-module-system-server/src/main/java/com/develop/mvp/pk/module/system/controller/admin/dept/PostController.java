@@ -1,5 +1,6 @@
 package com.develop.mvp.pk.module.system.controller.admin.dept;
 
+import com.develop.mvp.pk.module.system.application.dept.service.DeptApplicationService;
 import com.develop.mvp.pk.framework.apilog.core.annotation.ApiAccessLog;
 import com.develop.mvp.pk.framework.common.enums.CommonStatusEnum;
 import com.develop.mvp.pk.framework.common.pojo.CommonResult;
@@ -12,7 +13,6 @@ import com.develop.mvp.pk.module.system.controller.admin.dept.vo.post.PostRespVO
 import com.develop.mvp.pk.module.system.controller.admin.dept.vo.post.PostSaveReqVO;
 import com.develop.mvp.pk.module.system.controller.admin.dept.vo.post.PostSimpleRespVO;
 import com.develop.mvp.pk.module.system.dal.dataobject.dept.PostDO;
-import com.develop.mvp.pk.module.system.service.dept.PostService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -38,7 +38,7 @@ import static com.develop.mvp.pk.framework.common.pojo.CommonResult.success;
 public class PostController {
 
     @Resource
-    private PostService postService;
+    private DeptApplicationService postService;
 
     @PostMapping("/create")
     @Operation(summary = "创建岗位")

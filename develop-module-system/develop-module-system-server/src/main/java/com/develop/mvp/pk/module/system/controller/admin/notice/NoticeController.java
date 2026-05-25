@@ -9,8 +9,8 @@ import com.develop.mvp.pk.module.infra.api.websocket.WebSocketSenderApi;
 import com.develop.mvp.pk.module.system.controller.admin.notice.vo.NoticePageReqVO;
 import com.develop.mvp.pk.module.system.controller.admin.notice.vo.NoticeRespVO;
 import com.develop.mvp.pk.module.system.controller.admin.notice.vo.NoticeSaveReqVO;
+import com.develop.mvp.pk.module.system.application.notice.service.NoticeApplicationService;
 import com.develop.mvp.pk.module.system.dal.dataobject.notice.NoticeDO;
-import com.develop.mvp.pk.module.system.service.notice.NoticeService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -31,7 +31,7 @@ import static com.develop.mvp.pk.framework.common.pojo.CommonResult.success;
 public class NoticeController {
 
     @Resource
-    private NoticeService noticeService;
+    private NoticeApplicationService noticeApplicationService;
 
     @Resource
     private WebSocketSenderApi webSocketSenderApi;
@@ -40,7 +40,7 @@ public class NoticeController {
     @Operation(summary = "创建通知公告")
     @PreAuthorize("@ss.hasPermission('system:notice:create')")
     public CommonResult<Long> createNotice(@Valid @RequestBody NoticeSaveReqVO createReqVO) {
-        Long noticeId = noticeService.createNotice(createReqVO);
+        Long noticeId = noticeApplicationService.createNotice(createReqVO);
         return success(noticeId);
     }
 
@@ -48,7 +48,7 @@ public class NoticeController {
     @Operation(summary = "修改通知公告")
     @PreAuthorize("@ss.hasPermission('system:notice:update')")
     public CommonResult<Boolean> updateNotice(@Valid @RequestBody NoticeSaveReqVO updateReqVO) {
-        noticeService.updateNotice(updateReqVO);
+        noticeApplicationService.updateNotice(updateReqVO);
         return success(true);
     }
 
@@ -57,7 +57,7 @@ public class NoticeController {
     @Parameter(name = "id", description = "编号", required = true, example = "1024")
     @PreAuthorize("@ss.hasPermission('system:notice:delete')")
     public CommonResult<Boolean> deleteNotice(@RequestParam("id") Long id) {
-        noticeService.deleteNotice(id);
+        noticeApplicationService.deleteNotice(id);
         return success(true);
     }
 
@@ -66,7 +66,7 @@ public class NoticeController {
     @Parameter(name = "ids", description = "编号列表", required = true)
     @PreAuthorize("@ss.hasPermission('system:notice:delete')")
     public CommonResult<Boolean> deleteNoticeList(@RequestParam("ids") List<Long> ids) {
-        noticeService.deleteNoticeList(ids);
+        noticeApplicationService.deleteNoticeList(ids);
         return success(true);
     }
 
@@ -74,7 +74,7 @@ public class NoticeController {
     @Operation(summary = "获取通知公告列表")
     @PreAuthorize("@ss.hasPermission('system:notice:query')")
     public CommonResult<PageResult<NoticeRespVO>> getNoticePage(@Validated NoticePageReqVO pageReqVO) {
-        PageResult<NoticeDO> pageResult = noticeService.getNoticePage(pageReqVO);
+        PageResult<NoticeDO> pageResult = noticeApplicationService.getNoticePage(pageReqVO);
         return success(BeanUtils.toBean(pageResult, NoticeRespVO.class));
     }
 
@@ -83,7 +83,7 @@ public class NoticeController {
     @Parameter(name = "id", description = "编号", required = true, example = "1024")
     @PreAuthorize("@ss.hasPermission('system:notice:query')")
     public CommonResult<NoticeRespVO> getNotice(@RequestParam("id") Long id) {
-        NoticeDO notice = noticeService.getNotice(id);
+        NoticeDO notice = noticeApplicationService.getNotice(id);
         return success(BeanUtils.toBean(notice, NoticeRespVO.class));
     }
 
@@ -92,7 +92,7 @@ public class NoticeController {
     @Parameter(name = "id", description = "编号", required = true, example = "1024")
     @PreAuthorize("@ss.hasPermission('system:notice:update')")
     public CommonResult<Boolean> push(@RequestParam("id") Long id) {
-        NoticeDO notice = noticeService.getNotice(id);
+        NoticeDO notice = noticeApplicationService.getNotice(id);
         Assert.notNull(notice, "公告不能为空");
         // 通过 websocket 推送给在线的用户
         webSocketSenderApi.sendObject(UserTypeEnum.ADMIN.getValue(), "notice-push", notice);

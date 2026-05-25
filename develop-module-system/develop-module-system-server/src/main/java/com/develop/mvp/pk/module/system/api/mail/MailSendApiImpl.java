@@ -2,7 +2,7 @@ package com.develop.mvp.pk.module.system.api.mail;
 
 import com.develop.mvp.pk.framework.common.pojo.CommonResult;
 import com.develop.mvp.pk.module.system.api.mail.dto.MailSendSingleToUserReqDTO;
-import com.develop.mvp.pk.module.system.service.mail.MailSendService;
+import com.develop.mvp.pk.module.system.application.mail.service.MailApplicationService;
 import jakarta.annotation.Resource;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.RestController;
@@ -14,7 +14,7 @@ import static com.develop.mvp.pk.framework.common.pojo.CommonResult.success;
 public class MailSendApiImpl implements MailSendApi {
 
     @Resource
-    private MailSendService mailSendService;
+    private MailApplicationService mailSendService;
 
     @Override
     public CommonResult<Long> sendSingleMailToAdmin(MailSendSingleToUserReqDTO reqDTO) {

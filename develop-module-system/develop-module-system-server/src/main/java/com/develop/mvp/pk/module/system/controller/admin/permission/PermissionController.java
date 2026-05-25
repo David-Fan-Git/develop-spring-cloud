@@ -5,8 +5,8 @@ import com.develop.mvp.pk.framework.common.pojo.CommonResult;
 import com.develop.mvp.pk.module.system.controller.admin.permission.vo.permission.PermissionAssignRoleDataScopeReqVO;
 import com.develop.mvp.pk.module.system.controller.admin.permission.vo.permission.PermissionAssignRoleMenuReqVO;
 import com.develop.mvp.pk.module.system.controller.admin.permission.vo.permission.PermissionAssignUserRoleReqVO;
-import com.develop.mvp.pk.module.system.service.permission.PermissionService;
-import com.develop.mvp.pk.module.system.service.tenant.TenantService;
+import com.develop.mvp.pk.module.system.application.permission.service.PermissionApplicationService;
+import com.develop.mvp.pk.module.system.application.tenant.service.TenantApplicationService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -31,9 +31,9 @@ import static com.develop.mvp.pk.framework.common.pojo.CommonResult.success;
 public class PermissionController {
 
     @Resource
-    private PermissionService permissionService;
+    private PermissionApplicationService permissionService;
     @Resource
-    private TenantService tenantService;
+    private TenantApplicationService tenantService;
 
     @Operation(summary = "获得角色拥有的菜单编号")
     @Parameter(name = "roleId", description = "角色编号", required = true)

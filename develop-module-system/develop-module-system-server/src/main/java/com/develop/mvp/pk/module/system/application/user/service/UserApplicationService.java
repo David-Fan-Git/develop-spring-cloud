@@ -1,5 +1,6 @@
 package com.develop.mvp.pk.module.system.application.user.service;
 
+import com.develop.mvp.pk.module.system.application.dept.service.DeptApplicationService;
 import com.develop.mvp.pk.module.system.application.user.port.inbound.UserUseCase;
 import cn.hutool.core.collection.CollUtil;
 import com.develop.mvp.pk.framework.common.pojo.PageResult;
@@ -15,8 +16,6 @@ import com.develop.mvp.pk.module.system.domain.user.repository.UserRepository;
 import com.develop.mvp.pk.module.system.domain.user.service.PasswordEncoder;
 import com.develop.mvp.pk.module.system.domain.user.service.UserUniquenessChecker;
 import com.develop.mvp.pk.module.system.domain.user.valueobject.*;
-import com.develop.mvp.pk.module.system.service.dept.DeptService;
-import com.develop.mvp.pk.module.system.service.dept.PostService;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -33,13 +32,13 @@ public class UserApplicationService implements UserUseCase {
     private final PasswordEncoder passwordEncoder;
     private final UserUniquenessChecker uniquenessChecker;
     private final DomainEventPublisher eventPublisher;
-    private final DeptService deptService;
-    private final PostService postService;
+    private final DeptApplicationService deptService;
+    private final DeptApplicationService postService;
 
     public UserApplicationService(UserRepository userRepository, PasswordEncoder passwordEncoder,
                                    UserUniquenessChecker uniquenessChecker,
                                    DomainEventPublisher eventPublisher,
-                                   DeptService deptService, PostService postService) {
+                                   DeptApplicationService deptService, DeptApplicationService postService) {
         this.userRepository = userRepository;
         this.passwordEncoder = passwordEncoder;
         this.uniquenessChecker = uniquenessChecker;

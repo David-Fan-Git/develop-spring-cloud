@@ -1,5 +1,6 @@
 package com.develop.mvp.pk.module.system.controller.admin.oauth2;
 
+import com.develop.mvp.pk.module.system.application.dept.service.DeptApplicationService;
 import cn.hutool.core.collection.CollUtil;
 import com.develop.mvp.pk.framework.common.pojo.CommonResult;
 import com.develop.mvp.pk.framework.common.util.object.BeanUtils;
@@ -9,9 +10,7 @@ import com.develop.mvp.pk.module.system.controller.admin.user.vo.profile.UserPro
 import com.develop.mvp.pk.module.system.dal.dataobject.dept.DeptDO;
 import com.develop.mvp.pk.module.system.dal.dataobject.dept.PostDO;
 import com.develop.mvp.pk.module.system.dal.dataobject.user.AdminUserDO;
-import com.develop.mvp.pk.module.system.service.dept.DeptService;
-import com.develop.mvp.pk.module.system.service.dept.PostService;
-import com.develop.mvp.pk.module.system.service.user.AdminUserService;
+import com.develop.mvp.pk.module.system.application.user.service.AdminUserApplicationService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.extern.slf4j.Slf4j;
@@ -42,11 +41,11 @@ import static com.develop.mvp.pk.framework.security.core.util.SecurityFrameworkU
 public class OAuth2UserController {
 
     @Resource
-    private AdminUserService userService;
+    private AdminUserApplicationService userService;
     @Resource
-    private DeptService deptService;
+    private DeptApplicationService deptService;
     @Resource
-    private PostService postService;
+    private DeptApplicationService postService;
 
     @GetMapping("/get")
     @Operation(summary = "获得用户基本信息")
@@ -73,7 +72,7 @@ public class OAuth2UserController {
     @PreAuthorize("@ss.hasScope('user.write')")
     public CommonResult<Boolean> updateUserInfo(@Valid @RequestBody OAuth2UserUpdateReqVO reqVO) {
         // 这里将 UserProfileUpdateReqVO =》UserProfileUpdateReqVO 对象，实现接口的复用。
-        // 主要是，AdminUserService 没有自己的 BO 对象，所以复用只能这么做
+        // 主要是，AdminUserApplicationService 没有自己的 BO 对象，所以复用只能这么做
         userService.updateUserProfile(getLoginUserId(), BeanUtils.toBean(reqVO, UserProfileUpdateReqVO.class));
         return success(true);
     }

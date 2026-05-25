@@ -1,244 +1,256 @@
 package com.develop.mvp.pk.module.system.application.permission.service;
 
-// Skill: AggregateRoot_Role_Menu_Skill — 应用服务 PermissionApplicationService
-// DDD 角色：RBAC 权限编排服务，负责 Role/Menu CRUD 及关联操作
-
-import com.develop.mvp.pk.framework.common.pojo.PageResult;
-import com.develop.mvp.pk.module.system.application.permission.port.inbound.MenuUseCase;
+import cn.hutool.core.collection.CollUtil;
+import cn.hutool.core.util.ArrayUtil;
+import cn.hutool.extra.spring.SpringUtil;
+import com.baomidou.dynamic.datasource.annotation.DSTransactional;
+import com.develop.mvp.pk.framework.common.biz.system.permission.dto.DeptDataPermissionRespDTO;
+import com.develop.mvp.pk.framework.common.enums.CommonStatusEnum;
+import com.develop.mvp.pk.framework.common.util.collection.CollectionUtils;
+import com.develop.mvp.pk.framework.datapermission.core.annotation.DataPermission;
+import com.develop.mvp.pk.module.system.application.dept.service.DeptApplicationService;
 import com.develop.mvp.pk.module.system.application.permission.port.inbound.PermissionUseCase;
-import com.develop.mvp.pk.module.system.domain.permission.*;
-import com.develop.mvp.pk.module.system.domain.permission.repository.*;
-import com.develop.mvp.pk.module.system.domain.permission.valueobject.*;
-import com.develop.mvp.pk.module.system.domain.user.event.DomainEventPublisher;
-import com.develop.mvp.pk.module.system.domain.user.event.DomainEvent;
+import com.develop.mvp.pk.module.system.application.user.service.AdminUserApplicationService;
+import com.develop.mvp.pk.module.system.dal.dataobject.permission.MenuDO;
+import com.develop.mvp.pk.module.system.dal.dataobject.permission.RoleDO;
+import com.develop.mvp.pk.module.system.dal.redis.RedisKeyConstants;
+import com.develop.mvp.pk.module.system.domain.permission.repository.RoleMenuRepository;
+import com.develop.mvp.pk.module.system.domain.permission.repository.UserRoleRepository;
 import com.develop.mvp.pk.module.system.enums.permission.DataScopeEnum;
-import com.develop.mvp.pk.module.system.enums.permission.RoleCodeEnum;
-import com.develop.mvp.pk.module.system.enums.permission.RoleTypeEnum;
+import com.google.common.annotations.VisibleForTesting;
+import com.google.common.base.Suppliers;
+import com.google.common.collect.Sets;
+import jakarta.annotation.Resource;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.cache.annotation.CacheEvict;
+import org.springframework.cache.annotation.Cacheable;
+import org.springframework.cache.annotation.Caching;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.time.LocalDateTime;
 import java.util.*;
-import java.util.stream.Collectors;
+import java.util.function.Supplier;
 
-import static com.develop.mvp.pk.framework.common.exception.util.ServiceExceptionUtil.exception;
-import static com.develop.mvp.pk.module.system.enums.ErrorCodeConstants.*;
+import static com.develop.mvp.pk.framework.common.util.collection.CollectionUtils.convertSet;
+import static com.develop.mvp.pk.framework.common.util.json.JsonUtils.toJsonString;
 
 @Service
-public class PermissionApplicationService implements MenuUseCase, PermissionUseCase {
+@Slf4j
+public class PermissionApplicationService implements PermissionUseCase {
 
-    private final RoleRepository roleRepository;
-    private final MenuRepository menuRepository;
-    private final UserRoleRepository userRoleRepository;
-    private final RoleMenuRepository roleMenuRepository;
-    private final DomainEventPublisher eventPublisher;
+    @Resource
+    private UserRoleRepository userRoleRepository;
+    @Resource
+    private RoleMenuRepository roleMenuRepository;
+    @Resource
+    @Lazy
+    private RoleApplicationService roleService;
+    @Resource
+    @Lazy
+    private MenuApplicationService menuService;
+    @Resource
+    private DeptApplicationService deptService;
+    @Resource
+    private AdminUserApplicationService userService;
 
-    public PermissionApplicationService(RoleRepository roleRepository, MenuRepository menuRepository,
-                                         UserRoleRepository userRoleRepository, RoleMenuRepository roleMenuRepository,
-                                         DomainEventPublisher eventPublisher) {
-        this.roleRepository = roleRepository;
-        this.menuRepository = menuRepository;
-        this.userRoleRepository = userRoleRepository;
-        this.roleMenuRepository = roleMenuRepository;
-        this.eventPublisher = eventPublisher;
+    public boolean hasAnyPermissions(Long userId, String... permissions) {
+        if (ArrayUtil.isEmpty(permissions)) {
+            return true;
+        }
+        List<RoleDO> roles = getEnableUserRoleListByUserIdFromCache(userId);
+        if (CollUtil.isEmpty(roles)) {
+            return false;
+        }
+        for (String permission : permissions) {
+            if (hasAnyPermission(roles, permission)) {
+                return true;
+            }
+        }
+        return roleService.hasAnySuperAdmin(convertSet(roles, RoleDO::getId));
     }
 
-    // ========== Role CRUD ==========
-
-    @Transactional
-    public Long createRole(String name, String code, Integer sort, Integer status, String remark,
-                            Long tenantId, Integer dataScope, Set<Long> dataScopeDeptIds) {
-        // 规则 RR04：禁止使用 SUPER_ADMIN 编码
-        if (RoleCodeEnum.isSuperAdmin(code)) throw exception(ROLE_ADMIN_CODE_ERROR, code);
-        assertRoleNameUnique(name, null);
-        assertRoleCodeUnique(code, null);
-        Role role = RoleFactory.create(null, name, code, sort, status,
-                RoleTypeEnum.CUSTOM.getType(), remark, tenantId,
-                dataScope != null ? dataScope : DataScopeEnum.ALL.getScope(), dataScopeDeptIds);
-        roleRepository.save(role);
-        publishEvents(role);
-        return role.id().value();
+    private boolean hasAnyPermission(List<RoleDO> roles, String permission) {
+        List<Long> menuIds = menuService.getMenuIdListByPermissionFromCache(permission);
+        if (CollUtil.isEmpty(menuIds)) {
+            return false;
+        }
+        Set<Long> roleIds = convertSet(roles, RoleDO::getId);
+        for (Long menuId : menuIds) {
+            Set<Long> menuRoleIds = getSelf().getMenuRoleIdListByMenuIdFromCache(menuId);
+            if (CollUtil.containsAny(menuRoleIds, roleIds)) {
+                return true;
+            }
+        }
+        return false;
     }
 
-    @Transactional
-    public void updateRole(Long id, String name, String code, Integer sort, Integer status, String remark) {
-        Role role = findRole(id);
-        assertNotSystemRole(role);
-        assertRoleNameUnique(name, id);
-        assertRoleCodeUnique(code, id);
-        // Update via save (Role doesn't expose mutable setters by design)
-        roleRepository.save(RoleFactory.reconstitute(id, name, code, sort, status,
-                role.type().code(), remark, role.tenantId(),
-                role.dataScope().scope(), role.dataScope().deptIds(), role.menuIds()));
+    public boolean hasAnyRoles(Long userId, String... roles) {
+        if (ArrayUtil.isEmpty(roles)) {
+            return true;
+        }
+        List<RoleDO> roleList = getEnableUserRoleListByUserIdFromCache(userId);
+        if (CollUtil.isEmpty(roleList)) {
+            return false;
+        }
+        Set<String> userRoles = convertSet(roleList, RoleDO::getCode);
+        return CollUtil.containsAny(userRoles, Sets.newHashSet(roles));
     }
 
-    @Transactional
-    public void deleteRole(Long id) {
-        Role role = findRole(id);
-        assertNotSystemRole(role);
-        role.markDeleted();
-        userRoleRepository.deleteByRoleId(id);
-        roleMenuRepository.deleteByRoleId(id);
-        roleRepository.delete(RoleId.of(id));
-        publishEvents(role);
-    }
-
-    @Transactional
-    public void deleteRoleList(List<Long> ids) { ids.forEach(this::deleteRole); }
-
-    public Role getRole(Long id) { return roleRepository.findById(RoleId.of(id)); }
-
-    public List<Role> getRoleList(Collection<Long> ids) {
-        return roleRepository.findByIds(ids.stream().map(RoleId::of).collect(Collectors.toList()));
-    }
-
-    public List<Role> getRoleList() { return roleRepository.findAll(); }
-
-    public PageResult<Role> getRolePage(String name, String code, Integer status,
-                                         LocalDateTime[] createTime, Integer pageNo, Integer pageSize) {
-        return roleRepository.findPage(name, code, status, createTime, pageNo, pageSize);
-    }
-
-    // ========== Menu CRUD ==========
-
-    @Transactional
-    public Long createMenu(String name, String permission, Integer type, Integer sort, Long parentId,
-                            String path, String icon, String component, String componentName,
-                            Integer status, Boolean visible, Boolean keepAlive, Boolean alwaysShow) {
-        Menu parent = parentId != null && parentId > 0 ? menuRepository.findById(MenuId.of(parentId)) : null;
-        // 规则 MR01/MR02: validate parent
-        Menu temp = MenuFactory.create(null, name, permission, type, sort, parentId,
-                path, icon, component, componentName, status, visible, keepAlive, alwaysShow);
-        if (!temp.parentId().isRoot() && (parent == null || !parent.type().isDirOrMenu()))
-            throw exception(MENU_PARENT_NOT_DIR_OR_MENU);
-        assertMenuNameUnique(parentId, name, null);
-        assertComponentNameUnique(componentName, null);
-        menuRepository.save(temp);
-        return temp.id().value();
-    }
-
-    @Transactional
-    public void updateMenu(Long id, String name, String permission, Integer type, Integer sort, Long parentId,
-                            String path, String icon, String component, String componentName,
-                            Integer status, Boolean visible, Boolean keepAlive, Boolean alwaysShow) {
-        if (menuRepository.findById(MenuId.of(id)) == null) throw exception(MENU_NOT_EXISTS);
-        assertMenuNameUnique(parentId, name, id);
-        assertComponentNameUnique(componentName, id);
-        Menu updated = MenuFactory.reconstitute(id, name, permission, type, sort, parentId,
-                path, icon, component, componentName, status, visible, keepAlive, alwaysShow);
-        menuRepository.save(updated);
-    }
-
-    @Transactional
-    public void deleteMenu(Long id) {
-        if (menuRepository.countByParentId(MenuId.of(id)) > 0) throw exception(MENU_EXISTS_CHILDREN);
-        if (menuRepository.findById(MenuId.of(id)) == null) throw exception(MENU_NOT_EXISTS);
-        Menu menu = menuRepository.findById(MenuId.of(id));
-        menu.markDeleted();
-        roleMenuRepository.deleteByMenuId(id);
-        menuRepository.delete(MenuId.of(id));
-        if (menu != null) publishEvents(menu);
-    }
-
-    @Transactional
-    public void deleteMenuList(List<Long> ids) { ids.forEach(this::deleteMenu); }
-
-    public Menu getMenu(Long id) { return menuRepository.findById(MenuId.of(id)); }
-
-    public List<Menu> getMenuList() { return menuRepository.findAll(); }
-
-    public List<Menu> getMenuList(Collection<Long> ids) {
-        if (ids == null || ids.isEmpty()) return Collections.emptyList();
-        return menuRepository.findByIds(ids.stream().map(MenuId::of).collect(Collectors.toList()));
-    }
-
-    // ========== User-Role Assignment ==========
-
-    @Transactional
-    public void assignUserRole(Long userId, Set<Long> roleIds) {
-        userRoleRepository.assign(userId, roleIds);
-    }
-
-    @Transactional
-    public void processUserDeleted(Long userId) {
-        userRoleRepository.deleteByUserId(userId);
-    }
-
-    public Set<Long> getUserRoleIds(Long userId) { return userRoleRepository.findByUserId(userId); }
-
-    public Set<Long> getUserIdsByRoleIds(Collection<Long> roleIds) { return userRoleRepository.findByRoleIds(roleIds); }
-
-    // ========== Role-Menu Assignment ==========
-
-    @Transactional
+    @Override
+    @DSTransactional
+    @Caching(evict = {
+            @CacheEvict(value = RedisKeyConstants.MENU_ROLE_ID_LIST, allEntries = true),
+            @CacheEvict(value = RedisKeyConstants.PERMISSION_MENU_ID_LIST, allEntries = true)
+    })
     public void assignRoleMenu(Long roleId, Set<Long> menuIds) {
         roleMenuRepository.assign(roleId, menuIds);
     }
 
-    @Transactional
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    @Caching(evict = {
+            @CacheEvict(value = RedisKeyConstants.MENU_ROLE_ID_LIST, allEntries = true),
+            @CacheEvict(value = RedisKeyConstants.USER_ROLE_ID_LIST, allEntries = true)
+    })
     public void processRoleDeleted(Long roleId) {
         userRoleRepository.deleteByRoleId(roleId);
         roleMenuRepository.deleteByRoleId(roleId);
     }
 
-    @Transactional
+    @Override
+    @CacheEvict(value = RedisKeyConstants.MENU_ROLE_ID_LIST, key = "#menuId")
     public void processMenuDeleted(Long menuId) {
         roleMenuRepository.deleteByMenuId(menuId);
     }
 
-    public Set<Long> getRoleMenuIds(Long roleId) { return roleMenuRepository.findByRoleId(roleId); }
-
-    public Set<Long> getRoleMenuIds(Collection<Long> roleIds) { return roleMenuRepository.findByRoleIds(roleIds); }
-
-    public Set<Long> getMenuRoleIds(Long menuId) { return roleMenuRepository.findByMenuId(menuId); }
-
-    // ========== helpers ==========
-
-    private Role findRole(Long id) {
-        Role r = roleRepository.findById(RoleId.of(id));
-        if (r == null) throw exception(ROLE_NOT_EXISTS);
-        return r;
+    public Set<Long> getRoleMenuListByRoleId(Long roleId) {
+        return getRoleMenuListByRoleId(Collections.singleton(roleId));
     }
 
-    private void assertNotSystemRole(Role role) {
-        if (role.isSystem()) throw exception(ROLE_CAN_NOT_UPDATE_SYSTEM_TYPE_ROLE);
+    public Set<Long> getRoleMenuListByRoleId(Collection<Long> roleIds) {
+        if (CollUtil.isEmpty(roleIds)) {
+            return Collections.emptySet();
+        }
+        if (roleService.hasAnySuperAdmin(roleIds)) {
+            return convertSet(menuService.getMenuList(), MenuDO::getId);
+        }
+        return getRoleMenuIds(roleIds);
     }
 
-    private void assertRoleNameUnique(String name, Long excludeId) {
-        if (name == null || name.isBlank()) return;
-        roleRepository.findByName(name).ifPresent(r -> {
-            if (excludeId == null || !r.id().value().equals(excludeId))
-                throw exception(ROLE_NAME_DUPLICATE, name);
-        });
+    @Override
+    public Set<Long> getRoleMenuIds(Long roleId) {
+        return roleMenuRepository.findByRoleId(roleId);
     }
 
-    private void assertRoleCodeUnique(String code, Long excludeId) {
-        if (code == null || code.isBlank()) return;
-        roleRepository.findByCode(code).ifPresent(r -> {
-            if (excludeId == null || !r.id().value().equals(excludeId))
-                throw exception(ROLE_CODE_DUPLICATE, code);
-        });
+    @Override
+    public Set<Long> getRoleMenuIds(Collection<Long> roleIds) {
+        return roleMenuRepository.findByRoleIds(roleIds);
     }
 
-    private void assertMenuNameUnique(Long parentId, String name, Long excludeId) {
-        if (name == null || name.isBlank()) return;
-        menuRepository.findByParentIdAndName(parentId != null ? parentId : 0, name).ifPresent(m -> {
-            if (excludeId == null || !m.id().value().equals(excludeId))
-                throw exception(MENU_NAME_DUPLICATE);
-        });
+    @Cacheable(value = RedisKeyConstants.MENU_ROLE_ID_LIST, key = "#menuId")
+    public Set<Long> getMenuRoleIdListByMenuIdFromCache(Long menuId) {
+        return getMenuRoleIds(menuId);
     }
 
-    private void assertComponentNameUnique(String componentName, Long excludeId) {
-        if (componentName == null || componentName.isBlank()) return;
-        menuRepository.findByComponentName(componentName).ifPresent(m -> {
-            if (excludeId == null || !m.id().value().equals(excludeId))
-                throw exception(MENU_COMPONENT_NAME_DUPLICATE);
-        });
+    @Override
+    public Set<Long> getMenuRoleIds(Long menuId) {
+        return roleMenuRepository.findByMenuId(menuId);
     }
 
-    private void publishEvents(Object aggregate) {
-        List<DomainEvent> events = aggregate instanceof Role r ? r.pullEvents()
-                : aggregate instanceof Menu m ? m.pullEvents() : Collections.emptyList();
-        events.forEach(eventPublisher::publish);
+    @Override
+    @DSTransactional
+    @CacheEvict(value = RedisKeyConstants.USER_ROLE_ID_LIST, key = "#userId")
+    public void assignUserRole(Long userId, Set<Long> roleIds) {
+        userRoleRepository.assign(userId, roleIds);
+    }
+
+    @Override
+    @CacheEvict(value = RedisKeyConstants.USER_ROLE_ID_LIST, key = "#userId")
+    public void processUserDeleted(Long userId) {
+        userRoleRepository.deleteByUserId(userId);
+    }
+
+    public Set<Long> getUserRoleIdListByUserId(Long userId) {
+        return getUserRoleIds(userId);
+    }
+
+    @Cacheable(value = RedisKeyConstants.USER_ROLE_ID_LIST, key = "#userId")
+    public Set<Long> getUserRoleIdListByUserIdFromCache(Long userId) {
+        return getUserRoleIdListByUserId(userId);
+    }
+
+    @Override
+    public Set<Long> getUserRoleIds(Long userId) {
+        return userRoleRepository.findByUserId(userId);
+    }
+
+    public Set<Long> getUserRoleIdListByRoleId(Collection<Long> roleIds) {
+        return getUserIdsByRoleIds(roleIds);
+    }
+
+    @Override
+    public Set<Long> getUserIdsByRoleIds(Collection<Long> roleIds) {
+        return userRoleRepository.findByRoleIds(roleIds);
+    }
+
+    @VisibleForTesting
+    List<RoleDO> getEnableUserRoleListByUserIdFromCache(Long userId) {
+        Set<Long> roleIds = getSelf().getUserRoleIdListByUserIdFromCache(userId);
+        List<RoleDO> roles = roleService.getRoleListFromCache(roleIds);
+        roles.removeIf(role -> !CommonStatusEnum.ENABLE.getStatus().equals(role.getStatus()));
+        return roles;
+    }
+
+    public void assignRoleDataScope(Long roleId, Integer dataScope, Set<Long> dataScopeDeptIds) {
+        roleService.updateRoleDataScope(roleId, dataScope, dataScopeDeptIds);
+    }
+
+    @DataPermission(enable = false)
+    public DeptDataPermissionRespDTO getDeptDataPermission(Long userId) {
+        List<RoleDO> roles = getEnableUserRoleListByUserIdFromCache(userId);
+        DeptDataPermissionRespDTO result = new DeptDataPermissionRespDTO();
+        if (CollUtil.isEmpty(roles)) {
+            result.setSelf(true);
+            return result;
+        }
+        Supplier<Long> userDeptId = Suppliers.memoize(() -> userService.getUser(userId).getDeptId());
+        for (RoleDO role : roles) {
+            if (role.getDataScope() == null) {
+                continue;
+            }
+            if (Objects.equals(role.getDataScope(), DataScopeEnum.ALL.getScope())) {
+                result.setAll(true);
+                continue;
+            }
+            if (Objects.equals(role.getDataScope(), DataScopeEnum.DEPT_CUSTOM.getScope())) {
+                CollUtil.addAll(result.getDeptIds(), role.getDataScopeDeptIds());
+                CollectionUtils.addIfNotNull(result.getDeptIds(), userDeptId.get());
+                continue;
+            }
+            if (Objects.equals(role.getDataScope(), DataScopeEnum.DEPT_ONLY.getScope())) {
+                CollectionUtils.addIfNotNull(result.getDeptIds(), userDeptId.get());
+                continue;
+            }
+            if (Objects.equals(role.getDataScope(), DataScopeEnum.DEPT_AND_CHILD.getScope())) {
+                Long deptId = userDeptId.get();
+                if (deptId == null) {
+                    continue;
+                }
+                CollUtil.addAll(result.getDeptIds(), deptService.getChildDeptIdListFromCache(deptId));
+                result.getDeptIds().add(deptId);
+                continue;
+            }
+            if (Objects.equals(role.getDataScope(), DataScopeEnum.SELF.getScope())) {
+                result.setSelf(true);
+                continue;
+            }
+            log.error("[getDeptDataPermission][LoginUser({}) role({}) 无法处理]", userId, toJsonString(result));
+        }
+        return result;
+    }
+
+    private PermissionApplicationService getSelf() {
+        return SpringUtil.getBean(getClass());
     }
 }

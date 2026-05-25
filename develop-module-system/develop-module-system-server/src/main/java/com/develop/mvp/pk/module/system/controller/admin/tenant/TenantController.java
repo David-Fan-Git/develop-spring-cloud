@@ -15,6 +15,7 @@ import com.develop.mvp.pk.module.system.application.tenant.service.TenantApplica
 import com.develop.mvp.pk.module.system.controller.admin.tenant.vo.tenant.TenantPageReqVO;
 import com.develop.mvp.pk.module.system.controller.admin.tenant.vo.tenant.TenantRespVO;
 import com.develop.mvp.pk.module.system.controller.admin.tenant.vo.tenant.TenantSaveReqVO;
+import com.develop.mvp.pk.module.system.dal.dataobject.tenant.TenantDO;
 import com.develop.mvp.pk.module.system.domain.tenant.Tenant;
 import com.develop.mvp.pk.module.system.domain.tenant.repository.TenantPageQuery;
 import io.swagger.v3.oas.annotations.Operation;
@@ -60,10 +61,10 @@ public class TenantController {
     @TenantIgnore
     @Operation(summary = "获取租户精简信息列表", description = "只包含被开启的租户，用于【首页】功能的选择租户选项")
     public CommonResult<List<TenantRespVO>> getTenantSimpleList() {
-        List<Tenant> list = tenantApplicationService.getTenantListByStatus(
+        List<TenantDO> list = tenantApplicationService.getTenantListByStatus(
                 CommonStatusEnum.ENABLE.getStatus());
         return success(list.stream()
-                .map(t -> new TenantRespVO().setId(t.id().value()).setName(t.name().value()))
+                .map(t -> new TenantRespVO().setId(t.getId()).setName(t.getName()))
                 .collect(Collectors.toList()));
     }
 

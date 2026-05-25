@@ -4,7 +4,7 @@ import com.develop.mvp.pk.framework.common.pojo.CommonResult;
 import com.develop.mvp.pk.module.system.api.sms.dto.code.SmsCodeSendReqDTO;
 import com.develop.mvp.pk.module.system.api.sms.dto.code.SmsCodeUseReqDTO;
 import com.develop.mvp.pk.module.system.api.sms.dto.code.SmsCodeValidateReqDTO;
-import com.develop.mvp.pk.module.system.service.sms.SmsCodeService;
+import com.develop.mvp.pk.module.system.application.sms.service.SmsApplicationService;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.RestController;
 
@@ -17,7 +17,7 @@ import static com.develop.mvp.pk.framework.common.pojo.CommonResult.success;
 public class SmsCodeApiImpl implements SmsCodeApi {
 
     @Resource
-    private SmsCodeService smsCodeService;
+    private SmsApplicationService smsCodeService;
 
     @Override
     public CommonResult<Boolean> sendSmsCode(SmsCodeSendReqDTO reqDTO) {

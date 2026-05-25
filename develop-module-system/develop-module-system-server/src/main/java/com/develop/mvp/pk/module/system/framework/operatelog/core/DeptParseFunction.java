@@ -1,9 +1,9 @@
 package com.develop.mvp.pk.module.system.framework.operatelog.core;
 
+import com.develop.mvp.pk.module.system.application.dept.service.DeptApplicationService;
 import cn.hutool.core.convert.Convert;
 import cn.hutool.core.util.StrUtil;
 import com.develop.mvp.pk.module.system.dal.dataobject.dept.DeptDO;
-import com.develop.mvp.pk.module.system.service.dept.DeptService;
 import com.mzt.logapi.service.IParseFunction;
 import jakarta.annotation.Resource;
 import lombok.extern.slf4j.Slf4j;
@@ -21,7 +21,7 @@ public class DeptParseFunction implements IParseFunction {
     public static final String NAME = "getDeptById";
 
     @Resource
-    private DeptService deptService;
+    private DeptApplicationService deptService;
 
     @Override
     public String functionName() {

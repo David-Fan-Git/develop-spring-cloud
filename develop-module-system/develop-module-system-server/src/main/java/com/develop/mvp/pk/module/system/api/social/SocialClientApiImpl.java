@@ -8,8 +8,7 @@ import com.develop.mvp.pk.framework.common.pojo.CommonResult;
 import com.develop.mvp.pk.framework.common.util.object.BeanUtils;
 import com.develop.mvp.pk.module.system.api.social.dto.*;
 import com.develop.mvp.pk.module.system.enums.social.SocialTypeEnum;
-import com.develop.mvp.pk.module.system.service.social.SocialClientService;
-import com.develop.mvp.pk.module.system.service.social.SocialUserService;
+import com.develop.mvp.pk.module.system.application.social.service.SocialApplicationService;
 import lombok.extern.slf4j.Slf4j;
 import me.chanjar.weixin.common.bean.WxJsapiSignature;
 import me.chanjar.weixin.common.bean.subscribemsg.TemplateInfo;
@@ -35,9 +34,9 @@ import static com.develop.mvp.pk.framework.common.util.collection.CollectionUtil
 public class SocialClientApiImpl implements SocialClientApi {
 
     @Resource
-    private SocialClientService socialClientService;
+    private SocialApplicationService socialClientService;
     @Resource
-    private SocialUserService socialUserService;
+    private SocialApplicationService socialUserService;
 
     @Override
     public CommonResult<String> getAuthorizeUrl(Integer socialType, Integer userType, String redirectUri) {

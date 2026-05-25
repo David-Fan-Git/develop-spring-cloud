@@ -10,9 +10,8 @@ import com.develop.mvp.pk.module.system.controller.admin.sms.vo.template.SmsTemp
 import com.develop.mvp.pk.module.system.controller.admin.sms.vo.template.SmsTemplateRespVO;
 import com.develop.mvp.pk.module.system.controller.admin.sms.vo.template.SmsTemplateSaveReqVO;
 import com.develop.mvp.pk.module.system.controller.admin.sms.vo.template.SmsTemplateSendReqVO;
+import com.develop.mvp.pk.module.system.application.sms.service.SmsApplicationService;
 import com.develop.mvp.pk.module.system.dal.dataobject.sms.SmsTemplateDO;
-import com.develop.mvp.pk.module.system.service.sms.SmsSendService;
-import com.develop.mvp.pk.module.system.service.sms.SmsTemplateService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -34,9 +33,9 @@ import static com.develop.mvp.pk.framework.common.pojo.CommonResult.success;
 public class SmsTemplateController {
 
     @Resource
-    private SmsTemplateService smsTemplateService;
+    private SmsApplicationService smsTemplateService;
     @Resource
-    private SmsSendService smsSendService;
+    private SmsApplicationService smsSendService;
 
     @PostMapping("/create")
     @Operation(summary = "创建短信模板")

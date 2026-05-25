@@ -8,7 +8,7 @@ import com.develop.mvp.pk.module.system.controller.admin.permission.vo.menu.Menu
 import com.develop.mvp.pk.module.system.controller.admin.permission.vo.menu.MenuSaveVO;
 import com.develop.mvp.pk.module.system.controller.admin.permission.vo.menu.MenuSimpleRespVO;
 import com.develop.mvp.pk.module.system.dal.dataobject.permission.MenuDO;
-import com.develop.mvp.pk.module.system.service.permission.MenuService;
+import com.develop.mvp.pk.module.system.application.permission.service.MenuApplicationService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -30,7 +30,7 @@ import static com.develop.mvp.pk.framework.common.pojo.CommonResult.success;
 public class MenuController {
 
     @Resource
-    private MenuService menuService;
+    private MenuApplicationService menuService;
 
     @PostMapping("/create")
     @Operation(summary = "创建菜单")

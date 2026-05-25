@@ -8,6 +8,7 @@ import com.develop.mvp.pk.framework.common.enums.UserTypeEnum;
 import com.develop.mvp.pk.framework.common.pojo.CommonResult;
 import com.develop.mvp.pk.framework.common.util.http.HttpUtils;
 import com.develop.mvp.pk.framework.common.util.json.JsonUtils;
+import com.develop.mvp.pk.module.system.application.oauth2.service.OAuth2ApplicationService;
 import com.develop.mvp.pk.module.system.controller.admin.oauth2.vo.open.OAuth2OpenAccessTokenRespVO;
 import com.develop.mvp.pk.module.system.controller.admin.oauth2.vo.open.OAuth2OpenAuthorizeInfoRespVO;
 import com.develop.mvp.pk.module.system.controller.admin.oauth2.vo.open.OAuth2OpenCheckTokenRespVO;
@@ -16,10 +17,6 @@ import com.develop.mvp.pk.module.system.dal.dataobject.oauth2.OAuth2AccessTokenD
 import com.develop.mvp.pk.module.system.dal.dataobject.oauth2.OAuth2ApproveDO;
 import com.develop.mvp.pk.module.system.dal.dataobject.oauth2.OAuth2ClientDO;
 import com.develop.mvp.pk.module.system.enums.oauth2.OAuth2GrantTypeEnum;
-import com.develop.mvp.pk.module.system.service.oauth2.OAuth2ApproveService;
-import com.develop.mvp.pk.module.system.service.oauth2.OAuth2ClientService;
-import com.develop.mvp.pk.module.system.service.oauth2.OAuth2GrantService;
-import com.develop.mvp.pk.module.system.service.oauth2.OAuth2TokenService;
 import com.develop.mvp.pk.module.system.util.oauth2.OAuth2Utils;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
@@ -62,13 +59,13 @@ import static com.develop.mvp.pk.framework.security.core.util.SecurityFrameworkU
 public class OAuth2OpenController {
 
     @Resource
-    private OAuth2GrantService oauth2GrantService;
+    private OAuth2ApplicationService oauth2GrantService;
     @Resource
-    private OAuth2ClientService oauth2ClientService;
+    private OAuth2ApplicationService oauth2ClientService;
     @Resource
-    private OAuth2ApproveService oauth2ApproveService;
+    private OAuth2ApplicationService oauth2ApproveService;
     @Resource
-    private OAuth2TokenService oauth2TokenService;
+    private OAuth2ApplicationService oauth2TokenService;
 
     /**
      * 对应 Spring Security OAuth 的 TokenEndpoint 类的 postAccessToken 方法

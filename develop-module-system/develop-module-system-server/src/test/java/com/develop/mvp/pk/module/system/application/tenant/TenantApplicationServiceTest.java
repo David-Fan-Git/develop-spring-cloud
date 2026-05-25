@@ -12,10 +12,11 @@ import com.develop.mvp.pk.module.system.enums.permission.RoleCodeEnum;
 import com.develop.mvp.pk.module.system.enums.permission.RoleTypeEnum;
 import com.develop.mvp.pk.module.system.infrastructure.tenant.persistence.TenantRepositoryImpl;
 import com.develop.mvp.pk.module.system.infrastructure.tenant.persistence.TenantUniquenessCheckerImpl;
-import com.develop.mvp.pk.module.system.service.permission.PermissionService;
-import com.develop.mvp.pk.module.system.service.permission.RoleService;
-import com.develop.mvp.pk.module.system.service.tenant.TenantPackageService;
-import com.develop.mvp.pk.module.system.service.user.AdminUserService;
+import com.develop.mvp.pk.module.system.application.permission.service.MenuApplicationService;
+import com.develop.mvp.pk.module.system.application.permission.service.PermissionApplicationService;
+import com.develop.mvp.pk.module.system.application.permission.service.RoleApplicationService;
+import com.develop.mvp.pk.module.system.application.tenant.service.TenantPackageApplicationService;
+import com.develop.mvp.pk.module.system.application.user.service.AdminUserApplicationService;
 import jakarta.annotation.Resource;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -43,13 +44,15 @@ class TenantApplicationServiceTest extends BaseDbUnitTest {
     @MockitoBean
     private DomainEventPublisher eventPublisher;
     @MockitoBean
-    private TenantPackageService tenantPackageService;
+    private TenantPackageApplicationService tenantPackageService;
     @MockitoBean
-    private AdminUserService adminUserService;
+    private AdminUserApplicationService adminUserService;
     @MockitoBean
-    private RoleService roleService;
+    private RoleApplicationService roleService;
     @MockitoBean
-    private PermissionService permissionService;
+    private PermissionApplicationService permissionService;
+    @MockitoBean
+    private MenuApplicationService menuService;
 
     @BeforeEach
     void setUp() {

@@ -3,10 +3,9 @@ package com.develop.mvp.pk.module.system.controller.admin.mail;
 import com.develop.mvp.pk.framework.common.pojo.CommonResult;
 import com.develop.mvp.pk.framework.common.pojo.PageResult;
 import com.develop.mvp.pk.framework.common.util.object.BeanUtils;
+import com.develop.mvp.pk.module.system.application.mail.service.MailApplicationService;
 import com.develop.mvp.pk.module.system.controller.admin.mail.vo.template.*;
 import com.develop.mvp.pk.module.system.dal.dataobject.mail.MailTemplateDO;
-import com.develop.mvp.pk.module.system.service.mail.MailSendService;
-import com.develop.mvp.pk.module.system.service.mail.MailTemplateService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -26,9 +25,9 @@ import static com.develop.mvp.pk.framework.security.core.util.SecurityFrameworkU
 public class MailTemplateController {
 
     @Resource
-    private MailTemplateService mailTempleService;
+    private MailApplicationService mailTempleService;
     @Resource
-    private MailSendService mailSendService;
+    private MailApplicationService mailSendService;
 
     @PostMapping("/create")
     @Operation(summary = "创建邮件模版")

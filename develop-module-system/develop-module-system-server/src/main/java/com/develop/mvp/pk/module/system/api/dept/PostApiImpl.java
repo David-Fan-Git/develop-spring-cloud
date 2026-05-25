@@ -1,10 +1,10 @@
 package com.develop.mvp.pk.module.system.api.dept;
 
+import com.develop.mvp.pk.module.system.application.dept.service.DeptApplicationService;
 import com.develop.mvp.pk.framework.common.pojo.CommonResult;
 import com.develop.mvp.pk.framework.common.util.object.BeanUtils;
 import com.develop.mvp.pk.module.system.api.dept.dto.PostRespDTO;
 import com.develop.mvp.pk.module.system.dal.dataobject.dept.PostDO;
-import com.develop.mvp.pk.module.system.service.dept.PostService;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.RestController;
 
@@ -19,7 +19,7 @@ import static com.develop.mvp.pk.framework.common.pojo.CommonResult.success;
 public class PostApiImpl implements PostApi {
 
     @Resource
-    private PostService postService;
+    private DeptApplicationService postService;
 
     @Override
     public CommonResult<Boolean> validPostList(Collection<Long> ids) {

@@ -3,7 +3,7 @@ package com.develop.mvp.pk.module.system.framework.operatelog.core;
 import cn.hutool.core.convert.Convert;
 import cn.hutool.core.util.StrUtil;
 import com.develop.mvp.pk.module.system.dal.dataobject.user.AdminUserDO;
-import com.develop.mvp.pk.module.system.service.user.AdminUserService;
+import com.develop.mvp.pk.module.system.application.user.service.AdminUserApplicationService;
 import com.mzt.logapi.service.IParseFunction;
 import jakarta.annotation.Resource;
 import lombok.extern.slf4j.Slf4j;
@@ -21,7 +21,7 @@ public class AdminUserParseFunction implements IParseFunction {
     public static final String NAME = "getAdminUserById";
 
     @Resource
-    private AdminUserService adminUserService;
+    private AdminUserApplicationService adminUserService;
 
     @Override
     public String functionName() {

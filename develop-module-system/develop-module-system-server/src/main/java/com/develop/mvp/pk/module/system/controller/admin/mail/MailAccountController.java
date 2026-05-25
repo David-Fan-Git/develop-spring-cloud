@@ -8,8 +8,8 @@ import com.develop.mvp.pk.module.system.controller.admin.mail.vo.account.MailAcc
 import com.develop.mvp.pk.module.system.controller.admin.mail.vo.account.MailAccountRespVO;
 import com.develop.mvp.pk.module.system.controller.admin.mail.vo.account.MailAccountSaveReqVO;
 import com.develop.mvp.pk.module.system.controller.admin.mail.vo.account.MailAccountSimpleRespVO;
+import com.develop.mvp.pk.module.system.application.mail.service.MailApplicationService;
 import com.develop.mvp.pk.module.system.dal.dataobject.mail.MailAccountDO;
-import com.develop.mvp.pk.module.system.service.mail.MailAccountService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -28,7 +28,7 @@ import static com.develop.mvp.pk.framework.common.pojo.CommonResult.success;
 public class MailAccountController {
 
     @Resource
-    private MailAccountService mailAccountService;
+    private MailApplicationService mailAccountService;
 
     @PostMapping("/create")
     @Operation(summary = "创建邮箱账号")

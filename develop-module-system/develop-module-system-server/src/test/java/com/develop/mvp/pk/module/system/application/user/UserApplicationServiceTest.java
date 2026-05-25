@@ -1,5 +1,6 @@
 package com.develop.mvp.pk.module.system.application.user.service;
 
+import com.develop.mvp.pk.module.system.application.dept.service.DeptApplicationService;
 import com.develop.mvp.pk.framework.common.enums.CommonStatusEnum;
 import com.develop.mvp.pk.framework.test.core.ut.BaseDbUnitTest;
 import com.develop.mvp.pk.framework.tenant.core.context.TenantContextHolder;
@@ -12,8 +13,6 @@ import com.develop.mvp.pk.module.system.domain.user.event.UserCreatedEvent;
 import com.develop.mvp.pk.module.system.domain.user.service.PasswordEncoder;
 import com.develop.mvp.pk.module.system.infrastructure.user.persistence.UserRepositoryImpl;
 import com.develop.mvp.pk.module.system.infrastructure.user.persistence.UserUniquenessCheckerImpl;
-import com.develop.mvp.pk.module.system.service.dept.DeptService;
-import com.develop.mvp.pk.module.system.service.dept.PostService;
 import jakarta.annotation.Resource;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Test;
@@ -43,9 +42,7 @@ class UserApplicationServiceTest extends BaseDbUnitTest {
     @MockitoBean
     private DomainEventPublisher eventPublisher;
     @MockitoBean
-    private DeptService deptService;
-    @MockitoBean
-    private PostService postService;
+    private DeptApplicationService deptService;
 
     @AfterEach
     void tearDown() {
@@ -80,7 +77,7 @@ class UserApplicationServiceTest extends BaseDbUnitTest {
         assertEquals(Set.of(30L, 40L), com.develop.mvp.pk.framework.common.util.collection.CollectionUtils.convertSet(
                 userPostMapper.selectListByUserId(userId), UserPostDO::getPostId));
         verify(deptService).validateDeptList(Set.of(20L));
-        verify(postService).validatePostList(Set.of(30L, 40L));
+        verify(deptService).validatePostList(Set.of(30L, 40L));
         verify(eventPublisher).publish(isA(UserCreatedEvent.class));
     }
 }

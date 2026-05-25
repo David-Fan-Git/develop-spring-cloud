@@ -10,8 +10,8 @@ import com.develop.mvp.pk.module.system.controller.admin.dict.vo.type.DictTypePa
 import com.develop.mvp.pk.module.system.controller.admin.dict.vo.type.DictTypeRespVO;
 import com.develop.mvp.pk.module.system.controller.admin.dict.vo.type.DictTypeSaveReqVO;
 import com.develop.mvp.pk.module.system.controller.admin.dict.vo.type.DictTypeSimpleRespVO;
+import com.develop.mvp.pk.module.system.application.dict.service.DictApplicationService;
 import com.develop.mvp.pk.module.system.dal.dataobject.dict.DictTypeDO;
-import com.develop.mvp.pk.module.system.service.dict.DictTypeService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -35,13 +35,13 @@ import static com.develop.mvp.pk.framework.common.pojo.CommonResult.success;
 public class DictTypeController {
 
     @Resource
-    private DictTypeService dictTypeService;
+    private DictApplicationService dictApplicationService;
 
     @PostMapping("/create")
     @Operation(summary = "创建字典类型")
     @PreAuthorize("@ss.hasPermission('system:dict:create')")
     public CommonResult<Long> createDictType(@Valid @RequestBody DictTypeSaveReqVO createReqVO) {
-        Long dictTypeId = dictTypeService.createDictType(createReqVO);
+        Long dictTypeId = dictApplicationService.createDictType(createReqVO);
         return success(dictTypeId);
     }
 
@@ -49,7 +49,7 @@ public class DictTypeController {
     @Operation(summary = "修改字典类型")
     @PreAuthorize("@ss.hasPermission('system:dict:update')")
     public CommonResult<Boolean> updateDictType(@Valid @RequestBody DictTypeSaveReqVO updateReqVO) {
-        dictTypeService.updateDictType(updateReqVO);
+        dictApplicationService.updateDictType(updateReqVO);
         return success(true);
     }
 
@@ -58,7 +58,7 @@ public class DictTypeController {
     @Parameter(name = "id", description = "编号", required = true, example = "1024")
     @PreAuthorize("@ss.hasPermission('system:dict:delete')")
     public CommonResult<Boolean> deleteDictType(Long id) {
-        dictTypeService.deleteDictType(id);
+        dictApplicationService.deleteDictType(id);
         return success(true);
     }
 
@@ -67,7 +67,7 @@ public class DictTypeController {
     @Parameter(name = "ids", description = "编号列表", required = true)
     @PreAuthorize("@ss.hasPermission('system:dict:delete')")
     public CommonResult<Boolean> deleteDictTypeList(@RequestParam("ids") List<Long> ids) {
-        dictTypeService.deleteDictTypeList(ids);
+        dictApplicationService.deleteDictTypeList(ids);
         return success(true);
     }
 
@@ -75,7 +75,7 @@ public class DictTypeController {
     @Operation(summary = "获得字典类型的分页列表")
     @PreAuthorize("@ss.hasPermission('system:dict:query')")
     public CommonResult<PageResult<DictTypeRespVO>> pageDictTypes(@Valid DictTypePageReqVO pageReqVO) {
-        PageResult<DictTypeDO> pageResult = dictTypeService.getDictTypePage(pageReqVO);
+        PageResult<DictTypeDO> pageResult = dictApplicationService.getDictTypePage(pageReqVO);
         return success(BeanUtils.toBean(pageResult, DictTypeRespVO.class));
     }
 
@@ -84,7 +84,7 @@ public class DictTypeController {
     @GetMapping(value = "/get")
     @PreAuthorize("@ss.hasPermission('system:dict:query')")
     public CommonResult<DictTypeRespVO> getDictType(@RequestParam("id") Long id) {
-        DictTypeDO dictType = dictTypeService.getDictType(id);
+        DictTypeDO dictType = dictApplicationService.getDictType(id);
         return success(BeanUtils.toBean(dictType, DictTypeRespVO.class));
     }
 
@@ -92,7 +92,7 @@ public class DictTypeController {
     @Operation(summary = "获得全部字典类型列表", description = "包括开启 + 禁用的字典类型，主要用于前端的下拉选项")
     // 无需添加权限认证，因为前端全局都需要
     public CommonResult<List<DictTypeSimpleRespVO>> getSimpleDictTypeList() {
-        List<DictTypeDO> list = dictTypeService.getDictTypeList();
+        List<DictTypeDO> list = dictApplicationService.getDictTypeList();
         return success(BeanUtils.toBean(list, DictTypeSimpleRespVO.class));
     }
 
@@ -102,7 +102,7 @@ public class DictTypeController {
     @ApiAccessLog(operateType = EXPORT)
     public void export(HttpServletResponse response, @Valid DictTypePageReqVO exportReqVO) throws IOException {
         exportReqVO.setPageSize(PageParam.PAGE_SIZE_NONE);
-        List<DictTypeDO> list = dictTypeService.getDictTypePage(exportReqVO).getList();
+        List<DictTypeDO> list = dictApplicationService.getDictTypePage(exportReqVO).getList();
         // 导出
         ExcelUtils.write(response, "字典类型.xls", "数据", DictTypeRespVO.class,
                 BeanUtils.toBean(list, DictTypeRespVO.class));

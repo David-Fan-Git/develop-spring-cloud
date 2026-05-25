@@ -1,5 +1,6 @@
 package com.develop.mvp.pk.module.system.controller.admin.user;
 
+import com.develop.mvp.pk.module.system.application.dept.service.DeptApplicationService;
 // Skill: AggregateRoot_User_Validation_Skill — 接口层 UserController
 // DDD 角色：接口层，仅处理 HTTP 请求/响应，调用 UserApplicationService
 
@@ -17,8 +18,7 @@ import com.develop.mvp.pk.module.system.dal.dataobject.dept.DeptDO;
 import com.develop.mvp.pk.module.system.domain.user.User;
 import com.develop.mvp.pk.module.system.domain.user.repository.UserPageQuery;
 import com.develop.mvp.pk.module.system.enums.common.SexEnum;
-import com.develop.mvp.pk.module.system.service.dept.DeptService;
-import com.develop.mvp.pk.module.system.service.user.AdminUserService;
+import com.develop.mvp.pk.module.system.application.user.service.AdminUserApplicationService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.Parameters;
@@ -48,9 +48,9 @@ public class UserController {
     @Resource
     private UserApplicationService userApplicationService;
     @Resource
-    private AdminUserService adminUserService; // 导入功能暂保留旧服务
+    private AdminUserApplicationService adminUserService; // 导入功能暂保留旧服务
     @Resource
-    private DeptService deptService;
+    private DeptApplicationService deptService;
 
     @PostMapping("/create")
     @Operation(summary = "新增用户")

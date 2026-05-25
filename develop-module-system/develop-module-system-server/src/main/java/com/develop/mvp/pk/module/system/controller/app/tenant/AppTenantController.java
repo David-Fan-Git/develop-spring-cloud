@@ -6,7 +6,7 @@ import com.develop.mvp.pk.framework.common.util.object.BeanUtils;
 import com.develop.mvp.pk.framework.tenant.core.aop.TenantIgnore;
 import com.develop.mvp.pk.module.system.controller.app.tenant.vo.AppTenantRespVO;
 import com.develop.mvp.pk.module.system.dal.dataobject.tenant.TenantDO;
-import com.develop.mvp.pk.module.system.service.tenant.TenantService;
+import com.develop.mvp.pk.module.system.application.tenant.service.TenantApplicationService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -28,7 +28,7 @@ import static com.develop.mvp.pk.framework.common.pojo.CommonResult.success;
 public class AppTenantController {
 
     @Resource
-    private TenantService tenantService;
+    private TenantApplicationService tenantService;
 
     @GetMapping("/get-by-website")
     @PermitAll
@@ -37,7 +37,7 @@ public class AppTenantController {
     @Parameter(name = "website", description = "域名", required = true, example = "www.iocoder.cn")
     public CommonResult<AppTenantRespVO> getTenantByWebsite(
             @RequestParam("website") @Pattern(regexp = "^[a-zA-Z0-9.-]+(:\\d{1,5})?$", message = "网站域名格式不正确") String website) {
-        TenantDO tenant = tenantService.getTenantByWebsite(website);
+        TenantDO tenant = tenantService.getTenantDoByWebsite(website);
         if (tenant == null || CommonStatusEnum.isDisable(tenant.getStatus())) {
             return success(null);
         }

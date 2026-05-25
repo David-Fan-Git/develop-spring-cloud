@@ -2,7 +2,7 @@ package com.develop.mvp.pk.module.system.api.sms;
 
 import com.develop.mvp.pk.framework.common.pojo.CommonResult;
 import com.develop.mvp.pk.module.system.api.sms.dto.send.SmsSendSingleToUserReqDTO;
-import com.develop.mvp.pk.module.system.service.sms.SmsSendService;
+import com.develop.mvp.pk.module.system.application.sms.service.SmsApplicationService;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.RestController;
 
@@ -15,7 +15,7 @@ import static com.develop.mvp.pk.framework.common.pojo.CommonResult.success;
 public class SmsSendApiImpl implements SmsSendApi {
 
     @Resource
-    private SmsSendService smsSendService;
+    private SmsApplicationService smsSendService;
 
     @Override
     public CommonResult<Long> sendSingleSmsToAdmin(SmsSendSingleToUserReqDTO reqDTO) {

@@ -1,9 +1,9 @@
 package com.develop.mvp.pk.module.system.framework.operatelog.core;
 
+import com.develop.mvp.pk.module.system.application.dept.service.DeptApplicationService;
 import cn.hutool.core.convert.Convert;
 import cn.hutool.core.util.StrUtil;
 import com.develop.mvp.pk.module.system.dal.dataobject.dept.PostDO;
-import com.develop.mvp.pk.module.system.service.dept.PostService;
 import com.mzt.logapi.service.IParseFunction;
 import jakarta.annotation.Resource;
 import lombok.extern.slf4j.Slf4j;
@@ -21,7 +21,7 @@ public class PostParseFunction implements IParseFunction {
     public static final String NAME = "getPostById";
 
     @Resource
-    private PostService postService;
+    private DeptApplicationService postService;
 
     @Override
     public String functionName() {

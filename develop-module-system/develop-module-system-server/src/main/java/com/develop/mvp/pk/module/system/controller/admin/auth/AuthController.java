@@ -13,13 +13,13 @@ import com.develop.mvp.pk.module.system.convert.auth.AuthConvert;
 import com.develop.mvp.pk.module.system.dal.dataobject.permission.MenuDO;
 import com.develop.mvp.pk.module.system.dal.dataobject.permission.RoleDO;
 import com.develop.mvp.pk.module.system.dal.dataobject.user.AdminUserDO;
+import com.develop.mvp.pk.module.system.application.auth.service.AuthApplicationService;
 import com.develop.mvp.pk.module.system.enums.logger.LoginLogTypeEnum;
-import com.develop.mvp.pk.module.system.service.auth.AdminAuthService;
-import com.develop.mvp.pk.module.system.service.permission.MenuService;
-import com.develop.mvp.pk.module.system.service.permission.PermissionService;
-import com.develop.mvp.pk.module.system.service.permission.RoleService;
-import com.develop.mvp.pk.module.system.service.social.SocialClientService;
-import com.develop.mvp.pk.module.system.service.user.AdminUserService;
+import com.develop.mvp.pk.module.system.application.permission.service.MenuApplicationService;
+import com.develop.mvp.pk.module.system.application.permission.service.PermissionApplicationService;
+import com.develop.mvp.pk.module.system.application.permission.service.RoleApplicationService;
+import com.develop.mvp.pk.module.system.application.social.service.SocialApplicationService;
+import com.develop.mvp.pk.module.system.application.user.service.AdminUserApplicationService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.Parameters;
@@ -48,17 +48,17 @@ import static com.develop.mvp.pk.framework.security.core.util.SecurityFrameworkU
 public class AuthController {
 
     @Resource
-    private AdminAuthService authService;
+    private AuthApplicationService authService;
     @Resource
-    private AdminUserService userService;
+    private AdminUserApplicationService userService;
     @Resource
-    private RoleService roleService;
+    private RoleApplicationService roleService;
     @Resource
-    private MenuService menuService;
+    private MenuApplicationService menuService;
     @Resource
-    private PermissionService permissionService;
+    private PermissionApplicationService permissionService;
     @Resource
-    private SocialClientService socialClientService;
+    private SocialApplicationService socialClientService;
 
     @Resource
     private SecurityProperties securityProperties;

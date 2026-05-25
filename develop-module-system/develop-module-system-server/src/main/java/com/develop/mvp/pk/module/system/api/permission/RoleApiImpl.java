@@ -1,7 +1,7 @@
 package com.develop.mvp.pk.module.system.api.permission;
 
 import com.develop.mvp.pk.framework.common.pojo.CommonResult;
-import com.develop.mvp.pk.module.system.service.permission.RoleService;
+import com.develop.mvp.pk.module.system.application.permission.service.RoleApplicationService;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.RestController;
 
@@ -15,7 +15,7 @@ import static com.develop.mvp.pk.framework.common.pojo.CommonResult.success;
 public class RoleApiImpl implements RoleApi {
 
     @Resource
-    private RoleService roleService;
+    private RoleApplicationService roleService;
 
     @Override
     public CommonResult<Boolean> validRoleList(Collection<Long> ids) {

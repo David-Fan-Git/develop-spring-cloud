@@ -7,9 +7,17 @@ package com.develop.mvp.pk.module.system.application.tenant.service;
 
 import com.develop.mvp.pk.module.system.application.tenant.port.inbound.TenantUseCase;
 import cn.hutool.core.collection.CollUtil;
+import com.develop.mvp.pk.framework.common.enums.CommonStatusEnum;
 import com.develop.mvp.pk.framework.common.pojo.PageResult;
+import com.develop.mvp.pk.framework.common.util.collection.CollectionUtils;
+import com.develop.mvp.pk.framework.tenant.config.TenantProperties;
+import com.develop.mvp.pk.framework.tenant.core.context.TenantContextHolder;
 import com.develop.mvp.pk.framework.tenant.core.util.TenantUtils;
 import com.develop.mvp.pk.module.system.controller.admin.permission.vo.role.RoleSaveReqVO;
+import com.develop.mvp.pk.module.system.controller.admin.tenant.vo.tenant.TenantPageReqVO;
+import com.develop.mvp.pk.module.system.controller.admin.tenant.vo.tenant.TenantSaveReqVO;
+import com.develop.mvp.pk.module.system.dal.dataobject.permission.MenuDO;
+import com.develop.mvp.pk.module.system.dal.dataobject.tenant.TenantDO;
 import com.develop.mvp.pk.module.system.domain.tenant.Tenant;
 import com.develop.mvp.pk.module.system.domain.tenant.TenantFactory;
 import com.develop.mvp.pk.module.system.domain.user.event.DomainEvent;
@@ -21,10 +29,11 @@ import com.develop.mvp.pk.module.system.domain.user.event.DomainEventPublisher;
 import com.develop.mvp.pk.module.system.dal.dataobject.tenant.TenantPackageDO;
 import com.develop.mvp.pk.module.system.enums.permission.RoleCodeEnum;
 import com.develop.mvp.pk.module.system.enums.permission.RoleTypeEnum;
-import com.develop.mvp.pk.module.system.service.permission.PermissionService;
-import com.develop.mvp.pk.module.system.service.permission.RoleService;
-import com.develop.mvp.pk.module.system.service.tenant.TenantPackageService;
-import com.develop.mvp.pk.module.system.service.user.AdminUserService;
+import com.develop.mvp.pk.module.system.application.permission.service.MenuApplicationService;
+import com.develop.mvp.pk.module.system.application.permission.service.PermissionApplicationService;
+import com.develop.mvp.pk.module.system.application.permission.service.RoleApplicationService;
+import com.develop.mvp.pk.module.system.application.user.service.AdminUserApplicationService;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -41,18 +50,24 @@ public class TenantApplicationService implements TenantUseCase {
     private final TenantRepository tenantRepository;
     private final TenantUniquenessChecker uniquenessChecker;
     private final DomainEventPublisher eventPublisher;
-    private final TenantPackageService tenantPackageService;
-    private final AdminUserService adminUserService;
-    private final RoleService roleService;
-    private final PermissionService permissionService;
+    private final TenantPackageApplicationService tenantPackageService;
+    private final AdminUserApplicationService adminUserService;
+    private final RoleApplicationService roleService;
+    private final PermissionApplicationService permissionService;
+    private final MenuApplicationService menuService;
+
+    @SuppressWarnings("SpringJavaAutowiredFieldsWarningInspection")
+    @Autowired(required = false)
+    private TenantProperties tenantProperties;
 
     public TenantApplicationService(TenantRepository tenantRepository,
                                      TenantUniquenessChecker uniquenessChecker,
                                      DomainEventPublisher eventPublisher,
-                                     TenantPackageService tenantPackageService,
-                                     AdminUserService adminUserService,
-                                     RoleService roleService,
-                                     PermissionService permissionService) {
+                                     TenantPackageApplicationService tenantPackageService,
+                                     AdminUserApplicationService adminUserService,
+                                     RoleApplicationService roleService,
+                                     PermissionApplicationService permissionService,
+                                     MenuApplicationService menuService) {
         this.tenantRepository = tenantRepository;
         this.uniquenessChecker = uniquenessChecker;
         this.eventPublisher = eventPublisher;
@@ -60,6 +75,7 @@ public class TenantApplicationService implements TenantUseCase {
         this.adminUserService = adminUserService;
         this.roleService = roleService;
         this.permissionService = permissionService;
+        this.menuService = menuService;
     }
 
     /**
@@ -163,8 +179,27 @@ public class TenantApplicationService implements TenantUseCase {
 
     // ── 查询 ──
 
+    public Long createTenant(TenantSaveReqVO createReqVO) {
+        return createTenant(
+                createReqVO.getId(), createReqVO.getName(), createReqVO.getContactName(),
+                createReqVO.getContactMobile(), createReqVO.getStatus(), createReqVO.getWebsites(),
+                createReqVO.getPackageId(), createReqVO.getExpireTime(), createReqVO.getAccountCount(),
+                createReqVO.getUsername(), createReqVO.getPassword());
+    }
+
+    public void updateTenant(TenantSaveReqVO updateReqVO) {
+        updateTenant(
+                updateReqVO.getId(), updateReqVO.getName(), updateReqVO.getContactName(),
+                updateReqVO.getContactMobile(), updateReqVO.getStatus(), updateReqVO.getWebsites(),
+                updateReqVO.getPackageId(), updateReqVO.getExpireTime(), updateReqVO.getAccountCount());
+    }
+
     public Tenant getTenant(Long id) {
         return tenantRepository.findById(TenantId.of(id));
+    }
+
+    public TenantDO getTenantDo(Long id) {
+        return toDataObject(getTenant(id));
     }
 
     /** 规则 R07：校验租户有效性（存在+启用+未过期） */
@@ -183,30 +218,82 @@ public class TenantApplicationService implements TenantUseCase {
         return tenantRepository.findByName(TenantName.of(name)).orElse(null);
     }
 
+    public TenantDO getTenantDoByName(String name) {
+        return toDataObject(getTenantByName(name));
+    }
+
     public Tenant getTenantByWebsite(String website) {
         List<Tenant> tenants = tenantRepository.findByWebsite(website);
         return tenants.isEmpty() ? null : tenants.get(0);
+    }
+
+    public TenantDO getTenantDoByWebsite(String website) {
+        return toDataObject(getTenantByWebsite(website));
     }
 
     public PageResult<Tenant> getTenantPage(TenantPageQuery query) {
         return tenantRepository.findPage(query);
     }
 
-    public List<Tenant> getTenantListByStatus(Integer statusCode) {
+    public PageResult<TenantDO> getTenantPage(TenantPageReqVO pageReqVO) {
+        TenantPageQuery query = new TenantPageQuery(
+                pageReqVO.getName(), pageReqVO.getContactName(), pageReqVO.getContactMobile(),
+                pageReqVO.getStatus(), pageReqVO.getCreateTime(), pageReqVO.getPageNo(), pageReqVO.getPageSize());
+        PageResult<Tenant> pageResult = getTenantPage(query);
+        return new PageResult<>(pageResult.getList().stream()
+                .map(this::toDataObject).collect(Collectors.toList()), pageResult.getTotal());
+    }
+
+    public List<Tenant> getTenantDomainListByStatus(Integer statusCode) {
         return tenantRepository.findByStatus(TenantStatus.of(statusCode));
+    }
+
+    public List<TenantDO> getTenantListByStatus(Integer statusCode) {
+        return getTenantDomainListByStatus(statusCode).stream()
+                .map(this::toDataObject).collect(Collectors.toList());
     }
 
     public Long getTenantCountByPackageId(Long packageId) {
         return tenantRepository.countByPackageId(TenantPackageRef.of(packageId));
     }
 
-    public List<Tenant> getTenantListByPackageId(Long packageId) {
+    public List<Tenant> getTenantDomainListByPackageId(Long packageId) {
         return tenantRepository.findByPackageId(TenantPackageRef.of(packageId));
+    }
+
+    public List<TenantDO> getTenantListByPackageId(Long packageId) {
+        return getTenantDomainListByPackageId(packageId).stream()
+                .map(this::toDataObject).collect(Collectors.toList());
     }
 
     public List<Long> getTenantIdList() {
         return tenantRepository.findAll().stream()
                 .map(t -> t.id().value()).collect(Collectors.toList());
+    }
+
+    public void validTenant(Long id) {
+        getAndValidateTenant(id);
+    }
+
+    public void handleTenantInfo(TenantInfoHandler handler) {
+        if (isTenantDisable()) {
+            return;
+        }
+        handler.handle(getTenantDo(TenantContextHolder.getRequiredTenantId()));
+    }
+
+    public void handleTenantMenu(TenantMenuHandler handler) {
+        if (isTenantDisable()) {
+            return;
+        }
+        TenantDO tenant = getTenantDo(TenantContextHolder.getRequiredTenantId());
+        Set<Long> menuIds;
+        if (isSystemTenant(tenant)) {
+            menuIds = CollectionUtils.convertSet(menuService.getMenuList(), MenuDO::getId);
+        } else {
+            menuIds = tenantPackageService.getTenantPackage(tenant.getPackageId()).getMenuIds();
+        }
+        handler.handle(menuIds);
     }
 
     // ── 私有方法 ──
@@ -215,6 +302,37 @@ public class TenantApplicationService implements TenantUseCase {
         Tenant tenant = tenantRepository.findById(id);
         if (tenant == null) throw exception(TENANT_NOT_EXISTS);
         return tenant;
+    }
+
+    private static boolean isSystemTenant(TenantDO tenant) {
+        return Objects.equals(tenant.getPackageId(), TenantDO.PACKAGE_ID_SYSTEM);
+    }
+
+    private boolean isTenantDisable() {
+        return tenantProperties == null || Boolean.FALSE.equals(tenantProperties.getEnable());
+    }
+
+    private TenantDO toDataObject(Tenant tenant) {
+        if (tenant == null) {
+            return null;
+        }
+        TenantDO tenantDO = new TenantDO()
+                .setId(tenant.id().value())
+                .setName(tenant.name().value())
+                .setContactUserId(tenant.contactUserId())
+                .setContactName(tenant.contactName())
+                .setContactMobile(tenant.contactMobile())
+                .setStatus(tenant.status().code())
+                .setWebsites(tenant.websites())
+                .setPackageId(tenant.packageRef().packageId())
+                .setExpireTime(tenant.expireTime().value())
+                .setAccountCount(tenant.accountCount());
+        tenantDO.setCreateTime(tenant.createTime());
+        tenantDO.setUpdateTime(tenant.updateTime());
+        tenantDO.setCreator(tenant.creator());
+        tenantDO.setUpdater(tenant.updater());
+        tenantDO.setDeleted(tenant.deleted());
+        return tenantDO;
     }
 
     private void assertNotSystemTenant(Tenant tenant) {

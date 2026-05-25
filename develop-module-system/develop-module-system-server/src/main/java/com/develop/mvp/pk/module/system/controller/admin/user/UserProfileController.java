@@ -1,5 +1,6 @@
 package com.develop.mvp.pk.module.system.controller.admin.user;
 
+import com.develop.mvp.pk.module.system.application.dept.service.DeptApplicationService;
 // Skill: AggregateRoot_User_Validation_Skill — 接口层 UserProfileController
 // DDD 角色：接口层，调用 UserApplicationService
 
@@ -15,10 +16,8 @@ import com.develop.mvp.pk.module.system.dal.dataobject.dept.DeptDO;
 import com.develop.mvp.pk.module.system.dal.dataobject.dept.PostDO;
 import com.develop.mvp.pk.module.system.dal.dataobject.permission.RoleDO;
 import com.develop.mvp.pk.module.system.domain.user.User;
-import com.develop.mvp.pk.module.system.service.dept.DeptService;
-import com.develop.mvp.pk.module.system.service.dept.PostService;
-import com.develop.mvp.pk.module.system.service.permission.PermissionService;
-import com.develop.mvp.pk.module.system.service.permission.RoleService;
+import com.develop.mvp.pk.module.system.application.permission.service.PermissionApplicationService;
+import com.develop.mvp.pk.module.system.application.permission.service.RoleApplicationService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.annotation.Resource;
@@ -42,13 +41,13 @@ public class UserProfileController {
     @Resource
     private UserApplicationService userApplicationService;
     @Resource
-    private DeptService deptService;
+    private DeptApplicationService deptService;
     @Resource
-    private PostService postService;
+    private DeptApplicationService postService;
     @Resource
-    private PermissionService permissionService;
+    private PermissionApplicationService permissionService;
     @Resource
-    private RoleService roleService;
+    private RoleApplicationService roleService;
 
     @GetMapping("/get")
     @Operation(summary = "获得登录用户信息")

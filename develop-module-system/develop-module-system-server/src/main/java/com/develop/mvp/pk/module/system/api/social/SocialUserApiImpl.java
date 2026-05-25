@@ -4,7 +4,7 @@ import com.develop.mvp.pk.framework.common.pojo.CommonResult;
 import com.develop.mvp.pk.module.system.api.social.dto.SocialUserBindReqDTO;
 import com.develop.mvp.pk.module.system.api.social.dto.SocialUserRespDTO;
 import com.develop.mvp.pk.module.system.api.social.dto.SocialUserUnbindReqDTO;
-import com.develop.mvp.pk.module.system.service.social.SocialUserService;
+import com.develop.mvp.pk.module.system.application.social.service.SocialApplicationService;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.RestController;
 
@@ -17,7 +17,7 @@ import static com.develop.mvp.pk.framework.common.pojo.CommonResult.success;
 public class SocialUserApiImpl implements SocialUserApi {
 
     @Resource
-    private SocialUserService socialUserService;
+    private SocialApplicationService socialUserService;
 
     @Override
     public CommonResult<String> bindSocialUser(SocialUserBindReqDTO reqDTO) {

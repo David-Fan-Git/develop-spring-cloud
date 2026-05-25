@@ -1,10 +1,10 @@
 package com.develop.mvp.pk.module.system.api.dept;
 
+import com.develop.mvp.pk.module.system.application.dept.service.DeptApplicationService;
 import com.develop.mvp.pk.framework.common.pojo.CommonResult;
 import com.develop.mvp.pk.framework.common.util.object.BeanUtils;
 import com.develop.mvp.pk.module.system.api.dept.dto.DeptRespDTO;
 import com.develop.mvp.pk.module.system.dal.dataobject.dept.DeptDO;
-import com.develop.mvp.pk.module.system.service.dept.DeptService;
 import org.springframework.context.annotation.Bean;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.RestController;
@@ -20,7 +20,7 @@ import static com.develop.mvp.pk.framework.common.pojo.CommonResult.success;
 public class DeptApiImpl implements DeptApi {
 
     @Resource
-    private DeptService deptService;
+    private DeptApplicationService deptService;
 
     @Override
     public CommonResult<DeptRespDTO> getDept(Long id) {
