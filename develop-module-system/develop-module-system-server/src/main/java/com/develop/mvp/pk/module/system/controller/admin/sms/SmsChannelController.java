@@ -7,7 +7,7 @@ import com.develop.mvp.pk.module.system.controller.admin.sms.vo.channel.SmsChann
 import com.develop.mvp.pk.module.system.controller.admin.sms.vo.channel.SmsChannelRespVO;
 import com.develop.mvp.pk.module.system.controller.admin.sms.vo.channel.SmsChannelSaveReqVO;
 import com.develop.mvp.pk.module.system.controller.admin.sms.vo.channel.SmsChannelSimpleRespVO;
-import com.develop.mvp.pk.module.system.application.sms.service.SmsApplicationService;
+import com.develop.mvp.pk.module.system.application.sms.port.inbound.SmsUseCase;
 import com.develop.mvp.pk.module.system.dal.dataobject.sms.SmsChannelDO;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
@@ -28,7 +28,7 @@ import static com.develop.mvp.pk.framework.common.pojo.CommonResult.success;
 public class SmsChannelController {
 
     @Resource
-    private SmsApplicationService smsChannelService;
+    private SmsUseCase smsChannelService;
 
     @PostMapping("/create")
     @Operation(summary = "创建短信渠道")

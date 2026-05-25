@@ -1,6 +1,6 @@
 package com.develop.mvp.pk.module.system.mq.consumer.mail;
 
-import com.develop.mvp.pk.module.system.application.mail.service.MailApplicationService;
+import com.develop.mvp.pk.module.system.application.mail.port.inbound.MailUseCase;
 import com.develop.mvp.pk.module.system.mq.message.mail.MailSendMessage;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.event.EventListener;
@@ -19,7 +19,7 @@ import jakarta.annotation.Resource;
 public class MailSendConsumer {
 
     @Resource
-    private MailApplicationService mailSendService;
+    private MailUseCase mailSendService;
 
     @EventListener
     @Async // Spring Event 默认在 Producer 发送的线程，通过 @Async 实现异步

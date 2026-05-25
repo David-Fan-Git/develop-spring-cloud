@@ -2,7 +2,7 @@ package com.develop.mvp.pk.module.system.api.logger;
 
 import com.develop.mvp.pk.framework.common.pojo.CommonResult;
 import com.develop.mvp.pk.module.system.api.logger.dto.LoginLogCreateReqDTO;
-import com.develop.mvp.pk.module.system.application.logger.service.LoggerApplicationService;
+import com.develop.mvp.pk.module.system.application.logger.port.inbound.LoggerUseCase;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.RestController;
 
@@ -15,11 +15,11 @@ import static com.develop.mvp.pk.framework.common.pojo.CommonResult.success;
 public class LoginLogApiImpl implements LoginLogApi {
 
     @Resource
-    private LoggerApplicationService loggerApplicationService;
+    private LoggerUseCase loggerUseCase;
 
     @Override
     public CommonResult<Boolean> createLoginLog(LoginLogCreateReqDTO reqDTO) {
-        loggerApplicationService.createLoginLog(reqDTO);
+        loggerUseCase.createLoginLog(reqDTO);
         return success(true);
     }
 

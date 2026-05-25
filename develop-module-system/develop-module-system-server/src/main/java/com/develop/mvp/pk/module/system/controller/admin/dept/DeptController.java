@@ -1,6 +1,6 @@
 package com.develop.mvp.pk.module.system.controller.admin.dept;
 
-import com.develop.mvp.pk.module.system.application.dept.service.DeptApplicationService;
+import com.develop.mvp.pk.module.system.application.dept.port.inbound.DeptUseCase;
 import com.develop.mvp.pk.framework.common.enums.CommonStatusEnum;
 import com.develop.mvp.pk.framework.common.pojo.CommonResult;
 import com.develop.mvp.pk.framework.common.util.object.BeanUtils;
@@ -29,13 +29,13 @@ import static com.develop.mvp.pk.framework.common.pojo.CommonResult.success;
 public class DeptController {
 
     @Resource
-    private DeptApplicationService deptService;
+    private DeptUseCase deptUseCase;
 
     @PostMapping("create")
     @Operation(summary = "创建部门")
     @PreAuthorize("@ss.hasPermission('system:dept:create')")
     public CommonResult<Long> createDept(@Valid @RequestBody DeptSaveReqVO createReqVO) {
-        Long deptId = deptService.createDept(createReqVO);
+        Long deptId = deptUseCase.createDept(createReqVO);
         return success(deptId);
     }
 
@@ -43,7 +43,7 @@ public class DeptController {
     @Operation(summary = "更新部门")
     @PreAuthorize("@ss.hasPermission('system:dept:update')")
     public CommonResult<Boolean> updateDept(@Valid @RequestBody DeptSaveReqVO updateReqVO) {
-        deptService.updateDept(updateReqVO);
+        deptUseCase.updateDept(updateReqVO);
         return success(true);
     }
 
@@ -52,7 +52,7 @@ public class DeptController {
     @Parameter(name = "id", description = "编号", required = true, example = "1024")
     @PreAuthorize("@ss.hasPermission('system:dept:delete')")
     public CommonResult<Boolean> deleteDept(@RequestParam("id") Long id) {
-        deptService.deleteDept(id);
+        deptUseCase.deleteDept(id);
         return success(true);
     }
 
@@ -61,7 +61,7 @@ public class DeptController {
     @Parameter(name = "ids", description = "编号列表", required = true)
     @PreAuthorize("@ss.hasPermission('system:dept:delete')")
     public CommonResult<Boolean> deleteDeptList(@RequestParam("ids") List<Long> ids) {
-        deptService.deleteDeptList(ids);
+        deptUseCase.deleteDeptList(ids);
         return success(true);
     }
 
@@ -69,14 +69,14 @@ public class DeptController {
     @Operation(summary = "获取部门列表")
     @PreAuthorize("@ss.hasPermission('system:dept:query')")
     public CommonResult<List<DeptRespVO>> getDeptList(DeptListReqVO reqVO) {
-        List<DeptDO> list = deptService.getDeptList(reqVO);
+        List<DeptDO> list = deptUseCase.getDeptList(reqVO);
         return success(BeanUtils.toBean(list, DeptRespVO.class));
     }
 
     @GetMapping(value = {"/list-all-simple", "/simple-list"})
     @Operation(summary = "获取部门精简信息列表", description = "只包含被开启的部门，主要用于前端的下拉选项")
     public CommonResult<List<DeptSimpleRespVO>> getSimpleDeptList() {
-        List<DeptDO> list = deptService.getDeptList(
+        List<DeptDO> list = deptUseCase.getDeptList(
                 new DeptListReqVO().setStatus(CommonStatusEnum.ENABLE.getStatus()));
         return success(BeanUtils.toBean(list, DeptSimpleRespVO.class));
     }
@@ -86,7 +86,7 @@ public class DeptController {
     @Parameter(name = "id", description = "编号", required = true, example = "1024")
     @PreAuthorize("@ss.hasPermission('system:dept:query')")
     public CommonResult<DeptRespVO> getDept(@RequestParam("id") Long id) {
-        DeptDO dept = deptService.getDept(id);
+        DeptDO dept = deptUseCase.getDept(id);
         return success(BeanUtils.toBean(dept, DeptRespVO.class));
     }
 

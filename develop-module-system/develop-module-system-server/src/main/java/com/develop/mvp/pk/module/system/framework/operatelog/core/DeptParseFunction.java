@@ -1,6 +1,6 @@
 package com.develop.mvp.pk.module.system.framework.operatelog.core;
 
-import com.develop.mvp.pk.module.system.application.dept.service.DeptApplicationService;
+import com.develop.mvp.pk.module.system.application.dept.port.inbound.DeptUseCase;
 import cn.hutool.core.convert.Convert;
 import cn.hutool.core.util.StrUtil;
 import com.develop.mvp.pk.module.system.dal.dataobject.dept.DeptDO;
@@ -21,7 +21,7 @@ public class DeptParseFunction implements IParseFunction {
     public static final String NAME = "getDeptById";
 
     @Resource
-    private DeptApplicationService deptService;
+    private DeptUseCase deptUseCase;
 
     @Override
     public String functionName() {
@@ -35,7 +35,7 @@ public class DeptParseFunction implements IParseFunction {
         }
 
         // 获取部门信息
-        DeptDO dept = deptService.getDept(Convert.toLong(value));
+        DeptDO dept = deptUseCase.getDept(Convert.toLong(value));
         if (dept == null) {
             log.warn("[apply][获取部门{{}}为空", value);
             return "";

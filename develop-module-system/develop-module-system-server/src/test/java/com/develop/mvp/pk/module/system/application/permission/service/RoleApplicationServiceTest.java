@@ -183,7 +183,7 @@ public class RoleApplicationServiceTest extends BaseDbUnitTest {
         Long id = roleDO.getId();
 
         // 调用
-        RoleDO dbRoleDO = roleService.getRole(id);
+        RoleDO dbRoleDO = roleService.getRoleDO(id);
         // 断言
         assertPojoEquals(roleDO, dbRoleDO);
     }

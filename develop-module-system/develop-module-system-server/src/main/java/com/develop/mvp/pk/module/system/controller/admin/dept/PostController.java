@@ -1,6 +1,6 @@
 package com.develop.mvp.pk.module.system.controller.admin.dept;
 
-import com.develop.mvp.pk.module.system.application.dept.service.DeptApplicationService;
+import com.develop.mvp.pk.module.system.application.dept.port.inbound.DeptUseCase;
 import com.develop.mvp.pk.framework.apilog.core.annotation.ApiAccessLog;
 import com.develop.mvp.pk.framework.common.enums.CommonStatusEnum;
 import com.develop.mvp.pk.framework.common.pojo.CommonResult;
@@ -38,13 +38,13 @@ import static com.develop.mvp.pk.framework.common.pojo.CommonResult.success;
 public class PostController {
 
     @Resource
-    private DeptApplicationService postService;
+    private DeptUseCase postUseCase;
 
     @PostMapping("/create")
     @Operation(summary = "创建岗位")
     @PreAuthorize("@ss.hasPermission('system:post:create')")
     public CommonResult<Long> createPost(@Valid @RequestBody PostSaveReqVO createReqVO) {
-        Long postId = postService.createPost(createReqVO);
+        Long postId = postUseCase.createPost(createReqVO);
         return success(postId);
     }
 
@@ -52,7 +52,7 @@ public class PostController {
     @Operation(summary = "修改岗位")
     @PreAuthorize("@ss.hasPermission('system:post:update')")
     public CommonResult<Boolean> updatePost(@Valid @RequestBody PostSaveReqVO updateReqVO) {
-        postService.updatePost(updateReqVO);
+        postUseCase.updatePost(updateReqVO);
         return success(true);
     }
 
@@ -60,7 +60,7 @@ public class PostController {
     @Operation(summary = "删除岗位")
     @PreAuthorize("@ss.hasPermission('system:post:delete')")
     public CommonResult<Boolean> deletePost(@RequestParam("id") Long id) {
-        postService.deletePost(id);
+        postUseCase.deletePost(id);
         return success(true);
     }
 
@@ -68,7 +68,7 @@ public class PostController {
     @Operation(summary = "批量删除岗位")
     @PreAuthorize("@ss.hasPermission('system:post:delete')")
     public CommonResult<Boolean> deletePostList(@RequestParam("ids") List<Long> ids) {
-        postService.deletePostList(ids);
+        postUseCase.deletePostList(ids);
         return success(true);
     }
 
@@ -77,7 +77,7 @@ public class PostController {
     @Parameter(name = "id", description = "岗位编号", required = true, example = "1024")
     @PreAuthorize("@ss.hasPermission('system:post:query')")
     public CommonResult<PostRespVO> getPost(@RequestParam("id") Long id) {
-        PostDO post = postService.getPost(id);
+        PostDO post = postUseCase.getPost(id);
         return success(BeanUtils.toBean(post, PostRespVO.class));
     }
 
@@ -85,7 +85,7 @@ public class PostController {
     @Operation(summary = "获取岗位全列表", description = "只包含被开启的岗位，主要用于前端的下拉选项")
     public CommonResult<List<PostSimpleRespVO>> getSimplePostList() {
         // 获得岗位列表，只要开启状态的
-        List<PostDO> list = postService.getPostList(null, Collections.singleton(CommonStatusEnum.ENABLE.getStatus()));
+        List<PostDO> list = postUseCase.getPostList(null, Collections.singleton(CommonStatusEnum.ENABLE.getStatus()));
         // 排序后，返回给前端
         list.sort(Comparator.comparing(PostDO::getSort));
         return success(BeanUtils.toBean(list, PostSimpleRespVO.class));
@@ -95,7 +95,7 @@ public class PostController {
     @Operation(summary = "获得岗位分页列表")
     @PreAuthorize("@ss.hasPermission('system:post:query')")
     public CommonResult<PageResult<PostRespVO>> getPostPage(@Validated PostPageReqVO pageReqVO) {
-        PageResult<PostDO> pageResult = postService.getPostPage(pageReqVO);
+        PageResult<PostDO> pageResult = postUseCase.getPostPage(pageReqVO);
         return success(BeanUtils.toBean(pageResult, PostRespVO.class));
     }
 
@@ -105,7 +105,7 @@ public class PostController {
     @ApiAccessLog(operateType = EXPORT)
     public void export(HttpServletResponse response, @Validated PostPageReqVO reqVO) throws IOException {
         reqVO.setPageSize(PageParam.PAGE_SIZE_NONE);
-        List<PostDO> list = postService.getPostPage(reqVO).getList();
+        List<PostDO> list = postUseCase.getPostPage(reqVO).getList();
         // 输出
         ExcelUtils.write(response, "岗位数据.xls", "岗位列表", PostRespVO.class,
                 BeanUtils.toBean(list, PostRespVO.class));

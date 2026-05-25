@@ -19,8 +19,8 @@ import com.develop.mvp.pk.module.system.api.social.dto.SocialUserRespDTO;
 import com.develop.mvp.pk.module.system.application.auth.port.inbound.AuthUseCase;
 import com.develop.mvp.pk.module.system.application.logger.service.LoggerApplicationService;
 import com.develop.mvp.pk.module.system.application.member.service.MemberApplicationService;
-import com.develop.mvp.pk.module.system.application.oauth2.service.OAuth2ApplicationService;
-import com.develop.mvp.pk.module.system.application.user.service.AdminUserApplicationService;
+import com.develop.mvp.pk.module.system.application.oauth2.port.inbound.OAuth2UseCase;
+import com.develop.mvp.pk.module.system.application.user.port.inbound.AdminUserUseCase;
 import com.develop.mvp.pk.module.system.controller.admin.auth.vo.*;
 import com.develop.mvp.pk.module.system.convert.auth.AuthConvert;
 import com.develop.mvp.pk.module.system.dal.dataobject.oauth2.OAuth2AccessTokenDO;
@@ -29,14 +29,11 @@ import com.develop.mvp.pk.module.system.enums.logger.LoginLogTypeEnum;
 import com.develop.mvp.pk.module.system.enums.logger.LoginResultEnum;
 import com.develop.mvp.pk.module.system.enums.oauth2.OAuth2ClientConstants;
 import com.develop.mvp.pk.module.system.enums.sms.SmsSceneEnum;
-import com.develop.mvp.pk.module.system.application.social.service.SocialApplicationService;
+import com.develop.mvp.pk.module.system.application.social.port.inbound.SocialUseCase;
 import com.google.common.annotations.VisibleForTesting;
-import jakarta.annotation.Resource;
 import jakarta.validation.Validator;
 import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Value;
-import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.Objects;
@@ -45,30 +42,43 @@ import static com.develop.mvp.pk.framework.common.exception.util.ServiceExceptio
 import static com.develop.mvp.pk.framework.common.util.servlet.ServletUtils.getClientIP;
 import static com.develop.mvp.pk.module.system.enums.ErrorCodeConstants.*;
 
-@Service
 @Slf4j
 public class AuthApplicationService implements AuthUseCase {
 
-    @Resource
-    private AdminUserApplicationService userService;
-    @Resource
-    private LoggerApplicationService loggerApplicationService;
-    @Resource
-    private OAuth2ApplicationService oauth2TokenService;
-    @Resource
-    private SocialApplicationService socialUserService;
-    @Resource
-    private MemberApplicationService memberApplicationService;
-    @Resource
-    private Validator validator;
-    @Resource
-    private CaptchaService captchaService;
-    @Resource
-    private SmsCodeApi smsCodeApi;
+    private final AdminUserUseCase userService;
+    private final LoggerApplicationService loggerApplicationService;
+    private final OAuth2UseCase oauth2TokenService;
+    private final SocialUseCase socialUseCase;
+    private final MemberApplicationService memberApplicationService;
+    private final Validator validator;
+    private final CaptchaService captchaService;
+    private final SmsCodeApi smsCodeApi;
 
-    @Value("${develop.captcha.enable:true}")
     @Setter
     private Boolean captchaEnable;
+
+    public AuthApplicationService(AdminUserUseCase userService,
+                                  LoggerApplicationService loggerApplicationService,
+                                  OAuth2UseCase oauth2TokenService,
+                                  SocialUseCase socialUseCase,
+                                  MemberApplicationService memberApplicationService,
+                                  Validator validator,
+                                  CaptchaService captchaService,
+                                  SmsCodeApi smsCodeApi) {
+        this.userService = userService;
+        this.loggerApplicationService = loggerApplicationService;
+        this.oauth2TokenService = oauth2TokenService;
+        this.socialUseCase = socialUseCase;
+        this.memberApplicationService = memberApplicationService;
+        this.validator = validator;
+        this.captchaService = captchaService;
+        this.smsCodeApi = smsCodeApi;
+        this.captchaEnable = true;
+    }
+
+    public void setCaptchaEnable(Boolean captchaEnable) {
+        this.captchaEnable = captchaEnable;
+    }
 
     public AdminUserDO authenticate(String username, String password) {
         final LoginLogTypeEnum logTypeEnum = LoginLogTypeEnum.LOGIN_USERNAME;
@@ -93,7 +103,7 @@ public class AuthApplicationService implements AuthUseCase {
         validateCaptcha(reqVO);
         AdminUserDO user = authenticate(reqVO.getUsername(), reqVO.getPassword());
         if (reqVO.getSocialType() != null) {
-            socialUserService.bindSocialUser(new SocialUserBindReqDTO(user.getId(), getUserType().getValue(),
+            socialUseCase.bindSocialUser(new SocialUserBindReqDTO(user.getId(), getUserType().getValue(),
                     reqVO.getSocialType(), reqVO.getSocialCode(), reqVO.getSocialState()));
         }
         return createTokenAfterLoginSuccess(user.getId(), reqVO.getUsername(), LoginLogTypeEnum.LOGIN_USERNAME);
@@ -122,7 +132,7 @@ public class AuthApplicationService implements AuthUseCase {
     }
 
     public AuthLoginRespVO socialLogin(AuthSocialLoginReqVO reqVO) {
-        SocialUserRespDTO socialUser = socialUserService.getSocialUserByCode(UserTypeEnum.ADMIN.getValue(), reqVO.getType(),
+        SocialUserRespDTO socialUser = socialUseCase.getSocialUserByCode(UserTypeEnum.ADMIN.getValue(), reqVO.getType(),
                 reqVO.getCode(), reqVO.getState());
         if (socialUser == null || socialUser.getUserId() == null) {
             throw exception(AUTH_THIRD_LOGIN_NOT_BIND);

@@ -18,9 +18,9 @@ import com.develop.mvp.pk.framework.common.util.string.StrUtils;
 import com.develop.mvp.pk.framework.security.core.LoginUser;
 import com.develop.mvp.pk.framework.tenant.core.context.TenantContextHolder;
 import com.develop.mvp.pk.framework.tenant.core.util.TenantUtils;
-import com.develop.mvp.pk.module.system.application.auth.service.AuthApplicationService;
+import com.develop.mvp.pk.module.system.application.auth.port.inbound.AuthUseCase;
 import com.develop.mvp.pk.module.system.application.oauth2.port.inbound.OAuth2UseCase;
-import com.develop.mvp.pk.module.system.application.user.service.AdminUserApplicationService;
+import com.develop.mvp.pk.module.system.application.user.port.inbound.AdminUserUseCase;
 import com.develop.mvp.pk.module.system.controller.admin.oauth2.vo.client.OAuth2ClientPageReqVO;
 import com.develop.mvp.pk.module.system.controller.admin.oauth2.vo.client.OAuth2ClientSaveReqVO;
 import com.develop.mvp.pk.module.system.controller.admin.oauth2.vo.token.OAuth2AccessTokenPageReqVO;
@@ -41,15 +41,12 @@ import com.develop.mvp.pk.module.system.domain.oauth2.OAuth2AccessToken;
 import com.develop.mvp.pk.module.system.domain.oauth2.repository.OAuth2AccessTokenRepository;
 import com.develop.mvp.pk.module.system.enums.ErrorCodeConstants;
 import com.google.common.annotations.VisibleForTesting;
-import jakarta.annotation.Resource;
 import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.cache.annotation.Cacheable;
 import org.springframework.context.annotation.Lazy;
-import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import org.springframework.validation.annotation.Validated;
 
 import java.time.LocalDateTime;
 import java.util.Collection;
@@ -63,34 +60,55 @@ import static com.develop.mvp.pk.framework.common.exception.util.ServiceExceptio
 import static com.develop.mvp.pk.framework.common.util.collection.CollectionUtils.convertSet;
 import static com.develop.mvp.pk.module.system.enums.ErrorCodeConstants.*;
 
-@Service
-@Validated
 public class OAuth2ApplicationService implements OAuth2UseCase {
 
     private static final Integer CODE_TIMEOUT = 5 * 60;
     private static final Integer APPROVE_TIMEOUT = 30 * 24 * 60 * 60;
 
-    @Autowired(required = false)
     private OAuth2AccessTokenRepository tokenRepo;
+    private final OAuth2ClientMapper oauth2ClientMapper;
+    private final OAuth2AccessTokenMapper oauth2AccessTokenMapper;
+    private final OAuth2RefreshTokenMapper oauth2RefreshTokenMapper;
+    private final OAuth2AccessTokenRedisDAO oauth2AccessTokenRedisDAO;
+    private final OAuth2CodeMapper oauth2CodeMapper;
+    private final OAuth2ApproveMapper oauth2ApproveMapper;
+    private final AdminUserUseCase adminUserService;
+    private final AuthUseCase adminAuthService;
 
-    @Resource
-    private OAuth2ClientMapper oauth2ClientMapper;
-    @Resource
-    private OAuth2AccessTokenMapper oauth2AccessTokenMapper;
-    @Resource
-    private OAuth2RefreshTokenMapper oauth2RefreshTokenMapper;
-    @Resource
-    private OAuth2AccessTokenRedisDAO oauth2AccessTokenRedisDAO;
-    @Resource
-    private OAuth2CodeMapper oauth2CodeMapper;
-    @Resource
-    private OAuth2ApproveMapper oauth2ApproveMapper;
-    @Resource
-    @Lazy
-    private AdminUserApplicationService adminUserService;
-    @Resource
-    @Lazy
-    private AuthApplicationService adminAuthService;
+    public OAuth2ApplicationService() {
+        this.oauth2ClientMapper = null;
+        this.oauth2AccessTokenMapper = null;
+        this.oauth2RefreshTokenMapper = null;
+        this.oauth2AccessTokenRedisDAO = null;
+        this.oauth2CodeMapper = null;
+        this.oauth2ApproveMapper = null;
+        this.adminUserService = null;
+        this.adminAuthService = null;
+    }
+
+    @Autowired
+    public OAuth2ApplicationService(
+            OAuth2ClientMapper oauth2ClientMapper,
+            OAuth2AccessTokenMapper oauth2AccessTokenMapper,
+            OAuth2RefreshTokenMapper oauth2RefreshTokenMapper,
+            OAuth2AccessTokenRedisDAO oauth2AccessTokenRedisDAO,
+            OAuth2CodeMapper oauth2CodeMapper,
+            OAuth2ApproveMapper oauth2ApproveMapper,
+            AdminUserUseCase adminUserService,
+            AuthUseCase adminAuthService) {
+        this.oauth2ClientMapper = oauth2ClientMapper;
+        this.oauth2AccessTokenMapper = oauth2AccessTokenMapper;
+        this.oauth2RefreshTokenMapper = oauth2RefreshTokenMapper;
+        this.oauth2AccessTokenRedisDAO = oauth2AccessTokenRedisDAO;
+        this.oauth2CodeMapper = oauth2CodeMapper;
+        this.oauth2ApproveMapper = oauth2ApproveMapper;
+        this.adminUserService = adminUserService;
+        this.adminAuthService = adminAuthService;
+    }
+
+    public void setTokenRepo(OAuth2AccessTokenRepository tokenRepo) {
+        this.tokenRepo = tokenRepo;
+    }
 
     public Long createOAuth2Client(@Valid OAuth2ClientSaveReqVO createReqVO) {
         validateClientIdExists(null, createReqVO.getClientId());

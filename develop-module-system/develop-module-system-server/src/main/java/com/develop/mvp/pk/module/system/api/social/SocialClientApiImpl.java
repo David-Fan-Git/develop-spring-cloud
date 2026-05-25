@@ -8,7 +8,7 @@ import com.develop.mvp.pk.framework.common.pojo.CommonResult;
 import com.develop.mvp.pk.framework.common.util.object.BeanUtils;
 import com.develop.mvp.pk.module.system.api.social.dto.*;
 import com.develop.mvp.pk.module.system.enums.social.SocialTypeEnum;
-import com.develop.mvp.pk.module.system.application.social.service.SocialApplicationService;
+import com.develop.mvp.pk.module.system.application.social.port.inbound.SocialUseCase;
 import lombok.extern.slf4j.Slf4j;
 import me.chanjar.weixin.common.bean.WxJsapiSignature;
 import me.chanjar.weixin.common.bean.subscribemsg.TemplateInfo;
@@ -34,42 +34,42 @@ import static com.develop.mvp.pk.framework.common.util.collection.CollectionUtil
 public class SocialClientApiImpl implements SocialClientApi {
 
     @Resource
-    private SocialApplicationService socialClientService;
+    private SocialUseCase socialClientUseCase;
     @Resource
-    private SocialApplicationService socialUserService;
+    private SocialUseCase socialUserUseCase;
 
     @Override
     public CommonResult<String> getAuthorizeUrl(Integer socialType, Integer userType, String redirectUri) {
-        return success(socialClientService.getAuthorizeUrl(socialType, userType, redirectUri));
+        return success(socialClientUseCase.getAuthorizeUrl(socialType, userType, redirectUri));
     }
 
     @Override
     public CommonResult<SocialWxJsapiSignatureRespDTO> createWxMpJsapiSignature(Integer userType, String url) {
-        WxJsapiSignature signature = socialClientService.createWxMpJsapiSignature(userType, url);
+        WxJsapiSignature signature = socialClientUseCase.createWxMpJsapiSignature(userType, url);
         return success(BeanUtils.toBean(signature, SocialWxJsapiSignatureRespDTO.class));
     }
 
     @Override
     public CommonResult<SocialWxPhoneNumberInfoRespDTO> getWxMaPhoneNumberInfo(Integer userType, String phoneCode) {
-        WxMaPhoneNumberInfo info = socialClientService.getWxMaPhoneNumberInfo(userType, phoneCode);
+        WxMaPhoneNumberInfo info = socialClientUseCase.getWxMaPhoneNumberInfo(userType, phoneCode);
         return success(BeanUtils.toBean(info, SocialWxPhoneNumberInfoRespDTO.class));
     }
 
     @Override
     public CommonResult<byte[]> getWxaQrcode(SocialWxQrcodeReqDTO reqVO) {
-        return success(socialClientService.getWxaQrcode(reqVO));
+        return success(socialClientUseCase.getWxaQrcode(reqVO));
     }
 
     @Override
     public CommonResult<List<SocialWxaSubscribeTemplateRespDTO>> getWxaSubscribeTemplateList(Integer userType) {
-        List<TemplateInfo> list = socialClientService.getSubscribeTemplateList(userType);
+        List<TemplateInfo> list = socialClientUseCase.getSubscribeTemplateList(userType);
         return success(convertList(list, item -> BeanUtils.toBean(item, SocialWxaSubscribeTemplateRespDTO.class).setId(item.getPriTmplId())));
     }
 
     @Override
     public CommonResult<Boolean> sendWxaSubscribeMessage(SocialWxaSubscribeMessageSendReqDTO reqDTO) {
         // 1.1 获得订阅模版列表
-        List<TemplateInfo> templateList = socialClientService.getSubscribeTemplateList(reqDTO.getUserType());
+        List<TemplateInfo> templateList = socialClientUseCase.getSubscribeTemplateList(reqDTO.getUserType());
         if (CollUtil.isEmpty(templateList)) {
             log.warn("[sendSubscribeMessage][reqDTO({}) 发送订阅消息失败，原因：没有找到订阅模板]", reqDTO);
             return success(false);
@@ -83,7 +83,7 @@ public class SocialClientApiImpl implements SocialClientApi {
         }
 
         // 2. 获得社交用户
-        SocialUserRespDTO socialUser = socialUserService.getSocialUserByUserId(reqDTO.getUserType(), reqDTO.getUserId(),
+        SocialUserRespDTO socialUser = socialUserUseCase.getSocialUserByUserId(reqDTO.getUserType(), reqDTO.getUserId(),
                 SocialTypeEnum.WECHAT_MINI_PROGRAM.getType());
         if (ObjUtil.isNull(socialUser) || StrUtil.isBlankIfStr(socialUser.getOpenid())) {
             log.warn("[sendWxaSubscribeMessage][reqDTO({}) 发送订阅消息失败，原因：会员 openid 缺失]", reqDTO);
@@ -91,19 +91,19 @@ public class SocialClientApiImpl implements SocialClientApi {
         }
 
         // 3. 发送订阅消息
-        socialClientService.sendSubscribeMessage(reqDTO, template.getPriTmplId(), socialUser.getOpenid());
+        socialClientUseCase.sendSubscribeMessage(reqDTO, template.getPriTmplId(), socialUser.getOpenid());
         return success(true);
     }
 
     @Override
     public CommonResult<Boolean> uploadWxaOrderShippingInfo(Integer userType, SocialWxaOrderUploadShippingInfoReqDTO reqDTO) {
-        socialClientService.uploadWxaOrderShippingInfo(userType, reqDTO);
+        socialClientUseCase.uploadWxaOrderShippingInfo(userType, reqDTO);
         return success(true);
     }
 
     @Override
     public CommonResult<Boolean> notifyWxaOrderConfirmReceive(Integer userType, SocialWxaOrderNotifyConfirmReceiveReqDTO reqDTO) {
-        socialClientService.notifyWxaOrderConfirmReceive(userType, reqDTO);
+        socialClientUseCase.notifyWxaOrderConfirmReceive(userType, reqDTO);
         return success(true);
     }
 

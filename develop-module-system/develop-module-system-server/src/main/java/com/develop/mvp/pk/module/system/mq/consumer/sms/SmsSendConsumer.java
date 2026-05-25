@@ -1,6 +1,6 @@
 package com.develop.mvp.pk.module.system.mq.consumer.sms;
 
-import com.develop.mvp.pk.module.system.application.sms.service.SmsApplicationService;
+import com.develop.mvp.pk.module.system.application.sms.port.inbound.SmsUseCase;
 import com.develop.mvp.pk.module.system.mq.message.sms.SmsSendMessage;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.event.EventListener;
@@ -19,7 +19,7 @@ import jakarta.annotation.Resource;
 public class SmsSendConsumer {
 
     @Resource
-    private SmsApplicationService smsSendService;
+    private SmsUseCase smsSendService;
 
     @EventListener
     @Async // Spring Event 默认在 Producer 发送的线程，通过 @Async 实现异步

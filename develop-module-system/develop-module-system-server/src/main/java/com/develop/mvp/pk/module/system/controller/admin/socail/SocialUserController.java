@@ -10,7 +10,7 @@ import com.develop.mvp.pk.module.system.controller.admin.socail.vo.user.SocialUs
 import com.develop.mvp.pk.module.system.controller.admin.socail.vo.user.SocialUserRespVO;
 import com.develop.mvp.pk.module.system.controller.admin.socail.vo.user.SocialUserUnbindReqVO;
 import com.develop.mvp.pk.module.system.dal.dataobject.social.SocialUserDO;
-import com.develop.mvp.pk.module.system.application.social.service.SocialApplicationService;
+import com.develop.mvp.pk.module.system.application.social.port.inbound.SocialUseCase;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -33,12 +33,12 @@ import static com.develop.mvp.pk.framework.security.core.util.SecurityFrameworkU
 public class SocialUserController {
 
     @Resource
-    private SocialApplicationService socialUserService;
+    private SocialUseCase socialUseCase;
 
     @PostMapping("/bind")
     @Operation(summary = "社交绑定，使用 code 授权码")
     public CommonResult<Boolean> socialBind(@RequestBody @Valid SocialUserBindReqVO reqVO) {
-        socialUserService.bindSocialUser(new SocialUserBindReqDTO().setSocialType(reqVO.getType())
+        socialUseCase.bindSocialUser(new SocialUserBindReqDTO().setSocialType(reqVO.getType())
                         .setCode(reqVO.getCode()).setState(reqVO.getState())
                         .setUserId(getLoginUserId()).setUserType(UserTypeEnum.ADMIN.getValue()));
         return CommonResult.success(true);
@@ -47,14 +47,14 @@ public class SocialUserController {
     @DeleteMapping("/unbind")
     @Operation(summary = "取消社交绑定")
     public CommonResult<Boolean> socialUnbind(@RequestBody SocialUserUnbindReqVO reqVO) {
-        socialUserService.unbindSocialUser(getLoginUserId(), UserTypeEnum.ADMIN.getValue(), reqVO.getType(), reqVO.getOpenid());
+        socialUseCase.unbindSocialUser(getLoginUserId(), UserTypeEnum.ADMIN.getValue(), reqVO.getType(), reqVO.getOpenid());
         return CommonResult.success(true);
     }
 
     @GetMapping("/get-bind-list")
     @Operation(summary = "获得绑定社交用户列表")
     public CommonResult<List<SocialUserRespVO>> getBindSocialUserList() {
-        List<SocialUserDO> list = socialUserService.getSocialUserList(getLoginUserId(), UserTypeEnum.ADMIN.getValue());
+        List<SocialUserDO> list = socialUseCase.getSocialUserList(getLoginUserId(), UserTypeEnum.ADMIN.getValue());
         return success(convertList(list, socialUser -> new SocialUserRespVO() // 返回精简信息
                 .setId(socialUser.getId()).setType(socialUser.getType()).setOpenid(socialUser.getOpenid())
                 .setNickname(socialUser.getNickname()).setAvatar(socialUser.getNickname())));
@@ -67,7 +67,7 @@ public class SocialUserController {
     @Parameter(name = "id", description = "编号", required = true, example = "1024")
     @PreAuthorize("@ss.hasPermission('system:social-user:query')")
     public CommonResult<SocialUserRespVO> getSocialUser(@RequestParam("id") Long id) {
-        SocialUserDO socialUser = socialUserService.getSocialUser(id);
+        SocialUserDO socialUser = socialUseCase.getSocialUser(id);
         return success(BeanUtils.toBean(socialUser, SocialUserRespVO.class));
     }
 
@@ -75,7 +75,7 @@ public class SocialUserController {
     @Operation(summary = "获得社交用户分页")
     @PreAuthorize("@ss.hasPermission('system:social-user:query')")
     public CommonResult<PageResult<SocialUserRespVO>> getSocialUserPage(@Valid SocialUserPageReqVO pageVO) {
-        PageResult<SocialUserDO> pageResult = socialUserService.getSocialUserPage(pageVO);
+        PageResult<SocialUserDO> pageResult = socialUseCase.getSocialUserPage(pageVO);
         return success(BeanUtils.toBean(pageResult, SocialUserRespVO.class));
     }
 

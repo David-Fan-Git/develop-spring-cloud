@@ -1,12 +1,10 @@
 package com.develop.mvp.pk.module.system.controller.app.tenant;
 
-import com.develop.mvp.pk.framework.common.enums.CommonStatusEnum;
 import com.develop.mvp.pk.framework.common.pojo.CommonResult;
-import com.develop.mvp.pk.framework.common.util.object.BeanUtils;
 import com.develop.mvp.pk.framework.tenant.core.aop.TenantIgnore;
+import com.develop.mvp.pk.module.system.application.tenant.port.inbound.TenantUseCase;
 import com.develop.mvp.pk.module.system.controller.app.tenant.vo.AppTenantRespVO;
-import com.develop.mvp.pk.module.system.dal.dataobject.tenant.TenantDO;
-import com.develop.mvp.pk.module.system.application.tenant.service.TenantApplicationService;
+import com.develop.mvp.pk.module.system.domain.tenant.Tenant;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -28,7 +26,7 @@ import static com.develop.mvp.pk.framework.common.pojo.CommonResult.success;
 public class AppTenantController {
 
     @Resource
-    private TenantApplicationService tenantService;
+    private TenantUseCase tenantUseCase;
 
     @GetMapping("/get-by-website")
     @PermitAll
@@ -37,11 +35,11 @@ public class AppTenantController {
     @Parameter(name = "website", description = "域名", required = true, example = "www.iocoder.cn")
     public CommonResult<AppTenantRespVO> getTenantByWebsite(
             @RequestParam("website") @Pattern(regexp = "^[a-zA-Z0-9.-]+(:\\d{1,5})?$", message = "网站域名格式不正确") String website) {
-        TenantDO tenant = tenantService.getTenantDoByWebsite(website);
-        if (tenant == null || CommonStatusEnum.isDisable(tenant.getStatus())) {
+        Tenant tenant = tenantUseCase.getTenantByWebsite(website);
+        if (tenant == null || tenant.isDisabled()) {
             return success(null);
         }
-        return success(BeanUtils.toBean(tenant, AppTenantRespVO.class));
+        return success(new AppTenantRespVO().setId(tenant.id().value()).setName(tenant.name().value()));
     }
 
 }

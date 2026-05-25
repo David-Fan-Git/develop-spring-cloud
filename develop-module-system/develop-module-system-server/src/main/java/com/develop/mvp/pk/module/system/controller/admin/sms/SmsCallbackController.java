@@ -3,7 +3,7 @@ package com.develop.mvp.pk.module.system.controller.admin.sms;
 import com.develop.mvp.pk.framework.common.pojo.CommonResult;
 import com.develop.mvp.pk.framework.common.util.servlet.ServletUtils;
 import com.develop.mvp.pk.framework.tenant.core.aop.TenantIgnore;
-import com.develop.mvp.pk.module.system.application.sms.service.SmsApplicationService;
+import com.develop.mvp.pk.module.system.application.sms.port.inbound.SmsUseCase;
 import com.develop.mvp.pk.module.system.framework.sms.core.enums.SmsChannelEnum;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -21,7 +21,7 @@ import static com.develop.mvp.pk.framework.common.pojo.CommonResult.success;
 public class SmsCallbackController {
 
     @Resource
-    private SmsApplicationService smsSendService;
+    private SmsUseCase smsSendService;
 
     @PostMapping("/aliyun")
     @PermitAll

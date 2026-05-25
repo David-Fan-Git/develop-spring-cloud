@@ -1,13 +1,13 @@
 package com.develop.mvp.pk.module.system.controller.admin.user;
 
-import com.develop.mvp.pk.module.system.application.dept.service.DeptApplicationService;
+import com.develop.mvp.pk.module.system.application.dept.port.inbound.DeptUseCase;
 // Skill: AggregateRoot_User_Validation_Skill — 接口层 UserProfileController
 // DDD 角色：接口层，调用 UserApplicationService
 
 import cn.hutool.core.collection.CollUtil;
 import com.develop.mvp.pk.framework.common.pojo.CommonResult;
 import com.develop.mvp.pk.framework.datapermission.core.annotation.DataPermission;
-import com.develop.mvp.pk.module.system.application.user.service.UserApplicationService;
+import com.develop.mvp.pk.module.system.application.user.port.inbound.UserUseCase;
 import com.develop.mvp.pk.module.system.controller.admin.user.vo.profile.UserProfileRespVO;
 import com.develop.mvp.pk.module.system.controller.admin.user.vo.profile.UserProfileUpdatePasswordReqVO;
 import com.develop.mvp.pk.module.system.controller.admin.user.vo.profile.UserProfileUpdateReqVO;
@@ -16,8 +16,8 @@ import com.develop.mvp.pk.module.system.dal.dataobject.dept.DeptDO;
 import com.develop.mvp.pk.module.system.dal.dataobject.dept.PostDO;
 import com.develop.mvp.pk.module.system.dal.dataobject.permission.RoleDO;
 import com.develop.mvp.pk.module.system.domain.user.User;
-import com.develop.mvp.pk.module.system.application.permission.service.PermissionApplicationService;
-import com.develop.mvp.pk.module.system.application.permission.service.RoleApplicationService;
+import com.develop.mvp.pk.module.system.application.permission.port.inbound.PermissionUseCase;
+import com.develop.mvp.pk.module.system.application.permission.port.inbound.RoleUseCase;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.annotation.Resource;
@@ -39,15 +39,15 @@ import static com.develop.mvp.pk.framework.security.core.util.SecurityFrameworkU
 public class UserProfileController {
 
     @Resource
-    private UserApplicationService userApplicationService;
+    private UserUseCase userApplicationService;
     @Resource
-    private DeptApplicationService deptService;
+    private DeptUseCase deptUseCase;
     @Resource
-    private DeptApplicationService postService;
+    private DeptUseCase postUseCase;
     @Resource
-    private PermissionApplicationService permissionService;
+    private PermissionUseCase permissionService;
     @Resource
-    private RoleApplicationService roleService;
+    private RoleUseCase roleService;
 
     @GetMapping("/get")
     @Operation(summary = "获得登录用户信息")
@@ -56,9 +56,9 @@ public class UserProfileController {
         User user = userApplicationService.getUser(getLoginUserId());
         List<RoleDO> userRoles = roleService.getRoleListFromCache(
                 permissionService.getUserRoleIdListByUserId(user.id().value()));
-        DeptDO dept = user.deptId() != null ? deptService.getDept(user.deptId()) : null;
+        DeptDO dept = user.deptId() != null ? deptUseCase.getDept(user.deptId()) : null;
         List<PostDO> posts = CollUtil.isNotEmpty(user.postIds())
-                ? postService.getPostList(user.postIds()) : null;
+                ? postUseCase.getPostList(user.postIds()) : null;
         return success(UserConvert.INSTANCE.convertUser(user, userRoles, dept, posts));
     }
 

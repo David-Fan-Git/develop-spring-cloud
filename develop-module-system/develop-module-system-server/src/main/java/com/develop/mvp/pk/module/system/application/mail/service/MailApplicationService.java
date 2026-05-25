@@ -12,7 +12,7 @@ import com.develop.mvp.pk.framework.common.pojo.PageResult;
 import com.develop.mvp.pk.framework.common.util.object.BeanUtils;
 import com.develop.mvp.pk.module.system.application.mail.port.inbound.MailUseCase;
 import com.develop.mvp.pk.module.system.application.member.service.MemberApplicationService;
-import com.develop.mvp.pk.module.system.application.user.service.AdminUserApplicationService;
+import com.develop.mvp.pk.module.system.application.user.port.inbound.AdminUserUseCase;
 import com.develop.mvp.pk.module.system.controller.admin.mail.vo.account.MailAccountPageReqVO;
 import com.develop.mvp.pk.module.system.controller.admin.mail.vo.account.MailAccountSaveReqVO;
 import com.develop.mvp.pk.module.system.controller.admin.mail.vo.log.MailLogPageReqVO;
@@ -36,12 +36,9 @@ import com.develop.mvp.pk.module.system.mq.producer.mail.MailProducer;
 import com.google.common.annotations.VisibleForTesting;
 import jakarta.annotation.Resource;
 import org.dromara.hutool.extra.mail.MailUtil;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.cache.annotation.Cacheable;
-import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import org.springframework.validation.annotation.Validated;
 
 import java.io.File;
 import java.time.LocalDateTime;
@@ -53,29 +50,41 @@ import static cn.hutool.core.exceptions.ExceptionUtil.getRootCauseMessage;
 import static com.develop.mvp.pk.framework.common.exception.util.ServiceExceptionUtil.exception;
 import static com.develop.mvp.pk.module.system.enums.ErrorCodeConstants.*;
 
-@Service
-@Validated
 public class MailApplicationService implements MailUseCase {
 
     private static final Pattern PATTERN_PARAMS = Pattern.compile("\\{(.*?)}");
 
-    @Autowired(required = false)
     private MailAccountRepository accountRepo;
-    @Autowired(required = false)
     private MailTemplateRepository templateRepo;
 
-    @Resource
-    private MailAccountMapper mailAccountMapper;
-    @Resource
-    private MailTemplateMapper mailTemplateMapper;
-    @Resource
-    private MailLogMapper mailLogMapper;
-    @Resource
-    private AdminUserApplicationService adminUserService;
-    @Resource
-    private MemberApplicationService memberApplicationService;
-    @Resource
-    private MailProducer mailProducer;
+    private final MailAccountMapper mailAccountMapper;
+    private final MailTemplateMapper mailTemplateMapper;
+    private final MailLogMapper mailLogMapper;
+    private final AdminUserUseCase adminUserService;
+    private final MemberApplicationService memberApplicationService;
+    private final MailProducer mailProducer;
+
+    public MailApplicationService(MailAccountMapper mailAccountMapper,
+                                   MailTemplateMapper mailTemplateMapper,
+                                   MailLogMapper mailLogMapper,
+                                   AdminUserUseCase adminUserService,
+                                   MemberApplicationService memberApplicationService,
+                                   MailProducer mailProducer) {
+        this.mailAccountMapper = mailAccountMapper;
+        this.mailTemplateMapper = mailTemplateMapper;
+        this.mailLogMapper = mailLogMapper;
+        this.adminUserService = adminUserService;
+        this.memberApplicationService = memberApplicationService;
+        this.mailProducer = mailProducer;
+    }
+
+    public void setAccountRepo(MailAccountRepository accountRepo) {
+        this.accountRepo = accountRepo;
+    }
+
+    public void setTemplateRepo(MailTemplateRepository templateRepo) {
+        this.templateRepo = templateRepo;
+    }
 
     public Long createMailAccount(MailAccountSaveReqVO createReqVO) {
         MailAccountDO account = BeanUtils.toBean(createReqVO, MailAccountDO.class);

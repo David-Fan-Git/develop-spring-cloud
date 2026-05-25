@@ -8,7 +8,7 @@ import com.develop.mvp.pk.framework.common.util.object.BeanUtils;
 import com.develop.mvp.pk.framework.excel.core.util.ExcelUtils;
 import com.develop.mvp.pk.module.system.controller.admin.sms.vo.log.SmsLogPageReqVO;
 import com.develop.mvp.pk.module.system.controller.admin.sms.vo.log.SmsLogRespVO;
-import com.develop.mvp.pk.module.system.application.sms.service.SmsApplicationService;
+import com.develop.mvp.pk.module.system.application.sms.port.inbound.SmsUseCase;
 import com.develop.mvp.pk.module.system.dal.dataobject.sms.SmsLogDO;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
@@ -36,7 +36,7 @@ import static com.develop.mvp.pk.framework.common.pojo.CommonResult.success;
 public class SmsLogController {
 
     @Resource
-    private SmsApplicationService smsLogService;
+    private SmsUseCase smsLogService;
 
     @GetMapping("/page")
     @Operation(summary = "获得短信日志分页")

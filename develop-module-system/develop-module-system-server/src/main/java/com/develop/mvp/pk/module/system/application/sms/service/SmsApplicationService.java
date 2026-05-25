@@ -18,7 +18,7 @@ import com.develop.mvp.pk.module.system.api.sms.dto.code.SmsCodeUseReqDTO;
 import com.develop.mvp.pk.module.system.api.sms.dto.code.SmsCodeValidateReqDTO;
 import com.develop.mvp.pk.module.system.application.member.service.MemberApplicationService;
 import com.develop.mvp.pk.module.system.application.sms.port.inbound.SmsUseCase;
-import com.develop.mvp.pk.module.system.application.user.service.AdminUserApplicationService;
+import com.develop.mvp.pk.module.system.application.user.port.inbound.AdminUserUseCase;
 import com.develop.mvp.pk.module.system.controller.admin.sms.vo.channel.SmsChannelPageReqVO;
 import com.develop.mvp.pk.module.system.controller.admin.sms.vo.channel.SmsChannelSaveReqVO;
 import com.develop.mvp.pk.module.system.controller.admin.sms.vo.log.SmsLogPageReqVO;
@@ -50,14 +50,10 @@ import com.develop.mvp.pk.module.system.framework.sms.core.property.SmsChannelPr
 import com.develop.mvp.pk.module.system.mq.message.sms.SmsSendMessage;
 import com.develop.mvp.pk.module.system.mq.producer.sms.SmsProducer;
 import com.google.common.annotations.VisibleForTesting;
-import jakarta.annotation.Resource;
-import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.cache.annotation.Cacheable;
-import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import org.springframework.validation.annotation.Validated;
 
 import java.time.LocalDateTime;
 import java.util.List;
@@ -71,34 +67,43 @@ import static com.develop.mvp.pk.framework.common.exception.util.ServiceExceptio
 import static com.develop.mvp.pk.framework.common.util.date.DateUtils.isToday;
 import static com.develop.mvp.pk.module.system.enums.ErrorCodeConstants.*;
 
-@Service
-@Validated
-@RequiredArgsConstructor
 @Slf4j
 public class SmsApplicationService implements SmsUseCase {
 
     private static final Pattern PATTERN_PARAMS = Pattern.compile("\\{(.*?)}");
 
     private final SmsChannelRepository channelRepo;
+    private final SmsClientFactory smsClientFactory;
+    private final SmsChannelMapper smsChannelMapper;
+    private final SmsTemplateMapper smsTemplateMapper;
+    private final SmsLogMapper smsLogMapper;
+    private final SmsCodeMapper smsCodeMapper;
+    private final SmsCodeProperties smsCodeProperties;
+    private final AdminUserUseCase adminUserService;
+    private final MemberApplicationService memberApplicationService;
+    private final SmsProducer smsProducer;
 
-    @Resource
-    private SmsClientFactory smsClientFactory;
-    @Resource
-    private SmsChannelMapper smsChannelMapper;
-    @Resource
-    private SmsTemplateMapper smsTemplateMapper;
-    @Resource
-    private SmsLogMapper smsLogMapper;
-    @Resource
-    private SmsCodeMapper smsCodeMapper;
-    @Resource
-    private SmsCodeProperties smsCodeProperties;
-    @Resource
-    private AdminUserApplicationService adminUserService;
-    @Resource
-    private MemberApplicationService memberApplicationService;
-    @Resource
-    private SmsProducer smsProducer;
+    public SmsApplicationService(SmsChannelRepository channelRepo,
+                                  SmsClientFactory smsClientFactory,
+                                  SmsChannelMapper smsChannelMapper,
+                                  SmsTemplateMapper smsTemplateMapper,
+                                  SmsLogMapper smsLogMapper,
+                                  SmsCodeMapper smsCodeMapper,
+                                  SmsCodeProperties smsCodeProperties,
+                                  AdminUserUseCase adminUserService,
+                                  MemberApplicationService memberApplicationService,
+                                  SmsProducer smsProducer) {
+        this.channelRepo = channelRepo;
+        this.smsClientFactory = smsClientFactory;
+        this.smsChannelMapper = smsChannelMapper;
+        this.smsTemplateMapper = smsTemplateMapper;
+        this.smsLogMapper = smsLogMapper;
+        this.smsCodeMapper = smsCodeMapper;
+        this.smsCodeProperties = smsCodeProperties;
+        this.adminUserService = adminUserService;
+        this.memberApplicationService = memberApplicationService;
+        this.smsProducer = smsProducer;
+    }
 
     @Transactional
     public Long createChannel(String code, String signature, Integer status, String apiKey, String apiSecret, String callbackUrl, String remark) {

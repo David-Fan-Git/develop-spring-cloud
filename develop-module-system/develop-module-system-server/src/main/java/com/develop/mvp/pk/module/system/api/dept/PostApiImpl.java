@@ -1,6 +1,6 @@
 package com.develop.mvp.pk.module.system.api.dept;
 
-import com.develop.mvp.pk.module.system.application.dept.service.DeptApplicationService;
+import com.develop.mvp.pk.module.system.application.dept.port.inbound.DeptUseCase;
 import com.develop.mvp.pk.framework.common.pojo.CommonResult;
 import com.develop.mvp.pk.framework.common.util.object.BeanUtils;
 import com.develop.mvp.pk.module.system.api.dept.dto.PostRespDTO;
@@ -19,17 +19,17 @@ import static com.develop.mvp.pk.framework.common.pojo.CommonResult.success;
 public class PostApiImpl implements PostApi {
 
     @Resource
-    private DeptApplicationService postService;
+    private DeptUseCase postUseCase;
 
     @Override
     public CommonResult<Boolean> validPostList(Collection<Long> ids) {
-        postService.validatePostList(ids);
+        postUseCase.validatePostList(ids);
         return success(true);
     }
 
     @Override
     public CommonResult<List<PostRespDTO>> getPostList(Collection<Long> ids) {
-        List<PostDO> list = postService.getPostList(ids);
+        List<PostDO> list = postUseCase.getPostList(ids);
         return success(BeanUtils.toBean(list, PostRespDTO.class));
     }
 

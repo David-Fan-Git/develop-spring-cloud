@@ -9,7 +9,7 @@ import com.develop.mvp.pk.framework.excel.core.util.ExcelUtils;
 import com.develop.mvp.pk.framework.translate.core.TranslateUtils;
 import com.develop.mvp.pk.module.system.controller.admin.logger.vo.operatelog.OperateLogPageReqVO;
 import com.develop.mvp.pk.module.system.controller.admin.logger.vo.operatelog.OperateLogRespVO;
-import com.develop.mvp.pk.module.system.application.logger.service.LoggerApplicationService;
+import com.develop.mvp.pk.module.system.application.logger.port.inbound.LoggerUseCase;
 import com.develop.mvp.pk.module.system.dal.dataobject.logger.OperateLogDO;
 import com.fhs.core.trans.anno.TransMethodResult;
 import io.swagger.v3.oas.annotations.Operation;
@@ -38,14 +38,14 @@ import static com.develop.mvp.pk.framework.common.pojo.CommonResult.success;
 public class OperateLogController {
 
     @Resource
-    private LoggerApplicationService loggerApplicationService;
+    private LoggerUseCase loggerUseCase;
 
     @GetMapping("/get")
     @Operation(summary = "查看操作日志")
     @Parameter(name = "id", description = "编号", required = true, example = "1024")
     @PreAuthorize("@ss.hasPermission('system:operate-log:query')")
     public CommonResult<OperateLogRespVO> getOperateLog(@RequestParam("id") Long id) {
-        OperateLogDO operateLog = loggerApplicationService.getOperateLog(id);
+        OperateLogDO operateLog = loggerUseCase.getOperateLog(id);
         return success(BeanUtils.toBean(operateLog, OperateLogRespVO.class));
     }
 
@@ -54,7 +54,7 @@ public class OperateLogController {
     @PreAuthorize("@ss.hasPermission('system:operate-log:query')")
     @TransMethodResult
     public CommonResult<PageResult<OperateLogRespVO>> pageOperateLog(@Valid OperateLogPageReqVO pageReqVO) {
-        PageResult<OperateLogDO> pageResult = loggerApplicationService.getOperateLogPage(pageReqVO);
+        PageResult<OperateLogDO> pageResult = loggerUseCase.getOperateLogPage(pageReqVO);
         return success(BeanUtils.toBean(pageResult, OperateLogRespVO.class));
     }
 
@@ -65,7 +65,7 @@ public class OperateLogController {
     @ApiAccessLog(operateType = EXPORT)
     public void exportOperateLog(HttpServletResponse response, @Valid OperateLogPageReqVO exportReqVO) throws IOException {
         exportReqVO.setPageSize(PageParam.PAGE_SIZE_NONE);
-        List<OperateLogDO> list = loggerApplicationService.getOperateLogPage(exportReqVO).getList();
+        List<OperateLogDO> list = loggerUseCase.getOperateLogPage(exportReqVO).getList();
         ExcelUtils.write(response, "操作日志.xls", "数据列表", OperateLogRespVO.class,
                 TranslateUtils.translate(BeanUtils.toBean(list, OperateLogRespVO.class)));
     }

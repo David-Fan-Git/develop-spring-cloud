@@ -1,6 +1,8 @@
 package com.develop.mvp.pk.module.system.application.user.service;
 
-import com.develop.mvp.pk.module.system.application.dept.service.DeptApplicationService;
+import com.develop.mvp.pk.module.system.application.dept.port.inbound.DeptUseCase;
+import com.develop.mvp.pk.module.system.application.user.port.inbound.AdminUserUseCase;
+import com.develop.mvp.pk.module.system.application.user.port.inbound.UserUseCase;
 import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.collection.CollectionUtil;
 import cn.hutool.core.util.ObjUtil;
@@ -25,23 +27,20 @@ import com.develop.mvp.pk.module.system.dal.dataobject.dept.DeptDO;
 import com.develop.mvp.pk.module.system.dal.dataobject.dept.UserPostDO;
 import com.develop.mvp.pk.module.system.dal.dataobject.user.AdminUserDO;
 import com.develop.mvp.pk.module.system.dal.mysql.dept.UserPostMapper;
-import com.develop.mvp.pk.module.system.application.oauth2.service.OAuth2ApplicationService;
-import com.develop.mvp.pk.module.system.application.tenant.service.TenantApplicationService;
+import com.develop.mvp.pk.module.system.application.oauth2.port.inbound.OAuth2UseCase;
+import com.develop.mvp.pk.module.system.application.tenant.port.inbound.TenantUseCase;
 import com.develop.mvp.pk.module.system.dal.mysql.user.AdminUserMapper;
-import com.develop.mvp.pk.module.system.application.permission.service.PermissionApplicationService;
+import com.develop.mvp.pk.module.system.application.permission.port.inbound.PermissionUseCase;
 import com.google.common.annotations.VisibleForTesting;
 import com.mzt.logapi.context.LogRecordContext;
 import com.mzt.logapi.service.impl.DiffParseFunction;
 import com.mzt.logapi.starter.annotation.LogRecord;
-import jakarta.annotation.Resource;
 import jakarta.validation.ConstraintViolationException;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.security.crypto.password.PasswordEncoder;
-import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.time.LocalDateTime;
 import java.util.*;
 import java.util.concurrent.atomic.AtomicInteger;
 
@@ -55,39 +54,44 @@ import static com.develop.mvp.pk.module.system.enums.LogRecordConstants.*;
  *
  * @author David
  */
-@Service
 @Slf4j
-public class AdminUserApplicationService {
+public class AdminUserApplicationService implements AdminUserUseCase {
 
     public static final String USER_INIT_PASSWORD_KEY = "system.user.init-password";
-
     public static final String USER_REGISTER_ENABLED_KEY = "system.user.register-enabled";
 
-    @Resource
-    private AdminUserMapper userMapper;
-    @Resource
-    private UserApplicationService userApplicationService;
+    private final AdminUserMapper userMapper;
+    private final UserUseCase userApplicationService;
+    private final DeptUseCase deptUseCase;
+    private final DeptUseCase postUseCase;
+    private final PermissionUseCase permissionService;
+    private final PasswordEncoder passwordEncoder;
+    private final TenantUseCase tenantService;
+    private final OAuth2UseCase oauth2TokenService;
+    private final UserPostMapper userPostMapper;
+    private final ConfigApi configApi;
 
-    @Resource
-    private DeptApplicationService deptService;
-    @Resource
-    private DeptApplicationService postService;
-    @Resource
-    private PermissionApplicationService permissionService;
-    @Resource
-    private PasswordEncoder passwordEncoder;
-    @Resource
-    @Lazy // 延迟，避免循环依赖报错
-    private TenantApplicationService tenantService;
-    @Resource
-    @Lazy // 懒加载，避免循环依赖
-    private OAuth2ApplicationService oauth2TokenService;
-
-    @Resource
-    private UserPostMapper userPostMapper;
-
-    @Resource
-    private ConfigApi configApi;
+    public AdminUserApplicationService(AdminUserMapper userMapper,
+                                       UserUseCase userApplicationService,
+                                       DeptUseCase deptUseCase,
+                                       DeptUseCase postUseCase,
+                                       PermissionUseCase permissionService,
+                                       PasswordEncoder passwordEncoder,
+                                       @Lazy TenantUseCase tenantService,
+                                       @Lazy OAuth2UseCase oauth2TokenService,
+                                       UserPostMapper userPostMapper,
+                                       ConfigApi configApi) {
+        this.userMapper = userMapper;
+        this.userApplicationService = userApplicationService;
+        this.deptUseCase = deptUseCase;
+        this.postUseCase = postUseCase;
+        this.permissionService = permissionService;
+        this.passwordEncoder = passwordEncoder;
+        this.tenantService = tenantService;
+        this.oauth2TokenService = oauth2TokenService;
+        this.userPostMapper = userPostMapper;
+        this.configApi = configApi;
+    }
 
     @Transactional(rollbackFor = Exception.class)
     @LogRecord(type = SYSTEM_USER_TYPE, subType = SYSTEM_USER_CREATE_SUB_TYPE, bizNo = "{{#user.id}}",
@@ -329,7 +333,7 @@ public class AdminUserApplicationService {
         if (deptId == null) {
             return Collections.emptySet();
         }
-        Set<Long> deptIds = convertSet(deptService.getChildDeptList(deptId), DeptDO::getId);
+        Set<Long> deptIds = convertSet(deptUseCase.getChildDeptList(deptId), DeptDO::getId);
         deptIds.add(deptId); // 包括自身
         return deptIds;
     }
@@ -347,9 +351,9 @@ public class AdminUserApplicationService {
             // 校验邮箱唯一
             validateEmailUnique(id, email);
             // 校验部门处于开启状态
-            deptService.validateDeptList(CollectionUtils.singleton(deptId));
+            deptUseCase.validateDeptList(CollectionUtils.singleton(deptId));
             // 校验岗位处于开启状态
-            postService.validatePostList(postIds);
+            postUseCase.validatePostList(postIds);
             return user;
         });
     }

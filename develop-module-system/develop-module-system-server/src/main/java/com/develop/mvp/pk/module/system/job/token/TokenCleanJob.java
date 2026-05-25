@@ -1,7 +1,7 @@
 package com.develop.mvp.pk.module.system.job.token;
 
 import com.develop.mvp.pk.framework.tenant.core.aop.TenantIgnore;
-import com.develop.mvp.pk.module.system.application.oauth2.service.OAuth2ApplicationService;
+import com.develop.mvp.pk.module.system.application.oauth2.port.inbound.OAuth2UseCase;
 import com.xxl.job.core.context.XxlJobHelper;
 import com.xxl.job.core.handler.annotation.XxlJob;
 import jakarta.annotation.Resource;
@@ -18,7 +18,7 @@ import org.springframework.stereotype.Component;
 public class TokenCleanJob {
 
     @Resource
-    private OAuth2ApplicationService oauth2TokenService;
+    private OAuth2UseCase oauth2TokenService;
 
     /**
      * 清理过期（14）天的令牌

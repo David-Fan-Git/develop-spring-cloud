@@ -6,7 +6,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 David develop-cloud (Smart Cloud) — a Spring Cloud Alibaba microservices rapid-development platform. This is the **complete version** with all business modules. Derived from RuoYi-Vue-Pro.
 
-**Tech stack:** Java 17, Spring Boot 3.5.x (root `pom.xml` currently sets 3.5.9 for compiler/plugin use; `develop-dependencies/pom.xml` manages application dependencies at 3.5.14), Spring Cloud 2025.0.1, Spring Cloud Alibaba 2025.0.0.0, Maven, MyBatis Plus, Redis/Redisson, Lombok + MapStruct.
+**Tech stack:** Java 17, Spring Boot 3.5.x, Spring Cloud 2025.0.1, Spring Cloud Alibaba, Maven, MyBatis Plus, Redis/Redisson, Lombok + MapStruct. Exact dependency versions are centralized in `develop-dependencies/pom.xml`.
 
 Dependency versions are centralized in `develop-dependencies/pom.xml`; the root `pom.xml` controls the Maven reactor and compiler/plugin configuration. Prefer POM files over README badges/version prose when versions differ. There is no Maven wrapper in this checkout, so use a local `mvn` with Java 17.
 
@@ -145,6 +145,9 @@ Key starters and their responsibilities:
 | `develop-spring-boot-starter-biz-tenant` | Multi-tenant (SaaS) support |
 | `develop-spring-boot-starter-biz-data-permission` | Row-level data permission filtering |
 | `develop-spring-boot-starter-excel` | Excel import/export |
+| `develop-spring-boot-starter-protection` | Sentinel rate limiting and circuit breaking |
+| `develop-spring-boot-starter-monitor` | SkyWalking tracing and metrics |
+| `develop-spring-boot-starter-websocket` | WebSocket support |
 | `develop-spring-boot-starter-test` | Test base classes (extend for unit/integration tests) |
 
 ## API and Integration Patterns

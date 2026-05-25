@@ -2,7 +2,7 @@ package com.develop.mvp.pk.module.system.api.notify;
 
 import com.develop.mvp.pk.framework.common.pojo.CommonResult;
 import com.develop.mvp.pk.module.system.api.notify.dto.NotifySendSingleToUserReqDTO;
-import com.develop.mvp.pk.module.system.application.notify.service.NotifyApplicationService;
+import com.develop.mvp.pk.module.system.application.notify.port.inbound.NotifyUseCase;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.RestController;
 
@@ -15,7 +15,7 @@ import static com.develop.mvp.pk.framework.common.pojo.CommonResult.success;
 public class NotifyMessageSendApiImpl implements NotifyMessageSendApi {
 
     @Resource
-    private NotifyApplicationService notifySendService;
+    private NotifyUseCase notifySendService;
 
     @Override
     public CommonResult<Long> sendSingleMessageToAdmin(NotifySendSingleToUserReqDTO reqDTO) {

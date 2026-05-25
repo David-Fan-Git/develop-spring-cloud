@@ -3,9 +3,7 @@ package com.develop.mvp.pk.module.system.application.member.service;
 import cn.hutool.core.util.ReflectUtil;
 import com.develop.mvp.pk.module.system.application.member.port.inbound.MemberUseCase;
 import com.develop.mvp.pk.module.system.application.member.port.outbound.MemberUserGateway;
-import org.springframework.stereotype.Service;
 
-@Service
 public class MemberApplicationService implements MemberUseCase {
 
     private final MemberUserGateway memberUserGateway;

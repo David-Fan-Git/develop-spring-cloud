@@ -9,7 +9,7 @@ import com.develop.mvp.pk.module.system.controller.admin.tenant.vo.packages.Tena
 import com.develop.mvp.pk.module.system.controller.admin.tenant.vo.packages.TenantPackageSaveReqVO;
 import com.develop.mvp.pk.module.system.controller.admin.tenant.vo.packages.TenantPackageSimpleRespVO;
 import com.develop.mvp.pk.module.system.dal.dataobject.tenant.TenantPackageDO;
-import com.develop.mvp.pk.module.system.application.tenant.service.TenantPackageApplicationService;
+import com.develop.mvp.pk.module.system.application.tenant.port.inbound.TenantPackageUseCase;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -30,7 +30,7 @@ import static com.develop.mvp.pk.framework.common.pojo.CommonResult.success;
 public class TenantPackageController {
 
     @Resource
-    private TenantPackageApplicationService tenantPackageService;
+    private TenantPackageUseCase tenantPackageService;
 
     @PostMapping("/create")
     @Operation(summary = "创建租户套餐")

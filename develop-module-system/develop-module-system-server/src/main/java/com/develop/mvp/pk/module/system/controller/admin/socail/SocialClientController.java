@@ -9,7 +9,7 @@ import com.develop.mvp.pk.module.system.controller.admin.socail.vo.client.Social
 import com.develop.mvp.pk.module.system.controller.admin.socail.vo.client.SocialClientRespVO;
 import com.develop.mvp.pk.module.system.controller.admin.socail.vo.client.SocialClientSaveReqVO;
 import com.develop.mvp.pk.module.system.dal.dataobject.social.SocialClientDO;
-import com.develop.mvp.pk.module.system.application.social.service.SocialApplicationService;
+import com.develop.mvp.pk.module.system.application.social.port.inbound.SocialUseCase;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -30,7 +30,7 @@ import static com.develop.mvp.pk.framework.common.pojo.CommonResult.success;
 public class SocialClientController {
 
     @Resource
-    private SocialApplicationService socialClientService;
+    private SocialUseCase socialUseCase;
     @Resource
     private SocialClientApi socialClientApi;
 
@@ -38,14 +38,14 @@ public class SocialClientController {
     @Operation(summary = "创建社交客户端")
     @PreAuthorize("@ss.hasPermission('system:social-client:create')")
     public CommonResult<Long> createSocialClient(@Valid @RequestBody SocialClientSaveReqVO createReqVO) {
-        return success(socialClientService.createSocialClient(createReqVO));
+        return success(socialUseCase.createSocialClient(createReqVO));
     }
 
     @PutMapping("/update")
     @Operation(summary = "更新社交客户端")
     @PreAuthorize("@ss.hasPermission('system:social-client:update')")
     public CommonResult<Boolean> updateSocialClient(@Valid @RequestBody SocialClientSaveReqVO updateReqVO) {
-        socialClientService.updateSocialClient(updateReqVO);
+        socialUseCase.updateSocialClient(updateReqVO);
         return success(true);
     }
 
@@ -54,7 +54,7 @@ public class SocialClientController {
     @Parameter(name = "id", description = "编号", required = true)
     @PreAuthorize("@ss.hasPermission('system:social-client:delete')")
     public CommonResult<Boolean> deleteSocialClient(@RequestParam("id") Long id) {
-        socialClientService.deleteSocialClient(id);
+        socialUseCase.deleteSocialClient(id);
         return success(true);
     }
 
@@ -63,7 +63,7 @@ public class SocialClientController {
     @Operation(summary = "批量删除社交客户端")
     @PreAuthorize("@ss.hasPermission('system:social-client:delete')")
     public CommonResult<Boolean> deleteSocialClientList(@RequestParam("ids") List<Long> ids) {
-        socialClientService.deleteSocialClientList(ids);
+        socialUseCase.deleteSocialClientList(ids);
         return success(true);
     }
 
@@ -72,7 +72,7 @@ public class SocialClientController {
     @Parameter(name = "id", description = "编号", required = true, example = "1024")
     @PreAuthorize("@ss.hasPermission('system:social-client:query')")
     public CommonResult<SocialClientRespVO> getSocialClient(@RequestParam("id") Long id) {
-        SocialClientDO client = socialClientService.getSocialClient(id);
+        SocialClientDO client = socialUseCase.getSocialClient(id);
         return success(BeanUtils.toBean(client, SocialClientRespVO.class));
     }
 
@@ -80,7 +80,7 @@ public class SocialClientController {
     @Operation(summary = "获得社交客户端分页")
     @PreAuthorize("@ss.hasPermission('system:social-client:query')")
     public CommonResult<PageResult<SocialClientRespVO>> getSocialClientPage(@Valid SocialClientPageReqVO pageVO) {
-        PageResult<SocialClientDO> pageResult = socialClientService.getSocialClientPage(pageVO);
+        PageResult<SocialClientDO> pageResult = socialUseCase.getSocialClientPage(pageVO);
         return success(BeanUtils.toBean(pageResult, SocialClientRespVO.class));
     }
 

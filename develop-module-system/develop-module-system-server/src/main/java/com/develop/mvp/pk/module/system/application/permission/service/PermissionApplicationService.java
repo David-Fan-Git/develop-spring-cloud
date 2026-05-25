@@ -8,9 +8,11 @@ import com.develop.mvp.pk.framework.common.biz.system.permission.dto.DeptDataPer
 import com.develop.mvp.pk.framework.common.enums.CommonStatusEnum;
 import com.develop.mvp.pk.framework.common.util.collection.CollectionUtils;
 import com.develop.mvp.pk.framework.datapermission.core.annotation.DataPermission;
-import com.develop.mvp.pk.module.system.application.dept.service.DeptApplicationService;
+import com.develop.mvp.pk.module.system.application.dept.port.inbound.DeptUseCase;
+import com.develop.mvp.pk.module.system.application.permission.port.inbound.MenuUseCase;
 import com.develop.mvp.pk.module.system.application.permission.port.inbound.PermissionUseCase;
-import com.develop.mvp.pk.module.system.application.user.service.AdminUserApplicationService;
+import com.develop.mvp.pk.module.system.application.permission.port.inbound.RoleUseCase;
+import com.develop.mvp.pk.module.system.application.user.port.inbound.AdminUserUseCase;
 import com.develop.mvp.pk.module.system.dal.dataobject.permission.MenuDO;
 import com.develop.mvp.pk.module.system.dal.dataobject.permission.RoleDO;
 import com.develop.mvp.pk.module.system.dal.redis.RedisKeyConstants;
@@ -20,13 +22,11 @@ import com.develop.mvp.pk.module.system.enums.permission.DataScopeEnum;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Suppliers;
 import com.google.common.collect.Sets;
-import jakarta.annotation.Resource;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.cache.annotation.Cacheable;
 import org.springframework.cache.annotation.Caching;
 import org.springframework.context.annotation.Lazy;
-import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.*;
@@ -35,25 +35,31 @@ import java.util.function.Supplier;
 import static com.develop.mvp.pk.framework.common.util.collection.CollectionUtils.convertSet;
 import static com.develop.mvp.pk.framework.common.util.json.JsonUtils.toJsonString;
 
-@Service
 @Slf4j
 public class PermissionApplicationService implements PermissionUseCase {
 
-    @Resource
-    private UserRoleRepository userRoleRepository;
-    @Resource
-    private RoleMenuRepository roleMenuRepository;
-    @Resource
-    @Lazy
-    private RoleApplicationService roleService;
-    @Resource
-    @Lazy
-    private MenuApplicationService menuService;
-    @Resource
-    private DeptApplicationService deptService;
-    @Resource
-    private AdminUserApplicationService userService;
+    private final UserRoleRepository userRoleRepository;
+    private final RoleMenuRepository roleMenuRepository;
+    private final RoleUseCase roleService;
+    private final MenuUseCase menuService;
+    private final DeptUseCase deptUseCase;
+    private final AdminUserUseCase userService;
 
+    public PermissionApplicationService(UserRoleRepository userRoleRepository,
+                                        RoleMenuRepository roleMenuRepository,
+                                        @Lazy RoleUseCase roleService,
+                                        @Lazy MenuUseCase menuService,
+                                        DeptUseCase deptUseCase,
+                                        AdminUserUseCase userService) {
+        this.userRoleRepository = userRoleRepository;
+        this.roleMenuRepository = roleMenuRepository;
+        this.roleService = roleService;
+        this.menuService = menuService;
+        this.deptUseCase = deptUseCase;
+        this.userService = userService;
+    }
+
+    @Override
     public boolean hasAnyPermissions(Long userId, String... permissions) {
         if (ArrayUtil.isEmpty(permissions)) {
             return true;
@@ -85,6 +91,7 @@ public class PermissionApplicationService implements PermissionUseCase {
         return false;
     }
 
+    @Override
     public boolean hasAnyRoles(Long userId, String... roles) {
         if (ArrayUtil.isEmpty(roles)) {
             return true;
@@ -124,10 +131,12 @@ public class PermissionApplicationService implements PermissionUseCase {
         roleMenuRepository.deleteByMenuId(menuId);
     }
 
+    @Override
     public Set<Long> getRoleMenuListByRoleId(Long roleId) {
         return getRoleMenuListByRoleId(Collections.singleton(roleId));
     }
 
+    @Override
     public Set<Long> getRoleMenuListByRoleId(Collection<Long> roleIds) {
         if (CollUtil.isEmpty(roleIds)) {
             return Collections.emptySet();
@@ -148,6 +157,7 @@ public class PermissionApplicationService implements PermissionUseCase {
         return roleMenuRepository.findByRoleIds(roleIds);
     }
 
+    @Override
     @Cacheable(value = RedisKeyConstants.MENU_ROLE_ID_LIST, key = "#menuId")
     public Set<Long> getMenuRoleIdListByMenuIdFromCache(Long menuId) {
         return getMenuRoleIds(menuId);
@@ -171,10 +181,12 @@ public class PermissionApplicationService implements PermissionUseCase {
         userRoleRepository.deleteByUserId(userId);
     }
 
+    @Override
     public Set<Long> getUserRoleIdListByUserId(Long userId) {
         return getUserRoleIds(userId);
     }
 
+    @Override
     @Cacheable(value = RedisKeyConstants.USER_ROLE_ID_LIST, key = "#userId")
     public Set<Long> getUserRoleIdListByUserIdFromCache(Long userId) {
         return getUserRoleIdListByUserId(userId);
@@ -185,6 +197,7 @@ public class PermissionApplicationService implements PermissionUseCase {
         return userRoleRepository.findByUserId(userId);
     }
 
+    @Override
     public Set<Long> getUserRoleIdListByRoleId(Collection<Long> roleIds) {
         return getUserIdsByRoleIds(roleIds);
     }
@@ -194,18 +207,21 @@ public class PermissionApplicationService implements PermissionUseCase {
         return userRoleRepository.findByRoleIds(roleIds);
     }
 
+    @Override
     @VisibleForTesting
-    List<RoleDO> getEnableUserRoleListByUserIdFromCache(Long userId) {
+    public List<RoleDO> getEnableUserRoleListByUserIdFromCache(Long userId) {
         Set<Long> roleIds = getSelf().getUserRoleIdListByUserIdFromCache(userId);
         List<RoleDO> roles = roleService.getRoleListFromCache(roleIds);
         roles.removeIf(role -> !CommonStatusEnum.ENABLE.getStatus().equals(role.getStatus()));
         return roles;
     }
 
+    @Override
     public void assignRoleDataScope(Long roleId, Integer dataScope, Set<Long> dataScopeDeptIds) {
         roleService.updateRoleDataScope(roleId, dataScope, dataScopeDeptIds);
     }
 
+    @Override
     @DataPermission(enable = false)
     public DeptDataPermissionRespDTO getDeptDataPermission(Long userId) {
         List<RoleDO> roles = getEnableUserRoleListByUserIdFromCache(userId);
@@ -237,7 +253,7 @@ public class PermissionApplicationService implements PermissionUseCase {
                 if (deptId == null) {
                     continue;
                 }
-                CollUtil.addAll(result.getDeptIds(), deptService.getChildDeptIdListFromCache(deptId));
+                CollUtil.addAll(result.getDeptIds(), deptUseCase.getChildDeptIdListFromCache(deptId));
                 result.getDeptIds().add(deptId);
                 continue;
             }

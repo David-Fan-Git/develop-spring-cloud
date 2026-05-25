@@ -5,6 +5,7 @@ package com.develop.mvp.pk.module.system.application.tenant.service;
 // 规则 R04/不变式 I04：系统租户不可修改/删除，由本层校验
 // 验收标准 AC09：创建租户时的角色+用户创建编排逻辑在 ApplicationService 中
 
+import com.develop.mvp.pk.module.system.application.tenant.port.inbound.TenantPackageUseCase;
 import com.develop.mvp.pk.module.system.application.tenant.port.inbound.TenantUseCase;
 import cn.hutool.core.collection.CollUtil;
 import com.develop.mvp.pk.framework.common.enums.CommonStatusEnum;
@@ -29,12 +30,11 @@ import com.develop.mvp.pk.module.system.domain.user.event.DomainEventPublisher;
 import com.develop.mvp.pk.module.system.dal.dataobject.tenant.TenantPackageDO;
 import com.develop.mvp.pk.module.system.enums.permission.RoleCodeEnum;
 import com.develop.mvp.pk.module.system.enums.permission.RoleTypeEnum;
-import com.develop.mvp.pk.module.system.application.permission.service.MenuApplicationService;
-import com.develop.mvp.pk.module.system.application.permission.service.PermissionApplicationService;
-import com.develop.mvp.pk.module.system.application.permission.service.RoleApplicationService;
-import com.develop.mvp.pk.module.system.application.user.service.AdminUserApplicationService;
+import com.develop.mvp.pk.module.system.application.permission.port.inbound.MenuUseCase;
+import com.develop.mvp.pk.module.system.application.permission.port.inbound.PermissionUseCase;
+import com.develop.mvp.pk.module.system.application.permission.port.inbound.RoleUseCase;
+import com.develop.mvp.pk.module.system.application.user.port.inbound.AdminUserUseCase;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.*;
@@ -44,30 +44,32 @@ import static com.develop.mvp.pk.framework.common.exception.util.ServiceExceptio
 import static com.develop.mvp.pk.module.system.enums.ErrorCodeConstants.*;
 import static java.util.Collections.singleton;
 
-@Service
 public class TenantApplicationService implements TenantUseCase {
 
     private final TenantRepository tenantRepository;
     private final TenantUniquenessChecker uniquenessChecker;
     private final DomainEventPublisher eventPublisher;
-    private final TenantPackageApplicationService tenantPackageService;
-    private final AdminUserApplicationService adminUserService;
-    private final RoleApplicationService roleService;
-    private final PermissionApplicationService permissionService;
-    private final MenuApplicationService menuService;
+    private final TenantPackageUseCase tenantPackageService;
+    private final AdminUserUseCase adminUserService;
+    private final RoleUseCase roleService;
+    private final PermissionUseCase permissionService;
+    private final MenuUseCase menuService;
 
-    @SuppressWarnings("SpringJavaAutowiredFieldsWarningInspection")
     @Autowired(required = false)
     private TenantProperties tenantProperties;
+
+    public void setTenantProperties(TenantProperties tenantProperties) {
+        this.tenantProperties = tenantProperties;
+    }
 
     public TenantApplicationService(TenantRepository tenantRepository,
                                      TenantUniquenessChecker uniquenessChecker,
                                      DomainEventPublisher eventPublisher,
-                                     TenantPackageApplicationService tenantPackageService,
-                                     AdminUserApplicationService adminUserService,
-                                     RoleApplicationService roleService,
-                                     PermissionApplicationService permissionService,
-                                     MenuApplicationService menuService) {
+                                     TenantPackageUseCase tenantPackageService,
+                                     AdminUserUseCase adminUserService,
+                                     RoleUseCase roleService,
+                                     PermissionUseCase permissionService,
+                                     MenuUseCase menuService) {
         this.tenantRepository = tenantRepository;
         this.uniquenessChecker = uniquenessChecker;
         this.eventPublisher = eventPublisher;

@@ -11,7 +11,7 @@ import com.develop.mvp.pk.module.system.controller.admin.permission.vo.role.Role
 import com.develop.mvp.pk.module.system.controller.admin.permission.vo.role.RoleRespVO;
 import com.develop.mvp.pk.module.system.controller.admin.permission.vo.role.RoleSaveReqVO;
 import com.develop.mvp.pk.module.system.dal.dataobject.permission.RoleDO;
-import com.develop.mvp.pk.module.system.application.permission.service.RoleApplicationService;
+import com.develop.mvp.pk.module.system.application.permission.port.inbound.RoleUseCase;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -37,7 +37,7 @@ import static java.util.Collections.singleton;
 public class RoleController {
 
     @Resource
-    private RoleApplicationService roleService;
+    private RoleUseCase roleService;
 
     @PostMapping("/create")
     @Operation(summary = "创建角色")
@@ -76,7 +76,7 @@ public class RoleController {
     @Operation(summary = "获得角色信息")
     @PreAuthorize("@ss.hasPermission('system:role:query')")
     public CommonResult<RoleRespVO> getRole(@RequestParam("id") Long id) {
-        RoleDO role = roleService.getRole(id);
+        RoleDO role = roleService.getRoleDO(id);
         return success(BeanUtils.toBean(role, RoleRespVO.class));
     }
 

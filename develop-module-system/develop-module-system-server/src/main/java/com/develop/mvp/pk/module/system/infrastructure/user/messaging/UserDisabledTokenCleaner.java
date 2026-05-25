@@ -6,7 +6,7 @@ package com.develop.mvp.pk.module.system.infrastructure.user.messaging;
 // 验收标准 AC10：禁用用户时，UserDisabledEvent 被发布且被此订阅者消费
 
 import com.develop.mvp.pk.framework.common.enums.UserTypeEnum;
-import com.develop.mvp.pk.module.system.application.oauth2.service.OAuth2ApplicationService;
+import com.develop.mvp.pk.module.system.application.oauth2.port.inbound.OAuth2UseCase;
 import com.develop.mvp.pk.module.system.domain.user.event.UserDisabledEvent;
 import org.springframework.context.event.EventListener;
 import org.springframework.stereotype.Component;
@@ -14,9 +14,9 @@ import org.springframework.stereotype.Component;
 @Component
 public class UserDisabledTokenCleaner {
 
-    private final OAuth2ApplicationService oauth2TokenService;
+    private final OAuth2UseCase oauth2TokenService;
 
-    public UserDisabledTokenCleaner(OAuth2ApplicationService oauth2TokenService) {
+    public UserDisabledTokenCleaner(OAuth2UseCase oauth2TokenService) {
         this.oauth2TokenService = oauth2TokenService;
     }
 

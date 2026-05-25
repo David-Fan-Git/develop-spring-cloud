@@ -9,7 +9,6 @@ import com.develop.mvp.pk.module.system.domain.notice.Notice;
 import com.develop.mvp.pk.module.system.domain.notice.repository.NoticeRepository;
 import com.google.common.annotations.VisibleForTesting;
 import lombok.RequiredArgsConstructor;
-import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
@@ -17,7 +16,6 @@ import java.util.List;
 import static com.develop.mvp.pk.framework.common.exception.util.ServiceExceptionUtil.exception;
 import static com.develop.mvp.pk.module.system.enums.ErrorCodeConstants.NOTICE_NOT_FOUND;
 
-@Service
 @RequiredArgsConstructor
 public class NoticeApplicationService implements NoticeUseCase {
 

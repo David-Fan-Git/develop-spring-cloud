@@ -23,7 +23,6 @@ import com.develop.mvp.pk.module.system.domain.dict.valueobject.DictTypeKey;
 import com.develop.mvp.pk.module.system.domain.dict.valueobject.DictTypeName;
 import com.google.common.annotations.VisibleForTesting;
 import lombok.RequiredArgsConstructor;
-import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
@@ -35,7 +34,6 @@ import java.util.Map;
 import static com.develop.mvp.pk.framework.common.exception.util.ServiceExceptionUtil.exception;
 import static com.develop.mvp.pk.module.system.enums.ErrorCodeConstants.*;
 
-@Service
 @RequiredArgsConstructor
 public class DictApplicationService implements DictUseCase {
 

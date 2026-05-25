@@ -6,10 +6,13 @@ import com.develop.mvp.pk.framework.common.enums.UserTypeEnum;
 import com.develop.mvp.pk.framework.test.core.ut.BaseMockitoUnitTest;
 import com.develop.mvp.pk.module.system.application.notify.service.NotifyApplicationService;
 import com.develop.mvp.pk.module.system.dal.dataobject.notify.NotifyTemplateDO;
+import com.develop.mvp.pk.module.system.dal.mysql.notify.NotifyMessageMapper;
+import com.develop.mvp.pk.module.system.dal.mysql.notify.NotifyTemplateMapper;
 import org.assertj.core.util.Lists;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.mockito.Mock;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -28,9 +31,14 @@ class NotifySendApplicationServiceTest extends BaseMockitoUnitTest {
 
     private NotifyApplicationService notifySendService;
 
+    @Mock
+    private NotifyMessageMapper notifyMessageMapper;
+    @Mock
+    private NotifyTemplateMapper notifyTemplateMapper;
+
     @BeforeEach
     void setUp() {
-        notifySendService = spy(new NotifyApplicationService());
+        notifySendService = spy(new NotifyApplicationService(notifyMessageMapper, notifyTemplateMapper));
     }
 
     @Test

@@ -1,6 +1,6 @@
 package com.develop.mvp.pk.module.system.api.dept;
 
-import com.develop.mvp.pk.module.system.application.dept.service.DeptApplicationService;
+import com.develop.mvp.pk.module.system.application.dept.port.inbound.DeptUseCase;
 import com.develop.mvp.pk.framework.common.pojo.CommonResult;
 import com.develop.mvp.pk.framework.common.util.object.BeanUtils;
 import com.develop.mvp.pk.module.system.api.dept.dto.DeptRespDTO;
@@ -20,29 +20,29 @@ import static com.develop.mvp.pk.framework.common.pojo.CommonResult.success;
 public class DeptApiImpl implements DeptApi {
 
     @Resource
-    private DeptApplicationService deptService;
+    private DeptUseCase deptUseCase;
 
     @Override
     public CommonResult<DeptRespDTO> getDept(Long id) {
-        DeptDO dept = deptService.getDept(id);
+        DeptDO dept = deptUseCase.getDept(id);
         return success(BeanUtils.toBean(dept, DeptRespDTO.class));
     }
 
     @Override
     public CommonResult<List<DeptRespDTO>> getDeptList(Collection<Long> ids) {
-        List<DeptDO> depts = deptService.getDeptList(ids);
+        List<DeptDO> depts = deptUseCase.getDeptList(ids);
         return success(BeanUtils.toBean(depts, DeptRespDTO.class));
     }
 
     @Override
     public CommonResult<Boolean> validateDeptList(Collection<Long> ids) {
-        deptService.validateDeptList(ids);
+        deptUseCase.validateDeptList(ids);
         return success(true);
     }
 
     @Override
     public CommonResult<List<DeptRespDTO>> getChildDeptList(Long id) {
-        List<DeptDO> depts = deptService.getChildDeptList(id);
+        List<DeptDO> depts = deptUseCase.getChildDeptList(id);
         return success(BeanUtils.toBean(depts, DeptRespDTO.class));
     }
 

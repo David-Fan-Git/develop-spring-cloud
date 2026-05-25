@@ -3,7 +3,7 @@ package com.develop.mvp.pk.module.system.controller.app.dict;
 import com.develop.mvp.pk.framework.common.enums.CommonStatusEnum;
 import com.develop.mvp.pk.framework.common.pojo.CommonResult;
 import com.develop.mvp.pk.framework.common.util.object.BeanUtils;
-import com.develop.mvp.pk.module.system.application.dict.service.DictApplicationService;
+import com.develop.mvp.pk.module.system.application.dict.port.inbound.DictUseCase;
 import com.develop.mvp.pk.module.system.controller.app.dict.vo.AppDictDataRespVO;
 import com.develop.mvp.pk.module.system.dal.dataobject.dict.DictDataDO;
 import io.swagger.v3.oas.annotations.Operation;
@@ -28,14 +28,14 @@ import static com.develop.mvp.pk.framework.common.pojo.CommonResult.success;
 public class AppDictDataController {
 
     @Resource
-    private DictApplicationService dictApplicationService;
+    private DictUseCase dictUseCase;
 
     @GetMapping("/type")
     @Operation(summary = "根据字典类型查询字典数据信息")
     @Parameter(name = "type", description = "字典类型", required = true, example = "common_status")
     @PermitAll
     public CommonResult<List<AppDictDataRespVO>> getDictDataListByType(@RequestParam("type") String type) {
-        List<DictDataDO> list = dictApplicationService.getDictDataList(
+        List<DictDataDO> list = dictUseCase.getDictDataList(
                 CommonStatusEnum.ENABLE.getStatus(), type);
         return success(BeanUtils.toBean(list, AppDictDataRespVO.class));
     }

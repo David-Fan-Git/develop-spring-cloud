@@ -13,13 +13,13 @@ import com.develop.mvp.pk.module.system.convert.auth.AuthConvert;
 import com.develop.mvp.pk.module.system.dal.dataobject.permission.MenuDO;
 import com.develop.mvp.pk.module.system.dal.dataobject.permission.RoleDO;
 import com.develop.mvp.pk.module.system.dal.dataobject.user.AdminUserDO;
-import com.develop.mvp.pk.module.system.application.auth.service.AuthApplicationService;
+import com.develop.mvp.pk.module.system.application.auth.port.inbound.AuthUseCase;
+import com.develop.mvp.pk.module.system.application.user.port.inbound.AdminUserUseCase;
 import com.develop.mvp.pk.module.system.enums.logger.LoginLogTypeEnum;
-import com.develop.mvp.pk.module.system.application.permission.service.MenuApplicationService;
-import com.develop.mvp.pk.module.system.application.permission.service.PermissionApplicationService;
-import com.develop.mvp.pk.module.system.application.permission.service.RoleApplicationService;
-import com.develop.mvp.pk.module.system.application.social.service.SocialApplicationService;
-import com.develop.mvp.pk.module.system.application.user.service.AdminUserApplicationService;
+import com.develop.mvp.pk.module.system.application.permission.port.inbound.MenuUseCase;
+import com.develop.mvp.pk.module.system.application.permission.port.inbound.PermissionUseCase;
+import com.develop.mvp.pk.module.system.application.permission.port.inbound.RoleUseCase;
+import com.develop.mvp.pk.module.system.application.social.port.inbound.SocialUseCase;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.Parameters;
@@ -48,17 +48,17 @@ import static com.develop.mvp.pk.framework.security.core.util.SecurityFrameworkU
 public class AuthController {
 
     @Resource
-    private AuthApplicationService authService;
+    private AuthUseCase authService;
     @Resource
-    private AdminUserApplicationService userService;
+    private AdminUserUseCase userService;
     @Resource
-    private RoleApplicationService roleService;
+    private RoleUseCase roleService;
     @Resource
-    private MenuApplicationService menuService;
+    private MenuUseCase menuService;
     @Resource
-    private PermissionApplicationService permissionService;
+    private PermissionUseCase permissionService;
     @Resource
-    private SocialApplicationService socialClientService;
+    private SocialUseCase socialUseCase;
 
     @Resource
     private SecurityProperties securityProperties;
@@ -162,7 +162,7 @@ public class AuthController {
     })
     public CommonResult<String> socialLogin(@RequestParam("type") Integer type,
                                             @RequestParam("redirectUri") String redirectUri) {
-        return success(socialClientService.getAuthorizeUrl(
+        return success(socialUseCase.getAuthorizeUrl(
                 type, UserTypeEnum.ADMIN.getValue(), redirectUri));
     }
 

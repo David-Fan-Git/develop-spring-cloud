@@ -1,6 +1,6 @@
 package com.develop.mvp.pk.module.system.application.user.service;
 
-import com.develop.mvp.pk.module.system.application.dept.service.DeptApplicationService;
+import com.develop.mvp.pk.module.system.application.dept.port.inbound.DeptUseCase;
 import com.develop.mvp.pk.module.system.application.user.port.inbound.UserUseCase;
 import cn.hutool.core.collection.CollUtil;
 import com.develop.mvp.pk.framework.common.pojo.PageResult;
@@ -16,7 +16,6 @@ import com.develop.mvp.pk.module.system.domain.user.repository.UserRepository;
 import com.develop.mvp.pk.module.system.domain.user.service.PasswordEncoder;
 import com.develop.mvp.pk.module.system.domain.user.service.UserUniquenessChecker;
 import com.develop.mvp.pk.module.system.domain.user.valueobject.*;
-import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.*;
@@ -25,26 +24,25 @@ import java.util.stream.Collectors;
 import static com.develop.mvp.pk.framework.common.exception.util.ServiceExceptionUtil.exception;
 import static com.develop.mvp.pk.module.system.enums.ErrorCodeConstants.*;
 
-@Service
 public class UserApplicationService implements UserUseCase {
 
     private final UserRepository userRepository;
     private final PasswordEncoder passwordEncoder;
     private final UserUniquenessChecker uniquenessChecker;
     private final DomainEventPublisher eventPublisher;
-    private final DeptApplicationService deptService;
-    private final DeptApplicationService postService;
+    private final DeptUseCase deptUseCase;
+    private final DeptUseCase postUseCase;
 
     public UserApplicationService(UserRepository userRepository, PasswordEncoder passwordEncoder,
                                    UserUniquenessChecker uniquenessChecker,
                                    DomainEventPublisher eventPublisher,
-                                   DeptApplicationService deptService, DeptApplicationService postService) {
+                                   DeptUseCase deptUseCase, DeptUseCase postUseCase) {
         this.userRepository = userRepository;
         this.passwordEncoder = passwordEncoder;
         this.uniquenessChecker = uniquenessChecker;
         this.eventPublisher = eventPublisher;
-        this.deptService = deptService;
-        this.postService = postService;
+        this.deptUseCase = deptUseCase;
+        this.postUseCase = postUseCase;
     }
 
     @Transactional
@@ -207,7 +205,7 @@ public class UserApplicationService implements UserUseCase {
     public Set<Long> getDeptCondition(Long deptId) {
         if (deptId == null) return Collections.emptySet();
         Set<Long> deptIds = CollectionUtils.convertSet(
-                deptService.getChildDeptList(deptId),
+                deptUseCase.getChildDeptList(deptId),
                 d -> d.getId());
         deptIds.add(deptId);
         return deptIds;
@@ -220,8 +218,8 @@ public class UserApplicationService implements UserUseCase {
     }
 
     private void validateDeptAndPosts(Long deptId, Set<Long> postIds) {
-        deptService.validateDeptList(CollectionUtils.singleton(deptId));
-        postService.validatePostList(postIds);
+        deptUseCase.validateDeptList(CollectionUtils.singleton(deptId));
+        postUseCase.validatePostList(postIds);
     }
 
     private void assertUsernameUnique(Username username, UserId excludeId) {

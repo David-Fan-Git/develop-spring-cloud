@@ -5,8 +5,8 @@ import com.develop.mvp.pk.framework.common.pojo.CommonResult;
 import com.develop.mvp.pk.module.system.controller.admin.permission.vo.permission.PermissionAssignRoleDataScopeReqVO;
 import com.develop.mvp.pk.module.system.controller.admin.permission.vo.permission.PermissionAssignRoleMenuReqVO;
 import com.develop.mvp.pk.module.system.controller.admin.permission.vo.permission.PermissionAssignUserRoleReqVO;
-import com.develop.mvp.pk.module.system.application.permission.service.PermissionApplicationService;
-import com.develop.mvp.pk.module.system.application.tenant.service.TenantApplicationService;
+import com.develop.mvp.pk.module.system.application.permission.port.inbound.PermissionUseCase;
+import com.develop.mvp.pk.module.system.application.tenant.port.inbound.TenantUseCase;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -31,9 +31,9 @@ import static com.develop.mvp.pk.framework.common.pojo.CommonResult.success;
 public class PermissionController {
 
     @Resource
-    private PermissionApplicationService permissionService;
+    private PermissionUseCase permissionService;
     @Resource
-    private TenantApplicationService tenantService;
+    private TenantUseCase tenantUseCase;
 
     @Operation(summary = "获得角色拥有的菜单编号")
     @Parameter(name = "roleId", description = "角色编号", required = true)
@@ -48,7 +48,7 @@ public class PermissionController {
     @PreAuthorize("@ss.hasPermission('system:permission:assign-role-menu')")
     public CommonResult<Boolean> assignRoleMenu(@Validated @RequestBody PermissionAssignRoleMenuReqVO reqVO) {
         // 开启多租户的情况下，需要过滤掉未开通的菜单
-        tenantService.handleTenantMenu(menuIds -> reqVO.getMenuIds().removeIf(menuId -> !CollUtil.contains(menuIds, menuId)));
+        tenantUseCase.handleTenantMenu(menuIds -> reqVO.getMenuIds().removeIf(menuId -> !CollUtil.contains(menuIds, menuId)));
 
         // 执行菜单的分配
         permissionService.assignRoleMenu(reqVO.getRoleId(), reqVO.getMenuIds());

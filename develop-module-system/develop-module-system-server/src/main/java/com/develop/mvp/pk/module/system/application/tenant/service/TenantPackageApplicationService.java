@@ -6,15 +6,15 @@ import com.baomidou.dynamic.datasource.annotation.DSTransactional;
 import com.develop.mvp.pk.framework.common.enums.CommonStatusEnum;
 import com.develop.mvp.pk.framework.common.pojo.PageResult;
 import com.develop.mvp.pk.framework.common.util.object.BeanUtils;
+import com.develop.mvp.pk.module.system.application.tenant.port.inbound.TenantPackageUseCase;
 import com.develop.mvp.pk.module.system.controller.admin.tenant.vo.packages.TenantPackagePageReqVO;
 import com.develop.mvp.pk.module.system.controller.admin.tenant.vo.packages.TenantPackageSaveReqVO;
-import com.develop.mvp.pk.module.system.dal.dataobject.tenant.TenantDO;
 import com.develop.mvp.pk.module.system.dal.dataobject.tenant.TenantPackageDO;
+import com.develop.mvp.pk.module.system.domain.tenant.Tenant;
 import com.develop.mvp.pk.module.system.dal.mysql.tenant.TenantPackageMapper;
+import com.develop.mvp.pk.module.system.application.tenant.port.inbound.TenantUseCase;
 import com.google.common.annotations.VisibleForTesting;
-import jakarta.annotation.Resource;
 import org.springframework.context.annotation.Lazy;
-import org.springframework.stereotype.Service;
 import org.springframework.validation.annotation.Validated;
 
 import java.util.List;
@@ -22,16 +22,17 @@ import java.util.List;
 import static com.develop.mvp.pk.framework.common.exception.util.ServiceExceptionUtil.exception;
 import static com.develop.mvp.pk.module.system.enums.ErrorCodeConstants.*;
 
-@Service
 @Validated
-public class TenantPackageApplicationService {
+public class TenantPackageApplicationService implements TenantPackageUseCase {
 
-    @Resource
-    private TenantPackageMapper tenantPackageMapper;
+    private final TenantPackageMapper tenantPackageMapper;
+    private final TenantUseCase tenantUseCase;
 
-    @Resource
-    @Lazy
-    private TenantApplicationService tenantApplicationService;
+    public TenantPackageApplicationService(TenantPackageMapper tenantPackageMapper,
+                                           @Lazy TenantUseCase tenantUseCase) {
+        this.tenantPackageMapper = tenantPackageMapper;
+        this.tenantUseCase = tenantUseCase;
+    }
 
     public Long createTenantPackage(TenantPackageSaveReqVO createReqVO) {
         validateTenantPackageNameUnique(null, createReqVO.getName());
@@ -47,8 +48,8 @@ public class TenantPackageApplicationService {
         TenantPackageDO updateObj = BeanUtils.toBean(updateReqVO, TenantPackageDO.class);
         tenantPackageMapper.updateById(updateObj);
         if (!CollUtil.isEqualList(tenantPackage.getMenuIds(), updateReqVO.getMenuIds())) {
-            List<TenantDO> tenants = tenantApplicationService.getTenantListByPackageId(updateReqVO.getId());
-            tenants.forEach(tenant -> tenantApplicationService.updateTenantRoleMenu(tenant.getId(), updateReqVO.getMenuIds()));
+            List<Tenant> tenants = tenantUseCase.getTenantDomainListByPackageId(updateReqVO.getId());
+            tenants.forEach(tenant -> tenantUseCase.updateTenantRoleMenu(tenant.id().value(), updateReqVO.getMenuIds()));
         }
     }
 
@@ -60,7 +61,7 @@ public class TenantPackageApplicationService {
 
     public void deleteTenantPackageList(List<Long> ids) {
         for (Long id : ids) {
-            if (tenantApplicationService.getTenantCountByPackageId(id) > 0) {
+            if (tenantUseCase.getTenantCountByPackageId(id) > 0) {
                 throw exception(TENANT_PACKAGE_USED);
             }
         }
@@ -99,7 +100,7 @@ public class TenantPackageApplicationService {
     }
 
     private void validateTenantUsed(Long id) {
-        if (tenantApplicationService.getTenantCountByPackageId(id) > 0) {
+        if (tenantUseCase.getTenantCountByPackageId(id) > 0) {
             throw exception(TENANT_PACKAGE_USED);
         }
     }

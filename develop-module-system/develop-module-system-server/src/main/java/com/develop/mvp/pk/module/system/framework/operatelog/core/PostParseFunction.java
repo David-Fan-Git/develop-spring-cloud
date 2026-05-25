@@ -1,6 +1,6 @@
 package com.develop.mvp.pk.module.system.framework.operatelog.core;
 
-import com.develop.mvp.pk.module.system.application.dept.service.DeptApplicationService;
+import com.develop.mvp.pk.module.system.application.dept.port.inbound.DeptUseCase;
 import cn.hutool.core.convert.Convert;
 import cn.hutool.core.util.StrUtil;
 import com.develop.mvp.pk.module.system.dal.dataobject.dept.PostDO;
@@ -21,7 +21,7 @@ public class PostParseFunction implements IParseFunction {
     public static final String NAME = "getPostById";
 
     @Resource
-    private DeptApplicationService postService;
+    private DeptUseCase postUseCase;
 
     @Override
     public String functionName() {
@@ -35,7 +35,7 @@ public class PostParseFunction implements IParseFunction {
         }
 
         // 获取岗位信息
-        PostDO post = postService.getPost(Convert.toLong(value));
+        PostDO post = postUseCase.getPost(Convert.toLong(value));
         if (post == null) {
             log.warn("[apply][获取岗位{{}}为空", value);
             return "";

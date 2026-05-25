@@ -1,6 +1,6 @@
 package com.develop.mvp.pk.module.system.controller.admin.user;
 
-import com.develop.mvp.pk.module.system.application.dept.service.DeptApplicationService;
+import com.develop.mvp.pk.module.system.application.dept.port.inbound.DeptUseCase;
 // Skill: AggregateRoot_User_Validation_Skill — 接口层 UserController
 // DDD 角色：接口层，仅处理 HTTP 请求/响应，调用 UserApplicationService
 
@@ -11,14 +11,14 @@ import com.develop.mvp.pk.framework.common.pojo.CommonResult;
 import com.develop.mvp.pk.framework.common.pojo.PageParam;
 import com.develop.mvp.pk.framework.common.pojo.PageResult;
 import com.develop.mvp.pk.framework.excel.core.util.ExcelUtils;
-import com.develop.mvp.pk.module.system.application.user.service.UserApplicationService;
+import com.develop.mvp.pk.module.system.application.user.port.inbound.AdminUserUseCase;
+import com.develop.mvp.pk.module.system.application.user.port.inbound.UserUseCase;
 import com.develop.mvp.pk.module.system.controller.admin.user.vo.user.*;
 import com.develop.mvp.pk.module.system.convert.user.UserConvert;
 import com.develop.mvp.pk.module.system.dal.dataobject.dept.DeptDO;
 import com.develop.mvp.pk.module.system.domain.user.User;
 import com.develop.mvp.pk.module.system.domain.user.repository.UserPageQuery;
 import com.develop.mvp.pk.module.system.enums.common.SexEnum;
-import com.develop.mvp.pk.module.system.application.user.service.AdminUserApplicationService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.Parameters;
@@ -46,11 +46,11 @@ import static com.develop.mvp.pk.framework.common.util.collection.CollectionUtil
 public class UserController {
 
     @Resource
-    private UserApplicationService userApplicationService;
+    private UserUseCase userApplicationService;
     @Resource
-    private AdminUserApplicationService adminUserService; // 导入功能暂保留旧服务
+    private AdminUserUseCase adminUserService; // 导入功能暂保留旧服务
     @Resource
-    private DeptApplicationService deptService;
+    private DeptUseCase deptUseCase;
 
     @PostMapping("/create")
     @Operation(summary = "新增用户")
@@ -123,7 +123,7 @@ public class UserController {
         if (CollUtil.isEmpty(pageResult.getList())) {
             return success(new PageResult<>(pageResult.getTotal()));
         }
-        Map<Long, DeptDO> deptMap = deptService.getDeptMap(
+        Map<Long, DeptDO> deptMap = deptUseCase.getDeptMap(
                 convertList(pageResult.getList(), User::deptId));
         return success(new PageResult<>(
                 UserConvert.INSTANCE.convertUserList(pageResult.getList(), deptMap),
@@ -137,7 +137,7 @@ public class UserController {
     public CommonResult<List<UserRespVO>> getUserList(@RequestParam("ids") List<Long> ids) {
         List<User> users = userApplicationService.getUserList(ids);
         if (CollUtil.isEmpty(users)) return success(Collections.emptyList());
-        Map<Long, DeptDO> deptMap = deptService.getDeptMap(convertSet(users, User::deptId));
+        Map<Long, DeptDO> deptMap = deptUseCase.getDeptMap(convertSet(users, User::deptId));
         return success(UserConvert.INSTANCE.convertUserList(users, deptMap));
     }
 
@@ -146,7 +146,7 @@ public class UserController {
     public CommonResult<List<UserSimpleRespVO>> getSimpleUserList() {
         List<User> users = userApplicationService.getUserListByStatus(
                 CommonStatusEnum.ENABLE.getStatus());
-        Map<Long, DeptDO> deptMap = deptService.getDeptMap(convertList(users, User::deptId));
+        Map<Long, DeptDO> deptMap = deptUseCase.getDeptMap(convertList(users, User::deptId));
         return success(UserConvert.INSTANCE.convertUserSimpleList(users, deptMap));
     }
 
@@ -157,7 +157,7 @@ public class UserController {
     public CommonResult<UserRespVO> getUser(@RequestParam("id") Long id) {
         User user = userApplicationService.getUser(id);
         if (user == null) return success(null);
-        DeptDO dept = deptService.getDept(user.deptId());
+        DeptDO dept = deptUseCase.getDept(user.deptId());
         return success(UserConvert.INSTANCE.convertUser(user, dept));
     }
 
@@ -175,7 +175,7 @@ public class UserController {
                         .status(exportReqVO.getStatus()).deptIds(deptIds)
                         .pageNo(exportReqVO.getPageNo()).pageSize(exportReqVO.getPageSize())
                         .build());
-        Map<Long, DeptDO> deptMap = deptService.getDeptMap(
+        Map<Long, DeptDO> deptMap = deptUseCase.getDeptMap(
                 convertList(pageResult.getList(), User::deptId));
         ExcelUtils.write(response, "用户数据.xls", "数据", UserRespVO.class,
                 UserConvert.INSTANCE.convertUserList(pageResult.getList(), deptMap));

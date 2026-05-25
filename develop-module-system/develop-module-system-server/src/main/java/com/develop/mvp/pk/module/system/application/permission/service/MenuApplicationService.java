@@ -6,7 +6,8 @@ import cn.hutool.core.util.StrUtil;
 import com.develop.mvp.pk.framework.common.enums.CommonStatusEnum;
 import com.develop.mvp.pk.framework.common.util.object.BeanUtils;
 import com.develop.mvp.pk.module.system.application.permission.port.inbound.MenuUseCase;
-import com.develop.mvp.pk.module.system.application.tenant.service.TenantApplicationService;
+import com.develop.mvp.pk.module.system.application.permission.port.inbound.PermissionUseCase;
+import com.develop.mvp.pk.module.system.application.tenant.port.inbound.TenantUseCase;
 import com.develop.mvp.pk.module.system.controller.admin.permission.vo.menu.MenuListReqVO;
 import com.develop.mvp.pk.module.system.controller.admin.permission.vo.menu.MenuSaveVO;
 import com.develop.mvp.pk.module.system.dal.dataobject.permission.MenuDO;
@@ -15,12 +16,10 @@ import com.develop.mvp.pk.module.system.dal.redis.RedisKeyConstants;
 import com.develop.mvp.pk.module.system.enums.permission.MenuTypeEnum;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.collect.Lists;
-import jakarta.annotation.Resource;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.cache.annotation.Cacheable;
 import org.springframework.context.annotation.Lazy;
-import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.*;
@@ -31,18 +30,20 @@ import static com.develop.mvp.pk.framework.common.util.collection.CollectionUtil
 import static com.develop.mvp.pk.module.system.dal.dataobject.permission.MenuDO.ID_ROOT;
 import static com.develop.mvp.pk.module.system.enums.ErrorCodeConstants.*;
 
-@Service
 @Slf4j
 public class MenuApplicationService implements MenuUseCase {
 
-    @Resource
-    private MenuMapper menuMapper;
-    @Resource
-    @Lazy
-    private PermissionApplicationService permissionService;
-    @Resource
-    @Lazy
-    private TenantApplicationService tenantService;
+    private final MenuMapper menuMapper;
+    private final PermissionUseCase permissionService;
+    private final TenantUseCase tenantService;
+
+    public MenuApplicationService(MenuMapper menuMapper,
+                                  @Lazy PermissionUseCase permissionService,
+                                  @Lazy TenantUseCase tenantService) {
+        this.menuMapper = menuMapper;
+        this.permissionService = permissionService;
+        this.tenantService = tenantService;
+    }
 
     @CacheEvict(value = RedisKeyConstants.PERMISSION_MENU_ID_LIST, key = "#createReqVO.permission",
             condition = "#createReqVO.permission != null")

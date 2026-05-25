@@ -7,12 +7,18 @@ import com.develop.mvp.pk.framework.common.enums.UserTypeEnum;
 import com.develop.mvp.pk.framework.test.core.ut.BaseMockitoUnitTest;
 import com.develop.mvp.pk.module.system.application.member.service.MemberApplicationService;
 import com.develop.mvp.pk.module.system.application.sms.service.SmsApplicationService;
-import com.develop.mvp.pk.module.system.application.user.service.AdminUserApplicationService;
+import com.develop.mvp.pk.module.system.application.user.port.inbound.AdminUserUseCase;
 import com.develop.mvp.pk.module.system.dal.dataobject.sms.SmsChannelDO;
 import com.develop.mvp.pk.module.system.dal.dataobject.sms.SmsTemplateDO;
 import com.develop.mvp.pk.module.system.dal.dataobject.user.AdminUserDO;
+import com.develop.mvp.pk.module.system.dal.mysql.sms.SmsChannelMapper;
+import com.develop.mvp.pk.module.system.dal.mysql.sms.SmsCodeMapper;
+import com.develop.mvp.pk.module.system.dal.mysql.sms.SmsLogMapper;
+import com.develop.mvp.pk.module.system.dal.mysql.sms.SmsTemplateMapper;
 import com.develop.mvp.pk.module.system.domain.sms.repository.SmsChannelRepository;
+import com.develop.mvp.pk.module.system.framework.sms.config.SmsCodeProperties;
 import com.develop.mvp.pk.module.system.framework.sms.core.client.SmsClient;
+import com.develop.mvp.pk.module.system.framework.sms.core.client.SmsClientFactory;
 import com.develop.mvp.pk.module.system.framework.sms.core.client.dto.SmsReceiveRespDTO;
 import com.develop.mvp.pk.module.system.framework.sms.core.client.dto.SmsSendRespDTO;
 import com.develop.mvp.pk.module.system.mq.message.sms.SmsSendMessage;
@@ -22,7 +28,6 @@ import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mock;
-import org.springframework.test.util.ReflectionTestUtils;
 
 import java.util.HashMap;
 import java.util.List;
@@ -43,7 +48,19 @@ public class SmsSendApplicationServiceTest extends BaseMockitoUnitTest {
     @Mock
     private SmsChannelRepository smsChannelRepository;
     @Mock
-    private AdminUserApplicationService adminUserService;
+    private SmsClientFactory smsClientFactory;
+    @Mock
+    private SmsChannelMapper smsChannelMapper;
+    @Mock
+    private SmsTemplateMapper smsTemplateMapper;
+    @Mock
+    private SmsLogMapper smsLogMapper;
+    @Mock
+    private SmsCodeMapper smsCodeMapper;
+    @Mock
+    private SmsCodeProperties smsCodeProperties;
+    @Mock
+    private AdminUserUseCase adminUserService;
     @Mock
     private MemberApplicationService memberApplicationService;
     @Mock
@@ -51,10 +68,10 @@ public class SmsSendApplicationServiceTest extends BaseMockitoUnitTest {
 
     @BeforeEach
     public void setUp() {
-        smsSendService = spy(new SmsApplicationService(smsChannelRepository));
-        ReflectionTestUtils.setField(smsSendService, "adminUserService", adminUserService);
-        ReflectionTestUtils.setField(smsSendService, "memberApplicationService", memberApplicationService);
-        ReflectionTestUtils.setField(smsSendService, "smsProducer", smsProducer);
+        smsSendService = spy(new SmsApplicationService(smsChannelRepository,
+                smsClientFactory, smsChannelMapper, smsTemplateMapper, smsLogMapper,
+                smsCodeMapper, smsCodeProperties, adminUserService,
+                memberApplicationService, smsProducer));
     }
 
     @Test

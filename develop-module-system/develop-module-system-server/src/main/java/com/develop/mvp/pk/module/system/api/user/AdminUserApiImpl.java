@@ -1,6 +1,6 @@
 package com.develop.mvp.pk.module.system.api.user;
 
-import com.develop.mvp.pk.module.system.application.dept.service.DeptApplicationService;
+import com.develop.mvp.pk.module.system.application.dept.port.inbound.DeptUseCase;
 // Skill: AggregateRoot_User_Validation_Skill — 接口层 AdminUserApiImpl (Feign RPC)
 // DDD 角色：Feign RPC 端点，调用 UserApplicationService
 
@@ -10,7 +10,7 @@ import com.develop.mvp.pk.framework.common.pojo.CommonResult;
 import com.develop.mvp.pk.framework.datapermission.core.annotation.DataPermission;
 import com.develop.mvp.pk.framework.datapermission.core.util.DataPermissionUtils;
 import com.develop.mvp.pk.module.system.api.user.dto.AdminUserRespDTO;
-import com.develop.mvp.pk.module.system.application.user.service.UserApplicationService;
+import com.develop.mvp.pk.module.system.application.user.port.inbound.UserUseCase;
 import com.develop.mvp.pk.module.system.dal.dataobject.dept.DeptDO;
 import com.develop.mvp.pk.module.system.domain.user.User;
 import jakarta.annotation.Resource;
@@ -28,9 +28,9 @@ import static com.develop.mvp.pk.framework.common.util.collection.CollectionUtil
 public class AdminUserApiImpl implements AdminUserApi {
 
     @Resource
-    private UserApplicationService userApplicationService;
+    private UserUseCase userApplicationService;
     @Resource
-    private DeptApplicationService deptService;
+    private DeptUseCase deptUseCase;
 
     @Override
     @DataPermission(enable = false)
@@ -44,11 +44,11 @@ public class AdminUserApiImpl implements AdminUserApi {
         User user = userApplicationService.getUser(id);
         if (user == null) return success(Collections.emptyList());
         ArrayList<Long> deptIds = new ArrayList<>();
-        DeptDO dept = deptService.getDept(user.deptId());
+        DeptDO dept = deptUseCase.getDept(user.deptId());
         if (dept == null) return success(Collections.emptyList());
         if (ObjUtil.notEqual(dept.getLeaderUserId(), id)) return success(Collections.emptyList());
         deptIds.add(dept.getId());
-        List<DeptDO> childDeptList = deptService.getChildDeptList(dept.getId());
+        List<DeptDO> childDeptList = deptUseCase.getChildDeptList(dept.getId());
         if (CollUtil.isNotEmpty(childDeptList)) {
             deptIds.addAll(convertSet(childDeptList, DeptDO::getId));
         }

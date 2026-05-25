@@ -5,6 +5,7 @@ import com.tngtech.archunit.core.importer.ClassFileImporter;
 import com.tngtech.archunit.core.importer.ImportOption;
 import com.tngtech.archunit.lang.ArchRule;
 
+import static com.tngtech.archunit.lang.syntax.ArchRuleDefinition.classes;
 import static com.tngtech.archunit.lang.syntax.ArchRuleDefinition.noClasses;
 
 public final class DevelopArchitectureRules {
@@ -24,6 +25,18 @@ public final class DevelopArchitectureRules {
         applicationShouldNotDependOnEntryOrInfrastructure().check(classes);
         entryLayersShouldNotAccessPersistenceDirectly().check(classes);
         apiModuleShouldNotContainRuntimeImplementation().check(classes);
+    }
+
+    public static void verifyDddRuntimeUnitFull(String basePackage) {
+        JavaClasses classes = importPackages(basePackage);
+        domainShouldStayPure().check(classes);
+        applicationShouldNotDependOnEntryOrInfrastructure().check(classes);
+        entryLayersShouldNotAccessPersistenceDirectly().check(classes);
+        apiModuleShouldNotContainRuntimeImplementation().check(classes);
+        applicationServiceShouldNotHaveServiceAnnotation().check(classes);
+        adapterInboundShouldNotDependOnPersistence().check(classes);
+        adapterShouldNotDependOnEachOther().check(classes);
+        infrastructureShouldNotDependOnApplicationService().check(classes);
     }
 
     public static ArchRule domainShouldStayPure() {
@@ -79,6 +92,38 @@ public final class DevelopArchitectureRules {
                         "com.baomidou.mybatisplus..",
                         "org.apache.ibatis.."
                 )
+                .allowEmptyShould(true);
+    }
+
+    public static ArchRule applicationServiceShouldNotHaveServiceAnnotation() {
+        return noClasses()
+                .that().resideInAPackage("..application..service..")
+                .should().beAnnotatedWith(org.springframework.stereotype.Service.class)
+                .allowEmptyShould(true);
+    }
+
+    public static ArchRule adapterInboundShouldNotDependOnPersistence() {
+        return noClasses()
+                .that().resideInAnyPackage("..controller..", "..job..", "..mq..")
+                .should().dependOnClassesThat().resideInAnyPackage(
+                        "..dal..",
+                        "com.baomidou.mybatisplus..",
+                        "org.apache.ibatis.."
+                )
+                .allowEmptyShould(true);
+    }
+
+    public static ArchRule adapterShouldNotDependOnEachOther() {
+        return noClasses()
+                .that().resideInAnyPackage("..controller..", "..infrastructure..")
+                .should().dependOnClassesThat().resideInAPackage("..controller..")
+                .allowEmptyShould(true);
+    }
+
+    public static ArchRule infrastructureShouldNotDependOnApplicationService() {
+        return noClasses()
+                .that().resideInAPackage("..infrastructure..")
+                .should().dependOnClassesThat().resideInAPackage("..application..service..")
                 .allowEmptyShould(true);
     }
 }

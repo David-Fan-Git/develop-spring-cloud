@@ -52,7 +52,6 @@ import com.develop.mvp.pk.module.system.framework.justauth.core.AuthRequestFacto
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.cache.CacheLoader;
 import com.google.common.cache.LoadingCache;
-import jakarta.annotation.Resource;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotNull;
 import lombok.SneakyThrows;
@@ -75,7 +74,6 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.cache.annotation.Cacheable;
 import org.springframework.data.redis.core.StringRedisTemplate;
-import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.validation.annotation.Validated;
 
@@ -95,57 +93,70 @@ import static com.develop.mvp.pk.framework.common.util.json.JsonUtils.toJsonStri
 import static com.develop.mvp.pk.module.system.enums.ErrorCodeConstants.*;
 import static java.util.Collections.singletonList;
 
-@Service
 @Validated
 @Slf4j
 public class SocialApplicationService implements SocialUseCase {
 
-    @Value("${develop.wxa-code.env-version:release}")
-    public String envVersion;
-    @Value("${develop.wxa-subscribe-message.miniprogram-state:formal}")
-    public String miniprogramState;
-
     private static final long[] UPLOAD_SHIPPING_INFO_RETRY_BACKOFF_MILLIS = {1000, 2000, 4000};
     private static final int WX_ERR_CODE_PAY_ORDER_NOT_EXIST = 10060001;
 
-    @SuppressWarnings("SpringJavaAutowiredFieldsWarningInspection")
-    @Autowired(required = false)
-    private AuthRequestFactory authRequestFactory;
+    private final String envVersion;
+    private final String miniprogramState;
 
-    @Resource
-    private WxMpService wxMpService;
-    @Resource
-    private WxMpProperties wxMpProperties;
-    @Resource
-    private StringRedisTemplate stringRedisTemplate;
-    @Resource
-    private WxMaService wxMaService;
-    @Resource
-    private WxMaProperties wxMaProperties;
-    @Resource
-    private SocialClientMapper socialClientMapper;
-    @Resource
-    private SocialUserBindMapper socialUserBindMapper;
-    @Resource
-    private SocialUserMapper socialUserMapper;
+    private final AuthRequestFactory authRequestFactory;
 
-    private final LoadingCache<String, WxMpService> wxMpServiceCache = CacheUtils.buildAsyncReloadingCache(
-            Duration.ofSeconds(10L), new CacheLoader<>() {
-                @Override
-                public WxMpService load(String key) {
-                    String[] keys = key.split(":");
-                    return buildWxMpService(keys[0], keys[1]);
-                }
-            });
+    private final WxMpService wxMpService;
+    private final WxMpProperties wxMpProperties;
+    private final StringRedisTemplate stringRedisTemplate;
+    private final WxMaService wxMaService;
+    private final WxMaProperties wxMaProperties;
+    private final SocialClientMapper socialClientMapper;
+    private final SocialUserBindMapper socialUserBindMapper;
+    private final SocialUserMapper socialUserMapper;
 
-    private final LoadingCache<String, WxMaService> wxMaServiceCache = CacheUtils.buildAsyncReloadingCache(
-            Duration.ofSeconds(10L), new CacheLoader<>() {
-                @Override
-                public WxMaService load(String key) {
-                    String[] keys = key.split(":");
-                    return buildWxMaService(keys[0], keys[1]);
-                }
-            });
+    private final LoadingCache<String, WxMpService> wxMpServiceCache;
+    private final LoadingCache<String, WxMaService> wxMaServiceCache;
+
+    public SocialApplicationService(
+            @Autowired(required = false) AuthRequestFactory authRequestFactory,
+            WxMpService wxMpService,
+            WxMpProperties wxMpProperties,
+            StringRedisTemplate stringRedisTemplate,
+            WxMaService wxMaService,
+            WxMaProperties wxMaProperties,
+            SocialClientMapper socialClientMapper,
+            SocialUserBindMapper socialUserBindMapper,
+            SocialUserMapper socialUserMapper,
+            @Value("${develop.wxa-code.env-version:release}") String envVersion,
+            @Value("${develop.wxa-subscribe-message.miniprogram-state:formal}") String miniprogramState) {
+        this.authRequestFactory = authRequestFactory;
+        this.wxMpService = wxMpService;
+        this.wxMpProperties = wxMpProperties;
+        this.stringRedisTemplate = stringRedisTemplate;
+        this.wxMaService = wxMaService;
+        this.wxMaProperties = wxMaProperties;
+        this.socialClientMapper = socialClientMapper;
+        this.socialUserBindMapper = socialUserBindMapper;
+        this.socialUserMapper = socialUserMapper;
+        this.envVersion = envVersion;
+        this.miniprogramState = miniprogramState;
+        this.wxMpServiceCache = CacheUtils.buildAsyncReloadingCache(
+                Duration.ofSeconds(10L), new CacheLoader<>() {
+                    @Override
+                    public WxMpService load(String key) {
+                        String[] keys = key.split(":");
+                        return buildWxMpService(keys[0], keys[1]);
+                    }
+                });
+        this.wxMaServiceCache = CacheUtils.buildAsyncReloadingCache(
+                Duration.ofSeconds(10L), new CacheLoader<>() {
+                    @Override
+                    public WxMaService load(String key) {
+                        String[] keys = key.split(":");
+                        return buildWxMaService(keys[0], keys[1]);
+                    }
+                });
+    }
 
     public String getAuthorizeUrl(Integer socialType, Integer userType, String redirectUri) {
         AuthRequest authRequest = buildAuthRequest(socialType, userType);
@@ -166,7 +177,7 @@ public class SocialApplicationService implements SocialUseCase {
     }
 
     @VisibleForTesting
-    AuthRequest buildAuthRequest(Integer socialType, Integer userType) {
+    public AuthRequest buildAuthRequest(Integer socialType, Integer userType) {
         AuthRequest request = authRequestFactory.get(SocialTypeEnum.valueOfType(socialType).getSource());
         Assert.notNull(request, String.format("社交平台(%d) 不存在", socialType));
         SocialClientDO client = socialClientMapper.selectBySocialTypeAndUserType(socialType, userType);

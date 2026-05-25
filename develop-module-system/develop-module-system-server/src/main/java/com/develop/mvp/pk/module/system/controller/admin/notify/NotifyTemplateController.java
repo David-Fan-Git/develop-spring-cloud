@@ -8,7 +8,7 @@ import com.develop.mvp.pk.module.system.controller.admin.notify.vo.template.Noti
 import com.develop.mvp.pk.module.system.controller.admin.notify.vo.template.NotifyTemplateRespVO;
 import com.develop.mvp.pk.module.system.controller.admin.notify.vo.template.NotifyTemplateSaveReqVO;
 import com.develop.mvp.pk.module.system.controller.admin.notify.vo.template.NotifyTemplateSendReqVO;
-import com.develop.mvp.pk.module.system.application.notify.service.NotifyApplicationService;
+import com.develop.mvp.pk.module.system.application.notify.port.inbound.NotifyUseCase;
 import com.develop.mvp.pk.module.system.dal.dataobject.notify.NotifyTemplateDO;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
@@ -30,10 +30,10 @@ import static com.develop.mvp.pk.framework.common.pojo.CommonResult.success;
 public class NotifyTemplateController {
 
     @Resource
-    private NotifyApplicationService notifyTemplateService;
+    private NotifyUseCase notifyTemplateService;
 
     @Resource
-    private NotifyApplicationService notifySendService;
+    private NotifyUseCase notifySendService;
 
     @PostMapping("/create")
     @Operation(summary = "创建站内信模版")

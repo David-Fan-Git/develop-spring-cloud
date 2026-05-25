@@ -3,13 +3,14 @@ package com.develop.mvp.pk.module.system.application.tenant;
 import com.develop.mvp.pk.framework.common.enums.CommonStatusEnum;
 import com.develop.mvp.pk.framework.common.pojo.PageResult;
 import com.develop.mvp.pk.framework.test.core.ut.BaseDbUnitTest;
-import com.develop.mvp.pk.module.system.application.tenant.service.TenantApplicationService;
+import com.develop.mvp.pk.module.system.application.tenant.port.inbound.TenantUseCase;
 import com.develop.mvp.pk.module.system.application.tenant.service.TenantPackageApplicationService;
 import com.develop.mvp.pk.module.system.controller.admin.tenant.vo.packages.TenantPackagePageReqVO;
 import com.develop.mvp.pk.module.system.controller.admin.tenant.vo.packages.TenantPackageSaveReqVO;
-import com.develop.mvp.pk.module.system.dal.dataobject.tenant.TenantDO;
 import com.develop.mvp.pk.module.system.dal.dataobject.tenant.TenantPackageDO;
 import com.develop.mvp.pk.module.system.dal.mysql.tenant.TenantPackageMapper;
+import com.develop.mvp.pk.module.system.domain.tenant.Tenant;
+import com.develop.mvp.pk.module.system.domain.tenant.valueobject.TenantId;
 import org.junit.jupiter.api.Test;
 import org.springframework.context.annotation.Import;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
@@ -27,8 +28,7 @@ import static com.develop.mvp.pk.module.system.enums.ErrorCodeConstants.*;
 import static java.util.Arrays.asList;
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.eq;
-import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.when;
+import static org.mockito.Mockito.*;
 
 @Import(TenantPackageApplicationService.class)
 class TenantPackageApplicationServiceTest extends BaseDbUnitTest {
@@ -40,7 +40,7 @@ class TenantPackageApplicationServiceTest extends BaseDbUnitTest {
     private TenantPackageMapper tenantPackageMapper;
 
     @MockitoBean
-    private TenantApplicationService tenantApplicationService;
+    private TenantUseCase tenantUseCase;
 
     @Test
     void testCreateTenantPackage_success() {
@@ -66,16 +66,19 @@ class TenantPackageApplicationServiceTest extends BaseDbUnitTest {
         });
         Long tenantId01 = randomLongId();
         Long tenantId02 = randomLongId();
-        when(tenantApplicationService.getTenantListByPackageId(eq(reqVO.getId()))).thenReturn(
-                asList(randomPojo(TenantDO.class, o -> o.setId(tenantId01)),
-                        randomPojo(TenantDO.class, o -> o.setId(tenantId02))));
+        Tenant tenant1 = mock(Tenant.class);
+        when(tenant1.id()).thenReturn(TenantId.of(tenantId01));
+        Tenant tenant2 = mock(Tenant.class);
+        when(tenant2.id()).thenReturn(TenantId.of(tenantId02));
+        when(tenantUseCase.getTenantDomainListByPackageId(eq(reqVO.getId()))).thenReturn(
+                asList(tenant1, tenant2));
 
         tenantPackageService.updateTenantPackage(reqVO);
 
         TenantPackageDO tenantPackage = tenantPackageMapper.selectById(reqVO.getId());
         assertPojoEquals(reqVO, tenantPackage);
-        verify(tenantApplicationService).updateTenantRoleMenu(eq(tenantId01), eq(reqVO.getMenuIds()));
-        verify(tenantApplicationService).updateTenantRoleMenu(eq(tenantId02), eq(reqVO.getMenuIds()));
+        verify(tenantUseCase).updateTenantRoleMenu(eq(tenantId01), eq(reqVO.getMenuIds()));
+        verify(tenantUseCase).updateTenantRoleMenu(eq(tenantId02), eq(reqVO.getMenuIds()));
     }
 
     @Test
@@ -90,7 +93,7 @@ class TenantPackageApplicationServiceTest extends BaseDbUnitTest {
         TenantPackageDO dbTenantPackage = randomPojo(TenantPackageDO.class);
         tenantPackageMapper.insert(dbTenantPackage);
         Long id = dbTenantPackage.getId();
-        when(tenantApplicationService.getTenantCountByPackageId(eq(id))).thenReturn(0L);
+        when(tenantUseCase.getTenantCountByPackageId(eq(id))).thenReturn(0L);
 
         tenantPackageService.deleteTenantPackage(id);
 
@@ -109,7 +112,7 @@ class TenantPackageApplicationServiceTest extends BaseDbUnitTest {
         TenantPackageDO dbTenantPackage = randomPojo(TenantPackageDO.class);
         tenantPackageMapper.insert(dbTenantPackage);
         Long id = dbTenantPackage.getId();
-        when(tenantApplicationService.getTenantCountByPackageId(eq(id))).thenReturn(1L);
+        when(tenantUseCase.getTenantCountByPackageId(eq(id))).thenReturn(1L);
 
         assertServiceException(() -> tenantPackageService.deleteTenantPackage(id), TENANT_PACKAGE_USED);
     }

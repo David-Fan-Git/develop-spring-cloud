@@ -1,6 +1,6 @@
 package com.develop.mvp.pk.module.system.controller.admin.tenant;
 
-// Skill: AggregateRoot_Tenant_Validation_Skill — 适配 Controller 使用 TenantApplicationService
+// Skill: AggregateRoot_Tenant_Validation_Skill — 适配 Controller 使用 TenantUseCase 入站端口
 // DDD 角色：表示层，仅负责参数校验和 VO 转换，不包含业务逻辑
 
 import com.develop.mvp.pk.framework.apilog.core.annotation.ApiAccessLog;
@@ -11,11 +11,10 @@ import com.develop.mvp.pk.framework.common.pojo.PageResult;
 import com.develop.mvp.pk.framework.common.util.object.BeanUtils;
 import com.develop.mvp.pk.framework.excel.core.util.ExcelUtils;
 import com.develop.mvp.pk.framework.tenant.core.aop.TenantIgnore;
-import com.develop.mvp.pk.module.system.application.tenant.service.TenantApplicationService;
+import com.develop.mvp.pk.module.system.application.tenant.port.inbound.TenantUseCase;
 import com.develop.mvp.pk.module.system.controller.admin.tenant.vo.tenant.TenantPageReqVO;
 import com.develop.mvp.pk.module.system.controller.admin.tenant.vo.tenant.TenantRespVO;
 import com.develop.mvp.pk.module.system.controller.admin.tenant.vo.tenant.TenantSaveReqVO;
-import com.develop.mvp.pk.module.system.dal.dataobject.tenant.TenantDO;
 import com.develop.mvp.pk.module.system.domain.tenant.Tenant;
 import com.develop.mvp.pk.module.system.domain.tenant.repository.TenantPageQuery;
 import io.swagger.v3.oas.annotations.Operation;
@@ -44,7 +43,7 @@ import static com.develop.mvp.pk.framework.common.pojo.CommonResult.success;
 public class TenantController {
 
     @Resource
-    private TenantApplicationService tenantApplicationService;
+    private TenantUseCase tenantUseCase;
 
     @GetMapping("/get-id-by-name")
     @PermitAll
@@ -52,7 +51,7 @@ public class TenantController {
     @Operation(summary = "使用租户名，获得租户编号", description = "登录界面，根据用户的租户名，获得租户编号")
     @Parameter(name = "name", description = "租户名", required = true, example = "1024")
     public CommonResult<Long> getTenantIdByName(@RequestParam("name") String name) {
-        Tenant tenant = tenantApplicationService.getTenantByName(name);
+        Tenant tenant = tenantUseCase.getTenantByName(name);
         return success(tenant != null ? tenant.id().value() : null);
     }
 
@@ -61,10 +60,10 @@ public class TenantController {
     @TenantIgnore
     @Operation(summary = "获取租户精简信息列表", description = "只包含被开启的租户，用于【首页】功能的选择租户选项")
     public CommonResult<List<TenantRespVO>> getTenantSimpleList() {
-        List<TenantDO> list = tenantApplicationService.getTenantListByStatus(
+        List<Tenant> list = tenantUseCase.getTenantDomainListByStatus(
                 CommonStatusEnum.ENABLE.getStatus());
         return success(list.stream()
-                .map(t -> new TenantRespVO().setId(t.getId()).setName(t.getName()))
+                .map(t -> new TenantRespVO().setId(t.id().value()).setName(t.name().value()))
                 .collect(Collectors.toList()));
     }
 
@@ -75,7 +74,7 @@ public class TenantController {
     @Parameter(name = "website", description = "域名", required = true, example = "www.iocoder.cn")
     public CommonResult<TenantRespVO> getTenantByWebsite(
             @RequestParam("website") @Pattern(regexp = "^[a-zA-Z0-9.-]+(:\\d{1,5})?$", message = "网站域名格式不正确") String website) {
-        Tenant tenant = tenantApplicationService.getTenantByWebsite(website);
+        Tenant tenant = tenantUseCase.getTenantByWebsite(website);
         if (tenant == null || tenant.isDisabled()) {
             return success(null);
         }
@@ -87,7 +86,7 @@ public class TenantController {
     @PreAuthorize("@ss.hasPermission('system:tenant:create')")
     public CommonResult<Long> createTenant(@Valid @RequestBody TenantSaveReqVO createReqVO) {
         Long nextId = createReqVO.getId(); // 由数据库自增或指定
-        return success(tenantApplicationService.createTenant(
+        return success(tenantUseCase.createTenant(
                 nextId, createReqVO.getName(), createReqVO.getContactName(),
                 createReqVO.getContactMobile(), createReqVO.getStatus(),
                 createReqVO.getWebsites(), createReqVO.getPackageId(),
@@ -99,7 +98,7 @@ public class TenantController {
     @Operation(summary = "更新租户")
     @PreAuthorize("@ss.hasPermission('system:tenant:update')")
     public CommonResult<Boolean> updateTenant(@Valid @RequestBody TenantSaveReqVO updateReqVO) {
-        tenantApplicationService.updateTenant(
+        tenantUseCase.updateTenant(
                 updateReqVO.getId(), updateReqVO.getName(), updateReqVO.getContactName(),
                 updateReqVO.getContactMobile(), updateReqVO.getStatus(),
                 updateReqVO.getWebsites(), updateReqVO.getPackageId(),
@@ -112,7 +111,7 @@ public class TenantController {
     @Parameter(name = "id", description = "编号", required = true, example = "1024")
     @PreAuthorize("@ss.hasPermission('system:tenant:delete')")
     public CommonResult<Boolean> deleteTenant(@RequestParam("id") Long id) {
-        tenantApplicationService.deleteTenant(id);
+        tenantUseCase.deleteTenant(id);
         return success(true);
     }
 
@@ -121,7 +120,7 @@ public class TenantController {
     @Operation(summary = "批量删除租户")
     @PreAuthorize("@ss.hasPermission('system:tenant:delete')")
     public CommonResult<Boolean> deleteTenantList(@RequestParam("ids") List<Long> ids) {
-        tenantApplicationService.deleteTenantList(ids);
+        tenantUseCase.deleteTenantList(ids);
         return success(true);
     }
 
@@ -130,7 +129,7 @@ public class TenantController {
     @Parameter(name = "id", description = "编号", required = true, example = "1024")
     @PreAuthorize("@ss.hasPermission('system:tenant:query')")
     public CommonResult<TenantRespVO> getTenant(@RequestParam("id") Long id) {
-        Tenant tenant = tenantApplicationService.getTenant(id);
+        Tenant tenant = tenantUseCase.getTenant(id);
         return success(tenant != null ? toRespVO(tenant) : null);
     }
 
@@ -142,7 +141,7 @@ public class TenantController {
                 pageVO.getName(), pageVO.getContactName(), pageVO.getContactMobile(),
                 pageVO.getStatus(), pageVO.getCreateTime(),
                 pageVO.getPageNo(), pageVO.getPageSize());
-        PageResult<Tenant> pageResult = tenantApplicationService.getTenantPage(query);
+        PageResult<Tenant> pageResult = tenantUseCase.getTenantPage(query);
         List<TenantRespVO> voList = pageResult.getList().stream()
                 .map(this::toRespVO).collect(Collectors.toList());
         return success(new PageResult<>(voList, pageResult.getTotal()));
@@ -157,7 +156,7 @@ public class TenantController {
         TenantPageQuery query = new TenantPageQuery(
                 exportReqVO.getName(), exportReqVO.getContactName(), exportReqVO.getContactMobile(),
                 exportReqVO.getStatus(), exportReqVO.getCreateTime(), null, null);
-        List<Tenant> list = tenantApplicationService.getTenantPage(query).getList();
+        List<Tenant> list = tenantUseCase.getTenantPage(query).getList();
         List<TenantRespVO> voList = list.stream().map(this::toRespVO).collect(Collectors.toList());
         ExcelUtils.write(response, "租户.xls", "数据", TenantRespVO.class, voList);
     }

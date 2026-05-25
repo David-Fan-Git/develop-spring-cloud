@@ -8,7 +8,7 @@ import com.develop.mvp.pk.framework.common.enums.UserTypeEnum;
 import com.develop.mvp.pk.framework.common.pojo.CommonResult;
 import com.develop.mvp.pk.framework.common.util.http.HttpUtils;
 import com.develop.mvp.pk.framework.common.util.json.JsonUtils;
-import com.develop.mvp.pk.module.system.application.oauth2.service.OAuth2ApplicationService;
+import com.develop.mvp.pk.module.system.application.oauth2.port.inbound.OAuth2UseCase;
 import com.develop.mvp.pk.module.system.controller.admin.oauth2.vo.open.OAuth2OpenAccessTokenRespVO;
 import com.develop.mvp.pk.module.system.controller.admin.oauth2.vo.open.OAuth2OpenAuthorizeInfoRespVO;
 import com.develop.mvp.pk.module.system.controller.admin.oauth2.vo.open.OAuth2OpenCheckTokenRespVO;
@@ -59,13 +59,13 @@ import static com.develop.mvp.pk.framework.security.core.util.SecurityFrameworkU
 public class OAuth2OpenController {
 
     @Resource
-    private OAuth2ApplicationService oauth2GrantService;
+    private OAuth2UseCase oauth2GrantService;
     @Resource
-    private OAuth2ApplicationService oauth2ClientService;
+    private OAuth2UseCase oauth2ClientService;
     @Resource
-    private OAuth2ApplicationService oauth2ApproveService;
+    private OAuth2UseCase oauth2ApproveService;
     @Resource
-    private OAuth2ApplicationService oauth2TokenService;
+    private OAuth2UseCase oauth2TokenService;
 
     /**
      * 对应 Spring Security OAuth 的 TokenEndpoint 类的 postAccessToken 方法

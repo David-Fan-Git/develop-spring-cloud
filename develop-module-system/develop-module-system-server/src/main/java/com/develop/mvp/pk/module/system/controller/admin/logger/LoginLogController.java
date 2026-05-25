@@ -8,7 +8,7 @@ import com.develop.mvp.pk.framework.common.util.object.BeanUtils;
 import com.develop.mvp.pk.framework.excel.core.util.ExcelUtils;
 import com.develop.mvp.pk.module.system.controller.admin.logger.vo.loginlog.LoginLogPageReqVO;
 import com.develop.mvp.pk.module.system.controller.admin.logger.vo.loginlog.LoginLogRespVO;
-import com.develop.mvp.pk.module.system.application.logger.service.LoggerApplicationService;
+import com.develop.mvp.pk.module.system.application.logger.port.inbound.LoggerUseCase;
 import com.develop.mvp.pk.module.system.dal.dataobject.logger.LoginLogDO;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -34,13 +34,13 @@ import static com.develop.mvp.pk.framework.common.pojo.CommonResult.success;
 public class LoginLogController {
 
     @Resource
-    private LoggerApplicationService loggerApplicationService;
+    private LoggerUseCase loggerUseCase;
 
     @GetMapping("/get")
     @Operation(summary = "获得登录日志")
     @PreAuthorize("@ss.hasPermission('system:login-log:query')")
     public CommonResult<LoginLogRespVO> getLoginLog(Long id) {
-        LoginLogDO loginLog = loggerApplicationService.getLoginLog(id);
+        LoginLogDO loginLog = loggerUseCase.getLoginLog(id);
         return success(BeanUtils.toBean(loginLog, LoginLogRespVO.class));
     }
 
@@ -48,7 +48,7 @@ public class LoginLogController {
     @Operation(summary = "获得登录日志分页列表")
     @PreAuthorize("@ss.hasPermission('system:login-log:query')")
     public CommonResult<PageResult<LoginLogRespVO>> getLoginLogPage(@Valid LoginLogPageReqVO pageReqVO) {
-        PageResult<LoginLogDO> pageResult = loggerApplicationService.getLoginLogPage(pageReqVO);
+        PageResult<LoginLogDO> pageResult = loggerUseCase.getLoginLogPage(pageReqVO);
         return success(BeanUtils.toBean(pageResult, LoginLogRespVO.class));
     }
 
@@ -58,7 +58,7 @@ public class LoginLogController {
     @ApiAccessLog(operateType = EXPORT)
     public void exportLoginLog(HttpServletResponse response, @Valid LoginLogPageReqVO exportReqVO) throws IOException {
         exportReqVO.setPageSize(PageParam.PAGE_SIZE_NONE);
-        List<LoginLogDO> list = loggerApplicationService.getLoginLogPage(exportReqVO).getList();
+        List<LoginLogDO> list = loggerUseCase.getLoginLogPage(exportReqVO).getList();
         // 输出
         ExcelUtils.write(response, "登录日志.xls", "数据列表", LoginLogRespVO.class,
                 BeanUtils.toBean(list, LoginLogRespVO.class));

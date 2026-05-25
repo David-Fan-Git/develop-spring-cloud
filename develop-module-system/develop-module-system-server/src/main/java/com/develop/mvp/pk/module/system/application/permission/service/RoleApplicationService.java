@@ -7,6 +7,8 @@ import com.develop.mvp.pk.framework.common.enums.CommonStatusEnum;
 import com.develop.mvp.pk.framework.common.pojo.PageResult;
 import com.develop.mvp.pk.framework.common.util.collection.CollectionUtils;
 import com.develop.mvp.pk.framework.common.util.object.BeanUtils;
+import com.develop.mvp.pk.module.system.application.permission.port.inbound.PermissionUseCase;
+import com.develop.mvp.pk.module.system.application.permission.port.inbound.RoleUseCase;
 import com.develop.mvp.pk.module.system.controller.admin.permission.vo.role.RolePageReqVO;
 import com.develop.mvp.pk.module.system.controller.admin.permission.vo.role.RoleSaveReqVO;
 import com.develop.mvp.pk.module.system.dal.dataobject.permission.RoleDO;
@@ -24,12 +26,10 @@ import com.google.common.annotations.VisibleForTesting;
 import com.mzt.logapi.context.LogRecordContext;
 import com.mzt.logapi.service.impl.DiffParseFunction;
 import com.mzt.logapi.starter.annotation.LogRecord;
-import jakarta.annotation.Resource;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.cache.annotation.Cacheable;
 import org.springframework.context.annotation.Lazy;
-import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.StringUtils;
 
@@ -40,17 +40,63 @@ import static com.develop.mvp.pk.framework.common.util.collection.CollectionUtil
 import static com.develop.mvp.pk.module.system.enums.ErrorCodeConstants.*;
 import static com.develop.mvp.pk.module.system.enums.LogRecordConstants.*;
 
-@Service
 @Slf4j
-public class RoleApplicationService {
+public class RoleApplicationService implements RoleUseCase {
 
-    @Resource
-    private RoleRepository roleRepository;
-    @Resource
-    private RoleMapper roleMapper;
-    @Resource
-    @Lazy
-    private PermissionApplicationService permissionService;
+    private final RoleRepository roleRepository;
+    private final RoleMapper roleMapper;
+    private final PermissionUseCase permissionService;
+
+    public RoleApplicationService(RoleRepository roleRepository,
+                                  RoleMapper roleMapper,
+                                  @Lazy PermissionUseCase permissionService) {
+        this.roleRepository = roleRepository;
+        this.roleMapper = roleMapper;
+        this.permissionService = permissionService;
+    }
+
+    // ========== RoleUseCase domain-returning methods ==========
+
+    @Override
+    public Role createRole(String name, String code, Integer sort, Integer status, String remark, Integer type) {
+        return createRoleDomain(name, code, sort, status, remark, type);
+    }
+
+    @Override
+    public Role updateRole(Long id, String name, String code, Integer sort, Integer status, String remark) {
+        return updateRoleDomain(id, name, code, sort, status, remark);
+    }
+
+    @Override
+    @CacheEvict(value = RedisKeyConstants.ROLE, key = "#id")
+    public Role updateRoleDataScope(Long id, Integer dataScope, Set<Long> dataScopeDeptIds) {
+        Role role = validateRoleForUpdate(id);
+        role.changeDataScope(DataScope.of(dataScope, dataScopeDeptIds));
+        return roleRepository.save(role);
+    }
+
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    @CacheEvict(value = RedisKeyConstants.ROLE, key = "#id")
+    @LogRecord(type = SYSTEM_ROLE_TYPE, subType = SYSTEM_ROLE_DELETE_SUB_TYPE, bizNo = "{{#id}}",
+            success = SYSTEM_ROLE_DELETE_SUCCESS)
+    public Role deleteRole(Long id) {
+        Role role = deleteRoleDomain(id);
+        permissionService.processRoleDeleted(id);
+        LogRecordContext.putVariable("role", toDataObject(role));
+        return role;
+    }
+
+    @Override
+    public Role getRole(Long id) {
+        Role role = roleRepository.findById(RoleId.of(id));
+        if (role == null) {
+            throw exception(ROLE_NOT_EXISTS);
+        }
+        return role;
+    }
+
+    // ========== Existing public API (VO/DO based) ==========
 
     @Transactional(rollbackFor = Exception.class)
     @LogRecord(type = SYSTEM_ROLE_TYPE, subType = SYSTEM_ROLE_CREATE_SUB_TYPE, bizNo = "{{#role.id}}",
@@ -74,23 +120,6 @@ public class RoleApplicationService {
         LogRecordContext.putVariable("role", toDataObject(role));
     }
 
-    @CacheEvict(value = RedisKeyConstants.ROLE, key = "#id")
-    public void updateRoleDataScope(Long id, Integer dataScope, Set<Long> dataScopeDeptIds) {
-        Role role = validateRoleForUpdate(id);
-        role.changeDataScope(DataScope.of(dataScope, dataScopeDeptIds));
-        roleRepository.save(role);
-    }
-
-    @Transactional(rollbackFor = Exception.class)
-    @CacheEvict(value = RedisKeyConstants.ROLE, key = "#id")
-    @LogRecord(type = SYSTEM_ROLE_TYPE, subType = SYSTEM_ROLE_DELETE_SUB_TYPE, bizNo = "{{#id}}",
-            success = SYSTEM_ROLE_DELETE_SUCCESS)
-    public void deleteRole(Long id) {
-        Role role = deleteRoleDomain(id);
-        permissionService.processRoleDeleted(id);
-        LogRecordContext.putVariable("role", toDataObject(role));
-    }
-
     @Transactional(rollbackFor = Exception.class)
     public void deleteRoleList(List<Long> ids) {
         ids.forEach(id -> {
@@ -99,62 +128,8 @@ public class RoleApplicationService {
         });
     }
 
-    private Role createRoleDomain(String name, String code, Integer sort, Integer status, String remark, Integer type) {
-        validateRoleDuplicate(name, code, null);
-        Role role = RoleFactory.create(null, name, code, sort,
-                status != null ? status : CommonStatusEnum.ENABLE.getStatus(),
-                type != null ? type : RoleTypeEnum.CUSTOM.getType(),
-                remark, null, DataScopeEnum.ALL.getScope(), null);
-        return roleRepository.save(role);
-    }
-
-    private Role updateRoleDomain(Long id, String name, String code, Integer sort, Integer status, String remark) {
-        Role role = validateRoleForUpdate(id);
-        validateRoleDuplicate(name, code, id);
-        role.changeBaseInfo(name, code, sort, status, remark);
-        return roleRepository.save(role);
-    }
-
-    private Role deleteRoleDomain(Long id) {
-        Role role = validateRoleForUpdate(id);
-        role.markDeleted();
-        roleRepository.delete(RoleId.of(id));
-        return role;
-    }
-
-    @VisibleForTesting
-    public void validateRoleDuplicate(String name, String code, Long id) {
-        if (RoleCodeEnum.isSuperAdmin(code)) {
-            throw exception(ROLE_ADMIN_CODE_ERROR, code);
-        }
-        roleRepository.findByName(name).ifPresent(role -> {
-            if (!role.hasId(id)) {
-                throw exception(ROLE_NAME_DUPLICATE, name);
-            }
-        });
-        if (!StringUtils.hasText(code)) {
-            return;
-        }
-        roleRepository.findByCode(code).ifPresent(role -> {
-            if (!role.hasId(id)) {
-                throw exception(ROLE_CODE_DUPLICATE, code);
-            }
-        });
-    }
-
-    @VisibleForTesting
-    public Role validateRoleForUpdate(Long id) {
-        Role role = roleRepository.findById(RoleId.of(id));
-        if (role == null) {
-            throw exception(ROLE_NOT_EXISTS);
-        }
-        if (role.isSystem()) {
-            throw exception(ROLE_CAN_NOT_UPDATE_SYSTEM_TYPE_ROLE);
-        }
-        return role;
-    }
-
-    public RoleDO getRole(Long id) {
+    @Override
+    public RoleDO getRoleDO(Long id) {
         return roleMapper.selectById(id);
     }
 
@@ -217,6 +192,65 @@ public class RoleApplicationService {
             }
         });
     }
+
+    // ========== Domain helpers ==========
+
+    private Role createRoleDomain(String name, String code, Integer sort, Integer status, String remark, Integer type) {
+        validateRoleDuplicate(name, code, null);
+        Role role = RoleFactory.create(null, name, code, sort,
+                status != null ? status : CommonStatusEnum.ENABLE.getStatus(),
+                type != null ? type : RoleTypeEnum.CUSTOM.getType(),
+                remark, null, DataScopeEnum.ALL.getScope(), null);
+        return roleRepository.save(role);
+    }
+
+    private Role updateRoleDomain(Long id, String name, String code, Integer sort, Integer status, String remark) {
+        Role role = validateRoleForUpdate(id);
+        validateRoleDuplicate(name, code, id);
+        role.changeBaseInfo(name, code, sort, status, remark);
+        return roleRepository.save(role);
+    }
+
+    private Role deleteRoleDomain(Long id) {
+        Role role = validateRoleForUpdate(id);
+        role.markDeleted();
+        roleRepository.delete(RoleId.of(id));
+        return role;
+    }
+
+    @VisibleForTesting
+    public void validateRoleDuplicate(String name, String code, Long id) {
+        if (RoleCodeEnum.isSuperAdmin(code)) {
+            throw exception(ROLE_ADMIN_CODE_ERROR, code);
+        }
+        roleRepository.findByName(name).ifPresent(role -> {
+            if (!role.hasId(id)) {
+                throw exception(ROLE_NAME_DUPLICATE, name);
+            }
+        });
+        if (!StringUtils.hasText(code)) {
+            return;
+        }
+        roleRepository.findByCode(code).ifPresent(role -> {
+            if (!role.hasId(id)) {
+                throw exception(ROLE_CODE_DUPLICATE, code);
+            }
+        });
+    }
+
+    @VisibleForTesting
+    public Role validateRoleForUpdate(Long id) {
+        Role role = roleRepository.findById(RoleId.of(id));
+        if (role == null) {
+            throw exception(ROLE_NOT_EXISTS);
+        }
+        if (role.isSystem()) {
+            throw exception(ROLE_CAN_NOT_UPDATE_SYSTEM_TYPE_ROLE);
+        }
+        return role;
+    }
+
+    // ========== Private helpers ==========
 
     private RoleApplicationService getSelf() {
         return SpringUtil.getBean(getClass());

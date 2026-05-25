@@ -5,8 +5,8 @@ import com.develop.mvp.pk.framework.common.pojo.PageResult;
 import com.develop.mvp.pk.framework.common.util.object.BeanUtils;
 import com.develop.mvp.pk.module.system.controller.admin.oauth2.vo.token.OAuth2AccessTokenPageReqVO;
 import com.develop.mvp.pk.module.system.controller.admin.oauth2.vo.token.OAuth2AccessTokenRespVO;
-import com.develop.mvp.pk.module.system.application.auth.service.AuthApplicationService;
-import com.develop.mvp.pk.module.system.application.oauth2.service.OAuth2ApplicationService;
+import com.develop.mvp.pk.module.system.application.auth.port.inbound.AuthUseCase;
+import com.develop.mvp.pk.module.system.application.oauth2.port.inbound.OAuth2UseCase;
 import com.develop.mvp.pk.module.system.dal.dataobject.oauth2.OAuth2AccessTokenDO;
 import com.develop.mvp.pk.module.system.enums.logger.LoginLogTypeEnum;
 import io.swagger.v3.oas.annotations.Operation;
@@ -27,9 +27,9 @@ import static com.develop.mvp.pk.framework.common.pojo.CommonResult.success;
 public class OAuth2TokenController {
 
     @Resource
-    private OAuth2ApplicationService oauth2TokenService;
+    private OAuth2UseCase oauth2TokenService;
     @Resource
-    private AuthApplicationService authService;
+    private AuthUseCase authService;
 
     @GetMapping("/page")
     @Operation(summary = "获得访问令牌分页", description = "只返回有效期内的")

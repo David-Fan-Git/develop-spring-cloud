@@ -1,6 +1,6 @@
 package com.develop.mvp.pk.module.system.controller.admin.oauth2;
 
-import com.develop.mvp.pk.module.system.application.dept.service.DeptApplicationService;
+import com.develop.mvp.pk.module.system.application.dept.port.inbound.DeptUseCase;
 import cn.hutool.core.collection.CollUtil;
 import com.develop.mvp.pk.framework.common.pojo.CommonResult;
 import com.develop.mvp.pk.framework.common.util.object.BeanUtils;
@@ -10,7 +10,7 @@ import com.develop.mvp.pk.module.system.controller.admin.user.vo.profile.UserPro
 import com.develop.mvp.pk.module.system.dal.dataobject.dept.DeptDO;
 import com.develop.mvp.pk.module.system.dal.dataobject.dept.PostDO;
 import com.develop.mvp.pk.module.system.dal.dataobject.user.AdminUserDO;
-import com.develop.mvp.pk.module.system.application.user.service.AdminUserApplicationService;
+import com.develop.mvp.pk.module.system.application.user.port.inbound.AdminUserUseCase;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.extern.slf4j.Slf4j;
@@ -41,11 +41,11 @@ import static com.develop.mvp.pk.framework.security.core.util.SecurityFrameworkU
 public class OAuth2UserController {
 
     @Resource
-    private AdminUserApplicationService userService;
+    private AdminUserUseCase userService;
     @Resource
-    private DeptApplicationService deptService;
+    private DeptUseCase deptUseCase;
     @Resource
-    private DeptApplicationService postService;
+    private DeptUseCase postUseCase;
 
     @GetMapping("/get")
     @Operation(summary = "获得用户基本信息")
@@ -56,12 +56,12 @@ public class OAuth2UserController {
         OAuth2UserInfoRespVO resp = BeanUtils.toBean(user, OAuth2UserInfoRespVO.class);
         // 获得部门信息
         if (user.getDeptId() != null) {
-            DeptDO dept = deptService.getDept(user.getDeptId());
+            DeptDO dept = deptUseCase.getDept(user.getDeptId());
             resp.setDept(BeanUtils.toBean(dept, OAuth2UserInfoRespVO.Dept.class));
         }
         // 获得岗位信息
         if (CollUtil.isNotEmpty(user.getPostIds())) {
-            List<PostDO> posts = postService.getPostList(user.getPostIds());
+            List<PostDO> posts = postUseCase.getPostList(user.getPostIds());
             resp.setPosts(BeanUtils.toBean(posts, OAuth2UserInfoRespVO.Post.class));
         }
         return success(resp);

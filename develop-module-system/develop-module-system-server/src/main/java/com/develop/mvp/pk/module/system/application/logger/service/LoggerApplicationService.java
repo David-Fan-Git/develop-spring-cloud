@@ -13,11 +13,7 @@ import com.develop.mvp.pk.module.system.domain.logger.LoginLog;
 import com.develop.mvp.pk.module.system.domain.logger.OperateLog;
 import com.develop.mvp.pk.module.system.domain.logger.repository.LoginLogRepository;
 import com.develop.mvp.pk.module.system.domain.logger.repository.OperateLogRepository;
-import org.springframework.stereotype.Service;
-import org.springframework.validation.annotation.Validated;
 
-@Service
-@Validated
 public class LoggerApplicationService implements LoggerUseCase {
 
     private final LoginLogRepository loginLogRepository;

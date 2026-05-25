@@ -17,12 +17,9 @@ import com.develop.mvp.pk.module.system.dal.mysql.notify.NotifyMessageMapper;
 import com.develop.mvp.pk.module.system.dal.mysql.notify.NotifyTemplateMapper;
 import com.develop.mvp.pk.module.system.dal.redis.RedisKeyConstants;
 import com.google.common.annotations.VisibleForTesting;
-import jakarta.annotation.Resource;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.cache.annotation.Cacheable;
-import org.springframework.stereotype.Service;
-import org.springframework.validation.annotation.Validated;
 
 import java.util.Collection;
 import java.util.List;
@@ -33,17 +30,19 @@ import java.util.regex.Pattern;
 import static com.develop.mvp.pk.framework.common.exception.util.ServiceExceptionUtil.exception;
 import static com.develop.mvp.pk.module.system.enums.ErrorCodeConstants.*;
 
-@Service
-@Validated
 @Slf4j
 public class NotifyApplicationService implements NotifyUseCase {
 
     private static final Pattern PATTERN_PARAMS = Pattern.compile("\\{(.*?)}");
 
-    @Resource
-    private NotifyMessageMapper notifyMessageMapper;
-    @Resource
-    private NotifyTemplateMapper notifyTemplateMapper;
+    private final NotifyMessageMapper notifyMessageMapper;
+    private final NotifyTemplateMapper notifyTemplateMapper;
+
+    public NotifyApplicationService(NotifyMessageMapper notifyMessageMapper,
+                                     NotifyTemplateMapper notifyTemplateMapper) {
+        this.notifyMessageMapper = notifyMessageMapper;
+        this.notifyTemplateMapper = notifyTemplateMapper;
+    }
 
     public Long createNotifyMessage(Long userId, Integer userType,
                                     NotifyTemplateDO template, String templateContent, Map<String, Object> templateParams) {

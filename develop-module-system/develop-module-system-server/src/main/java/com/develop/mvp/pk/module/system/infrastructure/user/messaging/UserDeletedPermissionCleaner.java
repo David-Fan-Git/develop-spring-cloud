@@ -7,17 +7,17 @@ package com.develop.mvp.pk.module.system.infrastructure.user.messaging;
 
 import com.develop.mvp.pk.module.system.dal.mysql.dept.UserPostMapper;
 import com.develop.mvp.pk.module.system.domain.user.event.UserDeletedEvent;
-import com.develop.mvp.pk.module.system.application.permission.service.PermissionApplicationService;
+import com.develop.mvp.pk.module.system.application.permission.port.inbound.PermissionUseCase;
 import org.springframework.context.event.EventListener;
 import org.springframework.stereotype.Component;
 
 @Component
 public class UserDeletedPermissionCleaner {
 
-    private final PermissionApplicationService permissionService;
+    private final PermissionUseCase permissionService;
     private final UserPostMapper userPostMapper;
 
-    public UserDeletedPermissionCleaner(PermissionApplicationService permissionService,
+    public UserDeletedPermissionCleaner(PermissionUseCase permissionService,
                                          UserPostMapper userPostMapper) {
         this.permissionService = permissionService;
         this.userPostMapper = userPostMapper;

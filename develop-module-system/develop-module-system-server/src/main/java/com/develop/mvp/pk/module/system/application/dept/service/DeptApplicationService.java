@@ -23,12 +23,10 @@ import com.develop.mvp.pk.module.system.domain.dept.event.DeptDomainEvent;
 import com.develop.mvp.pk.module.system.domain.dept.repository.DeptRepository;
 import com.develop.mvp.pk.module.system.domain.dept.valueobject.DeptId;
 import com.google.common.annotations.VisibleForTesting;
-import jakarta.annotation.Resource;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.cache.annotation.Cacheable;
 import org.springframework.context.ApplicationEventPublisher;
-import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.validation.annotation.Validated;
 
@@ -40,18 +38,24 @@ import static com.develop.mvp.pk.framework.common.util.collection.CollectionUtil
 import static com.develop.mvp.pk.framework.common.util.collection.CollectionUtils.convertSet;
 import static com.develop.mvp.pk.module.system.enums.ErrorCodeConstants.*;
 
-@Service
 @Validated
 public class DeptApplicationService implements DeptUseCase {
 
-    @Autowired(required = false)
-    private DeptRepository deptRepository;
-    @Autowired(required = false)
-    private ApplicationEventPublisher eventPublisher;
-    @Resource
-    private DeptMapper deptMapper;
-    @Resource
-    private PostMapper postMapper;
+    private final DeptRepository deptRepository;
+    private final ApplicationEventPublisher eventPublisher;
+    private final DeptMapper deptMapper;
+    private final PostMapper postMapper;
+
+    public DeptApplicationService(
+            @Autowired(required = false) DeptRepository deptRepository,
+            @Autowired(required = false) ApplicationEventPublisher eventPublisher,
+            DeptMapper deptMapper,
+            PostMapper postMapper) {
+        this.deptRepository = deptRepository;
+        this.eventPublisher = eventPublisher;
+        this.deptMapper = deptMapper;
+        this.postMapper = postMapper;
+    }
 
     @CacheEvict(cacheNames = RedisKeyConstants.DEPT_CHILDREN_ID_LIST, allEntries = true)
     public Long createDept(DeptSaveReqVO createReqVO) {

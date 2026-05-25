@@ -6,7 +6,7 @@ import com.develop.mvp.pk.framework.common.util.object.BeanUtils;
 import com.develop.mvp.pk.module.system.controller.admin.oauth2.vo.client.OAuth2ClientPageReqVO;
 import com.develop.mvp.pk.module.system.controller.admin.oauth2.vo.client.OAuth2ClientRespVO;
 import com.develop.mvp.pk.module.system.controller.admin.oauth2.vo.client.OAuth2ClientSaveReqVO;
-import com.develop.mvp.pk.module.system.application.oauth2.service.OAuth2ApplicationService;
+import com.develop.mvp.pk.module.system.application.oauth2.port.inbound.OAuth2UseCase;
 import com.develop.mvp.pk.module.system.dal.dataobject.oauth2.OAuth2ClientDO;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
@@ -28,7 +28,7 @@ import static com.develop.mvp.pk.framework.common.pojo.CommonResult.success;
 public class OAuth2ClientController {
 
     @Resource
-    private OAuth2ApplicationService oAuth2ClientService;
+    private OAuth2UseCase oAuth2ClientService;
 
     @PostMapping("/create")
     @Operation(summary = "创建 OAuth2 客户端")

@@ -8,7 +8,7 @@ import com.develop.mvp.pk.framework.common.util.object.BeanUtils;
 import com.develop.mvp.pk.module.system.controller.admin.notify.vo.message.NotifyMessageMyPageReqVO;
 import com.develop.mvp.pk.module.system.controller.admin.notify.vo.message.NotifyMessagePageReqVO;
 import com.develop.mvp.pk.module.system.controller.admin.notify.vo.message.NotifyMessageRespVO;
-import com.develop.mvp.pk.module.system.application.notify.service.NotifyApplicationService;
+import com.develop.mvp.pk.module.system.application.notify.port.inbound.NotifyUseCase;
 import com.develop.mvp.pk.module.system.dal.dataobject.notify.NotifyMessageDO;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
@@ -31,7 +31,7 @@ import static com.develop.mvp.pk.framework.security.core.util.SecurityFrameworkU
 public class NotifyMessageController {
 
     @Resource
-    private NotifyApplicationService notifyMessageService;
+    private NotifyUseCase notifyMessageService;
 
     // ========== 管理所有的站内信 ==========
 

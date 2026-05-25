@@ -4,7 +4,7 @@ import com.develop.mvp.pk.framework.common.pojo.CommonResult;
 import com.develop.mvp.pk.module.system.api.social.dto.SocialUserBindReqDTO;
 import com.develop.mvp.pk.module.system.api.social.dto.SocialUserRespDTO;
 import com.develop.mvp.pk.module.system.api.social.dto.SocialUserUnbindReqDTO;
-import com.develop.mvp.pk.module.system.application.social.service.SocialApplicationService;
+import com.develop.mvp.pk.module.system.application.social.port.inbound.SocialUseCase;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.RestController;
 
@@ -17,28 +17,28 @@ import static com.develop.mvp.pk.framework.common.pojo.CommonResult.success;
 public class SocialUserApiImpl implements SocialUserApi {
 
     @Resource
-    private SocialApplicationService socialUserService;
+    private SocialUseCase socialUseCase;
 
     @Override
     public CommonResult<String> bindSocialUser(SocialUserBindReqDTO reqDTO) {
-        return success(socialUserService.bindSocialUser(reqDTO));
+        return success(socialUseCase.bindSocialUser(reqDTO));
     }
 
     @Override
     public CommonResult<Boolean> unbindSocialUser(SocialUserUnbindReqDTO reqDTO) {
-        socialUserService.unbindSocialUser(reqDTO.getUserId(), reqDTO.getUserType(),
+        socialUseCase.unbindSocialUser(reqDTO.getUserId(), reqDTO.getUserType(),
                 reqDTO.getSocialType(), reqDTO.getOpenid());
         return success(true);
     }
 
     @Override
     public CommonResult<SocialUserRespDTO> getSocialUserByUserId(Integer userType, Long userId, Integer socialType) {
-        return success(socialUserService.getSocialUserByUserId(userType, userId, socialType));
+        return success(socialUseCase.getSocialUserByUserId(userType, userId, socialType));
     }
 
     @Override
     public CommonResult<SocialUserRespDTO> getSocialUserByCode(Integer userType, Integer socialType, String code, String state) {
-        return success(socialUserService.getSocialUserByCode(userType, socialType, code, state));
+        return success(socialUseCase.getSocialUserByCode(userType, socialType, code, state));
     }
 
 }
