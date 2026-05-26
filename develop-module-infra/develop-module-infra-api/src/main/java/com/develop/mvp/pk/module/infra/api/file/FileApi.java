@@ -7,13 +7,11 @@ import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotEmpty;
-import org.springframework.cloud.openfeign.FeignClient;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestParam;
 
-@FeignClient(name = ApiConstants.NAME) // TODO David：fallbackFactory =
 @Tag(name = "RPC 服务 - 文件")
 public interface FileApi {
 
@@ -40,6 +38,10 @@ public interface FileApi {
         return createFile(content, name, null, null);
     }
 
+    default String createFile(byte[] content, String name, String type) {
+        return createFile(content, name, null, type);
+    }
+
     /**
      * 保存文件，并返回文件的访问路径
      *
@@ -57,6 +59,10 @@ public interface FileApi {
     @PostMapping(PREFIX + "/create")
     @Operation(summary = "保存文件，并返回文件的访问路径")
     CommonResult<String> createFile(@Valid @RequestBody FileCreateReqDTO createReqDTO);
+
+    default String presignGetUrl(String url) {
+        return presignGetUrl(url, null).getCheckedData();
+    }
 
     /**
      * 生成文件预签名地址，用于读取

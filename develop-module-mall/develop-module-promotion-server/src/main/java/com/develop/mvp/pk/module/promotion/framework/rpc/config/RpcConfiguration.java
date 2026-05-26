@@ -1,6 +1,6 @@
 package com.develop.mvp.pk.module.promotion.framework.rpc.config;
 
-import com.develop.mvp.pk.module.infra.api.websocket.WebSocketSenderApi;
+import com.develop.mvp.pk.module.infra.api.websocket.remote.WebSocketSenderRemoteClient;
 import com.develop.mvp.pk.module.member.api.user.remote.MemberUserRemoteClient;
 import com.develop.mvp.pk.module.product.api.category.ProductCategoryApi;
 import com.develop.mvp.pk.module.product.api.sku.ProductSkuApi;
@@ -14,7 +14,7 @@ import org.springframework.context.annotation.Configuration;
 
 @Configuration(value = "promotionRpcConfiguration", proxyBeanMethods = false)
 @EnableFeignClients(clients = {ProductSkuApi.class, ProductSpuApi.class, ProductCategoryApi.class,
-        MemberUserRemoteClient.class, TradeOrderApi.class, WebSocketSenderApi.class})
+        MemberUserRemoteClient.class, TradeOrderApi.class, WebSocketSenderRemoteClient.class})
 public class RpcConfiguration {
 
     @Configuration(proxyBeanMethods = false)

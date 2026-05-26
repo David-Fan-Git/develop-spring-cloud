@@ -9,6 +9,7 @@ import org.springframework.web.bind.annotation.RestController;
 
 import jakarta.annotation.Resource;
 
+import static com.develop.mvp.pk.framework.common.exception.util.ServiceExceptionUtil.invalidParamException;
 import static com.develop.mvp.pk.framework.common.pojo.CommonResult.success;
 
 @RestController // 提供 RESTful API 接口，给 Feign 调用
@@ -29,6 +30,8 @@ public class WebSocketSenderApiImpl implements WebSocketSenderApi {
         } else if (message.getUserType() != null) {
             webSocketMessageSender.send(message.getUserType(),
                     message.getMessageType(), message.getMessageContent());
+        } else {
+            throw invalidParamException("WebSocket 消息发送目标不能为空");
         }
         return success(true);
     }

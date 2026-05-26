@@ -6,13 +6,11 @@ import com.develop.mvp.pk.module.infra.api.websocket.dto.WebSocketSendReqDTO;
 import com.develop.mvp.pk.module.infra.enums.ApiConstants;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
-import org.springframework.cloud.openfeign.FeignClient;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 
 import jakarta.validation.Valid;
 
-@FeignClient(name = ApiConstants.NAME) // TODO David：fallbackFactory =
 @Tag(name = "RPC 服务 - WebSocket 发送器的") // 对 WebSocketMessageSender 进行封装，提供给其它模块使用
 public interface WebSocketSenderApi {
 

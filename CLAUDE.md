@@ -4,11 +4,11 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project Summary
 
-David develop-cloud (Smart Cloud) — a Spring Cloud Alibaba microservices rapid-development platform. This is the **complete version** with all business modules. Derived from RuoYi-Vue-Pro.
+David develop-cloud (Smart Cloud) — a Spring Cloud Alibaba microservices rapid-development platform. This checkout contains the complete business module set, while the default Maven reactor and boot container only enable the lightweight system/infra subset. Derived from RuoYi-Vue-Pro.
 
 **Tech stack:** Java 17, Spring Boot 3.5.x, Spring Cloud 2025.0.1, Spring Cloud Alibaba, Maven, MyBatis Plus, Redis/Redisson, Lombok + MapStruct. Exact dependency versions are centralized in `develop-dependencies/pom.xml`.
 
-Dependency versions are centralized in `develop-dependencies/pom.xml`; the root `pom.xml` controls the Maven reactor and compiler/plugin configuration. Prefer POM files over README badges/version prose when versions differ. There is no Maven wrapper in this checkout, so use a local `mvn` with Java 17.
+Dependency versions are centralized in `develop-dependencies/pom.xml`; the root `pom.xml` controls the default Maven reactor and compiler/plugin configuration. Prefer POM files over README badges/version prose when versions differ. There is no Maven wrapper in this checkout, so use a local `mvn` with Java 17.
 
 ## Build & Run
 
@@ -21,6 +21,9 @@ mvn compile
 
 # Compile a module and its dependencies
 mvn compile -pl develop-module-system/develop-module-system-server -am
+
+# Compile the boot server and required modules
+mvn compile -pl develop-server -am
 
 # Package the boot server and required modules
 mvn clean package -pl develop-server -am -Dmaven.test.skip=true
@@ -66,7 +69,7 @@ sql/                           # Database init scripts for MySQL, Oracle, Postgr
 
 Business modules: system, infra, member, bpm, pay, report, mp, mall, crm, erp, iot, mes, wms, ai. Most business modules have `api/` and `server/` Maven submodules; the API module exposes inter-module contracts, while the server module contains controllers, services/domain code, DAL, jobs, MQ, and configuration.
 
-The root `pom.xml` includes all backend modules in the Maven reactor, but the boot application runs only the modules declared as dependencies of `develop-server/pom.xml`. `develop-server` is intentionally an empty container: it exposes REST APIs by depending on selected `develop-module-*-server` artifacts.
+The root `pom.xml` enables only the core backend reactor subset by default; optional business modules are present in the checkout but commented out in the reactor unless explicitly enabled. The boot application runs only the modules declared as dependencies of `develop-server/pom.xml`. `develop-server` is intentionally an empty container: it exposes REST APIs by depending on selected `develop-module-*-server` artifacts.
 
 The platform runs in one of two modes controlled by which module dependencies are uncommented in `develop-server/pom.xml`:
 - **Minimal:** only `develop-module-system-server` + `develop-module-infra-server` (fast compile)
