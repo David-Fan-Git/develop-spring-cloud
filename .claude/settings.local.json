@@ -11,7 +11,11 @@
       "Bash(git *)",
       "Bash(grep *)",
       "Bash(mvn org.springframework.boot:spring-boot-maven-plugin:3.5.14:run *)",
-      "Bash(mvn package *)"
+      "Bash(mvn package *)",
+      "Bash(mvn test *)",
+      "Bash(mvn spring-boot:run *)",
+      "Bash(mvn *)",
+      "Bash(find develop-* -maxdepth 2 -name README.md)"
     ]
   }
 }

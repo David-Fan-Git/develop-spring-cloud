@@ -24,7 +24,7 @@
 <!--        <module>develop-module-mall</module>-->
 <!--        <module>develop-module-crm</module>-->
 <!--        <module>develop-module-erp</module>-->
-<!--        <module>develop-module-iot</module>-->
+        <module>develop-module-iot</module>
 <!--        <module>develop-module-mes</module>-->
 <!--        <module>develop-module-wms</module>-->
 <!--        <module>develop-module-ai</module>-->
