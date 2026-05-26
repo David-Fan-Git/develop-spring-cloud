@@ -27,8 +27,14 @@ import java.net.URLDecoder;
 import java.nio.charset.StandardCharsets;
 
 /**
- * Token 过滤器，验证 token 的有效性
- * 验证通过后，获得 {@link LoginUser} 信息，并加入到 Spring Security 上下文
+ * Token 认证过滤器，负责在每次请求进入业务代码前恢复当前登录用户。
+ *
+ * <p>请求可以通过两种方式携带身份信息：一种是网关或其它服务在请求头中透传序列化后的 {@link LoginUser}；
+ * 另一种是客户端直接携带访问 token。本过滤器优先读取透传头，读取不到时再解析 token，
+ * 并通过 OAuth2 token API 校验有效性。校验通过后，会把 {@link LoginUser} 写入 Spring Security 上下文，
+ * 后续控制器、权限表达式和业务代码即可读取当前登录用户。</p>
+ *
+ * <p>该类继承 {@link OncePerRequestFilter}，因此同一次请求只执行一次过滤逻辑。</p>
  *
  * @author David
  */
@@ -42,6 +48,14 @@ public class TokenAuthenticationFilter extends OncePerRequestFilter {
 
     private final OAuth2TokenCommonApi oauth2TokenApi;
 
+    /**
+     * 在请求进入后续过滤器和业务处理前解析登录态。
+     *
+     * <p>触发时机是 Servlet 过滤器链执行到本过滤器时：先尝试从 {@code login-user} 请求头恢复网关或服务间透传的用户；
+     * 如果没有透传用户，再从配置的 token 请求头或请求参数读取 token 并调用认证服务校验。
+     * 只有解析到有效用户或开发调试用的模拟用户时才写入 SecurityContext；没有恢复出登录用户时，
+     * 后续是否要求登录由 Spring Security 的访问规则决定。</p>
+     */
     @Override
     @SuppressWarnings("NullableProblems")
     protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain chain)
@@ -79,6 +93,13 @@ public class TokenAuthenticationFilter extends OncePerRequestFilter {
         chain.doFilter(request, response);
     }
 
+    /**
+     * 根据访问 token 构建登录用户。
+     *
+     * <p>该方法只在请求未携带网关透传用户、但携带 token 时执行。它会调用 OAuth2 token API 校验 token，
+     * 并在 admin/app 等能识别用户类型的入口上比对用户类型。校验失败的 {@link ServiceException} 会被转换为
+     * {@code null}，表示当前请求没有恢复出登录用户。</p>
+     */
     private LoginUser buildLoginUserByToken(String token, Integer userType) {
         try {
             // 校验访问令牌
@@ -128,6 +149,13 @@ public class TokenAuthenticationFilter extends OncePerRequestFilter {
                 .setTenantId(WebFrameworkUtils.getTenantId(request));
     }
 
+    /**
+     * 从请求头读取服务间透传的登录用户。
+     *
+     * <p>网关或上游服务已经完成认证时，会把 {@link LoginUser} 序列化后放入约定请求头。
+     * 当前服务在这里反序列化该用户，并按当前请求入口的用户类型做一致性校验。解析失败会继续抛出异常，
+     * 让调用链按 Spring Web/Security 的异常处理规则结束请求。</p>
+     */
     private LoginUser buildLoginUserByHeader(HttpServletRequest request) {
         String loginUserStr = request.getHeader(SecurityFrameworkUtils.LOGIN_USER_HEADER);
         if (StrUtil.isEmpty(loginUserStr)) {

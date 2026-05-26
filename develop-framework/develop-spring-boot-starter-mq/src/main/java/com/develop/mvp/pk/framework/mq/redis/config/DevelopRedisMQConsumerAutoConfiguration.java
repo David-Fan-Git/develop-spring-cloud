@@ -32,7 +32,14 @@ import java.util.List;
 import java.util.Properties;
 
 /**
- * Redis 消息队列 Consumer 配置类
+ * Redis 消息队列消费者自动配置。
+ *
+ * <p>该配置在基础 Redis 自动配置完成之后生效，负责把应用中声明的 Redis 消息监听器接入运行时容器：
+ * {@link AbstractRedisChannelMessageListener} 通过 Redis Pub/Sub 实现广播消费，
+ * {@link AbstractRedisStreamMessageListener} 通过 Redis Stream 消费者组实现集群消费。</p>
+ *
+ * <p>配置类只负责创建监听容器、注册监听器以及装配 Redis Stream 的补偿任务；具体业务处理仍由各监听器的
+ * {@code onMessage} 实现完成，消息发送与消费前后的横切增强复用 {@link RedisMQTemplate} 中的拦截器列表。</p>
  *
  * @author David
  */
@@ -42,7 +49,15 @@ import java.util.Properties;
 public class DevelopRedisMQConsumerAutoConfiguration {
 
     /**
-     * 创建 Redis Pub/Sub 广播消费的容器
+     * 创建 Redis Pub/Sub 广播消费容器。
+     *
+     * <p>只有业务侧声明了 {@link AbstractRedisChannelMessageListener} Bean 时才会装配该容器。
+     * 方法会把每个监听器绑定到其消息类型对应的 Channel，并注入同一个 {@link RedisMQTemplate}，
+     * 使监听器在真正执行业务 {@code onMessage} 前后可以调用模板中的消费拦截器。</p>
+     *
+     * @param redisMQTemplate Redis MQ 模板，提供底层 Redis 连接工厂和拦截器列表
+     * @param listeners 应用中声明的 Pub/Sub 监听器集合
+     * @return Redis Pub/Sub 消息监听容器
      */
     @Bean
     @ConditionalOnBean(AbstractRedisChannelMessageListener.class) // 只有 AbstractChannelMessageListener 存在的时候，才需要注册 Redis pubsub 监听
@@ -63,7 +78,15 @@ public class DevelopRedisMQConsumerAutoConfiguration {
     }
 
     /**
-     * 创建 Redis Stream 重新消费的任务
+     * 创建 Redis Stream 待确认消息重新投递任务。
+     *
+     * <p>该任务只在存在 Stream 监听器时启用，用于配合监听器集合、Redis 模板和 Redisson 客户端处理
+     * Pending 消息的补偿场景；具体重发策略由 {@link RedisPendingMessageResendJob} 承担。</p>
+     *
+     * @param listeners 应用中声明的 Stream 监听器集合
+     * @param redisTemplate Redis MQ 模板
+     * @param redissonClient Redisson 客户端
+     * @return Redis Stream Pending 消息重发任务
      */
     @Bean
     @ConditionalOnBean(AbstractRedisStreamMessageListener.class) // 只有 AbstractStreamMessageListener 存在的时候，才需要注册 Redis pubsub 监听
@@ -74,7 +97,15 @@ public class DevelopRedisMQConsumerAutoConfiguration {
     }
 
     /**
-     * 创建 Redis Stream 消息清理任务
+     * 创建 Redis Stream 消息清理任务。
+     *
+     * <p>该任务只在存在 Stream 监听器时启用，用于把监听器定义的 Stream 纳入统一清理流程；
+     * 清理边界与执行细节由 {@link RedisStreamMessageCleanupJob} 维护。</p>
+     *
+     * @param listeners 应用中声明的 Stream 监听器集合
+     * @param redisTemplate Redis MQ 模板
+     * @param redissonClient Redisson 客户端
+     * @return Redis Stream 消息清理任务
      */
     @Bean
     @ConditionalOnBean(AbstractRedisStreamMessageListener.class)
@@ -85,9 +116,21 @@ public class DevelopRedisMQConsumerAutoConfiguration {
     }
 
     /**
-     * 创建 Redis Stream 集群消费的容器
+     * 创建 Redis Stream 集群消费容器。
      *
-     * 基础知识：<a href="https://www.geek-book.com/src/docs/redis/redis/redis.io/commands/xreadgroup.html">Redis Stream 的 xreadgroup 命令</a>
+     * <p>容器以 {@link StreamMessageListenerContainer} 承载 Stream 监听流程，并通过
+     * {@code initMethod = "start"} 随 Bean 初始化启动监听、通过 {@code destroyMethod = "stop"}
+     * 在容器销毁时停止监听。启动前会校验 Redis 主版本不低于 5，因为 Stream 消费者组依赖 Redis 5 提供的能力。</p>
+     *
+     * <p>注册监听器时，本方法会为每个 Stream Key 尝试创建监听器声明的消费者组，并使用
+     * {@link #buildConsumerName()} 生成当前进程的消费者名。读取位置使用 {@link ReadOffset#lastConsumed()}，
+     * 且关闭自动 ack；监听器成功处理消息后再由自身执行 acknowledge。</p>
+     *
+     * <p>基础知识：<a href="https://www.geek-book.com/src/docs/redis/redis/redis.io/commands/xreadgroup.html">Redis Stream 的 xreadgroup 命令</a></p>
+     *
+     * @param redisMQTemplate Redis MQ 模板，提供连接工厂和监听器消费时使用的拦截器列表
+     * @param listeners 应用中声明的 Stream 监听器集合
+     * @return Redis Stream 消息监听容器
      */
     @Bean(initMethod = "start", destroyMethod = "stop")
     @ConditionalOnBean(AbstractRedisStreamMessageListener.class) // 只有 AbstractStreamMessageListener 存在的时候，才需要注册 Redis pubsub 监听
@@ -145,7 +188,12 @@ public class DevelopRedisMQConsumerAutoConfiguration {
     }
 
     /**
-     * 校验 Redis 版本号，是否满足最低的版本号要求！
+     * 校验 Redis 版本号是否满足 Stream 消费的最低要求。
+     *
+     * <p>Redis Stream 是 Redis 5 开始提供的能力，因此消费者容器启动前需要读取服务端版本并阻止低版本运行，
+     * 避免监听容器启动后才因命令不支持而失败。</p>
+     *
+     * @param redisTemplate 用于读取 Redis 服务端信息的模板
      */
     public static void checkRedisVersion(RedisTemplate<String, ?> redisTemplate) {
         // 获得 Redis 版本
