@@ -11,19 +11,19 @@ spring:
       - org.springframework.ai.vectorstore.milvus.autoconfigure.MilvusVectorStoreAutoConfiguration # 禁用 AI 模块的 Milvus，手动创建
   # 数据源配置项
   datasource:
-    druid: # Druid 诊断能力默认关闭，避免 dev 环境常态请求/SQL 都进入统计链路；排障时按需打开
+    druid: # Druid 【监控】相关的全局配置
       web-stat-filter:
-        enabled: false
+        enabled: true
       stat-view-servlet:
-        enabled: false
-        allow: 127.0.0.1,::1 # 开启控制台时默认仅允许本机访问；联调场景需要显式改为可信来源
+        enabled: true
+        allow: # 设置白名单，不填则允许所有访问
         url-pattern: /druid/*
         login-username: # 控制台管理用户名和密码
         login-password:
       filter:
         stat:
-          enabled: false
-          log-slow-sql: true # 开启 stat 过滤器后记录慢 SQL
+          enabled: true
+          log-slow-sql: true # 慢 SQL 记录
           slow-sql-millis: 100
           merge-sql: true
         wall:

@@ -173,8 +173,6 @@ spring:
     listener:
       missing-topics-fatal: false # 消费监听接口监听的主题不存在时，默认会报错。所以通过设置为 false ，解决报错
 
-# 兼容边界：develop-server 当前仍集中承载可选模块配置，保证旧模块按原方式启用。
-# 新增或迁移后的核心业务配置应优先下沉到对应 module 的 ConfigurationProperties 或配置中心 DataId，避免容器继续感知业务细节。
 --- #################### AI 相关配置 ####################
 
 spring:
@@ -287,8 +285,6 @@ develop:
       enable: true
       api-key: sk-40500e52840f4d24b956d0b1d80d9abe
 
-# 兼容边界：以下 develop.* 包含通用运行时配置与部分历史业务模块配置。
-# 本轮不迁移密钥和业务参数，只补齐边界说明；后续完成模块配置治理后再按模块拆分。
 --- #################### David相关配置 ####################
 
 develop:
