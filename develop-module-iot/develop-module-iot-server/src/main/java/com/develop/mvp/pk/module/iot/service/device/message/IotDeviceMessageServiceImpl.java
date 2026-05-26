@@ -15,6 +15,10 @@ import com.develop.mvp.pk.framework.common.util.object.BeanUtils;
 import com.develop.mvp.pk.module.iot.controller.admin.device.vo.message.IotDeviceMessagePageReqVO;
 import com.develop.mvp.pk.module.iot.controller.admin.statistics.vo.IotStatisticsDeviceMessageReqVO;
 import com.develop.mvp.pk.module.iot.controller.admin.statistics.vo.IotStatisticsDeviceMessageSummaryByDateRespVO;
+import com.develop.mvp.pk.module.iot.application.command.command.AckIotDeviceCommand;
+import com.develop.mvp.pk.module.iot.application.command.port.inbound.IotDeviceCommandUseCase;
+import com.develop.mvp.pk.module.iot.application.property.command.PostIotDevicePropertyCommand;
+import com.develop.mvp.pk.module.iot.application.property.port.inbound.IotDevicePropertyUseCase;
 import com.develop.mvp.pk.module.iot.core.enums.IotDeviceMessageMethodEnum;
 import com.develop.mvp.pk.module.iot.core.mq.message.IotDeviceMessage;
 import com.develop.mvp.pk.module.iot.core.mq.producer.IotDeviceMessageProducer;
@@ -62,6 +66,10 @@ public class IotDeviceMessageServiceImpl implements IotDeviceMessageService {
     private IotDeviceService deviceService;
     @Resource
     private IotDevicePropertyService devicePropertyService;
+    @Resource
+    private IotDevicePropertyUseCase devicePropertyUseCase;
+    @Resource
+    private IotDeviceCommandUseCase deviceCommandUseCase;
     @Resource
     @Lazy // 延迟加载，避免循环依赖
     private IotOtaTaskRecordService otaTaskRecordService;
@@ -212,9 +220,16 @@ public class IotDeviceMessageServiceImpl implements IotDeviceMessageService {
             return null;
         }
 
+        if (Objects.equal(message.getMethod(), IotDeviceMessageMethodEnum.SERVICE_INVOKE.getMethod())
+                && IotDeviceMessageUtils.isReplyMessage(message)) {
+            deviceCommandUseCase.handleAck(new AckIotDeviceCommand(device.getId(), message.getRequestId(),
+                    message.getData(), message.getCode(), message.getMsg()));
+            return null;
+        }
+
         // 属性上报
         if (Objects.equal(message.getMethod(), IotDeviceMessageMethodEnum.PROPERTY_POST.getMethod())) {
-            devicePropertyService.saveDeviceProperty(device, message);
+            devicePropertyUseCase.postProperty(new PostIotDevicePropertyCommand(device, message));
             return null;
         }
         // 批量上报（属性+事件+子设备）

@@ -5,13 +5,17 @@ import com.develop.mvp.pk.framework.common.pojo.CommonResult;
 import com.develop.mvp.pk.framework.common.pojo.PageParam;
 import com.develop.mvp.pk.framework.common.pojo.PageResult;
 import com.develop.mvp.pk.framework.common.util.collection.MapUtils;
-import com.develop.mvp.pk.framework.common.util.object.BeanUtils;
 import com.develop.mvp.pk.framework.excel.core.util.ExcelUtils;
+import com.develop.mvp.pk.module.iot.application.product.command.CreateIotProductCommand;
+import com.develop.mvp.pk.module.iot.application.product.command.UpdateIotProductCommand;
+import com.develop.mvp.pk.module.iot.application.product.command.UpdateIotProductStatusCommand;
+import com.develop.mvp.pk.module.iot.application.product.port.inbound.IotProductUseCase;
+import com.develop.mvp.pk.module.iot.application.product.query.IotProductPageQuery;
+import com.develop.mvp.pk.module.iot.application.product.result.IotProductResult;
 import com.develop.mvp.pk.module.iot.controller.admin.product.vo.product.IotProductPageReqVO;
 import com.develop.mvp.pk.module.iot.controller.admin.product.vo.product.IotProductRespVO;
 import com.develop.mvp.pk.module.iot.controller.admin.product.vo.product.IotProductSaveReqVO;
 import com.develop.mvp.pk.module.iot.dal.dataobject.product.IotProductCategoryDO;
-import com.develop.mvp.pk.module.iot.dal.dataobject.product.IotProductDO;
 import com.develop.mvp.pk.module.iot.service.product.IotProductCategoryService;
 import com.develop.mvp.pk.module.iot.service.product.IotProductService;
 import io.swagger.v3.oas.annotations.Operation;
@@ -39,6 +43,8 @@ import static com.develop.mvp.pk.framework.common.util.collection.CollectionUtil
 public class IotProductController {
 
     @Resource
+    private IotProductUseCase productUseCase;
+    @Resource
     private IotProductService productService;
     @Resource
     private IotProductCategoryService categoryService;
@@ -47,14 +53,21 @@ public class IotProductController {
     @Operation(summary = "创建产品")
     @PreAuthorize("@ss.hasPermission('iot:product:create')")
     public CommonResult<Long> createProduct(@Valid @RequestBody IotProductSaveReqVO createReqVO) {
-        return success(productService.createProduct(createReqVO));
+        return success(productUseCase.createProduct(new CreateIotProductCommand(createReqVO.getName(),
+                createReqVO.getProductKey(), createReqVO.getRegisterEnabled(), createReqVO.getCategoryId(),
+                createReqVO.getIcon(), createReqVO.getPicUrl(), createReqVO.getDescription(),
+                createReqVO.getDeviceType(), createReqVO.getNetType(), createReqVO.getProtocolType(),
+                createReqVO.getSerializeType())));
     }
 
     @PutMapping("/update")
     @Operation(summary = "更新产品")
     @PreAuthorize("@ss.hasPermission('iot:product:update')")
     public CommonResult<Boolean> updateProduct(@Valid @RequestBody IotProductSaveReqVO updateReqVO) {
-        productService.updateProduct(updateReqVO);
+        productUseCase.updateProduct(new UpdateIotProductCommand(updateReqVO.getId(), updateReqVO.getName(),
+                updateReqVO.getRegisterEnabled(), updateReqVO.getCategoryId(), updateReqVO.getIcon(),
+                updateReqVO.getPicUrl(), updateReqVO.getDescription(), updateReqVO.getDeviceType(),
+                updateReqVO.getNetType(), updateReqVO.getProtocolType(), updateReqVO.getSerializeType()));
         return success(true);
     }
 
@@ -65,7 +78,7 @@ public class IotProductController {
     @PreAuthorize("@ss.hasPermission('iot:product:update')")
     public CommonResult<Boolean> updateProductStatus(@RequestParam("id") Long id,
                                                      @RequestParam("status") Integer status) {
-        productService.updateProductStatus(id, status);
+        productUseCase.updateProductStatus(new UpdateIotProductStatusCommand(id, status));
         return success(true);
     }
 
@@ -74,7 +87,7 @@ public class IotProductController {
     @Parameter(name = "id", description = "编号", required = true)
     @PreAuthorize("@ss.hasPermission('iot:product:delete')")
     public CommonResult<Boolean> deleteProduct(@RequestParam("id") Long id) {
-        productService.deleteProduct(id);
+        productUseCase.deleteProduct(id);
         return success(true);
     }
 
@@ -83,17 +96,12 @@ public class IotProductController {
     @Parameter(name = "id", description = "编号", required = true, example = "1024")
     @PreAuthorize("@ss.hasPermission('iot:product:query')")
     public CommonResult<IotProductRespVO> getProduct(@RequestParam("id") Long id) {
-        IotProductDO product = productService.getProduct(id);
+        IotProductResult product = productUseCase.getProduct(id);
         if (product == null) {
             return success(null);
         }
-        // 拼接数据
-        IotProductCategoryDO category = categoryService.getProductCategory(product.getCategoryId());
-        return success(BeanUtils.toBean(product, IotProductRespVO.class, bean -> {
-            if (category != null) {
-                bean.setCategoryName(category.getName());
-            }
-        }));
+        IotProductCategoryDO category = categoryService.getProductCategory(product.categoryId());
+        return success(toRespVO(product, category));
     }
 
     @GetMapping("/get-by-key")
@@ -101,31 +109,27 @@ public class IotProductController {
     @Parameter(name = "productKey", description = "产品Key", required = true, example = "abc123")
     @PreAuthorize("@ss.hasPermission('iot:product:query')")
     public CommonResult<IotProductRespVO> getProductByKey(@RequestParam("productKey") String productKey) {
-        IotProductDO product = productService.getProductByProductKey(productKey);
+        IotProductResult product = productUseCase.getProductByProductKey(productKey);
         if (product == null) {
             return success(null);
         }
-        // 拼接数据
-        IotProductCategoryDO category = categoryService.getProductCategory(product.getCategoryId());
-        return success(BeanUtils.toBean(product, IotProductRespVO.class, bean -> {
-            if (category != null) {
-                bean.setCategoryName(category.getName());
-            }
-        }));
+        IotProductCategoryDO category = categoryService.getProductCategory(product.categoryId());
+        return success(toRespVO(product, category));
     }
 
     @GetMapping("/page")
     @Operation(summary = "获得产品分页")
     @PreAuthorize("@ss.hasPermission('iot:product:query')")
     public CommonResult<PageResult<IotProductRespVO>> getProductPage(@Valid IotProductPageReqVO pageReqVO) {
-        PageResult<IotProductDO> pageResult = productService.getProductPage(pageReqVO);
-        // 拼接数据
+        PageResult<IotProductResult> pageResult = productUseCase.getProductPage(new IotProductPageQuery(
+                pageReqVO.getName(), pageReqVO.getProductKey(), pageReqVO.getPageNo(), pageReqVO.getPageSize()));
         Map<Long, IotProductCategoryDO> categoryMap = categoryService.getProductCategoryMap(
-                convertList(pageResult.getList(), IotProductDO::getCategoryId));
-        return success(BeanUtils.toBean(pageResult, IotProductRespVO.class, bean -> {
-            MapUtils.findAndThen(categoryMap, bean.getCategoryId(),
-                    category -> bean.setCategoryName(category.getName()));
-        }));
+                convertList(pageResult.getList(), IotProductResult::categoryId));
+        return success(new PageResult<>(convertList(pageResult.getList(), product -> {
+            IotProductRespVO respVO = toRespVO(product, null);
+            MapUtils.findAndThen(categoryMap, product.categoryId(), category -> respVO.setCategoryName(category.getName()));
+            return respVO;
+        }), pageResult.getTotal()));
     }
 
     @GetMapping("/export-excel")
@@ -145,7 +149,7 @@ public class IotProductController {
     @Operation(summary = "同步产品属性表结构到 TDengine")
     @PreAuthorize("@ss.hasPermission('iot:product:update')")
     public CommonResult<Boolean> syncProductPropertyTable() {
-        productService.syncProductPropertyTable();
+        productUseCase.syncProductPropertyTable();
         return success(true);
     }
 
@@ -154,10 +158,24 @@ public class IotProductController {
     @Parameter(name = "deviceType", description = "设备类型", example = "1")
     public CommonResult<List<IotProductRespVO>> getProductSimpleList(
             @RequestParam(value = "deviceType", required = false) Integer deviceType) {
-        List<IotProductDO> list = productService.getProductList(deviceType);
-        return success(convertList(list, product -> // 只返回 id、name、productKey 字段
-                new IotProductRespVO().setId(product.getId()).setName(product.getName()).setStatus(product.getStatus())
-                        .setDeviceType(product.getDeviceType()).setProductKey(product.getProductKey())));
+        List<IotProductResult> list = productUseCase.getProductList(deviceType);
+        return success(convertList(list, product ->
+                new IotProductRespVO().setId(product.id()).setName(product.name()).setStatus(product.status())
+                        .setDeviceType(product.deviceType()).setProductKey(product.productKey())));
+    }
+
+    private IotProductRespVO toRespVO(IotProductResult product, IotProductCategoryDO category) {
+        IotProductRespVO respVO = new IotProductRespVO()
+                .setId(product.id()).setName(product.name()).setProductKey(product.productKey())
+                .setProductSecret(product.productSecret()).setRegisterEnabled(product.registerEnabled())
+                .setCategoryId(product.categoryId()).setIcon(product.icon()).setPicUrl(product.picUrl())
+                .setDescription(product.description()).setStatus(product.status()).setDeviceType(product.deviceType())
+                .setNetType(product.netType()).setProtocolType(product.protocolType())
+                .setSerializeType(product.serializeType());
+        if (category != null) {
+            respVO.setCategoryName(category.getName());
+        }
+        return respVO;
     }
 
 }

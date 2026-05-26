@@ -2,14 +2,17 @@ package com.develop.mvp.pk.module.iot.controller.admin.thingmodel;
 
 import com.develop.mvp.pk.framework.common.pojo.CommonResult;
 import com.develop.mvp.pk.framework.common.pojo.PageResult;
-import com.develop.mvp.pk.framework.common.util.object.BeanUtils;
+import com.develop.mvp.pk.module.iot.application.thingmodel.command.CreateIotThingModelCommand;
+import com.develop.mvp.pk.module.iot.application.thingmodel.command.UpdateIotThingModelCommand;
+import com.develop.mvp.pk.module.iot.application.thingmodel.port.inbound.IotThingModelUseCase;
+import com.develop.mvp.pk.module.iot.application.thingmodel.query.IotThingModelListQuery;
+import com.develop.mvp.pk.module.iot.application.thingmodel.query.IotThingModelPageQuery;
+import com.develop.mvp.pk.module.iot.application.thingmodel.result.IotThingModelResult;
+import com.develop.mvp.pk.module.iot.application.thingmodel.result.IotThingModelTslResult;
 import com.develop.mvp.pk.module.iot.controller.admin.thingmodel.vo.*;
-import com.develop.mvp.pk.module.iot.dal.dataobject.product.IotProductDO;
-import com.develop.mvp.pk.module.iot.dal.dataobject.thingmodel.IotThingModelDO;
-import com.develop.mvp.pk.module.iot.enums.thingmodel.IotThingModelTypeEnum;
-import com.develop.mvp.pk.module.iot.service.product.IotProductService;
-import com.develop.mvp.pk.module.iot.service.thingmodel.IotThingModelService;
-import com.google.common.base.Objects;
+import com.develop.mvp.pk.module.iot.dal.dataobject.thingmodel.model.ThingModelEvent;
+import com.develop.mvp.pk.module.iot.dal.dataobject.thingmodel.model.ThingModelProperty;
+import com.develop.mvp.pk.module.iot.dal.dataobject.thingmodel.model.ThingModelService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -32,22 +35,26 @@ import static com.develop.mvp.pk.framework.common.util.collection.CollectionUtil
 public class IotThingModelController {
 
     @Resource
-    private IotThingModelService thingModelService;
-    @Resource
-    private IotProductService productService;
+    private IotThingModelUseCase thingModelUseCase;
 
     @PostMapping("/create")
     @Operation(summary = "创建产品物模型")
     @PreAuthorize("@ss.hasPermission('iot:thing-model:create')")
     public CommonResult<Long> createThingModel(@Valid @RequestBody IotThingModelSaveReqVO createReqVO) {
-        return success(thingModelService.createThingModel(createReqVO));
+        return success(thingModelUseCase.createThingModel(new CreateIotThingModelCommand(createReqVO.getProductId(),
+                createReqVO.getProductKey(), createReqVO.getIdentifier(), createReqVO.getName(),
+                createReqVO.getDescription(), createReqVO.getType(), createReqVO.getProperty(), createReqVO.getEvent(),
+                createReqVO.getService())));
     }
 
     @PutMapping("/update")
     @Operation(summary = "更新产品物模型")
     @PreAuthorize("@ss.hasPermission('iot:thing-model:update')")
     public CommonResult<Boolean> updateThingModel(@Valid @RequestBody IotThingModelSaveReqVO updateReqVO) {
-        thingModelService.updateThingModel(updateReqVO);
+        thingModelUseCase.updateThingModel(new UpdateIotThingModelCommand(updateReqVO.getId(), updateReqVO.getProductId(),
+                updateReqVO.getProductKey(), updateReqVO.getIdentifier(), updateReqVO.getName(),
+                updateReqVO.getDescription(), updateReqVO.getType(), updateReqVO.getProperty(), updateReqVO.getEvent(),
+                updateReqVO.getService()));
         return success(true);
     }
 
@@ -56,7 +63,7 @@ public class IotThingModelController {
     @Parameter(name = "id", description = "编号", required = true)
     @PreAuthorize("@ss.hasPermission('iot:thing-model:delete')")
     public CommonResult<Boolean> deleteThingModel(@RequestParam("id") Long id) {
-        thingModelService.deleteThingModel(id);
+        thingModelUseCase.deleteThingModel(id);
         return success(true);
     }
 
@@ -65,8 +72,7 @@ public class IotThingModelController {
     @Parameter(name = "id", description = "编号", required = true)
     @PreAuthorize("@ss.hasPermission('iot:thing-model:query')")
     public CommonResult<IotThingModelRespVO> getThingModel(@RequestParam("id") Long id) {
-        IotThingModelDO thingModel = thingModelService.getThingModel(id);
-        return success(BeanUtils.toBean(thingModel, IotThingModelRespVO.class));
+        return success(toRespVO(thingModelUseCase.getThingModel(id)));
     }
 
     @GetMapping("/get-tsl")
@@ -74,38 +80,44 @@ public class IotThingModelController {
     @Parameter(name = "productId", description = "产品 ID", required = true, example = "1024")
     @PreAuthorize("@ss.hasPermission('iot:thing-model:query')")
     public CommonResult<IotThingModelTSLRespVO> getThingModelTsl(@RequestParam("productId") Long productId) {
-        // 1. 获得产品
-        IotProductDO product = productService.getProduct(productId);
-        if (product == null) {
+        IotThingModelTslResult tsl = thingModelUseCase.getTsl(productId);
+        if (tsl == null) {
             return success(null);
         }
-        IotThingModelTSLRespVO tslRespVO = new IotThingModelTSLRespVO()
-                .setProductId(product.getId()).setProductKey(product.getProductKey());
-        // 2. 获得物模型定义
-        List<IotThingModelDO> thingModels = thingModelService.getThingModelListByProductId(productId);
-        tslRespVO.setProperties(convertList(filterList(thingModels, item ->
-                        Objects.equal(IotThingModelTypeEnum.PROPERTY.getType(), item.getType())), IotThingModelDO::getProperty))
-                .setServices(convertList(filterList(thingModels, item ->
-                        Objects.equal(IotThingModelTypeEnum.SERVICE.getType(), item.getType())), IotThingModelDO::getService))
-                .setEvents(convertList(filterList(thingModels, item ->
-                        Objects.equal(IotThingModelTypeEnum.EVENT.getType(), item.getType())), IotThingModelDO::getEvent));
-        return success(tslRespVO);
+        return success(new IotThingModelTSLRespVO().setProductId(tsl.productId()).setProductKey(tsl.productKey())
+                .setProperties(convertList(tsl.properties(), ThingModelProperty.class::cast))
+                .setEvents(convertList(tsl.events(), ThingModelEvent.class::cast))
+                .setServices(convertList(tsl.services(), ThingModelService.class::cast)));
     }
 
     @GetMapping("/list")
     @Operation(summary = "获得产品物模型列表")
     @PreAuthorize("@ss.hasPermission('iot:thing-model:query')")
     public CommonResult<List<IotThingModelRespVO>> getThingModelListByProductId(@Valid IotThingModelListReqVO reqVO) {
-        List<IotThingModelDO> list = thingModelService.getThingModelList(reqVO);
-        return success(BeanUtils.toBean(list, IotThingModelRespVO.class));
+        List<IotThingModelResult> list = thingModelUseCase.getThingModelList(new IotThingModelListQuery(
+                reqVO.getProductId(), reqVO.getIdentifier(), reqVO.getName(), reqVO.getType()));
+        return success(convertList(list, this::toRespVO));
     }
 
     @GetMapping("/page")
     @Operation(summary = "获得产品物模型分页")
     @PreAuthorize("@ss.hasPermission('iot:thing-model:query')")
     public CommonResult<PageResult<IotThingModelRespVO>> getThingModelPage(@Valid IotThingModelPageReqVO pageReqVO) {
-        PageResult<IotThingModelDO> pageResult = thingModelService.getProductThingModelPage(pageReqVO);
-        return success(BeanUtils.toBean(pageResult, IotThingModelRespVO.class));
+        PageResult<IotThingModelResult> pageResult = thingModelUseCase.getThingModelPage(new IotThingModelPageQuery(
+                pageReqVO.getProductId(), pageReqVO.getIdentifier(), pageReqVO.getName(), pageReqVO.getType(),
+                pageReqVO.getPageNo(), pageReqVO.getPageSize()));
+        return success(new PageResult<>(convertList(pageResult.getList(), this::toRespVO), pageResult.getTotal()));
+    }
+
+    private IotThingModelRespVO toRespVO(IotThingModelResult thingModel) {
+        if (thingModel == null) {
+            return null;
+        }
+        return new IotThingModelRespVO().setId(thingModel.id()).setProductId(thingModel.productId())
+                .setProductKey(thingModel.productKey()).setIdentifier(thingModel.identifier())
+                .setName(thingModel.name()).setDescription(thingModel.description()).setType(thingModel.type())
+                .setProperty((ThingModelProperty) thingModel.property()).setEvent((ThingModelEvent) thingModel.event())
+                .setService((ThingModelService) thingModel.service());
     }
 
 }

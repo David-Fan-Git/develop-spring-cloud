@@ -10,7 +10,6 @@ import com.develop.mvp.pk.module.iot.controller.admin.device.vo.message.IotDevic
 import com.develop.mvp.pk.module.iot.controller.admin.device.vo.message.IotDeviceMessageSendReqVO;
 import com.develop.mvp.pk.module.iot.core.mq.message.IotDeviceMessage;
 import com.develop.mvp.pk.module.iot.dal.dataobject.device.IotDeviceMessageDO;
-import com.develop.mvp.pk.module.iot.dal.tdengine.IotDeviceMessageMapper;
 import com.develop.mvp.pk.module.iot.service.device.IotDeviceService;
 import com.develop.mvp.pk.module.iot.service.device.message.IotDeviceMessageService;
 import com.develop.mvp.pk.module.iot.service.thingmodel.IotThingModelService;
@@ -41,9 +40,6 @@ public class IotDeviceMessageController {
     private IotDeviceService deviceService;
     @Resource
     private IotThingModelService thingModelService;
-    @Resource
-    private IotDeviceMessageMapper deviceMessageMapper;
-
     @GetMapping("/page")
     @Operation(summary = "获得设备消息分页")
     @PreAuthorize("@ss.hasPermission('iot:device:message-query')")
