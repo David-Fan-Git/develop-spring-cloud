@@ -8,26 +8,16 @@ import lombok.NoArgsConstructor;
 import java.util.Map;
 
 /**
- * IoT 设备服务调用 Request DTO
+ * IoT 设备服务调用 Response DTO
  * <p>
- * 用于 {@link IotDeviceMessageMethodEnum#SERVICE_INVOKE} 下行消息的 params 参数
+ * 用于 {@link IotDeviceMessageMethodEnum#SERVICE_INVOKE} 下行消息 ACK 的 data 参数
  *
  * @author David
  */
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
-public class IotDeviceServiceInvokeReqDTO {
-
-    /**
-     * 服务标识符
-     */
-    private String identifier;
-
-    /**
-     * 服务输入参数
-     */
-    private Map<String, Object> inputParams;
+public class IotDeviceServiceInvokeRespDTO {
 
     /**
      * 命令编号
@@ -43,5 +33,10 @@ public class IotDeviceServiceInvokeReqDTO {
      * 消息结构版本
      */
     private Integer schemaVersion;
+
+    /**
+     * 服务输出参数
+     */
+    private Map<String, Object> outputParams;
 
 }

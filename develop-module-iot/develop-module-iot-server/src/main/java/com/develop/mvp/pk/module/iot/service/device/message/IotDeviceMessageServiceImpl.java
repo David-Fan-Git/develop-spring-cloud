@@ -15,6 +15,8 @@ import com.develop.mvp.pk.framework.common.util.object.BeanUtils;
 import com.develop.mvp.pk.module.iot.controller.admin.device.vo.message.IotDeviceMessagePageReqVO;
 import com.develop.mvp.pk.module.iot.controller.admin.statistics.vo.IotStatisticsDeviceMessageReqVO;
 import com.develop.mvp.pk.module.iot.controller.admin.statistics.vo.IotStatisticsDeviceMessageSummaryByDateRespVO;
+import com.develop.mvp.pk.module.iot.application.command.command.AckIotDeviceCommand;
+import com.develop.mvp.pk.module.iot.application.command.port.inbound.IotDeviceCommandUseCase;
 import com.develop.mvp.pk.module.iot.application.property.command.PostIotDevicePropertyCommand;
 import com.develop.mvp.pk.module.iot.application.property.port.inbound.IotDevicePropertyUseCase;
 import com.develop.mvp.pk.module.iot.core.enums.IotDeviceMessageMethodEnum;
@@ -66,6 +68,8 @@ public class IotDeviceMessageServiceImpl implements IotDeviceMessageService {
     private IotDevicePropertyService devicePropertyService;
     @Resource
     private IotDevicePropertyUseCase devicePropertyUseCase;
+    @Resource
+    private IotDeviceCommandUseCase deviceCommandUseCase;
     @Resource
     @Lazy // 延迟加载，避免循环依赖
     private IotOtaTaskRecordService otaTaskRecordService;
@@ -213,6 +217,13 @@ public class IotDeviceMessageServiceImpl implements IotDeviceMessageService {
             Assert.notEmpty(stateStr, "设备状态不能为空");
             Integer state = Integer.valueOf(stateStr);
             deviceService.updateDeviceState(device, state);
+            return null;
+        }
+
+        if (Objects.equal(message.getMethod(), IotDeviceMessageMethodEnum.SERVICE_INVOKE.getMethod())
+                && IotDeviceMessageUtils.isReplyMessage(message)) {
+            deviceCommandUseCase.handleAck(new AckIotDeviceCommand(device.getId(), message.getRequestId(),
+                    message.getData(), message.getCode(), message.getMsg()));
             return null;
         }
 

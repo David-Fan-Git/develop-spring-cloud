@@ -1,9 +1,12 @@
 package com.develop.mvp.pk.module.iot.service.device.message;
 
 import cn.hutool.core.date.LocalDateTimeUtil;
+import cn.hutool.core.map.MapUtil;
 import com.develop.mvp.pk.framework.common.exception.ServiceException;
 import com.develop.mvp.pk.framework.common.pojo.PageResult;
 import com.develop.mvp.pk.framework.test.core.ut.BaseMockitoUnitTest;
+import com.develop.mvp.pk.module.iot.application.command.command.AckIotDeviceCommand;
+import com.develop.mvp.pk.module.iot.application.command.port.inbound.IotDeviceCommandUseCase;
 import com.develop.mvp.pk.module.iot.controller.admin.device.vo.message.IotDeviceMessagePageReqVO;
 import com.develop.mvp.pk.module.iot.core.enums.IotDeviceMessageMethodEnum;
 import com.develop.mvp.pk.module.iot.core.mq.message.IotDeviceMessage;
@@ -19,6 +22,7 @@ import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentCaptor;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
+import org.springframework.test.util.ReflectionTestUtils;
 
 import java.time.LocalDateTime;
 import java.util.Collections;
@@ -49,6 +53,8 @@ public class IotDeviceMessageServiceImplTest extends BaseMockitoUnitTest {
     private IotDeviceService deviceService;
     @Mock
     private IotDevicePropertyService devicePropertyService;
+    @Mock
+    private IotDeviceCommandUseCase deviceCommandUseCase;
     @Mock
     private IotOtaTaskRecordService otaTaskRecordService;
     @Mock
@@ -144,6 +150,18 @@ public class IotDeviceMessageServiceImplTest extends BaseMockitoUnitTest {
                 () -> service.sendDeviceMessage(message, device));
         assertEquals(1_050_003_007, ex.getCode().intValue());
         verify(deviceMessageProducer, never()).sendDeviceMessageToGateway(any(), any());
+    }
+
+    @Test
+    public void testHandleUpstreamDeviceMessage_serviceInvokeReply_routesToCommandUseCase() {
+        IotDeviceDO device = buildDevice();
+        IotDeviceMessage message = IotDeviceMessage.replyOf("req-1", IotDeviceMessageMethodEnum.SERVICE_INVOKE.getMethod(),
+                MapUtil.builder("success", true).build(), 0, "success");
+
+        ReflectionTestUtils.invokeMethod(service, "handleUpstreamDeviceMessage0", message, device);
+
+        verify(deviceCommandUseCase).handleAck(new AckIotDeviceCommand(device.getId(), "req-1",
+                MapUtil.builder("success", true).build(), 0, "success"));
     }
 
     // ========== getDeviceMessagePage ==========
