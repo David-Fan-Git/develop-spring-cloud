@@ -53,6 +53,21 @@ import java.util.Set;
 
 import static com.develop.mvp.pk.framework.common.util.collection.CollectionUtils.convertList;
 
+/**
+ * Tenant Starter 的总装配入口。
+ *
+ * <p>当 {@code develop.tenant.enable} 未配置或为 {@code true} 时，本自动配置会把多租户能力接入到应用的主流程中：
+ * Web 过滤器负责从 HTTP 请求头建立 {@link com.develop.mvp.pk.framework.tenant.core.context.TenantContextHolder}；
+ * Security 过滤器负责校验租户有效性和接口级忽略规则；DB 拦截器负责让 MyBatis Plus 在 SQL 解析阶段拼接租户条件；
+ * MQ、Job、Redis 缓存相关 Bean 负责在各自技术入口延续或隔离租户信息；RPC 的 Feign 透传由
+ * {@code DevelopTenantRpcAutoConfiguration} 中的 {@link com.develop.mvp.pk.framework.tenant.core.rpc.TenantRequestInterceptor}
+ * 承担。</p>
+ *
+ * <p>这里的职责是“组装流程入口”，不直接实现业务隔离逻辑。初学者阅读时可以把它理解成多租户 Starter 的接线板：
+ * 具体租户编号从请求、消息或任务上下文进入，随后被数据库、缓存、远程调用等组件按各自边界消费。</p>
+ *
+ * @author David
+ */
 @AutoConfiguration
 @ConditionalOnProperty(prefix = "develop.tenant", value = "enable", matchIfMissing = true) // 允许使用 develop.tenant.enable=false 禁用多租户
 @EnableConfigurationProperties(TenantProperties.class)
@@ -61,6 +76,13 @@ public class DevelopTenantAutoConfiguration {
     @Resource
     private ApplicationContext applicationContext;
 
+    /**
+     * 创建租户框架服务，供 Web 安全校验、定时任务等框架组件查询租户状态。
+     *
+     * <p>参数中的 {@link TenantCommonApi} 可能来自本地模块实现，也可能来自远程 Feign 代理；
+     * 这里优先尝试使用名为 {@code tenantApiImpl} 的本地 Bean，是为了在单体聚合启动时避免不必要的远程调用。
+     * 该方法只决定“通过哪个 API 查询租户”，不负责写入或清理当前线程的租户上下文。</p>
+     */
     @Bean
     public TenantFrameworkService tenantFrameworkService(TenantCommonApi tenantApi) {
         // 参见 https://gitee.com/zhijiantianya/develop-cloud/issues/IC6YZF
@@ -75,6 +97,12 @@ public class DevelopTenantAutoConfiguration {
 
     // ========== AOP ==========
 
+    /**
+     * 注册 {@link TenantIgnore} 的切面入口。
+     *
+     * <p>{@code @TenantIgnore} 只适合包住少量明确需要跨租户读取的逻辑，例如全局缓存预热或后台任务；
+     * 它通过上下文中的 ignore 标记让后续 DB 等组件跳过租户条件，而不是伪造一个租户编号。</p>
+     */
     @Bean
     public TenantIgnoreAspect tenantIgnoreAspect() {
         return new TenantIgnoreAspect();
@@ -82,6 +110,13 @@ public class DevelopTenantAutoConfiguration {
 
     // ========== DB ==========
 
+    /**
+     * 把租户 SQL 拦截器接入 MyBatis Plus 的插件链。
+     *
+     * <p>真正判断“当前表是否需要租户条件”和“租户编号表达式如何生成”的逻辑在
+     * {@link TenantDatabaseInterceptor} 中。这里刻意把拦截器放在插件链第一个位置，遵循 MyBatis Plus
+     * 对租户插件需早于分页等插件执行的要求，避免后续插件先改写 SQL 后再补租户条件。</p>
+     */
     @Bean
     public TenantLineInnerInterceptor tenantLineInnerInterceptor(TenantProperties properties,
                                                                  MybatisPlusInterceptor interceptor) {
@@ -94,6 +129,12 @@ public class DevelopTenantAutoConfiguration {
 
     // ========== WEB ==========
 
+    /**
+     * 注册 HTTP 租户上下文过滤器。
+     *
+     * <p>该过滤器从请求头读取 {@code tenant-id}，写入当前线程上下文，供 Controller、Service、DB、RPC 等后续调用读取。
+     * 请求结束后由过滤器清理上下文，避免 Web 容器线程复用时把上一个请求的租户编号带到下一个请求。</p>
+     */
     @Bean
     public FilterRegistrationBean<TenantContextWebFilter> tenantContextWebFilter() {
         FilterRegistrationBean<TenantContextWebFilter> registrationBean = new FilterRegistrationBean<>();
@@ -136,7 +177,11 @@ public class DevelopTenantAutoConfiguration {
     }
 
     /**
-     * 如果 Controller 接口上，有 {@link TenantIgnore} 注解，则添加到忽略租户的 URL 集合中
+     * 扫描 Controller 上声明了 {@link TenantIgnore} 的 URL，交给安全过滤器作为“接口级可忽略租户”的白名单。
+     *
+     * <p>这里的 ignore 语义是：某些接口本身允许不按租户校验访问，例如开放接口或全局能力入口；它不同于“请求缺少租户编号”。
+     * 缺少租户编号表示上下文里没有 {@code tenant-id}，后续需要租户编号的 DB 拦截逻辑仍会按缺失处理；
+     * 安全过滤器只会在请求命中忽略 URL 且当前上下文没有 tenantId 时写入 ignore 标记，有明确 tenantId 的请求仍按租户上下文继续处理。</p>
      *
      * @return 忽略租户的 URL 集合
      */
@@ -205,6 +250,13 @@ public class DevelopTenantAutoConfiguration {
 
     // ========== Redis ==========
 
+    /**
+     * 创建带租户前缀处理能力的 Redis 缓存管理器。
+     *
+     * <p>Redis 缓存不是从请求头直接拿租户编号，而是在缓存读写发生时读取当前
+     * {@link com.develop.mvp.pk.framework.tenant.core.context.TenantContextHolder}。
+     * 因此它依赖 Web、MQ、Job 等入口先正确建立上下文；对配置在 ignoreCaches 中的缓存，则不追加租户维度。</p>
+     */
     @Bean
     @Primary // 引入租户时，tenantRedisCacheManager 为主 Bean
     public RedisCacheManager tenantRedisCacheManager(RedisTemplate<String, Object> redisTemplate,
