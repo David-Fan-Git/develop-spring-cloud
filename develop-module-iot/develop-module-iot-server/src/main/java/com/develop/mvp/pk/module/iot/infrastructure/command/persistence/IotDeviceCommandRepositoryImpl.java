@@ -60,7 +60,8 @@ public class IotDeviceCommandRepositoryImpl implements IotDeviceCommandRepositor
     }
 
     @Override
-    public void save(IotDeviceCommand command) {
+    public IotDeviceCommand save(IotDeviceCommand command) {
+        return command;
     }
 
     private IotDeviceCommand toCommand(IotDeviceMessageDO message) {

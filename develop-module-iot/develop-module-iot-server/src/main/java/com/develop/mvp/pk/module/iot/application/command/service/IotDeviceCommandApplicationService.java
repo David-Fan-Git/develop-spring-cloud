@@ -35,8 +35,8 @@ public class IotDeviceCommandApplicationService implements IotDeviceCommandUseCa
         deviceCommand.markPending();
         IotDeviceMessage message = messagePort.sendToDevice(command.deviceId(), command.method(), command.params(), command.requestId());
         deviceCommand.markSent(message.getId(), message.getServerId());
-        commandRepository.save(deviceCommand);
-        return toResult(deviceCommand);
+        IotDeviceCommand savedCommand = commandRepository.save(deviceCommand);
+        return toResult(savedCommand);
     }
 
     @Override

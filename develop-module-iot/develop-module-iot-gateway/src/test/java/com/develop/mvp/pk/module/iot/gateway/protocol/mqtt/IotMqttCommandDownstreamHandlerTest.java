@@ -27,7 +27,7 @@ class IotMqttCommandDownstreamHandlerTest {
         connectionInfo.setProductKey("pk-1");
         connectionInfo.setDeviceName("device-1");
         IotDeviceMessage message = IotDeviceMessage.requestOf("req-1", IotDeviceMessageMethodEnum.SERVICE_INVOKE.getMethod(),
-                new IotDeviceServiceInvokeReqDTO("switch", Map.of("power", true), "cmd-1", "trace-1", 1))
+                new IotDeviceServiceInvokeReqDTO("switch", Map.of("power", (Object) true), "cmd-1", "trace-1", 1))
                 .setId("msg-1")
                 .setDeviceId(1L)
                 .setServerId("mqtt-1");

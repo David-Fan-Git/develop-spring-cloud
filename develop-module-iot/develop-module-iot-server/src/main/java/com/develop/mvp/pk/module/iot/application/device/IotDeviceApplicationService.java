@@ -44,9 +44,9 @@ public class IotDeviceApplicationService {
         IotDevice device = IotDeviceFactory.create(deviceName, nickname, serialNumber,
                 picUrl, groupIds, productId, productKey, deviceType, gatewayId,
                 deviceSecret, config, latitude, longitude);
-        iotDeviceRepository.save(device);
+        IotDevice savedDevice = iotDeviceRepository.save(device);
         publishEvents(device);
-        return device.id();
+        return savedDevice.id();
     }
 
     @Transactional

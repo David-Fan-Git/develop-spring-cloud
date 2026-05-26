@@ -1,7 +1,6 @@
 package com.develop.mvp.pk.module.iot.core.topic.service;
 
 import com.develop.mvp.pk.module.iot.core.enums.IotDeviceMessageMethodEnum;
-import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
@@ -16,7 +15,6 @@ import java.util.Map;
  */
 @Data
 @NoArgsConstructor
-@AllArgsConstructor
 public class IotDeviceServiceInvokeReqDTO {
 
     /**
@@ -28,6 +26,19 @@ public class IotDeviceServiceInvokeReqDTO {
      * 服务输入参数
      */
     private Map<String, Object> inputParams;
+
+    public IotDeviceServiceInvokeReqDTO(String identifier, Map<String, Object> inputParams) {
+        this.identifier = identifier;
+        this.inputParams = inputParams;
+    }
+
+    public IotDeviceServiceInvokeReqDTO(String identifier, Map<String, Object> inputParams, String commandId,
+                                        String traceId, Integer schemaVersion) {
+        this(identifier, inputParams);
+        this.commandId = commandId;
+        this.traceId = traceId;
+        this.schemaVersion = schemaVersion;
+    }
 
     /**
      * 命令编号

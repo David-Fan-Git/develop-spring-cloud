@@ -13,6 +13,6 @@ public interface IotDeviceCommandRepository {
 
     PageResult<IotDeviceCommand> findPage(IotDeviceCommandQuery query);
 
-    void save(IotDeviceCommand command);
+    IotDeviceCommand save(IotDeviceCommand command);
 
 }
