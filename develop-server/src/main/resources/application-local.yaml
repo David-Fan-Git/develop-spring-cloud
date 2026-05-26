@@ -18,7 +18,8 @@ spring:
     exclude:
       - org.springframework.ai.vectorstore.qdrant.autoconfigure.QdrantVectorStoreAutoConfiguration # 禁用 AI 模块的 Qdrant，手动创建
       - org.springframework.ai.vectorstore.milvus.autoconfigure.MilvusVectorStoreAutoConfiguration # 禁用 AI 模块的 Milvus，手动创建
-      # 禁用 RPC 相关自动配置（本地单体启动无需 Feign 远程调用）
+      # 本地单体启动使用模块内本地 Bean，不发起 Feign/RPC 远程调用。
+      # 这里保留历史 AutoConfiguration 排除项以维持启动兼容；后续应收敛到 develop.rpc.* 语义开关，避免容器感知 framework 内部类名。
       - com.develop.mvp.pk.framework.security.config.DevelopSecurityRpcAutoConfiguration
       - com.develop.mvp.pk.framework.operatelog.config.DevelopOperateLogRpcAutoConfiguration
       - com.develop.mvp.pk.framework.datapermission.config.DevelopDataPermissionRpcAutoConfiguration
@@ -28,19 +29,19 @@ spring:
       - com.develop.mvp.pk.framework.apilog.config.DevelopApiLogRpcAutoConfiguration
   # 数据源配置项
   datasource:
-    druid: # Druid 【监控】相关的全局配置
+    druid: # Druid 诊断能力默认关闭，避免本地常态启动为每次请求/SQL 增加统计开销；排查连接池或慢 SQL 时再临时打开
       web-stat-filter:
-        enabled: true
+        enabled: false
       stat-view-servlet:
-        enabled: true
-        allow: # 设置白名单，不填则允许所有访问
+        enabled: false
+        allow: 127.0.0.1,::1 # 开启控制台时默认仅允许本机访问；联调场景需要显式改为可信来源
         url-pattern: /druid/*
         login-username: # 控制台管理用户名和密码
         login-password:
       filter:
         stat:
-          enabled: true
-          log-slow-sql: true # 慢 SQL 记录
+          enabled: false
+          log-slow-sql: true # 开启 stat 过滤器后记录慢 SQL
           slow-sql-millis: 100
           merge-sql: true
         wall:
@@ -162,27 +163,27 @@ logging:
   file:
     name: ${user.home}/logs/${spring.application.name}.log # 日志文件名，全路径
   level:
-    # 配置自己写的 MyBatis Mapper 打印日志
-    com.develop.mvp.pk.module.bpm.dal.mysql: debug
+    # 默认仅打开 develop-server 当前启用模块的 Mapper 日志，避免未启用模块的大范围 DEBUG 增加 I/O 与排障噪音
     com.develop.mvp.pk.module.infra.dal.mysql: debug
-    com.develop.mvp.pk.module.infra.dal.mysql.logger.ApiErrorLogMapper: INFO # 配置 ApiErrorLogMapper 的日志级别为 info，避免和 GlobalExceptionHandler 重复打印
-    com.develop.mvp.pk.module.infra.dal.mysql.job.JobLogMapper: INFO # 配置 JobLogMapper 的日志级别为 info
-    com.develop.mvp.pk.module.infra.dal.mysql.file.FileConfigMapper: INFO # 配置 FileConfigMapper 的日志级别为 info
-    com.develop.mvp.pk.module.pay.dal.mysql: debug
-    com.develop.mvp.pk.module.pay.dal.mysql.notify.PayNotifyTaskMapper: INFO # 配置 PayNotifyTaskMapper 的日志级别为 info
+    com.develop.mvp.pk.module.infra.dal.mysql.logger.ApiErrorLogMapper: INFO # 避免和 GlobalExceptionHandler 重复打印
+    com.develop.mvp.pk.module.infra.dal.mysql.job.JobLogMapper: INFO
+    com.develop.mvp.pk.module.infra.dal.mysql.file.FileConfigMapper: INFO
     com.develop.mvp.pk.module.system.dal.mysql: debug
-    com.develop.mvp.pk.module.system.dal.mysql.sms.SmsChannelMapper: INFO # 配置 SmsChannelMapper 的日志级别为 info
-    com.develop.mvp.pk.module.tool.dal.mysql: debug
-    com.develop.mvp.pk.module.member.dal.mysql: debug
-    com.develop.mvp.pk.module.trade.dal.mysql: debug
-    com.develop.mvp.pk.module.promotion.dal.mysql: debug
-    com.develop.mvp.pk.module.statistics.dal.mysql: debug
-    com.develop.mvp.pk.module.crm.dal.mysql: debug
-    com.develop.mvp.pk.module.erp.dal.mysql: debug
-    com.develop.mvp.pk.module.iot.dal.mysql: debug
-    com.develop.mvp.pk.module.iot.dal.tdengine: DEBUG
-    com.develop.mvp.pk.module.ai.dal.mysql: debug
-    org.springframework.context.support.PostProcessorRegistrationDelegate: ERROR # TODO David：先禁用，Spring Boot 3.X 存在部分错误的 WARN 提示
+    com.develop.mvp.pk.module.system.dal.mysql.sms.SmsChannelMapper: INFO
+    # 可选业务模块启用后，再按需临时打开对应 Mapper DEBUG，避免容器默认感知所有模块内部包
+    # com.develop.mvp.pk.module.bpm.dal.mysql: debug
+    # com.develop.mvp.pk.module.pay.dal.mysql: debug
+    # com.develop.mvp.pk.module.tool.dal.mysql: debug
+    # com.develop.mvp.pk.module.member.dal.mysql: debug
+    # com.develop.mvp.pk.module.trade.dal.mysql: debug
+    # com.develop.mvp.pk.module.promotion.dal.mysql: debug
+    # com.develop.mvp.pk.module.statistics.dal.mysql: debug
+    # com.develop.mvp.pk.module.crm.dal.mysql: debug
+    # com.develop.mvp.pk.module.erp.dal.mysql: debug
+    # com.develop.mvp.pk.module.iot.dal.mysql: debug
+    # com.develop.mvp.pk.module.iot.dal.tdengine: DEBUG
+    # com.develop.mvp.pk.module.ai.dal.mysql: debug
+    org.springframework.context.support.PostProcessorRegistrationDelegate: ERROR # Spring Boot 3.x 部分历史 WARN 噪音，保留压制
 
 debug: false
 
