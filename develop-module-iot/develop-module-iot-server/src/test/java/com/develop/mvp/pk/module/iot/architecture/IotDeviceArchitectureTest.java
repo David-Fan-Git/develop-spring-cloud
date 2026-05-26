@@ -76,6 +76,34 @@ class IotDeviceArchitectureTest {
         assertPresent("com.develop.mvp.pk.module.iot.infrastructure.thingmodel.messaging.package-info");
     }
 
+    @Test
+    void commandDddSkeletonUsesStandardPackages() {
+        assertPresent("com.develop.mvp.pk.module.iot.domain.command.model.IotDeviceCommand");
+        assertPresent("com.develop.mvp.pk.module.iot.domain.command.valueobject.IotCommandId");
+        assertPresent("com.develop.mvp.pk.module.iot.domain.command.valueobject.IotCommandRequestId");
+        assertPresent("com.develop.mvp.pk.module.iot.domain.command.valueobject.IotCommandStatus");
+        assertPresent("com.develop.mvp.pk.module.iot.domain.command.valueobject.IotCommandPayload");
+        assertPresent("com.develop.mvp.pk.module.iot.domain.command.event.IotCommandCreatedEvent");
+        assertPresent("com.develop.mvp.pk.module.iot.domain.command.event.IotCommandSentEvent");
+        assertPresent("com.develop.mvp.pk.module.iot.domain.command.event.IotCommandAckedEvent");
+        assertPresent("com.develop.mvp.pk.module.iot.domain.command.event.IotCommandFailedEvent");
+        assertPresent("com.develop.mvp.pk.module.iot.domain.command.service.IotCommandStatePolicy");
+        assertPresent("com.develop.mvp.pk.module.iot.domain.command.repository.IotDeviceCommandRepository");
+        assertPresent("com.develop.mvp.pk.module.iot.application.command.command.CreateIotDeviceCommand");
+        assertPresent("com.develop.mvp.pk.module.iot.application.command.command.AckIotDeviceCommand");
+        assertPresent("com.develop.mvp.pk.module.iot.application.command.command.MarkIotDeviceCommandTimeout");
+        assertPresent("com.develop.mvp.pk.module.iot.application.command.query.IotDeviceCommandQuery");
+        assertPresent("com.develop.mvp.pk.module.iot.application.command.result.IotDeviceCommandResult");
+        assertPresent("com.develop.mvp.pk.module.iot.application.command.port.inbound.IotDeviceCommandUseCase");
+        assertPresent("com.develop.mvp.pk.module.iot.application.command.port.outbound.IotDeviceCommandMessagePort");
+        assertPresent("com.develop.mvp.pk.module.iot.application.command.service.IotDeviceCommandApplicationService");
+        assertPresent("com.develop.mvp.pk.module.iot.infrastructure.command.persistence.IotDeviceCommandRepositoryImpl");
+        assertPresent("com.develop.mvp.pk.module.iot.infrastructure.command.messaging.IotDeviceCommandMessageAdapter");
+        assertPresent("com.develop.mvp.pk.module.iot.infrastructure.command.external.package-info");
+        assertPresent("com.develop.mvp.pk.module.iot.infrastructure.command.rpc.package-info");
+        assertPresent("com.develop.mvp.pk.module.iot.infrastructure.command.cache.package-info");
+    }
+
     private static void assertPresent(String className) {
         assertDoesNotThrow(() -> Class.forName(className), className + " should exist");
     }
