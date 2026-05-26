@@ -8,7 +8,9 @@ import com.develop.mvp.pk.framework.common.pojo.PageResult;
 import com.develop.mvp.pk.framework.common.util.collection.MapUtils;
 import com.develop.mvp.pk.framework.common.util.object.BeanUtils;
 import com.develop.mvp.pk.framework.excel.core.util.ExcelUtils;
+import com.develop.mvp.pk.module.iot.application.device.port.inbound.IotDeviceUseCase;
 import com.develop.mvp.pk.module.iot.controller.admin.device.vo.device.*;
+import com.develop.mvp.pk.module.iot.domain.device.IotDevice;
 import com.develop.mvp.pk.module.iot.dal.dataobject.device.IotDeviceDO;
 import com.develop.mvp.pk.module.iot.dal.dataobject.product.IotProductDO;
 import com.develop.mvp.pk.module.iot.service.device.IotDeviceService;
@@ -40,6 +42,8 @@ import static com.develop.mvp.pk.framework.common.util.collection.CollectionUtil
 public class IotDeviceController {
 
     @Resource
+    private IotDeviceUseCase deviceUseCase;
+    @Resource
     private IotDeviceService deviceService;
     @Resource
     private IotProductService productService;
@@ -56,7 +60,9 @@ public class IotDeviceController {
     @Operation(summary = "更新设备")
     @PreAuthorize("@ss.hasPermission('iot:device:update')")
     public CommonResult<Boolean> updateDevice(@Valid @RequestBody IotDeviceSaveReqVO updateReqVO) {
-        deviceService.updateDevice(updateReqVO);
+        deviceUseCase.updateDevice(updateReqVO.getId(), updateReqVO.getNickname(), updateReqVO.getSerialNumber(),
+                updateReqVO.getPicUrl(), updateReqVO.getGroupIds(), updateReqVO.getGatewayId(), updateReqVO.getConfig(),
+                updateReqVO.getLatitude(), updateReqVO.getLongitude());
         return success(true);
     }
 
@@ -64,7 +70,7 @@ public class IotDeviceController {
     @Operation(summary = "绑定子设备到网关")
     @PreAuthorize("@ss.hasPermission('iot:device:update')")
     public CommonResult<Boolean> bindDeviceGateway(@Valid @RequestBody IotDeviceBindGatewayReqVO reqVO) {
-        deviceService.bindDeviceGateway(reqVO.getSubIds(), reqVO.getGatewayId());
+        deviceUseCase.bindDeviceGateway(reqVO.getSubIds(), reqVO.getGatewayId());
         return success(true);
     }
 
@@ -72,7 +78,7 @@ public class IotDeviceController {
     @Operation(summary = "解绑子设备与网关")
     @PreAuthorize("@ss.hasPermission('iot:device:update')")
     public CommonResult<Boolean> unbindDeviceGateway(@Valid @RequestBody IotDeviceUnbindGatewayReqVO reqVO) {
-        deviceService.unbindDeviceGateway(reqVO.getSubIds(), reqVO.getGatewayId());
+        deviceUseCase.unbindDeviceGateway(reqVO.getSubIds(), reqVO.getGatewayId());
         return success(true);
     }
 
@@ -81,7 +87,7 @@ public class IotDeviceController {
     @Parameter(name = "gatewayId", description = "网关设备编号", required = true, example = "1")
     @PreAuthorize("@ss.hasPermission('iot:device:query')")
     public CommonResult<List<IotDeviceRespVO>> getSubDeviceList(@RequestParam("gatewayId") Long gatewayId) {
-        List<IotDeviceDO> list = deviceService.getDeviceListByGatewayId(gatewayId);
+        List<IotDevice> list = deviceUseCase.getDeviceListByGatewayId(gatewayId);
         if (CollUtil.isEmpty(list)) {
             return success(Collections.emptyList());
         }
@@ -89,9 +95,8 @@ public class IotDeviceController {
         // 补充产品名称
         Map<Long, IotProductDO> productMap = convertMap(productService.getProductList(), IotProductDO::getId);
         return success(convertList(list, device -> {
-            IotDeviceRespVO respVO = BeanUtils.toBean(device, IotDeviceRespVO.class);
-            MapUtils.findAndThen(productMap, device.getProductId(),
-                    product -> respVO.setProductName(product.getName()));
+            IotDeviceRespVO respVO = toRespVO(device);
+            MapUtils.findAndThen(productMap, device.productId(), product -> respVO.setProductName(product.getName()));
             return respVO;
         }));
     }
@@ -116,7 +121,7 @@ public class IotDeviceController {
     @Operation(summary = "更新设备分组")
     @PreAuthorize("@ss.hasPermission('iot:device:update')")
     public CommonResult<Boolean> updateDeviceGroup(@Valid @RequestBody IotDeviceUpdateGroupReqVO updateReqVO) {
-        deviceService.updateDeviceGroup(updateReqVO);
+        deviceUseCase.updateDeviceGroup(updateReqVO.getIds(), updateReqVO.getGroupIds());
         return success(true);
     }
 
@@ -125,7 +130,7 @@ public class IotDeviceController {
     @Parameter(name = "id", description = "编号", required = true)
     @PreAuthorize("@ss.hasPermission('iot:device:delete')")
     public CommonResult<Boolean> deleteDevice(@RequestParam("id") Long id) {
-        deviceService.deleteDevice(id);
+        deviceUseCase.deleteDevice(id);
         return success(true);
     }
 
@@ -143,16 +148,17 @@ public class IotDeviceController {
     @Parameter(name = "id", description = "编号", required = true, example = "1024")
     @PreAuthorize("@ss.hasPermission('iot:device:query')")
     public CommonResult<IotDeviceRespVO> getDevice(@RequestParam("id") Long id) {
-        IotDeviceDO device = deviceService.getDevice(id);
-        return success(BeanUtils.toBean(device, IotDeviceRespVO.class));
+        return success(toRespVO(deviceUseCase.getDevice(id)));
     }
 
     @GetMapping("/page")
     @Operation(summary = "获得设备分页")
     @PreAuthorize("@ss.hasPermission('iot:device:query')")
     public CommonResult<PageResult<IotDeviceRespVO>> getDevicePage(@Valid IotDevicePageReqVO pageReqVO) {
-        PageResult<IotDeviceDO> pageResult = deviceService.getDevicePage(pageReqVO);
-        return success(BeanUtils.toBean(pageResult, IotDeviceRespVO.class));
+        PageResult<IotDevice> pageResult = deviceUseCase.getDevicePage(pageReqVO.getDeviceName(), pageReqVO.getNickname(),
+                pageReqVO.getProductId(), pageReqVO.getDeviceType(), pageReqVO.getStatus(), pageReqVO.getGroupId(),
+                pageReqVO.getGatewayId(), pageReqVO.getPageNo(), pageReqVO.getPageSize());
+        return success(new PageResult<>(convertList(pageResult.getList(), this::toRespVO), pageResult.getTotal()));
     }
 
     @GetMapping("/export-excel")
@@ -173,7 +179,7 @@ public class IotDeviceController {
     @Parameter(name = "productId", description = "产品编号", example = "1")
     @PreAuthorize("@ss.hasPermission('iot:device:query')")
     public CommonResult<Long> getDeviceCount(@RequestParam("productId") Long productId) {
-        return success(deviceService.getDeviceCountByProductId(productId));
+        return success(deviceUseCase.getDeviceCountByProductId(productId));
     }
 
     @GetMapping("/simple-list")
@@ -185,10 +191,10 @@ public class IotDeviceController {
     public CommonResult<List<IotDeviceRespVO>> getDeviceSimpleList(
             @RequestParam(value = "deviceType", required = false) Integer deviceType,
             @RequestParam(value = "productId", required = false) Long productId) {
-        List<IotDeviceDO> list = deviceService.getDeviceListByCondition(deviceType, productId);
-        return success(convertList(list, device ->  // 只返回 id、name、productId 字段
-                new IotDeviceRespVO().setId(device.getId()).setDeviceName(device.getDeviceName())
-                        .setProductId(device.getProductId()).setState(device.getState())));
+        List<IotDevice> list = deviceUseCase.getDeviceListByCondition(deviceType, productId);
+        return success(convertList(list, device ->
+                new IotDeviceRespVO().setId(device.id()).setDeviceName(device.deviceName())
+                        .setProductId(device.productId()).setState(device.state().code())));
     }
 
     @GetMapping("/location-list")
@@ -249,6 +255,19 @@ public class IotDeviceController {
     public CommonResult<List<IotDeviceRespVO>> getDevicesByProductKeyAndNames(@Valid IotDeviceByProductKeyAndNamesReqVO reqVO) {
         List<IotDeviceDO> devices = deviceService.getDeviceListByProductKeyAndNames(reqVO.getProductKey(), reqVO.getDeviceNames());
         return success(BeanUtils.toBean(devices, IotDeviceRespVO.class));
+    }
+
+    private IotDeviceRespVO toRespVO(IotDevice device) {
+        if (device == null) {
+            return null;
+        }
+        return new IotDeviceRespVO().setId(device.id()).setDeviceName(device.deviceName()).setNickname(device.nickname())
+                .setSerialNumber(device.serialNumber()).setPicUrl(device.picUrl()).setGroupIds(device.groupIds())
+                .setProductId(device.productId()).setProductKey(device.productKey()).setDeviceType(device.deviceType())
+                .setGatewayId(device.gatewayId()).setState(device.state().code()).setOnlineTime(device.onlineTime())
+                .setOfflineTime(device.offlineTime()).setActiveTime(device.activeTime())
+                .setDeviceSecret(device.deviceSecret()).setConfig(device.config()).setLatitude(device.latitude())
+                .setLongitude(device.longitude());
     }
 
 }
