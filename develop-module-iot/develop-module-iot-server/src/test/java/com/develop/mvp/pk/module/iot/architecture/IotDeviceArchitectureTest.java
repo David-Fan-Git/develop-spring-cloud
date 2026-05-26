@@ -45,6 +45,37 @@ class IotDeviceArchitectureTest {
         assertPresent("com.develop.mvp.pk.module.iot.infrastructure.product.messaging.package-info");
     }
 
+    @Test
+    void thingModelDddSkeletonUsesStandardPackages() {
+        assertPresent("com.develop.mvp.pk.module.iot.domain.thingmodel.model.IotThingModel");
+        assertPresent("com.develop.mvp.pk.module.iot.domain.thingmodel.model.IotThingModelFunction");
+        assertPresent("com.develop.mvp.pk.module.iot.domain.thingmodel.valueobject.IotThingModelId");
+        assertPresent("com.develop.mvp.pk.module.iot.domain.thingmodel.valueobject.IotThingModelIdentifier");
+        assertPresent("com.develop.mvp.pk.module.iot.domain.thingmodel.valueobject.IotThingModelName");
+        assertPresent("com.develop.mvp.pk.module.iot.domain.thingmodel.valueobject.IotThingModelType");
+        assertPresent("com.develop.mvp.pk.module.iot.domain.thingmodel.valueobject.IotThingModelPropertyDefinition");
+        assertPresent("com.develop.mvp.pk.module.iot.domain.thingmodel.valueobject.IotThingModelEventDefinition");
+        assertPresent("com.develop.mvp.pk.module.iot.domain.thingmodel.valueobject.IotThingModelServiceDefinition");
+        assertPresent("com.develop.mvp.pk.module.iot.domain.thingmodel.event.IotThingModelCreatedEvent");
+        assertPresent("com.develop.mvp.pk.module.iot.domain.thingmodel.event.IotThingModelUpdatedEvent");
+        assertPresent("com.develop.mvp.pk.module.iot.domain.thingmodel.service.IotThingModelPolicy");
+        assertPresent("com.develop.mvp.pk.module.iot.domain.thingmodel.repository.IotThingModelRepository");
+        assertPresent("com.develop.mvp.pk.module.iot.application.thingmodel.command.CreateIotThingModelCommand");
+        assertPresent("com.develop.mvp.pk.module.iot.application.thingmodel.command.UpdateIotThingModelCommand");
+        assertPresent("com.develop.mvp.pk.module.iot.application.thingmodel.query.IotThingModelPageQuery");
+        assertPresent("com.develop.mvp.pk.module.iot.application.thingmodel.query.IotThingModelListQuery");
+        assertPresent("com.develop.mvp.pk.module.iot.application.thingmodel.result.IotThingModelResult");
+        assertPresent("com.develop.mvp.pk.module.iot.application.thingmodel.result.IotThingModelTslResult");
+        assertPresent("com.develop.mvp.pk.module.iot.application.thingmodel.port.inbound.IotThingModelUseCase");
+        assertPresent("com.develop.mvp.pk.module.iot.application.thingmodel.port.outbound.IotThingModelModbusPointPort");
+        assertPresent("com.develop.mvp.pk.module.iot.application.thingmodel.service.IotThingModelApplicationService");
+        assertPresent("com.develop.mvp.pk.module.iot.infrastructure.thingmodel.persistence.IotThingModelRepositoryImpl");
+        assertPresent("com.develop.mvp.pk.module.iot.infrastructure.thingmodel.external.package-info");
+        assertPresent("com.develop.mvp.pk.module.iot.infrastructure.thingmodel.rpc.package-info");
+        assertPresent("com.develop.mvp.pk.module.iot.infrastructure.thingmodel.cache.package-info");
+        assertPresent("com.develop.mvp.pk.module.iot.infrastructure.thingmodel.messaging.package-info");
+    }
+
     private static void assertPresent(String className) {
         assertDoesNotThrow(() -> Class.forName(className), className + " should exist");
     }
