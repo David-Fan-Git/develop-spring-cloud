@@ -104,6 +104,21 @@ class IotDeviceArchitectureTest {
         assertPresent("com.develop.mvp.pk.module.iot.infrastructure.command.cache.package-info");
     }
 
+    @Test
+    void propertyApplicationSkeletonUsesStandardPackages() {
+        assertPresent("com.develop.mvp.pk.module.iot.application.property.command.PostIotDevicePropertyCommand");
+        assertPresent("com.develop.mvp.pk.module.iot.application.property.query.IotDeviceLatestPropertyQuery");
+        assertPresent("com.develop.mvp.pk.module.iot.application.property.result.IotDeviceLatestPropertyResult");
+        assertPresent("com.develop.mvp.pk.module.iot.application.property.port.inbound.IotDevicePropertyUseCase");
+        assertPresent("com.develop.mvp.pk.module.iot.application.property.port.outbound.IotDevicePropertyStoragePort");
+        assertPresent("com.develop.mvp.pk.module.iot.application.property.service.IotDevicePropertyApplicationService");
+        assertPresent("com.develop.mvp.pk.module.iot.infrastructure.property.persistence.IotDevicePropertyRepositoryImpl");
+        assertPresent("com.develop.mvp.pk.module.iot.infrastructure.property.cache.IotDeviceLatestPropertyCacheAdapter");
+        assertPresent("com.develop.mvp.pk.module.iot.infrastructure.property.messaging.package-info");
+        assertPresent("com.develop.mvp.pk.module.iot.infrastructure.property.external.package-info");
+        assertPresent("com.develop.mvp.pk.module.iot.infrastructure.property.rpc.package-info");
+    }
+
     private static void assertPresent(String className) {
         assertDoesNotThrow(() -> Class.forName(className), className + " should exist");
     }
